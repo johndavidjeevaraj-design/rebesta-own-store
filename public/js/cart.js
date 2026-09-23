@@ -21,7 +21,7 @@
     image.className = 'cart-item-image';
     const img = document.createElement('img');
     img.src = product.image;
-    img.alt = product.title;
+    img.alt = product.title; img.decoding = 'async';
     image.appendChild(img);
 
     const main = document.createElement('div');

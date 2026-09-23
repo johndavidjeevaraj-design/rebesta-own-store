@@ -84,7 +84,7 @@
       imageWrap.appendChild(badge);
     }
     const img = document.createElement('img');
-    img.src = product.image; img.alt = product.title; img.loading = 'lazy';
+    img.src = product.image; img.alt = product.title; img.loading = 'lazy'; img.decoding = 'async';
     imageWrap.appendChild(img);
 
     const body = document.createElement('div');

@@ -876,3 +876,80 @@ input::placeholder,textarea::placeholder{font-weight:600}
   .category-shelf{margin-top:-24px;margin-left:10px;margin-right:10px;width:auto;overflow:hidden}
   .category-copy>span{max-width:86px}
 }
+
+/* ============================================================
+   POLISH PASS 1 — 2026-09-23
+   Readability floors, touch targets, rich footer.
+   Appended last so it cleanly overrides earlier stages.
+   ============================================================ */
+
+/* --- Base readability --- */
+body{font-size:16px}
+
+/* --- Type floors: nothing readable below ~11px --- */
+.unit{font-size:.72rem}
+.stock-note{font-size:.68rem}
+.product-category{font-size:.7rem}
+.checkout-step{font-size:.64rem}
+.checkout-step .dot{font-size:.62rem}
+.admin-table th{font-size:.66rem}
+.admin-table td{font-size:.8rem}
+.metric span{font-size:.7rem}
+.category-count{font-size:.68rem}
+.track-dot{font-size:.68rem;width:21px;height:21px}
+.badge{font-size:.7rem}
+.cart-count{font-size:.72rem}
+.card-actions .button{font-size:.76rem}
+.shop-count{font-size:.74rem}
+.option-card strong{font-size:.86rem}
+.option-card span{font-size:.78rem}
+.summary-note{font-size:.78rem}
+.alert{font-size:.82rem}
+.pin-status{font-size:.8rem}
+.remove-link{font-size:.74rem}
+.cart-item .meta{font-size:.76rem}
+.order-mini strong{font-size:.82rem}
+.order-mini span{font-size:.72rem}
+.delivery-meter-copy{font-size:.78rem}
+.field small{font-size:.76rem}
+.product-desc{font-size:.84rem}
+
+/* --- Touch targets (44px comfortable, 36px minimum) --- */
+.button{min-height:44px}
+.button.small{min-height:36px}
+.card-actions .button{min-height:38px}
+.minimal-footer a{display:inline-flex;align-items:center;min-height:38px}
+.qty-stepper button{width:33px;height:33px}
+.option-card input[type="radio"]{width:18px;height:18px;flex:0 0 auto;margin-top:3px;accent-color:var(--green)}
+.remove-link{display:inline-flex;align-items:center;min-height:36px;padding:5px 6px}
+.whatsapp-link{min-height:44px}
+
+/* --- Rich footer --- */
+.footer-rich{display:grid;grid-template-columns:minmax(220px,1.15fr) minmax(150px,auto) minmax(215px,auto);gap:30px;align-items:start;padding:30px 0 14px}
+.footer-brand{display:grid;gap:10px;justify-items:start}
+.footer-logo{display:inline-flex;align-items:center;height:44px;border-radius:12px;padding:4px 10px;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.18);transition:transform .18s var(--ease-spring)}
+.footer-logo:hover{transform:translateY(-1px)}
+.footer-logo img{width:124px;height:auto}
+.footer-brand p{max-width:330px;margin:0;color:#9eb6a0;font-size:.82rem;line-height:1.62}
+.footer-col{display:grid;gap:2px;justify-items:start}
+.footer-col h4{margin:0 0 8px;color:#fff;font-size:.7rem;font-weight:1000;letter-spacing:.11em;text-transform:uppercase}
+.footer-col a{display:inline-flex;align-items:center;min-height:36px;color:#cfe3cf;font-size:.85rem;font-weight:800;transition:color .16s ease,transform .16s ease}
+.footer-col a:hover{color:#fff;transform:translateX(2px)}
+.footer-col p{margin:4px 0 0;color:#9eb6a0;font-size:.8rem;line-height:1.62}
+@media(max-width:840px){.footer-rich{grid-template-columns:1fr 1fr;gap:20px;padding-top:24px}.footer-brand{grid-column:1/-1}}
+@media(max-width:540px){.footer-rich{grid-template-columns:1fr;gap:14px}.footer-col{gap:0}}
+
+/* --- Small-phone type floors --- */
+@media(max-width:430px){.checkout-step{font-size:.58rem}}
+@media(max-width:840px){.hero-card.small h3{font-size:.78rem}.hero-card.small .hero-price{font-size:.78rem}}
+@media(max-width:540px){.hero-badge{font-size:.7rem;padding:7px 10px}}
+
+/* --- Polish pass 1b: final micro-fixes --- */
+.mobile-cart-bar span:not(.button){font-size:.72rem}
+.product-title a{display:block}
+.header-location a{display:inline-flex;align-items:center;min-height:36px}
+.checkout-step{font-size:.68rem}
+.checkout-step .dot{font-size:.64rem}
+.step-number{font-size:.72rem}
+@media(max-width:430px){.checkout-step{font-size:.62rem}}
+.product-title a{min-height:2.4em}

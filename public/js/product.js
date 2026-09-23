@@ -22,7 +22,7 @@
     const a = document.createElement('a');
     a.className = 'product-card related-card';
     a.href = `/products/${encodeURIComponent(product.handle)}`;
-    a.innerHTML = `<div class="product-image"><img alt=""></div><div class="product-body"><div class="product-category"></div><h3 class="product-title"></h3><div class="price-row"><span class="price"></span><span class="unit"></span></div></div>`;
+    a.innerHTML = `<div class="product-image"><img alt="" loading="lazy" decoding="async"></div><div class="product-body"><div class="product-category"></div><h3 class="product-title"></h3><div class="price-row"><span class="price"></span><span class="unit"></span></div></div>`;
     a.querySelector('img').src = product.image;
     a.querySelector('img').alt = product.title;
     a.querySelector('.product-category').textContent = product.category;
@@ -39,7 +39,7 @@
     const stockText = p.stock > 10 ? 'In stock today' : p.stock > 0 ? `Only ${p.stock} left` : 'Sold out today';
     main.innerHTML = `
       <div class="product-detail-layout">
-        <div class="product-detail-media">${discount ? `<span class="badge orange product-badge">${discount}% off</span>` : ''}<img src="${p.image}" alt="${p.title}"></div>
+        <div class="product-detail-media">${discount ? `<span class="badge orange product-badge">${discount}% off</span>` : ''}<img src="${p.image}" alt="${p.title}" decoding="async"></div>
         <div class="product-detail-copy">
           <span class="eyebrow">${p.category}</span>
           <h1>${p.title}</h1>

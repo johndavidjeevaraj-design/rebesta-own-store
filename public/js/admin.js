@@ -25,6 +25,78 @@
     document.querySelectorAll('[data-admin-panel]').forEach(el => el.innerHTML = `<div class="alert error">${message}</div>`);
   }
 
+  function renderLowStock() {
+    const panel = $('[data-lowstock-panel]');
+    if (!panel) return;
+    const low = state.products.filter(p => p.active && Number(p.stock) <= 10).sort((a, b) => Number(a.stock) - Number(b.stock));
+    if (!low.length) {
+      panel.innerHTML = '<h2>Stock alerts</h2><div class="alert success">All stocked up — nothing is below 10 units right now.</div>';
+      return;
+    }
+    const chips = low.map(p => `
+      <div class="stock-chip ${Number(p.stock) <= 0 ? 'out' : ''}">
+        <span><strong>${p.title}</strong><br><small>${p.category} · ${p.unitLabel}</small></span>
+        <span class="stock-count">${Number(p.stock) <= 0 ? 'Sold out' : `Only ${p.stock} left`}</span>
+      </div>`).join('');
+    panel.innerHTML = `<h2>Stock alerts <span class="badge orange">${low.length} low</span></h2><div class="stock-chip-grid">${chips}</div>`;
+  }
+
+  function renderSales() {
+    const panel = $('[data-sales-panel]');
+    if (!panel) return;
+    const paid = state.orders.filter(o => o.status !== 'CANCELLED');
+    const revenue = paid.reduce((sum, o) => sum + Number(o.totalInr || 0), 0);
+    const avg = paid.length ? revenue / paid.length : 0;
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setUTCDate(d.getUTCDate() - i);
+      days.push(d.toISOString().slice(0, 10));
+    }
+    const perDay = days.map((day, i) => {
+      const dayOrders = paid.filter(o => String(o.placedAt || '').startsWith(day));
+      return {
+        label: new Date(day + 'T00:00:00Z').toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'UTC' }),
+        today: i === 6,
+        orders: dayOrders.length,
+        revenue: dayOrders.reduce((s, o) => s + Number(o.totalInr || 0), 0)
+      };
+    });
+    const maxRev = Math.max(...perDay.map(d => d.revenue), 1);
+    const bars = perDay.map(d => `
+      <div class="chart-bar ${d.today ? 'today' : ''}" title="${d.orders} order(s) · ${RFS.money(d.revenue)}">
+        <span class="val">${d.revenue ? RFS.money(d.revenue) : '–'}</span>
+        <span class="bar" style="height:${Math.max(4, Math.round(d.revenue / maxRev * 100))}%"></span>
+        <span class="day">${d.label}</span>
+      </div>`).join('');
+    const tally = new Map();
+    for (const o of paid) for (const item of o.items || []) {
+      const row = tally.get(item.title) || { units: 0, revenue: 0 };
+      row.units += Number(item.qty || 0);
+      row.revenue += Number(item.lineTotalInr || 0);
+      tally.set(item.title, row);
+    }
+    const top = [...tally.entries()].sort((a, b) => b[1].units - a[1].units).slice(0, 5);
+    const topHtml = top.length
+      ? top.map(([title, r], i) => `<div class="top-row"><span class="rank">${i + 1}</span><span class="top-name">${title}</span><span class="top-fig"><strong>${r.units}</strong> units · ${RFS.money(r.revenue)}</span></div>`).join('')
+      : '<p class="summary-note">Your best sellers will appear here after the first few orders.</p>';
+    panel.innerHTML = `
+      <h2>Sales <span class="badge green">last 7 days</span></h2>
+      <div class="sales-layout">
+        <div>
+          <div class="chart-bars">${bars}</div>
+          <div class="sales-totals">
+            <div><strong>${RFS.money(revenue)}</strong><span>revenue (all time)</span></div>
+            <div><strong>${RFS.money(avg)}</strong><span>avg order value</span></div>
+            <div><strong>${paid.length}</strong><span>orders</span></div>
+          </div>
+        </div>
+        <div>
+          <h3 class="top-title">Top products</h3>
+          <div class="top-products">${topHtml}</div>
+        </div>
+      </div>`;
+  }
+
   async function refreshDashboard() {
     const panel = $('[data-dashboard]');
     const data = await api('/api/admin/dashboard');
@@ -224,6 +296,8 @@
   async function refreshAll() {
     await refreshDashboard();
     await Promise.all([renderSettings(), renderProducts(), renderOrders()]);
+    renderLowStock();
+    renderSales();
   }
 
   $('#admin-key-form').addEventListener('submit', async event => {

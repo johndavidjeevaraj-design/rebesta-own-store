@@ -32,14 +32,37 @@
     return a;
   }
 
+  function openLightbox(src, alt) {
+    const box = document.createElement('div');
+    box.className = 'lightbox';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-label', 'Product image preview');
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'lightbox-close';
+    close.setAttribute('aria-label', 'Close preview');
+    close.textContent = '✕';
+    const img = document.createElement('img');
+    img.src = src; img.alt = alt;
+    box.append(close, img);
+    const shut = () => { box.remove(); document.removeEventListener('keydown', onKey); };
+    const onKey = ev => { if (ev.key === 'Escape') shut(); };
+    box.addEventListener('click', event => { if (event.target === box || event.target === close) shut(); });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(box);
+  }
+
   function render() {
     const p = state.product;
     document.title = `${p.title} – Rebesta Fresh`;
     const discount = p.compareAtInr && p.compareAtInr > p.priceInr ? Math.round((1 - p.priceInr / p.compareAtInr) * 100) : 0;
     const stockText = p.stock > 10 ? 'In stock today' : p.stock > 0 ? `Only ${p.stock} left` : 'Sold out today';
+    const shareText = `${p.title} — ${RFS.money(p.priceInr)} / ${p.unitLabel} at Rebesta Fresh, Hosur\n${location.href}`;
+    const shareHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+    const waIcon = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Zm0 2a8 8 0 1 1-4.2 14.8l-.4-.3-3 .8.8-2.9-.3-.4A8 8 0 0 1 12 4Zm-2.9 4c-.2 0-.5 0-.7.3-.3.3-.9.9-.9 2.1s.9 2.4 1 2.6c.2.2 1.8 2.9 4.5 3.9 2.2.8 2.7.7 3.2.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2-.1-.1-.3-.2-.6-.3l-2-1c-.3-.1-.5-.2-.7.1l-1 1.2c-.2.2-.4.2-.6.1a6.7 6.7 0 0 1-3.3-2.8c-.2-.4 0-.6.1-.7l.5-.6c.2-.2.2-.3.3-.5.1-.3 0-.4 0-.6L9.4 8.6c-.2-.4-.2-.6-.3-.6Z"/></svg>';
     main.innerHTML = `
       <div class="product-detail-layout">
-        <div class="product-detail-media">${discount ? `<span class="badge orange product-badge">${discount}% off</span>` : ''}<img src="${p.image}" alt="${p.title}" decoding="async"></div>
+        <div class="product-detail-media">${discount ? `<span class="badge orange product-badge">${discount}% off</span>` : ''}<img src="${p.image}" alt="${p.title}" decoding="async" data-zoom title="Click to enlarge"></div>
         <div class="product-detail-copy">
           <span class="eyebrow">${p.category}</span>
           <h1>${p.title}</h1>
@@ -47,6 +70,7 @@
           <div class="detail-price-row"><strong>${RFS.money(p.priceInr)}</strong>${discount ? `<span class="compare">${RFS.money(p.compareAtInr)}</span>` : ''}<span>/ ${p.unitLabel}</span></div>
           <div class="route-facts"><span class="badge ${p.stock > 10 ? 'green' : p.stock > 0 ? 'orange' : 'gray'}">${stockText}</span><span class="badge gray">Tomorrow morning</span><span class="badge gray">${p.sku}</span></div>
           <div class="purchase-panel"><label>Quantity</label><div class="purchase-controls"><span class="qty-stepper"><button type="button" data-qty-minus ${state.qty <= 1 ? 'disabled' : ''}>−</button><span>${state.qty}</span><button type="button" data-qty-plus ${state.qty >= Math.min(50, p.stock) ? 'disabled' : ''}>+</button></span><button class="button primary" type="button" data-add-detail ${p.stock <= 0 ? 'disabled' : ''}>${p.stock <= 0 ? 'Sold out' : 'Add to basket'}</button></div></div>
+          <div class="share-row"><a class="button whatsapp" href="${shareHref}" target="_blank" rel="noopener">${waIcon}Share on WhatsApp</a><button class="button ghost" type="button" data-copy-link>Copy link</button></div>
           <div class="delivery-proof"><h3>Delivery checked by your exact pin</h3><p>Choose current GPS, a manual map pin or coordinates at checkout. We use the actual rider route within 9 road km.</p></div>
         </div>
       </div>`;
@@ -54,6 +78,11 @@
     main.querySelector('[data-qty-minus]').addEventListener('click', () => { state.qty = Math.max(1, state.qty - 1); render(); });
     main.querySelector('[data-qty-plus]').addEventListener('click', () => { state.qty = Math.min(50, p.stock, state.qty + 1); render(); });
     main.querySelector('[data-add-detail]').addEventListener('click', addCurrent);
+    main.querySelector('[data-zoom]')?.addEventListener('click', () => openLightbox(p.image, p.title));
+    main.querySelector('[data-copy-link]')?.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(location.href); RFS.toast('Link copied — share it anywhere'); }
+      catch { RFS.toast('Could not copy link on this browser', 'error'); }
+    });
     related.innerHTML = '';
     state.related.forEach(product => related.appendChild(relatedCard(product)));
   }
@@ -62,8 +91,11 @@
     try {
       const data = await RFS.api(`/api/products/${encodeURIComponent(handle)}`);
       state.product = data.product;
-      const all = await RFS.api(`/api/products?category=${encodeURIComponent(data.product.category)}`);
-      state.related = all.products.filter(product => product.handle !== handle).slice(0, 5);
+      const all = await RFS.api('/api/products');
+      const others = all.products.filter(product => product.handle !== handle);
+      const sameCategory = others.filter(product => product.category === data.product.category);
+      const featured = others.filter(product => product.featured && product.category !== data.product.category);
+      state.related = [...sameCategory, ...featured].slice(0, 10);
       render();
     } catch (error) {
       main.innerHTML = `<div class="empty-state"><h2>Product not found</h2><p>${error.message}</p><a class="button primary" href="/#shop">Back to shop</a></div>`;

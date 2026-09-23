@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Track order – Rebesta Fresh</title>
-  <link rel="icon" href="/assets/brand/logo.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><link rel="stylesheet" href="/css/styles.css?v=20260923p4">
+  <link rel="icon" href="/assets/brand/logo.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><link rel="stylesheet" href="/css/styles.css?v=20260923p5">
 </head>
 <body>
   <header class="site-header"><div class="container header-inner"><a class="logo" href="/"><img src="/assets/brand/logo.png" alt="Rebesta Fresh" width="128" height="32"></a><span class="header-location">Order tracking</span><span></span><div class="header-actions"><a class="whatsapp-link" href="https://wa.me/918438765119">Help</a><a class="cart-link" href="/">Shop fresh</a></div></div></header>
@@ -36,7 +36,7 @@
   </div>
   <div class="container minimal-footer-inner"><span>© 2026 Rebesta Fresh · Fresh from farms, Hosur</span></div>
 </footer>
-  <script src="/js/store.js?v=20260923p4" defer></script>
+  <script src="/js/store.js?v=20260923p5" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded',()=>{const form=document.querySelector('[data-track-form]'),result=document.querySelector('[data-track-result]');form.addEventListener('submit',async event=>{event.preventDefault();const id=new FormData(form).get('orderId').trim();const phone=new FormData(form).get('phone').trim();result.innerHTML='<div class="alert info">Checking your order…</div>';try{const data=await RFS.api(`/api/orders/${encodeURIComponent(id)}?phone=${encodeURIComponent(phone)}`);const o=data.order;if(data.phoneVerified===false)throw new Error('Mobile number does not match this order');result.innerHTML=`<div class="alert success"><strong>${o.id}</strong> is currently <strong>${o.status.replaceAll('_',' ')}</strong>.</div><div class="order-mini-list">${o.items.map(i=>`<div class="order-mini"><img src="${i.image}" alt=""><div><strong>${i.title}</strong><br><span>${i.qty} × ${i.unitLabel}</span></div></div>`).join('')}</div><div class="summary-total"><span>Total</span><strong>${RFS.money(o.totalInr)}</strong></div>`;}catch(e){result.innerHTML=`<div class="alert error">${e.message}</div>`;}});});
   </script>

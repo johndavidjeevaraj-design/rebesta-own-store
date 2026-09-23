@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Secure checkout – Rebesta Fresh</title>
+  <link rel="icon" href="/assets/brand/logo.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#074015">
+  <link rel="stylesheet" href="/css/styles.css?final10=20260922">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+</head>
+<body class="shop-page">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="/"><img src="/assets/brand/logo.png" alt="Rebesta Fresh" width="128" height="32"></a>
+      <span class="header-location"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3 5 6v6c0 4.4 2.8 7.5 7 9 4.2-1.5 7-4.6 7-9V6l-7-3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m9 12 2 2 4-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Secure checkout</span>
+      <span></span>
+      <div class="header-actions">
+        <a class="whatsapp-link" href="https://wa.me/918438765119" target="_blank" rel="noopener">Help</a>
+        <a class="cart-link" href="/cart">Basket <span class="cart-count" data-cart-count>0</span></a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <span class="eyebrow">Checkout</span>
+        <h1>Delivery details</h1>
+        <p>Add your address, exact pin and preferred morning slot.</p>
+      </div>
+    </section>
+
+    <form data-checkout-form class="section" style="padding-top:26px" novalidate>
+      <div class="container checkout-layout">
+        <div>
+          <div class="shop-panel checkout-section">
+            <h2><span class="step-number">1</span>Contact</h2>
+            <div class="form-grid">
+              <div class="field"><label for="name">Full name</label><input id="name" name="name" autocomplete="name" required placeholder="Your name"></div>
+              <div class="field"><label for="phone">Mobile number</label><input id="phone" name="phone" inputmode="tel" autocomplete="tel" required placeholder="10-digit mobile"></div>
+            </div>
+          </div>
+
+          <div class="shop-panel checkout-section">
+            <h2><span class="step-number">2</span>Address + pin</h2>
+            <div class="form-grid">
+              <div class="field wide"><label for="address1">House / street</label><input id="address1" name="address1" autocomplete="address-line1" required placeholder="Flat, door number and street"></div>
+              <div class="field wide"><label for="address2">Landmark <small style="display:inline">(optional)</small></label><input id="address2" name="address2" autocomplete="address-line2" placeholder="Landmark, floor or apartment"></div>
+              <div class="field"><label for="area">Area</label><input id="area" name="area" autocomplete="address-level3" placeholder="Area / locality"></div>
+              <div class="field"><label for="city">City</label><input id="city" name="city" value="Hosur" autocomplete="address-level2"></div>
+              <div class="field"><label for="pincode">Pincode</label><input id="pincode" name="pincode" inputmode="numeric" autocomplete="postal-code" required maxlength="6" placeholder="635109"></div>
+            </div>
+
+            <div class="location-actions">
+              <button class="button primary" type="button" data-use-gps>Use current GPS</button>
+              <button class="button ghost" type="button" data-manual-pin>Choose on map</button>
+              <button class="button ghost" type="button" data-calculate-route>Calculate road delivery</button>
+            </div>
+            <div class="pin-status" data-pin-status>No pin selected yet. GPS is most exact; the manual map pin or decimal coordinates are the fallback.</div>
+
+            <div class="map-shell" data-map-shell><div id="pinMap" aria-label="Delivery pin map"></div></div>
+
+            <div class="form-grid" style="margin-top:15px">
+              <div class="field"><label for="latitude">Latitude</label><input id="latitude" name="latitude" inputmode="decimal" placeholder="12.728600"></div>
+              <div class="field"><label for="longitude">Longitude</label><input id="longitude" name="longitude" inputmode="decimal" placeholder="77.824800"></div>
+              <div class="field wide"><button class="button ghost small" type="button" data-apply-coords>Apply these coordinates</button><small>Use this if map tiles do not load. Decimal coordinates are accepted.</small></div>
+            </div>
+
+            <div data-quote-result style="margin-top:15px"></div>
+          </div>
+
+          <div class="shop-panel checkout-section">
+            <h2><span class="step-number">3</span>Delivery slot</h2>
+            <div class="slot-list" data-slots><div class="alert info">Calculate road delivery first to reveal safe delivery slots.</div></div>
+          </div>
+
+          <div class="shop-panel checkout-section">
+            <h2><span class="step-number">4</span>Payment</h2>
+            <div class="slot-list" data-payment-list></div>
+            <div class="field" style="margin-top:14px"><label for="notes">Delivery notes <small style="display:inline">(optional)</small></label><textarea id="notes" name="notes" maxlength="500" placeholder="Gate code, nearby shop, call on arrival…"></textarea></div>
+          </div>
+        </div>
+
+        <aside>
+          <div class="summary-card">
+            <h2>Your order</h2>
+            <div class="order-mini-list" data-order-mini-list></div>
+            <div data-checkout-summary></div>
+            <button class="button orange full" type="submit" data-place-order disabled style="margin-top:17px">Place order safely</button>
+            <p class="summary-note">COD is live. PayU UPI/card/netbanking unlocks after live merchant credentials and callbacks pass verification.</p>
+          </div>
+          <a class="button ghost full" href="/cart" style="margin-top:11px">Back to basket</a>
+        </aside>
+      </div>
+    </form>
+  </main>
+
+  <a class="mobile-cart-bar" data-mobile-cart href="/cart"><div><strong data-mobile-cart-text>0 items</strong><span data-mobile-cart-sub>Ready for tomorrow morning</span></div><span class="button orange small">View basket</span></a>
+  <footer class="minimal-footer"><div class="container minimal-footer-inner"><span>© 2026 Rebesta Fresh</span><a href="https://wa.me/918438765119">WhatsApp support</a><a href="/track">Track order</a></div></footer>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer crossorigin=""></script>
+  <script src="/js/store.js?final10=20260922" defer></script>
+  <script src="/js/checkout.js?final10=20260922" defer></script>
+</body>
+</html>

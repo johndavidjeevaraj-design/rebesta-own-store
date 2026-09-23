@@ -1,0 +1,22 @@
+{
+  "name": "rebesta-own-store",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Independent Rebesta Fresh quick-commerce storefront and checkout.",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "compression": "^1.7.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "morgan": "^1.10.0"
+  }
+}

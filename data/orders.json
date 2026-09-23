@@ -1,0 +1,69 @@
+[
+  {
+    "id": "RB-20260923-262C83",
+    "status": "PLACED",
+    "paymentStatus": "PAY_ON_DELIVERY",
+    "placedAt": "2026-09-23T07:24:43.418Z",
+    "updatedAt": "2026-09-23T07:24:43.418Z",
+    "history": [
+      {
+        "status": "PLACED",
+        "at": "2026-09-23T07:24:43.418Z",
+        "note": "Order received"
+      }
+    ],
+    "customer": {
+      "name": "koko",
+      "phone": "8072568386"
+    },
+    "address": {
+      "line1": "hhuhu",
+      "line2": "huhu",
+      "area": "huh",
+      "city": "Hosur",
+      "state": "Tamil Nadu",
+      "pincode": "635109",
+      "mapLabel": ""
+    },
+    "items": [
+      {
+        "handle": "capsicum-green",
+        "sku": "VEG-NS-007",
+        "title": "Capsicum - Green",
+        "category": "Nightshades",
+        "unitLabel": "1 kg",
+        "image": "/assets/products/capsicum-green.jpg",
+        "qty": 1,
+        "priceInr": 60,
+        "lineTotalInr": 60
+      }
+    ],
+    "subtotalInr": 60,
+    "deliveryFeeInr": 70,
+    "totalInr": 130,
+    "distanceKm": 6,
+    "deliveryTierLabel": "6–7 km",
+    "freeDeliveryApplied": false,
+    "deliveryDate": {
+      "iso": "2026-09-24",
+      "label": "Thursday, 24-09-2026"
+    },
+    "slot": {
+      "id": "am2",
+      "label": "9:00 AM – 11:00 AM",
+      "startHour": 9,
+      "endHour": 11,
+      "date": "2026-09-24",
+      "dateLabel": "Thursday, 24-09-2026"
+    },
+    "location": {
+      "lat": 12.728568,
+      "lng": 77.866609,
+      "label": "Manual coordinate pin",
+      "provider": "customer-exact-pin"
+    },
+    "paymentMethod": "cod",
+    "notes": "",
+    "source": "own-store-web"
+  }
+]

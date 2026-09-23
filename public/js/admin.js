@@ -1,0 +1,253 @@
+(() => {
+  const state = {
+    key: localStorage.getItem('rebesta_admin_key') || '',
+    products: [],
+    orders: [],
+    settings: null
+  };
+  const $ = selector => document.querySelector(selector);
+  const statuses = ['PENDING_PAYMENT', 'PLACED', 'CONFIRMED', 'PACKING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'PAYMENT_FAILED', 'PAID_NEEDS_REVIEW'];
+  const DEFAULT_TIERS = [
+    { min: 0, max: 1, label: '0–1 km', feeInr: 20 },
+    { min: 1, max: 3, label: '1–3 km', feeInr: 30 },
+    { min: 3, max: 4, label: '3–4 km', feeInr: 40 },
+    { min: 4, max: 5, label: '4–5 km', feeInr: 50 },
+    { min: 5, max: 6, label: '5–6 km', feeInr: 60 },
+    { min: 6, max: 7, label: '6–7 km', feeInr: 70 },
+    { min: 7, max: 9, label: '7–9 km', feeInr: 100 }
+  ];
+
+  async function api(path, options = {}) {
+    return RFS.api(path, { ...options, headers: { 'X-Admin-Key': state.key, ...(options.headers || {}) } });
+  }
+
+  function showError(message) {
+    document.querySelectorAll('[data-admin-panel]').forEach(el => el.innerHTML = `<div class="alert error">${message}</div>`);
+  }
+
+  async function refreshDashboard() {
+    const panel = $('[data-dashboard]');
+    const data = await api('/api/admin/dashboard');
+    panel.innerHTML = `
+      <div class="metric"><strong>${data.metrics.ordersToday}</strong><span>orders today</span></div>
+      <div class="metric"><strong>${data.metrics.activeOrders}</strong><span>active orders</span></div>
+      <div class="metric"><strong>${RFS.money(data.metrics.revenueTodayInr)}</strong><span>sales today</span></div>
+      <div class="metric"><strong>${data.metrics.liveProducts}</strong><span>live products</span></div>
+      <div class="metric"><strong>${data.metrics.lowStock}</strong><span>low stock</span></div>
+    `;
+  }
+
+  function setField(name, value) {
+    const input = document.querySelector(`[data-settings-form] [name="${name}"]`);
+    if (input) input.value = value ?? '';
+  }
+
+  function renderTierRows(tiers) {
+    const body = document.querySelector('[data-tier-body]');
+    body.innerHTML = '';
+    for (const tier of tiers) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" class="tier-label" value=""></td>
+        <td><input type="number" class="tier-min small-input" min="0" step="0.01"></td>
+        <td><input type="number" class="tier-max small-input" min="0" step="0.01"></td>
+        <td><input type="number" class="tier-fee small-input" min="0" step="0.01"></td>
+      `;
+      tr.querySelector('.tier-label').value = tier.label || '';
+      tr.querySelector('.tier-min').value = Number(tier.min ?? 0);
+      tr.querySelector('.tier-max').value = Number(tier.max ?? 0);
+      tr.querySelector('.tier-fee').value = Number(tier.feeInr ?? 0);
+      body.appendChild(tr);
+    }
+  }
+
+  async function renderSettings() {
+    const data = await api('/api/admin/settings');
+    state.settings = data.settings;
+    const content = data.settings.content || {};
+    const business = data.settings.business || {};
+    const delivery = data.settings.delivery || {};
+    for (const key of ['homeBadge', 'homeTitle', 'homeSubtitle', 'deliveryNoteTitle', 'deliveryNoteText', 'deliveryNoteButton']) setField(key, content[key]);
+    for (const key of ['name', 'whatsapp', 'phoneDisplay', 'city']) setField(key, business[key]);
+    setField('hubLat', delivery.hubLat);
+    setField('hubLng', delivery.hubLng);
+    setField('maxRoadKm', delivery.maxRoadKm);
+    setField('freeOverInr', delivery.freeOverInr);
+    renderTierRows(delivery.tiers?.length ? delivery.tiers : DEFAULT_TIERS);
+  }
+
+  function collectSettings() {
+    const value = name => (document.querySelector(`[data-settings-form] [name="${name}"]`)?.value || '').trim();
+    const deliveryNumber = name => {
+      const value = Number(document.querySelector(`[data-settings-form] [name="${name}"]`)?.value);
+      if (!Number.isFinite(value) || value < 0) throw new Error(`Enter a valid number for ${name}`);
+      return value;
+    };
+    const tiers = [...document.querySelectorAll('[data-tier-body] tr')].map((row, index) => {
+      const label = row.querySelector('.tier-label').value.trim() || `Level ${index + 1}`;
+      const min = Number(row.querySelector('.tier-min').value);
+      const max = Number(row.querySelector('.tier-max').value);
+      const feeInr = Number(row.querySelector('.tier-fee').value);
+      if (!Number.isFinite(min) || !Number.isFinite(max) || !Number.isFinite(feeInr) || min < 0 || max <= min || feeInr < 0) {
+        throw new Error(`Tier ${index + 1} has invalid distance or fee values`);
+      }
+      return { min, max, label, feeInr };
+    });
+    if (!tiers.length) throw new Error('Keep at least one delivery tier');
+    return {
+      content: {
+        homeBadge: value('homeBadge'),
+        homeTitle: value('homeTitle'),
+        homeSubtitle: value('homeSubtitle'),
+        deliveryNoteTitle: value('deliveryNoteTitle'),
+        deliveryNoteText: value('deliveryNoteText'),
+        deliveryNoteButton: value('deliveryNoteButton')
+      },
+      business: {
+        name: value('businessName'),
+        whatsapp: value('whatsapp'),
+        phoneDisplay: value('phoneDisplay'),
+        city: value('city')
+      },
+      delivery: {
+        hubLat: deliveryNumber('hubLat'),
+        hubLng: deliveryNumber('hubLng'),
+        maxRoadKm: deliveryNumber('maxRoadKm'),
+        freeOverInr: deliveryNumber('freeOverInr'),
+        tiers
+      }
+    };
+  }
+
+  $('[data-settings-form]').addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = document.querySelector('[data-save-settings]');
+    try {
+      const payload = collectSettings();
+      RFS.setBusy(button, true, 'Saving…');
+      await api('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(payload) });
+      RFS.toast('Website settings saved. Refresh the storefront to see them.');
+    } catch (error) {
+      RFS.toast(error.message, 'error');
+    } finally {
+      RFS.setBusy(button, false);
+    }
+  });
+
+  document.querySelector('[data-reset-tiers]').addEventListener('click', () => {
+    renderTierRows(DEFAULT_TIERS);
+    RFS.toast('Default tiers loaded. Click Save site settings to apply.');
+  });
+
+  async function renderProducts() {
+    const data = await api('/api/admin/products');
+    state.products = data.products;
+    const wrap = $('[data-products-table]');
+    wrap.innerHTML = '';
+    const table = document.createElement('table');
+    table.className = 'admin-table';
+    table.innerHTML = '<thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Visibility</th><th>Save</th></tr></thead><tbody></tbody>';
+    const body = table.querySelector('tbody');
+    for (const p of state.products) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${p.title}</strong><br><span>${p.handle}</span></td>
+        <td></td>
+        <td><input class="small-input" type="number" min="0" step="0.01" value="${p.priceInr}"></td>
+        <td><input class="small-input" type="number" min="0" step="1" value="${p.stock}"></td>
+        <td><label><input type="checkbox" ${p.active ? 'checked' : ''}> Live</label></td>
+        <td><button class="button ghost small" type="button">Save</button></td>
+      `;
+      tr.children[1].textContent = p.category;
+      const [price, stock, active] = tr.querySelectorAll('input');
+      tr.querySelector('button').addEventListener('click', async event => {
+        RFS.setBusy(event.currentTarget, true, 'Saving…');
+        try {
+          await api(`/api/admin/products/${encodeURIComponent(p.handle)}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ priceInr: Number(price.value), stock: Number(stock.value), active: active.checked })
+          });
+          RFS.toast(`${p.title} updated`);
+          refreshDashboard();
+        } catch (error) { RFS.toast(error.message, 'error'); }
+        finally { RFS.setBusy(event.currentTarget, false); }
+      });
+      body.appendChild(tr);
+    }
+    wrap.appendChild(table);
+  }
+
+  async function renderOrders() {
+    const data = await api('/api/admin/orders');
+    state.orders = data.orders;
+    const wrap = $('[data-orders-table]');
+    wrap.innerHTML = '';
+    if (!state.orders.length) {
+      wrap.innerHTML = '<div class="empty-state"><h3>No orders yet</h3><p>Orders placed from your own checkout will appear here.</p></div>';
+      return;
+    }
+    const table = document.createElement('table');
+    table.className = 'admin-table';
+    table.innerHTML = '<thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Delivery</th><th>Total</th><th>Status</th></tr></thead><tbody></tbody>';
+    const body = table.querySelector('tbody');
+    for (const order of state.orders) {
+      const tr = document.createElement('tr');
+      const itemText = order.items.map(i => `${i.title} × ${i.qty}`).join(', ');
+      const addr = [order.address?.line1, order.address?.area, order.address?.city, order.address?.pincode].filter(Boolean).join(', ');
+      tr.innerHTML = `
+        <td><strong>${order.id}</strong><br><span>${new Date(order.placedAt).toLocaleString('en-IN')}</span></td>
+        <td><strong>${order.customer?.name || ''}</strong><br><span>${order.customer?.phone || ''}</span></td>
+        <td>${itemText}</td>
+        <td><strong>${order.slot?.label || ''}</strong><br><span>${addr}</span><br><span>${order.location ? `Pin: ${order.location.lat}, ${order.location.lng}` : ''}</span></td>
+        <td><strong>${RFS.money(order.totalInr)}</strong><br><span>${order.paymentMethod.toUpperCase()} · ${order.paymentStatus}</span></td>
+        <td><select class="status-select"></select></td>
+      `;
+      const select = tr.querySelector('select');
+      for (const status of statuses) {
+        const opt = new Option(status.replaceAll('_', ' '), status);
+        if (order.status === status) opt.selected = true;
+        select.appendChild(opt);
+      }
+      select.addEventListener('change', async () => {
+        try {
+          await api(`/api/admin/orders/${encodeURIComponent(order.id)}/status`, { method: 'PATCH', body: JSON.stringify({ status: select.value }) });
+          order.status = select.value;
+          RFS.toast(`Order ${order.id} updated`);
+          refreshDashboard();
+        } catch (error) { RFS.toast(error.message, 'error'); select.value = order.status; }
+      });
+      body.appendChild(tr);
+    }
+    wrap.appendChild(table);
+  }
+
+  async function refreshAll() {
+    await refreshDashboard();
+    await Promise.all([renderSettings(), renderProducts(), renderOrders()]);
+  }
+
+  $('#admin-key-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    state.key = document.querySelector('[name="adminKey"]').value.trim();
+    localStorage.setItem('rebesta_admin_key', state.key);
+    RFS.setBusy(document.querySelector('[data-connect-admin]'), true, 'Connecting…');
+    try {
+      await refreshAll();
+      document.querySelector('[data-admin-content]').hidden = false;
+      RFS.toast('Admin dashboard connected');
+    } catch (error) {
+      showError(error.message);
+      RFS.toast(error.message, 'error');
+    } finally {
+      RFS.setBusy(document.querySelector('[data-connect-admin]'), false);
+    }
+  });
+
+  document.querySelector('[data-refresh-admin]').addEventListener('click', () => refreshAll().catch(e => RFS.toast(e.message, 'error')));
+  document.querySelector('[name="adminKey"]').value = state.key;
+  if (state.key) {
+    refreshAll().then(() => { document.querySelector('[data-admin-content]').hidden = false; }).catch(error => {
+      showError(error.message);
+    });
+  }
+})();

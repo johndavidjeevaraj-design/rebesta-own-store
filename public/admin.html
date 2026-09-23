@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Rebesta Fresh Admin</title>
+  <link rel="icon" href="/assets/brand/logo.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><link rel="stylesheet" href="/css/styles.css?final10=20260922">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="/"><img src="/assets/brand/logo.png" alt="Rebesta Fresh" width="128" height="32"></a>
+      <span class="header-location">Owner dashboard</span>
+      <span></span>
+      <div class="header-actions"><a class="cart-link" href="/">Open storefront</a></div>
+    </div>
+  </header>
+  <main>
+    <section class="section">
+      <div class="container">
+        <div class="eyebrow">Owner dashboard</div>
+        <h1 class="section-title">Rebesta Fresh operations</h1>
+        <p class="section-subtitle">Change website text, delivery rules, products, prices, stock and orders without opening any code file.</p>
+        <div class="admin-layout" style="margin-top:28px">
+          <aside class="admin-side">
+            <h2>Connection</h2>
+            <form id="admin-key-form">
+              <div class="field"><label for="adminKey">Admin key</label><input id="adminKey" name="adminKey" type="password" autocomplete="current-password" required placeholder="Your production key"></div>
+              <button class="button primary full" type="submit" data-connect-admin style="margin-top:14px">Connect dashboard</button>
+            </form>
+            <button class="button ghost full" type="button" data-refresh-admin>Refresh data</button>
+            <p class="summary-note">Production key is set with the ADMIN_KEY environment variable. Keep it private.</p>
+          </aside>
+          <div data-admin-content hidden>
+            <div class="metric-grid" data-dashboard data-admin-panel></div>
+
+            <section class="shop-panel" style="margin-bottom:20px">
+              <div class="section-head" style="margin-bottom:18px">
+                <div><h2 style="margin-bottom:5px">Website content &amp; delivery</h2><p class="section-subtitle" style="font-size:.94rem">These changes save to the site immediately. No ZIP, FTP, or code editor required.</p></div>
+                <button class="button orange" type="submit" form="site-settings-form" data-save-settings>Save site settings</button>
+              </div>
+              <form id="site-settings-form" data-settings-form class="form-grid">
+                <div class="field"><label for="homeBadge">Home page badge</label><input id="homeBadge" name="homeBadge" maxlength="100"></div>
+                <div class="field"><label for="homeTitle">Home page title</label><input id="homeTitle" name="homeTitle" maxlength="120"></div>
+                <div class="field wide"><label for="homeSubtitle">Home page subtitle</label><input id="homeSubtitle" name="homeSubtitle" maxlength="200"></div>
+                <div class="field"><label for="deliveryNoteTitle">Delivery note title</label><input id="deliveryNoteTitle" name="deliveryNoteTitle" maxlength="120"></div>
+                <div class="field"><label for="deliveryNoteButton">Delivery note button</label><input id="deliveryNoteButton" name="deliveryNoteButton" maxlength="50"></div>
+                <div class="field wide"><label for="deliveryNoteText">Delivery note text</label><input id="deliveryNoteText" name="deliveryNoteText" maxlength="200"></div>
+                <div class="field"><label for="businessName">Business name</label><input id="businessName" name="businessName" maxlength="80"></div>
+                <div class="field"><label for="whatsapp">WhatsApp number</label><input id="whatsapp" name="whatsapp" placeholder="918438765119" maxlength="20"></div>
+                <div class="field"><label for="phoneDisplay">Phone display</label><input id="phoneDisplay" name="phoneDisplay" placeholder="+91 84387 65119" maxlength="25"></div>
+                <div class="field"><label for="city">City</label><input id="city" name="city" maxlength="50"></div>
+                <div class="field"><label for="hubLat">Hub latitude</label><input id="hubLat" name="hubLat" inputmode="decimal"></div>
+                <div class="field"><label for="hubLng">Hub longitude</label><input id="hubLng" name="hubLng" inputmode="decimal"></div>
+                <div class="field"><label for="maxRoadKm">Maximum road-km delivery radius</label><input id="maxRoadKm" name="maxRoadKm" inputmode="decimal"></div>
+                <div class="field"><label for="freeOverInr">Basket value for free delivery</label><input id="freeOverInr" name="freeOverInr" inputmode="decimal"></div>
+                <div class="field wide">
+                  <div class="section-head" style="margin:10px 0 12px">
+                    <div><strong style="color:var(--green-900)">Delivery fee tiers by road distance</strong><br><small id="tier-help" style="color:var(--muted)">Edit distance ranges and prices carefully. Changes apply at checkout immediately.</small></div>
+                    <button class="button ghost small" type="button" data-reset-tiers>Reset default tiers</button>
+                  </div>
+                  <div class="admin-table-wrap" style="border-radius:16px">
+                    <table class="admin-table tiers-table" style="min-width:560px">
+                      <thead><tr><th>Label</th><th>From (&gt;)</th><th>To (≤)</th><th>Fee ₹</th></tr></thead>
+                      <tbody data-tier-body></tbody>
+                    </table>
+                  </div>
+                </div>
+              </form>
+            </section>
+
+            <section class="shop-panel" style="margin-bottom:20px"><h2>Orders</h2><div class="admin-table-wrap" data-orders-table data-admin-panel></div></section>
+            <section class="shop-panel"><h2>Products</h2><div class="admin-table-wrap" data-products-table data-admin-panel></div></section>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="/js/store.js?final10=20260922" defer></script><script src="/js/admin.js?final10=20260922" defer></script>
+</body>
+</html>

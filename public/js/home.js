@@ -1,5 +1,5 @@
 (() => {
-  const state = { products: [], categories: [], settings: null, activeCategory: 'All', search: '', reveal: null };
+  const state = { products: [], categories: [], settings: null, activeCategory: 'All', search: '', sort: 'featured', offersOnly: false, reveal: null };
   const grid = document.querySelector('[data-product-grid]');
   const categoryRow = document.querySelector('[data-category-row]');
   const searchInput = document.querySelector('[data-product-search]');
@@ -132,12 +132,20 @@
     return article;
   }
 
+  const SORTERS = {
+    featured: (a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)) || String(a.title).localeCompare(String(b.title)),
+    'price-asc': (a, b) => Number(a.priceInr) - Number(b.priceInr) || String(a.title).localeCompare(String(b.title)),
+    'price-desc': (a, b) => Number(b.priceInr) - Number(a.priceInr) || String(a.title).localeCompare(String(b.title)),
+    name: (a, b) => String(a.title).localeCompare(String(b.title))
+  };
+
   function filteredProducts() {
     let rows = state.products;
     if (state.activeCategory !== 'All') rows = rows.filter(p => p.category === state.activeCategory);
     const q = state.search.trim().toLowerCase();
     if (q) rows = rows.filter(p => [p.title, p.description, p.category, ...(p.tags || [])].join(' ').toLowerCase().includes(q));
-    return rows;
+    if (state.offersOnly) rows = rows.filter(p => Number(p.compareAtInr) > Number(p.priceInr));
+    return rows.slice().sort(SORTERS[state.sort] || SORTERS.featured);
   }
 
   function categoryImage(category) {
@@ -245,6 +253,22 @@
     document.title = `${business.name || 'Rebesta Fresh'} – ${content.homeTitle || 'Fresh vegetables in Hosur'}`;
   }
 
+  function fillOffersBanner() {
+    const banner = document.querySelector('[data-offers-banner]');
+    if (!banner || !state.products.length) return;
+    const offers = state.products.filter(p => Number(p.compareAtInr) > Number(p.priceInr));
+    if (!offers.length) return;
+    banner.hidden = false;
+    const set = (selector, text) => { const node = banner.querySelector(selector); if (node) node.textContent = text; };
+    set('[data-offers-count]', String(offers.length));
+    const maxOff = Math.max(...offers.map(p => Math.round((1 - Number(p.priceInr) / Number(p.compareAtInr)) * 100)));
+    set('[data-offers-max]', `${maxOff}%`);
+    const combos = state.products.filter(p => /combo/i.test(p.category || '') || /combo/i.test((p.tags || []).join(' ')));
+    set('[data-offers-combo]', combos.length
+      ? `Family combos from ₹${Math.min(...combos.map(p => Number(p.priceInr)))}.`
+      : 'Fresh deals updated daily.');
+  }
+
   async function init() {
     try {
       setupReveal();
@@ -252,6 +276,7 @@
       state.settings = settings; applySettings(settings);
       state.products = data.products.slice().sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)) || String(a.title).localeCompare(String(b.title)));
       state.categories = data.categories;
+      fillOffersBanner();
       const stockFact = document.querySelector('[data-fact-stock]');
       if (stockFact) stockFact.textContent = String(data.products.length);
       renderCategories(); renderHeroShowcase(); renderGrid(); RFS.syncCartUI(state.products);
@@ -262,6 +287,20 @@
   }
 
   searchInput?.addEventListener('input', () => { state.search = searchInput.value; renderGrid(); });
+
+  const offersToggle = document.querySelector('[data-offers-only]');
+  offersToggle?.addEventListener('change', () => { state.offersOnly = offersToggle.checked; renderGrid(); });
+  document.querySelectorAll('[data-sort]').forEach(pill => pill.addEventListener('click', () => {
+    document.querySelectorAll('[data-sort]').forEach(other => other.classList.toggle('active', other === pill));
+    state.sort = pill.dataset.sort || 'featured';
+    renderGrid();
+  }));
+  document.querySelector('[data-offers-cta]')?.addEventListener('click', () => {
+    state.offersOnly = true;
+    if (offersToggle) offersToggle.checked = true;
+    renderGrid();
+    document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
   window.addEventListener('rebesta:cart-changed', () => { RFS.syncCartUI(state.products); renderGrid(); });
   init();
 })();

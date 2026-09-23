@@ -1084,3 +1084,10 @@ body{font-size:16px}
 .top-fig{color:var(--muted);font-size:.7rem;font-weight:900;white-space:nowrap}
 .top-fig strong{color:var(--ink)}
 @media(max-width:900px){.sales-layout{grid-template-columns:1fr}}
+
+/* ============================================================
+   PASS 4 — new brand wordmark (8:1 aspect) + favicon fix
+   ============================================================ */
+.logo img{height:24px;width:auto}
+.footer-logo img{height:28px;width:auto}
+@media(max-width:840px){.logo img{height:19px;width:auto}}

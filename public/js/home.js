@@ -8,7 +8,20 @@
 
   const inCart = handle => RFS.readCart().find(row => row.handle === handle)?.qty || 0;
 
-  function setupReveal() {
+    function renderTestimonials(items) {
+    const section = document.querySelector('[data-testimonials-section]');
+    const grid = document.querySelector('[data-testimonial-grid]');
+    if (!section || !grid || !items.length) return;
+    grid.innerHTML = items.map(t => `
+      <figure class="testimonial-card">
+        <div class="testimonial-stars">${'★'.repeat(Math.max(1, Math.min(5, t.rating || 5)))}<span class="dim">${'★'.repeat(5 - Math.max(1, Math.min(5, t.rating || 5)))}</span></div>
+        <blockquote>${t.text}</blockquote>
+        <figcaption><strong>${t.name}</strong>${t.area ? `<span> · ${t.area}</span>` : ''}</figcaption>
+      </figure>`).join('');
+    section.style.display = '';
+  }
+
+function setupReveal() {
     if ('IntersectionObserver' in window) {
       state.reveal = new IntersectionObserver(entries => {
         entries.forEach(entry => {
@@ -274,6 +287,7 @@
       setupReveal();
       const [data, settings] = await Promise.all([RFS.api('/api/products'), RFS.api('/api/settings')]);
       state.settings = settings; applySettings(settings);
+      renderTestimonials(settings.testimonials || []);
       state.products = data.products.slice().sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)) || String(a.title).localeCompare(String(b.title)));
       state.categories = data.categories;
       fillOffersBanner();

@@ -192,6 +192,29 @@
     });
   }
 
+  // Global bootstrap: Google Analytics + maintenance banner (not on admin)
+  fetch('/api/settings').then(r => r.json()).then(settings => {
+    window.__RFS_SETTINGS = settings;
+    if (settings.maintenance?.enabled && !location.pathname.startsWith('/admin')) {
+      window.__RFS_MAINTENANCE = true;
+      const banner = document.createElement('div');
+      banner.className = 'maint-banner';
+      banner.innerHTML = `<strong>⛔ Temporarily paused</strong><span>${settings.maintenance.message || 'Orders resume shortly.'}</span>`;
+      document.body.appendChild(banner);
+    }
+    const gaId = settings.integrations?.gaId;
+    if (gaId && /^[G]-[A-Z0-9]{6,12}$/.test(gaId)) {
+      const s = document.createElement('script');
+      s.async = true;
+      s.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function gtag() { window.dataLayer.push(arguments); };
+      window.gtag('js', new Date());
+      window.gtag('config', gaId);
+    }
+  }).catch(() => {});
+
   window.RFS = {
     CART_KEY,
     LOCATION_KEY,

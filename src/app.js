@@ -40,6 +40,7 @@ ${productUrls}
 
   app.use('/api/quote', rateLimit({ windowMs: 60_000, max: 90, message: 'Too many delivery-quote attempts. Please wait one minute.' }));
   app.use('/api/orders', rateLimit({ windowMs: 60_000, max: 30, message: 'Too many order requests. Please wait one minute.' }));
+  app.use('/api/coupon', rateLimit({ windowMs: 60_000, max: 20, message: 'Too many coupon attempts. Please wait one minute.' }));
   app.use('/api', publicRouter);
   app.use('/api/admin', adminRouter);
   app.use(express.static(config.publicDir, {
@@ -49,13 +50,18 @@ ${productUrls}
   }));
 
   app.get('/', (req, res) => res.sendFile('index.html', { root: config.publicDir }));
-  app.get(['/cart', '/checkout', '/order-success', '/track', '/admin'], (req, res) => {
+  app.get(['/cart', '/checkout', '/order-success', '/track', '/about', '/faq', '/terms', '/privacy', '/refund'], (req, res) => {
     res.sendFile(`${req.path.slice(1)}.html`, { root: config.publicDir });
   });
   app.get('/products/:handle', (req, res) => res.sendFile('product.html', { root: config.publicDir }));
 
   app.use('/api', (req, res) => res.status(404).json({ ok: false, error: 'API route not found' }));
-  app.use((req, res) => res.redirect('/'));
+  app.use((req, res) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api')) {
+      return res.status(404).sendFile('404.html', { root: config.publicDir });
+    }
+    res.redirect('/');
+  });
   app.use((error, req, res, next) => {
     console.error(JSON.stringify({ event: 'store.error', path: req.path, error: String(error?.message || error).slice(0, 500) }));
     if (req.path.startsWith('/api')) {

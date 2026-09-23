@@ -78,6 +78,39 @@
     stickyObserver.observe(panel);
   }
 
+  function applyProductSeo(p) {
+    document.title = `${p.title} — Rebesta Fresh`;
+    const setMeta = (selector, attr, value) => { const el = document.head.querySelector(selector); if (el) el.setAttribute(attr, value); };
+    setMeta('meta[name="description"]', 'content', `${p.title} — ₹${p.priceInr} / ${p.unitLabel}. ${p.description}`.slice(0, 300));
+    setMeta('meta[property="og:title"]', 'content', `${p.title} — Rebesta Fresh`);
+    setMeta('meta[property="og:description"]', 'content', `${p.title} at ₹${p.priceInr}/${p.unitLabel} — fresh from farms, delivered in Hosur.`);
+    setMeta('meta[property="og:type"]', 'content', 'product');
+    const canonical = document.head.querySelector('link[rel="canonical"]') || (() => { const link = document.createElement('link'); link.rel = 'canonical'; document.head.appendChild(link); return link; })();
+    canonical.href = `${location.origin}/products/${encodeURIComponent(p.handle)}`;
+    const existing = document.getElementById('rfs-jsonld');
+    existing?.remove();
+    const script = document.createElement('script');
+    script.id = 'rfs-jsonld';
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: p.title,
+      description: p.description,
+      image: [p.image],
+      sku: p.sku,
+      brand: { '@type': 'Brand', name: 'Rebesta Fresh' },
+      offers: {
+        '@type': 'Offer',
+        priceCurrency: 'INR',
+        price: p.priceInr,
+        availability: p.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        url: canonical.href
+      }
+    });
+    document.head.appendChild(script);
+  }
+
   function render() {
     const p = state.product;
     document.title = `${p.title} – Rebesta Fresh`;
@@ -107,6 +140,7 @@
     main.querySelector('[data-add-detail]').addEventListener('click', addCurrent);
     main.querySelector('[data-zoom]')?.addEventListener('click', () => openLightbox(p.image, p.title));
     setupStickyAdd(p);
+    applyProductSeo(p);
     main.querySelector('[data-copy-link]')?.addEventListener('click', async () => {
       try { await navigator.clipboard.writeText(location.href); RFS.toast('Link copied — share it anywhere'); }
       catch { RFS.toast('Could not copy link on this browser', 'error'); }

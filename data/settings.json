@@ -3,7 +3,8 @@
     "name": "Rebesta Fresh",
     "whatsapp": "918438765119",
     "phoneDisplay": "+91 84387 65119",
-    "city": "Hosur"
+    "city": "Hosur",
+    "fssai": ""
   },
   "delivery": {
     "hubLat": 12.728582,
@@ -79,7 +80,8 @@
     "homeSubtitle": "Handpicked vegetables. Exact pin checkout. Morning delivery.",
     "deliveryNoteTitle": "Exact rider route, checked live",
     "deliveryNoteText": "Use GPS or place a map pin. We confirm your road route before selecting a slot.",
-    "deliveryNoteButton": "Check my pin"
+    "deliveryNoteButton": "Check my pin",
+    "testimonials": []
   },
   "promotions": {
     "coupons": [
@@ -97,6 +99,23 @@
         "minOrderInr": 599,
         "active": true
       }
-    ]
+    ],
+    "loyalty": {
+      "enabled": true,
+      "percent": 2,
+      "minOrderInr": 299,
+      "validityDays": 60
+    },
+    "referral": {
+      "enabled": true,
+      "bonusInr": 50
+    }
+  },
+  "maintenance": {
+    "enabled": false,
+    "message": "We are briefly paused for restocking — orders resume soon!"
+  },
+  "integrations": {
+    "gaId": ""
   }
 }

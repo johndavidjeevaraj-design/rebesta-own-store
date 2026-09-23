@@ -20,6 +20,14 @@ export const config = Object.freeze({
   nodeEnv: env.NODE_ENV || 'development',
   appUrl: (requiredProduction(env.APP_URL, 'APP_URL') || `http://localhost:${Number(env.PORT || 3000)}`).replace(/\/$/, ''),
   adminKey: requiredProduction(env.ADMIN_KEY, 'ADMIN_KEY') || 'dev-admin-key',
+  smtp: Object.freeze({
+    host: env.SMTP_HOST || '',
+    port: Number(env.SMTP_PORT || 465),
+    user: env.SMTP_USER || '',
+    pass: env.SMTP_PASS || '',
+    from: env.SMTP_FROM || env.SMTP_USER || '',
+    notify: env.NOTIFY_EMAIL || env.SMTP_USER || ''
+  }),
   payu: Object.freeze({
     key: env.PAYU_KEY || '',
     salt: env.PAYU_SALT || '',

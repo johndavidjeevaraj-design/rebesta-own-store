@@ -1,6 +1,7 @@
 import express from 'express';
 import { config } from '../config.js';
-import { loadProducts, loadSettings, readOrders, updateOrderStatus, updateProduct, saveSettings } from '../lib/store.js';
+import { loadProducts, loadSettings, readOrders, saveOrders, updateOrderStatus, updateProduct, saveSettings, createBackup, awardLoyalty, awardReferral } from '../lib/store.js';
+import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
 
 export const router = express.Router();
 
@@ -79,11 +80,35 @@ router.patch('/settings', (req, res) => {
     }
     if (patch.business) {
       const current = settings.business || (settings.business = {});
-      for (const key of ['name', 'whatsapp', 'phoneDisplay', 'city']) {
+      for (const key of ['name', 'whatsapp', 'phoneDisplay', 'city', 'fssai']) {
         if (patch.business[key] !== undefined) current[key] = String(patch.business[key]).trim();
       }
     }
     if (patch.promotions) {
+      if (patch.promotions.loyalty) {
+        const loyalty = patch.promotions.loyalty;
+        const current = settings.promotions || (settings.promotions = {});
+        const next = current.loyalty || (current.loyalty = {});
+        if (loyalty.enabled !== undefined) next.enabled = Boolean(loyalty.enabled);
+        for (const key of ['percent', 'minOrderInr', 'validityDays']) {
+          if (loyalty[key] !== undefined) {
+            const value = Number(loyalty[key]);
+            if (!Number.isFinite(value) || value < 0) return res.status(400).json({ ok: false, error: `Invalid loyalty ${key}` });
+            next[key] = Math.round(value);
+          }
+        }
+      }
+      if (patch.promotions.referral) {
+        const referral = patch.promotions.referral;
+        const current = settings.promotions || (settings.promotions = {});
+        const next = current.referral || (current.referral = {});
+        if (referral.enabled !== undefined) next.enabled = Boolean(referral.enabled);
+        if (referral.bonusInr !== undefined) {
+          const value = Number(referral.bonusInr);
+          if (!Number.isFinite(value) || value < 10 || value > 500) return res.status(400).json({ ok: false, error: 'Referral bonus must be between 10 and 500' });
+          next.bonusInr = Math.round(value);
+        }
+      }
       const promos = settings.promotions || (settings.promotions = {});
       if (Array.isArray(patch.promotions.coupons)) {
         const coupons = patch.promotions.coupons.map(c => {
@@ -94,7 +119,14 @@ router.patch('/settings', (req, res) => {
           if (!code || !Number.isFinite(value) || value <= 0) throw new Error(`Coupon ${code || '(blank)'} has invalid values`);
           if (type === 'percent' && value > 90) throw new Error(`Coupon ${code}: percent off cannot exceed 90`);
           if (type === 'flat' && value > 10000) throw new Error(`Coupon ${code}: flat off cannot exceed \u20B910000`);
-          return { code, type, value, minOrderInr, active: c.active !== false };
+          const couponOut = { code, type, value, minOrderInr, active: c.active !== false };
+          if (c.expiresAt && !Number.isNaN(new Date(c.expiresAt).getTime())) couponOut.expiresAt = new Date(c.expiresAt).toISOString();
+          if (c.maxUses && Number.isFinite(Number(c.maxUses)) && Number(c.maxUses) > 0) {
+            couponOut.maxUses = Math.round(Number(c.maxUses));
+            couponOut.usedCount = Math.max(0, Math.round(Number(c.usedCount) || 0));
+          }
+          if (c.note) couponOut.note = String(c.note).slice(0, 120);
+          return couponOut;
         });
         if (new Set(coupons.map(c => c.code)).size !== coupons.length) throw new Error('Coupon codes must be unique');
         promos.coupons = coupons;
@@ -104,6 +136,27 @@ router.patch('/settings', (req, res) => {
       const current = settings.content || (settings.content = {});
       for (const key of ['homeBadge', 'homeTitle', 'homeSubtitle', 'deliveryNoteTitle', 'deliveryNoteText', 'deliveryNoteButton']) {
         if (patch.content[key] !== undefined) current[key] = String(patch.content[key]).trim().slice(0, 200);
+      }
+      if (Array.isArray(patch.content.testimonials)) {
+        const testimonials = patch.content.testimonials.map(t => ({
+          name: String(t.name || '').trim().slice(0, 60),
+          text: String(t.text || '').trim().slice(0, 400),
+          rating: Math.max(1, Math.min(5, Math.round(Number(t.rating) || 5))),
+          area: String(t.area || '').trim().slice(0, 40)
+        })).filter(t => t.name && t.text);
+        current.testimonials = testimonials.slice(0, 12);
+      }
+    }
+    if (patch.maintenance) {
+      const current = settings.maintenance || (settings.maintenance = {});
+      if (patch.maintenance.enabled !== undefined) current.enabled = Boolean(patch.maintenance.enabled);
+      if (patch.maintenance.message !== undefined) current.message = String(patch.maintenance.message || '').trim().slice(0, 200);
+    }
+    if (patch.integrations) {
+      const current = settings.integrations || (settings.integrations = {});
+      if (patch.integrations.gaId !== undefined) {
+        const gaId = String(patch.integrations.gaId || '').trim();
+        current.gaId = gaId === '' || /^G-[A-Z0-9]{6,12}$/.test(gaId) ? gaId : current.gaId || '';
       }
     }
     saveSettings(settings);
@@ -124,8 +177,66 @@ router.patch('/orders/:id/status', (req, res) => {
   try {
     const order = updateOrderStatus(req.params.id, String(req.body?.status || '').toUpperCase(), String(req.body?.note || ''));
     if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
-    res.json({ ok: true, order });
+    let rewards = null;
+    if (order.status === 'DELIVERED') {
+      const loyaltyCoupon = awardLoyalty(order);
+      const referral = awardReferral(order);
+      rewards = { loyaltyCoupon, referral };
+      if (loyaltyCoupon) rewardCouponEmail(order, loyaltyCoupon, 'Your loyalty reward is here! \u{1F381}');
+      if (referral) rewardCouponEmail(order, referral.friendCoupon, 'Referral thank-you! \u{1F381}');
+    }
+    statusChangedEmail(order);
+    res.json({ ok: true, order, rewards });
   } catch (error) {
     res.status(error.status || 400).json({ ok: false, error: error.message || 'Could not update order' });
   }
+});
+
+router.patch('/orders/:id/payment', (req, res) => {
+  try {
+    const allowed = ['PAY_ON_DELIVERY', 'PAID_CASH_ON_DELIVERY', 'PAID_ONLINE', 'REFUNDED', 'CANCELLED_NO_CHARGE'];
+    const paymentStatus = String(req.body?.paymentStatus || '').toUpperCase();
+    if (!allowed.includes(paymentStatus)) return res.status(400).json({ ok: false, error: 'Invalid payment status' });
+    const orders = readOrders();
+    const order = orders.find(o => o.id === req.params.id);
+    if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
+    order.paymentStatus = paymentStatus;
+    order.updatedAt = new Date().toISOString();
+    order.history.push({ status: order.status, at: order.updatedAt, note: `Payment marked ${paymentStatus}` });
+    saveOrders(orders);
+    res.json({ ok: true, order });
+  } catch (error) {
+    res.status(error.status || 400).json({ ok: false, error: error.message || 'Could not update payment' });
+  }
+});
+
+router.get('/orders.csv', (req, res) => {
+  const orders = readOrders();
+  const cell = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
+  const head = ['Order ID', 'Placed At', 'Customer', 'Phone', 'Address', 'Items', 'Subtotal INR', 'Discount INR', 'Coupon', 'Delivery Fee INR', 'Total INR', 'Payment', 'Payment Status', 'Order Status', 'Slot', 'Delivery Date'];
+  const rows = orders.map(o => [
+    o.id,
+    o.placedAt,
+    o.customer?.name || '',
+    o.customer?.phone || '',
+    [o.address?.line1, o.address?.area, o.address?.city, o.address?.pincode].filter(Boolean).join(', '),
+    (o.items || []).map(i => `${i.title} x${i.qty}`).join('; '),
+    o.subtotalInr,
+    o.discountInr || 0,
+    o.couponCode || '',
+    o.deliveryFeeInr,
+    o.totalInr,
+    o.paymentMethod,
+    o.paymentStatus,
+    o.status,
+    o.slot?.label || '',
+    o.deliveryDate?.label || ''
+  ]);
+  const csv = [head, ...rows].map(row => row.map(cell).join(',')).join('\r\n');
+  res.type('text/csv').attachment(`rebesta-orders-${new Date().toISOString().slice(0, 10)}.csv`).send(csv);
+});
+
+router.get('/backup', (req, res) => {
+  const backup = createBackup();
+  res.type('application/json').attachment(`rebesta-backup-${new Date().toISOString().slice(0, 10)}.json`).send(JSON.stringify(backup, null, 2));
 });

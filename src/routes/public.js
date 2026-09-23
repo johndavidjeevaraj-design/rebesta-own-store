@@ -5,14 +5,18 @@ import {
   loadSettings,
   findCoupon,
   couponDiscount,
+  markCouponUsed,
   publicCatalog,
   getProduct,
   buildCart,
   addOrder,
   getOrder,
   maskCustomer,
-  markPayuPayment
+  markPayuPayment,
+  ordersByPhone,
+  cancelOrderPublic
 } from '../lib/store.js';
+import { orderPlacedEmails } from '../lib/mailer.js';
 import { quoteDelivery, reverseGeocode } from '../lib/delivery.js';
 import { createPayuPayment, validatePayuResponse } from '../lib/payu.js';
 
@@ -22,7 +26,7 @@ const randomSku = () => crypto.randomBytes(4).toString('hex');
 
 function flattenError(res, error, fallback = 'Request failed') {
   const status = Number(error.status || error.statusCode || 500);
-  const message = status >= 500 ? fallback : (error.message || fallback);
+  const message = status >= 500 && status !== 503 ? fallback : (error.message || fallback);
   res.status(status).json({ ok: false, error: message });
 }
 
@@ -64,6 +68,16 @@ router.get('/settings', (req, res) => {
     payments: {
       codEnabled: Boolean(settings.payments?.cod),
       onlineEnabled: Boolean(settings.payments?.payuEnabled && config.payu.key && config.payu.salt)
+    },
+    maintenance: {
+      enabled: Boolean(settings.maintenance?.enabled),
+      message: String(settings.maintenance?.message || '')
+    },
+    testimonials: Array.isArray(settings.content?.testimonials) ? settings.content.testimonials.slice(0, 12) : [],
+    rewards: {
+      loyaltyEnabled: Boolean(settings.promotions?.loyalty?.enabled),
+      referralEnabled: Boolean(settings.promotions?.referral?.enabled),
+      referralBonusInr: Number(settings.promotions?.referral?.bonusInr || 0)
     },
     requestId: randomSku()
   });
@@ -126,10 +140,15 @@ router.post('/coupon/check', (req, res) => {
 
 router.post('/orders', async (req, res) => {
   try {
+    const settingsNow = loadSettings();
+    if (settingsNow.maintenance?.enabled) {
+      throw Object.assign(new Error(settingsNow.maintenance?.message || 'We are briefly paused for restocking. Please order again in a while!'), { status: 503 });
+    }
     const cart = buildCart(req.body?.items || []);
     const customer = {
       name: String(req.body?.customer?.name || '').trim(),
-      phone: normalizePhone(req.body?.customer?.phone)
+      phone: normalizePhone(req.body?.customer?.phone),
+      email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(req.body?.customer?.email || '')) ? String(req.body?.customer?.email).trim().toLowerCase() : ''
     };
     if (customer.name.length < 2) throw Object.assign(new Error('Enter your full name'), { status: 400 });
     if (!customer.phone) throw Object.assign(new Error('Enter a valid Indian mobile number'), { status: 400 });
@@ -164,6 +183,12 @@ router.post('/orders', async (req, res) => {
       }
       couponCode = coupon.code;
     }
+    let referredBy = '';
+    if (req.body?.referredBy) {
+      referredBy = normalizePhone(req.body.referredBy);
+      if (!referredBy) throw Object.assign(new Error('Referral phone number looks invalid'), { status: 400 });
+      if (referredBy === customer.phone) throw Object.assign(new Error('Referral phone cannot be your own number'), { status: 400 });
+    }
     const total = Math.round((cart.subtotalInr - discountInr + deliveryFee) * 100) / 100;
     const order = addOrder({
       customer,
@@ -181,9 +206,12 @@ router.post('/orders', async (req, res) => {
       slot,
       location: quote.location,
       paymentMethod,
+      referredBy,
       notes: String(req.body?.notes || '').trim().slice(0, 500),
       source: 'own-store-web'
     });
+    if (couponCode) markCouponUsed(couponCode);
+    orderPlacedEmails(order);
 
     const settings = loadSettings();
     const whatsappDigits = String(settings.business?.whatsapp || '918438765119').replace(/\D/g, '');
@@ -221,6 +249,20 @@ async function payuCallback(req, res) {
     return res.status(500).type('text/plain').send('Payment verification failed. Contact Rebesta Fresh with your payment reference.');
   }
 }
+
+router.get('/orders/history', (req, res) => {
+  const phone = normalizePhone(req.query.phone);
+  if (!phone) return res.status(400).json({ ok: false, error: 'Enter a valid phone number' });
+  res.json({ ok: true, orders: ordersByPhone(phone) });
+});
+
+router.post('/orders/:id/cancel', (req, res) => {
+  try {
+    const order = cancelOrderPublic(req.params.id, req.body?.phone);
+    if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
+    res.json({ ok: true, order: maskCustomer(order) });
+  } catch (error) { flattenError(res, error, 'Could not cancel this order'); }
+});
 
 router.get('/payments/payu/callback', payuCallback);
 router.post('/payments/payu/callback', payuCallback);

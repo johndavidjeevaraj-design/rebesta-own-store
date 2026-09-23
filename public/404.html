@@ -2,20 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Order placed – Rebesta Fresh</title>
-  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><meta name="description" content="Your Rebesta Fresh vegetable order is confirmed."><meta property="og:title" content="Order confirmed"><meta property="og:description" content="Your Rebesta Fresh vegetable order is confirmed."><meta property="og:type" content="website"><meta property="og:image" content="/assets/brand/logo.png"><meta name="twitter:card" content="summary"><link rel="stylesheet" href="/css/styles.css?v=20260924p8">
+  <title>Page not found – Rebesta Fresh</title>
+  <meta name="description" content="The page you were looking for has moved or does not exist.">
+  <meta property="og:title" content="Page not found">
+  <meta property="og:description" content="The page you were looking for has moved or does not exist.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://rebestafresh.in/404">
+  <meta property="og:image" content="/assets/brand/logo.png">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><link rel="stylesheet" href="/css/styles.css?v=20260924p8">
 </head>
 <body>
-  <header class="site-header"><div class="container header-inner"><a class="logo" href="/"><img src="/assets/brand/logo.png" alt="Rebesta Fresh" width="191" height="24"></a><span class="header-location">Order confirmation</span><span></span><div class="header-actions"><a class="whatsapp-link" href="/track">Track order</a><a class="cart-link" href="/">Shop again</a></div></div></header>
-  <main><section class="section"><div class="container">
-    <div class="success-box">
-      <div class="success-icon"><svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <span class="badge green" data-status-badge>Order received</span>
-      <h1 data-success-title>Your vegetables are locked.</h1>
-      <p class="section-subtitle" style="margin-inline:auto"><span class="order-id-box" data-order-id>Loading order ID…</span></p>
-      <p data-order-copy>We are preparing the details…</p>
-      <div class="success-actions"><a class="button orange" href="#" data-whatsapp-link target="_blank" rel="noopener">Confirm on WhatsApp</a><a class="button ghost" href="/track">Track order</a></div>
-      <div data-order-summary style="text-align:left;margin-top:28px"></div>
+  <header class="site-header"><div class="container header-inner"><a class="logo" href="/"><img src="/assets/brand/logo.png" alt="Rebesta Fresh" width="191" height="24"></a><span class="header-location">Oops</span><span></span><div class="header-actions"><a class="whatsapp-link" href="https://wa.me/918438765119">Help</a><a class="cart-link" href="/">Shop fresh</a></div></div></header>
+  <main><section class="section"><div class="container" style="max-width:600px;text-align:center">
+    <div class="shop-panel" style="padding:44px 32px">
+      <div class="error-code">404</div>
+      <h1 class="section-title">This basket is empty</h1>
+      <p class="section-subtitle" style="margin-bottom:24px">The page you were looking for has moved or never existed. Let's get you back to fresh vegetables.</p>
+      <div class="success-actions" style="justify-content:center">
+        <a class="button orange" href="/">Shop fresh stock</a>
+        <a class="button primary" href="/track">Track my order</a>
+      </div>
     </div>
   </div></section></main>
   <nav class="bottom-nav" aria-label="Quick navigation">
@@ -48,11 +55,12 @@
     <div class="footer-col">
       <h4>Contact &amp; delivery</h4>
       <a href="https://wa.me/918438765119" target="_blank" rel="noopener">WhatsApp +91 84387 65119</a>
-      <p>Morning slots: 7–9 AM &amp; 9–11 AM<br>Hosur · up to 9 km road radius<br>Free delivery over ₹500 · COD available</p>
+      <p>Morning slots: 7–9 AM &amp; 9–11 AM<br>Hosur · up to 9 km road radius<br>Free delivery over ₹500 · COD available<br><span data-fssai></span></p>
     </div>
   </div>
   <div class="container minimal-footer-inner"><span>© 2026 Rebesta Fresh · Fresh from farms, Hosur</span></div>
-</footer>
-  <script src="/js/store.js?v=20260924p8" defer></script><script src="/js/order-success.js?v=20260924p8" defer></script>
+  </footer>
+  <script src="/js/store.js?v=20260924p8" defer></script>
+  <script>window.addEventListener('load', () => { fetch('/api/settings').then(r => r.json()).then(s => { const el = document.querySelector('[data-fssai]'); if (el && s.business?.fssai) el.textContent = 'FSSAI Lic. No. ' + s.business.fssai; }).catch(() => {}); });</script>
 </body>
 </html>

@@ -193,7 +193,7 @@
         RFS.toast('Coupon removed');
       });
     } else {
-      couponBox.innerHTML = `<label for="couponInput">Have a coupon code?</label><div class="coupon-row"><input id="couponInput" data-coupon-input placeholder="e.g. WELCOME50" maxlength="24" autocomplete="off"><button type="button" class="button ghost small" data-apply-coupon>Apply</button></div><div class="coupon-msg" data-coupon-msg></div>`;
+      couponBox.innerHTML = `<label for="couponInput">Have a coupon code?</label><div class="coupon-row"><input id="couponInput" data-coupon-input placeholder="e.g. WELCOME50" maxlength="24" autocomplete="off"><button type="button" class="button ghost small" data-apply-coupon>Apply</button></div><div class="coupon-msg" data-coupon-msg></div>${window.__RFS_SETTINGS?.rewards?.referralEnabled ? `<label for="referralInput" style="margin-top:12px">Referred by a friend? (optional)</label><div class="coupon-row"><input id="referralInput" data-referral-input inputmode="tel" placeholder="Friend's 10-digit mobile" maxlength="10" autocomplete="off"></div><div class="coupon-msg" data-referral-msg>Your friend gets ₹${window.__RFS_SETTINGS.rewards.referralBonusInr || 50} after your first delivery — and so do you.</div>` : ''}`;
       const input = couponBox.querySelector('[data-coupon-input]');
       const msg = couponBox.querySelector('[data-coupon-msg]');
       const apply = async () => {
@@ -344,6 +344,7 @@
 
   $('[data-checkout-form]').addEventListener('submit', async event => {
     event.preventDefault();
+    if (window.__RFS_MAINTENANCE) return RFS.toast(window.__RFS_SETTINGS?.maintenance?.message || 'We are briefly paused — please try again soon.', 'error');
     if (!items().length) return RFS.toast('Your basket is empty', 'error');
     if (!state.quote?.eligible) {
       await quoteDelivery(true);
@@ -357,6 +358,8 @@
     payload.slotId = slot;
     payload.paymentMethod = payment;
     if (state.coupon) payload.couponCode = state.coupon.code;
+    const referralInput = document.querySelector('[data-referral-input]');
+    if (referralInput && referralInput.value.trim()) payload.referredBy = referralInput.value.trim();
     RFS.setBusy(nodes.placeOrder, true, 'Securing your order…');
     try {
       const order = await RFS.api('/api/orders', { method: 'POST', body: JSON.stringify(payload) });

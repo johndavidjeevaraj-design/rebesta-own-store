@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Track order – Rebesta Fresh</title>
-  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><link rel="stylesheet" href="/css/styles.css?v=20260924p7">
+  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><meta name="description" content="Track your Rebesta Fresh vegetable order in real time."><meta property="og:title" content="Track your order"><meta property="og:description" content="Track your Rebesta Fresh vegetable order in real time."><meta property="og:type" content="website"><meta property="og:image" content="/assets/brand/logo.png"><meta name="twitter:card" content="summary"><link rel="stylesheet" href="/css/styles.css?v=20260924p8">
 </head>
 <body>
   <header class="site-header"><div class="container header-inner"><a class="logo" href="/"><img src="/assets/brand/logo.png" alt="Rebesta Fresh" width="191" height="24"></a><span class="header-location">Order tracking</span><span></span><div class="header-actions"><a class="whatsapp-link" href="https://wa.me/918438765119">Help</a><a class="cart-link" href="/">Shop fresh</a></div></div></header>
@@ -13,6 +13,11 @@
       <p class="section-subtitle" style="margin-bottom:22px">Enter your Rebesta order ID and the mobile number used at checkout.</p>
       <form data-track-form class="form-grid"><div class="field wide"><label for="orderId">Order ID</label><input id="orderId" name="orderId" required placeholder="RB-20260922-ABC123"></div><div class="field wide"><label for="trackPhone">Mobile number</label><input id="trackPhone" name="phone" inputmode="tel" required placeholder="10-digit mobile used at checkout"></div><button class="button orange full" type="submit">Track order</button></form>
       <div data-track-result style="margin-top:20px"></div>
+      <hr class="soft-divider">
+      <span class="eyebrow">Order history</span><h2 class="section-title" style="font-size:1.3rem">All my orders</h2>
+      <p class="section-subtitle" style="margin-bottom:14px">Enter just your mobile number to see every order, rewards and cancel options.</p>
+      <form data-history-form class="form-grid"><div class="field wide"><label for="historyPhone">Mobile number</label><input id="historyPhone" inputmode="tel" required placeholder="10-digit mobile"></div><button class="button primary full" type="submit">Show my orders</button></form>
+      <div data-history-result style="margin-top:16px"></div>
     </div>
   </div></section></main>
   <nav class="bottom-nav" aria-label="Quick navigation">
@@ -35,6 +40,14 @@
       <a href="/track">Track order</a>
     </div>
     <div class="footer-col">
+      <h4>Company</h4>
+      <a href="/about">About us</a>
+      <a href="/faq">FAQ</a>
+      <a href="/terms">Terms of use</a>
+      <a href="/privacy">Privacy policy</a>
+      <a href="/refund">Refund &amp; cancellation</a>
+    </div>
+    <div class="footer-col">
       <h4>Contact &amp; delivery</h4>
       <a href="https://wa.me/918438765119" target="_blank" rel="noopener">WhatsApp +91 84387 65119</a>
       <p>Morning slots: 7–9 AM &amp; 9–11 AM<br>Hosur · up to 9 km road radius<br>Free delivery over ₹500 · COD available</p>
@@ -42,9 +55,22 @@
   </div>
   <div class="container minimal-footer-inner"><span>© 2026 Rebesta Fresh · Fresh from farms, Hosur</span></div>
 </footer>
-  <script src="/js/store.js?v=20260924p7" defer></script>
+  <script src="/js/store.js?v=20260924p8" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded',()=>{const form=document.querySelector('[data-track-form]'),result=document.querySelector('[data-track-result]');form.addEventListener('submit',async event=>{event.preventDefault();const id=new FormData(form).get('orderId').trim();const phone=new FormData(form).get('phone').trim();result.innerHTML='<div class="alert info">Checking your order…</div>';try{const data=await RFS.api(`/api/orders/${encodeURIComponent(id)}?phone=${encodeURIComponent(phone)}`);const o=data.order;if(data.phoneVerified===false)throw new Error('Mobile number does not match this order');result.innerHTML=`<div class="alert success"><strong>${o.id}</strong> is currently <strong>${o.status.replaceAll('_',' ')}</strong>.</div><div class="order-mini-list">${o.items.map(i=>`<div class="order-mini"><img src="${i.image}" alt=""><div><strong>${i.title}</strong><br><span>${i.qty} × ${i.unitLabel}</span></div></div>`).join('')}</div>${Number(o.discountInr)>0?`<div class="summary-row coupon-applied-row"><span>Coupon ${o.couponCode||''}</span><strong>−${RFS.money(o.discountInr)}</strong></div>`:''}<div class="summary-total"><span>Total</span><strong>${RFS.money(o.totalInr)}</strong></div><button class="button primary" type="button" data-reorder style="margin-top:14px">🛒 Refill basket with this order</button>`;const reorderBtn=result.querySelector('[data-reorder]');reorderBtn.addEventListener('click',async()=>{reorderBtn.disabled=true;reorderBtn.textContent='Adding items…';try{const data=await RFS.api('/api/products');const byHandle=new Map(data.products.map(p=>[p.handle,p]));let added=0,missed=0;for(const item of o.items){const product=byHandle.get(item.handle);if(product&&product.active!==false&&product.stock>0){RFS.addItem(item.handle,item.qty,true);added++;}else{missed++;}}RFS.syncCartUI(data.products);RFS.toast(added?`${added} item${added===1?'':'s'} added to your basket${missed?` · ${missed} unavailable`:''}`:'These products are currently unavailable','success');if(added)location.href='/cart';else reorderBtn.disabled=false;}catch(e){RFS.toast(e.message,'error');reorderBtn.disabled=false;reorderBtn.textContent='🛒 Refill basket with this order';}});}catch(e){result.innerHTML=`<div class="alert error">${e.message}</div>`;}});});
+    const historyForm=document.querySelector('[data-history-form]'),historyResult=document.querySelector('[data-history-result]');
+    historyForm?.addEventListener('submit',async e=>{e.preventDefault();const phone=historyForm.querySelector('#historyPhone').value.trim();if(phone.replace(/[^0-9]/g,'').length!==10){RFS.toast('Enter a valid 10-digit mobile number','error');return;}historyResult.innerHTML='<div class="alert info">Loading your orders…</div>';try{const data=await RFS.api('/api/orders/history?phone='+encodeURIComponent(phone));if(!data.orders.length){historyResult.innerHTML='<div class="alert info">No orders found for this number yet.</div>';return;}renderHistory(data.orders,phone);}catch(err){historyResult.innerHTML='<<div class="alert error">'+err.message+'</div>';}});
+    function statusChip(status){const map={PLACED:['placed','orange'],CONFIRMED:['confirmed','green'],PACKING:['packing','orange'],OUT_FOR_DELIVERY:['out for delivery','orange'],DELIVERED:['delivered','green'],CANCELLED:['cancelled','gray'],PENDING_PAYMENT:['awaiting payment','orange'],PAYMENT_FAILED:['payment failed','gray']};const [label,color]=map[status]||[String(status).toLowerCase().replaceAll('_',' '),'gray'];return '<span class="badge '+color+'">'+label+'</span>';}
+    function renderHistory(orders,phone){historyResult.innerHTML='<div class="history-list">'+orders.map(o=>`
+      <div class="history-card">
+        <div class="history-top"><strong>${o.id}</strong>${statusChip(o.status)}</div>
+        <div class="history-meta">${new Date(o.placedAt).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})} · ${o.itemCount} items · ${RFS.money(o.totalInr)} · ${o.paymentMethod==='cod'?'COD':'Online'}</div>
+        ${o.loyaltyCouponCode?`<div class="reward-chip">🎁 Loyalty reward <strong>${o.loyaltyCouponCode}</strong> — ₹${o.loyaltyCouponValue} off your next order</div>`:''}
+        ${o.referralCouponCode?`<div class="reward-chip">🤝 Referral reward <strong>${o.referralCouponCode}</strong></div>`:''}
+        <div class="history-actions"><button class="button ghost small" type="button" data-hist-track="${o.id}">Track</button>${o.cancellable?`<button class="button danger small" type="button" data-hist-cancel="${o.id}">Cancel order</button>`:''}</div>
+      </div>`).join('')+'</div>';
+      historyResult.querySelectorAll('[data-hist-track]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelector('#orderId').value=btn.dataset.histTrack;document.querySelector('#trackPhone').value=phone;document.querySelector('[data-track-form] button[type="submit"]').click();document.querySelector('[data-track-form]').scrollIntoView({behavior:'smooth'});}));
+      historyResult.querySelectorAll('[data-hist-cancel]').forEach(btn=>btn.addEventListener('click',async()=>{if(!confirm('Cancel this order? This cannot be undone.'))return;btn.disabled=true;btn.textContent='Cancelling…';try{await RFS.api('/api/orders/'+btn.dataset.histCancel+'/cancel',{method:'POST',body:JSON.stringify({phone})});RFS.toast('Order cancelled','success');const data=await RFS.api('/api/orders/history?phone='+encodeURIComponent(phone));renderHistory(data.orders,phone);}catch(err){RFS.toast(err.message,'error');btn.disabled=false;btn.textContent='Cancel order';}}));}
   </script>
 </body>
 </html>

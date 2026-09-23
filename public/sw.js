@@ -5,7 +5,7 @@
    - Other static assets: cache-first (URLs are cache-busted on deploy)
    - API calls: always live (stock and prices must be real-time)
 */
-const CACHE = 'rebesta-shell-v1';
+const CACHE = 'rebesta-shell-v2';
 const SHELL = [
   '/',
   '/css/styles.css',

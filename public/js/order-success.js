@@ -46,6 +46,17 @@
         <div class="summary-total"><span>Total</span><strong>${RFS.money(order.totalInr)}</strong></div>
         <div class="track-list">${history(order)}</div>
       `;
+      fetch('/api/settings').then(r => r.json()).then(s => {
+        const perks = [];
+        if (s.rewards?.loyaltyEnabled) perks.push('🎁 <strong>Earn a reward:</strong> once this order is delivered you get a LOY- coupon (about 2% back) on the <a href="/track">Track page</a>');
+        if (s.rewards?.referralEnabled) perks.push(`🤝 <strong>Refer a friend:</strong> give them your mobile number to enter at checkout — you both get ₹${s.rewards.referralBonusInr || 50} after their first delivery`);
+        if (perks.length) {
+          const box = document.createElement('div');
+          box.className = 'rewards-teaser';
+          box.innerHTML = perks.map(p => `<div>${p}</div>`).join('');
+          summary.appendChild(box);
+        }
+      }).catch(() => {});
       const wa = document.querySelector('[data-whatsapp-link]');
       if (wa && whatsapp) wa.href = whatsapp;
       else wa?.remove();

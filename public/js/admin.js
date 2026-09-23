@@ -170,6 +170,36 @@
     setField('freeOverInr', delivery.freeOverInr);
     renderTierRows(delivery.tiers?.length ? delivery.tiers : DEFAULT_TIERS);
     renderCouponRows(Array.isArray(state.settings.promotions?.coupons) ? state.settings.promotions.coupons : []);
+    setField('fssai', business.fssai);
+    const promotions = data.settings.promotions || {};
+    setField('loyaltyPercent', promotions.loyalty?.percent ?? 2);
+    setField('loyaltyMinOrder', promotions.loyalty?.minOrderInr ?? 299);
+    setField('loyaltyValidity', promotions.loyalty?.validityDays ?? 60);
+    setField('referralBonus', promotions.referral?.bonusInr ?? 50);
+    const checked = (name, on) => { const el = document.querySelector(`[data-settings-form] [name="${name}"]`); if (el) el.checked = Boolean(on); };
+    checked('loyaltyEnabled', promotions.loyalty?.enabled);
+    checked('referralEnabled', promotions.referral?.enabled);
+    checked('maintenanceEnabled', data.settings.maintenance?.enabled);
+    setField('maintenanceMessage', data.settings.maintenance?.message || '');
+    setField('gaId', data.settings.integrations?.gaId || '');
+    renderTestimonialRows(Array.isArray(content.testimonials) ? content.testimonials : []);
+  }
+
+  function renderTestimonialRows(items) {
+    const body = $('[data-testimonial-body]');
+    if (!body) return;
+    body.innerHTML = '';
+    for (const item of items) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input class="small-input t-name" value="${String(item.name || '').replace(/"/g, '&quot;')}" maxlength="60"></td>
+        <td><input class="small-input t-area" value="${String(item.area || '').replace(/"/g, '&quot;')}" maxlength="40" placeholder="e.g. Mathigiri"></td>
+        <td><input class="small-input t-text" value="${String(item.text || '').replace(/"/g, '&quot;')}" maxlength="400"></td>
+        <td><input class="small-input t-rating" inputmode="numeric" value="${Number(item.rating || 5)}" style="width:52px"></td>
+        <td><button class="button ghost small" type="button" data-remove-testimonial>✕</button></td>`;
+      tr.querySelector('[data-remove-testimonial]').addEventListener('click', () => tr.remove());
+      body.appendChild(tr);
+    }
   }
 
   function collectSettings() {
@@ -197,21 +227,49 @@
       minOrderInr: Number(row.querySelector('.coupon-min').value) || 0,
       active: row.querySelector('.coupon-active').checked
     })).filter(c => String(c.code || '').trim());
+    const numberOr = (name, fallback) => { const raw = value(name); const num = Number(raw); return raw !== '' && Number.isFinite(num) ? num : fallback; };
+    const testimonials = [...document.querySelectorAll('[data-testimonial-body] tr')].map(row => ({
+      name: row.querySelector('.t-name').value.trim(),
+      area: row.querySelector('.t-area').value.trim(),
+      text: row.querySelector('.t-text').value.trim(),
+      rating: Number(row.querySelector('.t-rating').value) || 5
+    })).filter(t => t.name && t.text);
     return {
-      promotions: { coupons },
+      promotions: {
+        coupons,
+        loyalty: {
+          enabled: Boolean(document.querySelector('[data-settings-form] [name="loyaltyEnabled"]')?.checked),
+          percent: numberOr('loyaltyPercent', 2),
+          minOrderInr: numberOr('loyaltyMinOrder', 299),
+          validityDays: numberOr('loyaltyValidity', 60)
+        },
+        referral: {
+          enabled: Boolean(document.querySelector('[data-settings-form] [name="referralEnabled"]')?.checked),
+          bonusInr: numberOr('referralBonus', 50)
+        }
+      },
       content: {
         homeBadge: value('homeBadge'),
         homeTitle: value('homeTitle'),
         homeSubtitle: value('homeSubtitle'),
         deliveryNoteTitle: value('deliveryNoteTitle'),
         deliveryNoteText: value('deliveryNoteText'),
-        deliveryNoteButton: value('deliveryNoteButton')
+        deliveryNoteButton: value('deliveryNoteButton'),
+        testimonials
       },
       business: {
         name: value('businessName'),
         whatsapp: value('whatsapp'),
         phoneDisplay: value('phoneDisplay'),
-        city: value('city')
+        city: value('city'),
+        fssai: value('fssai')
+      },
+      maintenance: {
+        enabled: Boolean(document.querySelector('[data-settings-form] [name="maintenanceEnabled"]')?.checked),
+        message: value('maintenanceMessage')
+      },
+      integrations: {
+        gaId: value('gaId')
       },
       delivery: {
         hubLat: deliveryNumber('hubLat'),
@@ -385,7 +443,7 @@
         <td><strong>${order.customer?.name || ''}</strong><br><span>${order.customer?.phone || ''}</span></td>
         <td>${itemText}</td>
         <td><strong>${order.slot?.label || ''}</strong><br><span>${addr}</span><br><span>${order.location ? `Pin: ${order.location.lat}, ${order.location.lng}` : ''}</span></td>
-        <td><strong>${RFS.money(order.totalInr)}</strong><br><span>${order.paymentMethod.toUpperCase()} · ${order.paymentStatus}</span></td>
+        <td><strong>${RFS.money(order.totalInr)}</strong><br><span>${order.paymentMethod.toUpperCase()} · ${order.paymentStatus.replaceAll('_', ' ').toLowerCase()}</span>${order.paymentMethod === 'cod' && order.paymentStatus === 'PAY_ON_DELIVERY' && !['DELIVERED', 'CANCELLED'].includes(order.status) ? '<br><button class="button ghost small" type="button" data-mark-cash>💵 Mark cash received</button>' : ''}</td>
         <td><select class="status-select"></select></td>
       `;
       const select = tr.querySelector('select');
@@ -394,6 +452,15 @@
         if (order.status === status) opt.selected = true;
         select.appendChild(opt);
       }
+      tr.querySelector('[data-mark-cash]')?.addEventListener('click', async event => {
+        const btn = event.currentTarget;
+        btn.disabled = true;
+        try {
+          await api(`/api/admin/orders/${encodeURIComponent(order.id)}/payment`, { method: 'PATCH', body: JSON.stringify({ paymentStatus: 'PAID_CASH_ON_DELIVERY' }) });
+          RFS.toast(`Cash recorded for ${order.id}`, 'success');
+          renderOrders();
+        } catch (error) { RFS.toast(error.message, 'error'); btn.disabled = false; }
+      });
       select.addEventListener('change', async () => {
         try {
           await api(`/api/admin/orders/${encodeURIComponent(order.id)}/status`, { method: 'PATCH', body: JSON.stringify({ status: select.value }) });
@@ -405,6 +472,7 @@
       body.appendChild(tr);
     }
     wrap.appendChild(table);
+    renderPacking();
   }
 
   async function refreshAll() {
@@ -433,6 +501,103 @@
   });
 
   document.querySelector('[data-refresh-admin]').addEventListener('click', () => refreshAll().catch(e => RFS.toast(e.message, 'error')));
+
+  // --- CSV export & backup download ---
+  document.querySelector('[data-export-csv]')?.addEventListener('click', async () => {
+    try {
+      const response = await fetch('/api/admin/orders.csv', { headers: { 'x-admin-key': state.key } });
+      if (!response.ok) throw new Error('Export failed');
+      const blob = await response.blob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `rebesta-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      RFS.toast('Orders CSV downloaded', 'success');
+    } catch (error) { RFS.toast(error.message, 'error'); }
+  });
+  document.querySelector('[data-download-backup]')?.addEventListener('click', async () => {
+    try {
+      const response = await fetch('/api/admin/backup', { headers: { 'x-admin-key': state.key } });
+      if (!response.ok) throw new Error('Backup failed');
+      const blob = await response.blob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `rebesta-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      RFS.toast('Backup downloaded — keep it somewhere safe', 'success');
+    } catch (error) { RFS.toast(error.message, 'error'); }
+  });
+
+  // --- Packing lists ---
+  function renderPacking() {
+    const dateInput = $('[data-packing-date]');
+    const slotSelect = $('[data-packing-slot]');
+    const result = $('[data-packing-result]');
+    if (!dateInput || !result || !state.orders) return;
+    const active = state.orders.filter(o => !['CANCELLED', 'PAYMENT_FAILED'].includes(o.status));
+    const dates = [...new Set(active.map(o => o.deliveryDate?.iso || (o.deliveryDate?.label ? '' : '')).filter(Boolean))];
+    // deliveryDate objects: use label for grouping; fall back to placedAt date
+    const dateKeys = [...new Set(active.map(o => String(o.deliveryDate?.label || new Date(o.placedAt).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }))))];
+    if (!dateInput.value) {
+      const upcoming = active.map(o => o.deliveryDate?.iso).filter(Boolean).filter(d => d >= new Date().toISOString().slice(0, 10)).sort();
+      dateInput.value = upcoming[0] || new Date().toISOString().slice(0, 10);
+    }
+    const slots = [...new Set(active.map(o => o.slot?.label).filter(Boolean))];
+    slotSelect.innerHTML = '<option value="">All slots</option>' + slots.map(s => `<option value="${s}">${s}</option>`).join('');
+    const chosenDate = dateInput.value;
+    const matchDate = o => {
+      const iso = o.deliveryDate?.iso || o.deliveryDate?.date || '';
+      const label = String(o.deliveryDate?.label || '');
+      return iso.startsWith(chosenDate) || label === new Date(chosenDate + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+    };
+    let list = active.filter(matchDate);
+    if (slotSelect.value) list = list.filter(o => o.slot?.label === slotSelect.value);
+    if (!list.length) {
+      result.innerHTML = '<div class="empty-state"><h3>No orders for this date</h3><p>Pick the delivery date (and slot) you want to pack. Orders appear here as soon as customers place them.</p></div>';
+      return;
+    }
+    const codToCollect = list.filter(o => o.paymentMethod === 'cod' && o.paymentStatus === 'PAY_ON_DELIVERY').reduce((sum, o) => sum + Number(o.totalInr || 0), 0);
+    result.innerHTML = `
+      <div class="packing-sheet" id="packing-sheet">
+        <div class="packing-head"><img src="/assets/brand/logo.png" alt=""><div><strong>Packing sheet</strong><span>${new Date(chosenDate + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}${slotSelect.value ? ' · ' + slotSelect.value : ''} · ${list.length} orders</span></div></div>
+        ${codToCollect > 0 ? `<div class="packing-cod">💵 Total COD to collect: <strong>${RFS.money(codToCollect)}</strong></div>` : ''}
+        <div class="packing-list">
+        ${list.map((o, index) => `
+          <div class="packing-card">
+            <div class="packing-order-head"><span class="packing-num">#${index + 1}</span><strong>${o.customer?.name || ''}</strong><span class="packing-phone">📞 ${o.customer?.phone || ''}</span></div>
+            <div class="packing-address">📍 ${[o.address?.line1, o.address?.area, o.address?.city].filter(Boolean).join(', ')} · ${o.slot?.label || ''}</div>
+            <ul class="packing-items">${o.items.map(i => `<li><span>${i.title} (${i.unitLabel})</span><strong>× ${i.qty}</strong></li>`).join('')}</ul>
+            <div class="packing-total">${o.paymentMethod === 'cod' ? `<span class="badge orange">COD ${RFS.money(o.totalInr)}</span>` : `<span class="badge green">PAID ${RFS.money(o.totalInr)}</span>`}<span class="packing-paid">Cash ☐</span></div>
+          </div>`).join('')}
+        </div>
+      </div>`;
+  }
+  $('[data-packing-date]')?.addEventListener('change', renderPacking);
+  $('[data-packing-slot]')?.addEventListener('change', renderPacking);
+  $('[data-packing-print]')?.addEventListener('click', () => {
+    const sheet = document.getElementById('packing-sheet');
+    if (!sheet) return RFS.toast('Nothing to print — pick a date with orders', 'error');
+    document.body.classList.add('packing-print-mode');
+    window.print();
+    setTimeout(() => document.body.classList.remove('packing-print-mode'), 400);
+  });
+
+  // --- Testimonials add button ---
+  document.querySelector('[data-add-testimonial]')?.addEventListener('click', () => {
+    const body = $('[data-testimonial-body]');
+    if (!body) return;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input class="small-input t-name" placeholder="Customer name" maxlength="60"></td>
+      <td><input class="small-input t-area" placeholder="Area" maxlength="40"></td>
+      <td><input class="small-input t-text" placeholder="What they said…" maxlength="400"></td>
+      <td><input class="small-input t-rating" inputmode="numeric" value="5" style="width:52px"></td>
+      <td><button class="button ghost small" type="button" data-remove-testimonial>✕</button></td>`;
+    tr.querySelector('[data-remove-testimonial]').addEventListener('click', () => tr.remove());
+    body.appendChild(tr);
+  });
   document.querySelector('[name="adminKey"]').value = state.key;
   if (state.key) {
     refreshAll().then(() => { document.querySelector('[data-admin-content]').hidden = false; startOrderAlerts(); }).catch(error => {

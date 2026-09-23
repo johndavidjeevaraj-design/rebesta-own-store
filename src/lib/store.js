@@ -272,11 +272,164 @@ export function maskOrders(orders) {
 }
 
 export function findCoupon(code) {
-  const settings = loadSettings();
-  const list = Array.isArray(settings.promotions?.coupons) ? settings.promotions.coupons : [];
   const wanted = String(code || '').trim().toUpperCase();
   if (!wanted) return null;
-  return list.find(c => String(c.code || '').trim().toUpperCase() === wanted && c.active !== false) || null;
+  const settings = loadSettings();
+  const coupon = (settings.promotions?.coupons || []).find(c => String(c.code || '').trim().toUpperCase() === wanted && c.active !== false);
+  if (!coupon) return null;
+  if (coupon.expiresAt && new Date(coupon.expiresAt) <= new Date()) return null;
+  if (coupon.maxUses && Number(coupon.usedCount || 0) >= Number(coupon.maxUses)) return null;
+  return { ...coupon };
+}
+
+export function markCouponUsed(code) {
+  const settings = loadSettings();
+  const coupon = (settings.promotions?.coupons || []).find(c => String(c.code || '').trim().toUpperCase() === String(code || '').trim().toUpperCase());
+  if (coupon) {
+    coupon.usedCount = Number(coupon.usedCount || 0) + 1;
+    saveSettings(settings);
+  }
+}
+
+export function addCoupon(coupon) {
+  const settings = loadSettings();
+  if (!settings.promotions) settings.promotions = {};
+  if (!Array.isArray(settings.promotions.coupons)) settings.promotions.coupons = [];
+  settings.promotions.coupons.unshift(coupon);
+  saveSettings(settings);
+  return coupon;
+}
+
+function randomCode(len = 6) {
+  const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  let out = '';
+  for (let i = 0; i < len; i += 1) out += alphabet[crypto.randomInt(alphabet.length)];
+  return out;
+}
+
+/* Loyalty: when an order is DELIVERED the customer earns a single-use reward coupon. */
+export function awardLoyalty(order) {
+  const settings = loadSettings();
+  const loyalty = settings.promotions?.loyalty;
+  if (!loyalty?.enabled || order.loyaltyCouponCode) return null;
+  const value = Math.min(500, Math.max(10, Math.round(Number(order.subtotalInr || 0) * Number(loyalty.percent || 2) / 100)));
+  const coupon = {
+    code: `LOY-${randomCode()}`,
+    type: 'flat',
+    value,
+    minOrderInr: Number(loyalty.minOrderInr || 299),
+    active: true,
+    maxUses: 1,
+    usedCount: 0,
+    expiresAt: new Date(Date.now() + Number(loyalty.validityDays || 60) * 86400000).toISOString(),
+    note: `Loyalty reward for ${order.id}`
+  };
+  addCoupon(coupon);
+  const orders = readOrders();
+  const fresh = orders.find(o => o.id === order.id);
+  if (fresh) {
+    fresh.loyaltyCouponCode = coupon.code;
+    fresh.loyaltyCouponValue = value;
+    saveOrders(orders);
+    order.loyaltyCouponCode = coupon.code;
+    order.loyaltyCouponValue = value;
+  }
+  return coupon;
+}
+
+/* Referral: when a referred customer's first order is DELIVERED, both sides earn a coupon. */
+export function awardReferral(order) {
+  const settings = loadSettings();
+  const referral = settings.promotions?.referral;
+  if (!referral?.enabled || order.referralRewarded || !order.referredBy) return null;
+  const orders = readOrders();
+  const fresh = orders.find(o => o.id === order.id);
+  if (!fresh) return null;
+  const referrerHasDelivery = orders.some(o => o.customer?.phone === fresh.referredBy && o.status === 'DELIVERED' && o.id !== fresh.id);
+  const referredHasPrior = orders.some(o => o.customer?.phone === fresh.customer?.phone && o.placedAt < fresh.placedAt && o.id !== fresh.id);
+  if (!referrerHasDelivery || referredHasPrior) return null;
+  const bonus = Math.min(500, Math.max(10, Number(referral.bonusInr || 50)));
+  const expiry = new Date(Date.now() + 60 * 86400000).toISOString();
+  const friendCoupon = { code: `REF-${randomCode()}`, type: 'flat', value: bonus, minOrderInr: 299, active: true, maxUses: 1, usedCount: 0, expiresAt: expiry, note: `Referral thank-you for ${order.id}` };
+  const referrerCoupon = { code: `REF-${randomCode()}`, type: 'flat', value: bonus, minOrderInr: 299, active: true, maxUses: 1, usedCount: 0, expiresAt: expiry, note: `Referral bonus for referring ${order.id}` };
+  addCoupon(friendCoupon);
+  addCoupon(referrerCoupon);
+  fresh.referralRewarded = true;
+  fresh.referralCouponCode = friendCoupon.code;
+  fresh.referrerCouponCode = referrerCoupon.code;
+  saveOrders(orders);
+  order.referralRewarded = true;
+  order.referralCouponCode = friendCoupon.code;
+  order.referrerCouponCode = referrerCoupon.code;
+  return { friendCoupon, referrerCoupon };
+}
+
+/* Public order history by phone — light shape, no addresses. */
+export function ordersByPhone(phone) {
+  const wanted = String(phone || '').replace(/[^0-9]/g, '').slice(-10);
+  if (wanted.length !== 10) return [];
+  const cancellable = ['PENDING_PAYMENT', 'PLACED', 'CONFIRMED'];
+  return readOrders()
+    .filter(o => String(o.customer?.phone || '').replace(/[^0-9]/g, '').endsWith(wanted))
+    .map(o => ({
+      id: o.id,
+      status: o.status,
+      placedAt: o.placedAt,
+      deliveryDate: o.deliveryDate,
+      slot: o.slot ? { id: o.slot.id, label: o.slot.label } : null,
+      totalInr: o.totalInr,
+      itemCount: (o.items || []).reduce((sum, line) => sum + Number(line.qty || 0), 0),
+      paymentMethod: o.paymentMethod,
+      paymentStatus: o.paymentStatus,
+      loyaltyCouponCode: o.loyaltyCouponCode || '',
+      loyaltyCouponValue: o.loyaltyCouponValue || 0,
+      referralCouponCode: o.referralCouponCode || '',
+      cancellable: cancellable.includes(o.status) && o.paymentMethod === 'cod'
+    }));
+}
+
+/* Customer self-cancellation (COD orders before packing starts). */
+export function cancelOrderPublic(id, phone) {
+  const wanted = String(phone || '').replace(/[^0-9]/g, '').slice(-10);
+  if (wanted.length !== 10) throw Object.assign(new Error('Enter the phone number used on the order'), { status: 400 });
+  const order = getOrder(id);
+  if (!order) return null;
+  if (!String(order.customer?.phone || '').replace(/[^0-9]/g, '').endsWith(wanted)) {
+    throw Object.assign(new Error('Phone number does not match this order'), { status: 403 });
+  }
+  if (!['PENDING_PAYMENT', 'PLACED', 'CONFIRMED'].includes(order.status)) {
+    throw Object.assign(new Error('This order can no longer be cancelled online — it is already being prepared. WhatsApp us and we will help.'), { status: 409 });
+  }
+  return updateOrderStatus(id, 'CANCELLED', 'Cancelled by customer');
+}
+
+/* --- Backups: snapshot of all JSON data --- */
+export function createBackup() {
+  return {
+    createdAt: new Date().toISOString(),
+    files: {
+      products: readJson(files.products, []),
+      orders: readJson(files.orders, []),
+      settings: readJson(files.settings, {})
+    }
+  };
+}
+
+export function writeAutoBackup() {
+  try {
+    const dir = path.join(dataDir, 'backups');
+    fs.mkdirSync(dir, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 16);
+    const target = path.join(dir, `backup-${stamp}.json`);
+    fs.writeFileSync(target, JSON.stringify(createBackup(), null, 2));
+    const all = fs.readdirSync(dir).filter(f => f.startsWith('backup-') && f.endsWith('.json')).sort();
+    while (all.length > 14) fs.unlinkSync(path.join(dir, all.shift()));
+    console.log(JSON.stringify({ event: 'backup.written', target }));
+    return target;
+  } catch (error) {
+    console.error(JSON.stringify({ event: 'backup.error', error: String(error?.message || error).slice(0, 200) }));
+    return null;
+  }
 }
 
 export function couponDiscount(coupon, subtotalInr) {

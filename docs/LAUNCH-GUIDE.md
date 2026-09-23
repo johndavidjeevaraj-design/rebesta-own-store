@@ -32,19 +32,30 @@ Click create → wait 2–5 min while it builds.
 2. On the Overview page find **IP address** (looks like `123.45.67.89`)
 3. **Copy it** — you'll paste it twice in the next step
 
-## STEP 4 — Point your domain (5 min)
+## STEP 4 — Point your domain (5 min) · **GoDaddy edition**
 
-**If your domain is AT Hostinger:** hPanel → **Domains** → `rebestafresh.in` → **DNS / Nameservers** → **Manage DNS** → add/edit these records:
+1. Go to **godaddy.com** → sign in
+2. Click your name (top-right) → **My Products**
+3. Scroll to **rebestafresh.in** → click the **DNS** button next to it
+   *(shortcut: going directly to `dcc.godaddy.com` also works)*
+4. You're now in DNS Management — a table of records. Find the row with:
 
-**If your domain is elsewhere** (GoDaddy, BigRock, Namecheap…): open their DNS manager and add the same records:
+   | Type | Name | Points to |
+   |---|---|---|
+   | **A** | `@` | some GoDaddy IP like `76.223.x.x` |
 
-| Type | Name | Value | TTL |
-|---|---|---|---|
-| **A** | `@` | your server IP | default |
-| **A** | `www` | your server IP | default |
+5. Click the **pencil ✏️** on that row → change **Points to** → paste **your server IP** (from Step 3) → **Save**
+6. Now check the `www` row:
+   - If it's a **CNAME** pointing to `@` → **leave it as-is** ✅ (it follows @ automatically)
+   - If it's an **A** record → edit it to the same server IP
+   - If there's **no www row** → **Add new record** → Type `A` · Name `www` · Value = server IP → Save
+7. ⚠️ **Don't touch** any records with type **MX, TXT or CNAME named like `email`/`smtp`** — those are for email, not the website
 
-> ⚠️ If there are already A records pointing somewhere else, **edit them** — don't add duplicates.
-> Not sure where your domain's DNS is? WhatsApp me the company you bought it from — I'll give exact clicks.
+> **Done!** Changes save instantly — they spread across the internet in ~10 min to 1 hour.
+>
+> **If the domain still shows a GoDaddy parking page after 2 hours:** go back to My Products → rebestafresh.in → look for **"Forwarding"** / "Manage forwarding" → **turn it OFF**. (Forwarding overrides DNS.)
+>
+> **Check progress:** [whatsmydns.net](https://whatsmydns.net) → type `rebestafresh.in` → A records should show your server IP with green ticks around the world 🌍
 
 ## STEP 5 — The ONE paste 🪄 (8 min)
 

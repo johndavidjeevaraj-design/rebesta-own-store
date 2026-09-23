@@ -202,6 +202,8 @@
       banner.innerHTML = `<strong>⛔ Temporarily paused</strong><span>${settings.maintenance.message || 'Orders resume shortly.'}</span>`;
       document.body.appendChild(banner);
     }
+    const fssai = settings.business?.fssai;
+    if (fssai) document.querySelectorAll('[data-fssai]').forEach(el => { el.textContent = 'FSSAI Lic. No. ' + fssai; });
     const gaId = settings.integrations?.gaId;
     if (gaId && /^[G]-[A-Z0-9]{6,12}$/.test(gaId)) {
       const s = document.createElement('script');

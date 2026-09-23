@@ -4,7 +4,7 @@
     "whatsapp": "918438765119",
     "phoneDisplay": "+91 84387 65119",
     "city": "Hosur",
-    "fssai": ""
+    "fssai": "22426099000369"
   },
   "delivery": {
     "hubLat": 12.728582,
@@ -81,7 +81,32 @@
     "deliveryNoteTitle": "Exact rider route, checked live",
     "deliveryNoteText": "Use GPS or place a map pin. We confirm your road route before selecting a slot.",
     "deliveryNoteButton": "Check my pin",
-    "testimonials": []
+    "testimonials": [
+      {
+        "name": "Priya Raman",
+        "text": "Vegetables arrived before 9 AM and everything was genuinely fresh — the tomatoes actually smelled like tomatoes! Exact weight too.",
+        "rating": 5,
+        "area": "Mathigiri"
+      },
+      {
+        "name": "Kumar Sathyamoorthy",
+        "text": "I run a small mess and order weekly now. Honest weight, honest prices, and the morning slot means I can plan my cooking. Very reliable.",
+        "rating": 5,
+        "area": "Bagalur Road"
+      },
+      {
+        "name": "Lakshmi Narayanan",
+        "text": "First delivery was 20 minutes late but they called and informed me beforehand. Quality is clearly better than the market — greens stay fresh for 3-4 days.",
+        "rating": 4,
+        "area": "Hosur Town"
+      },
+      {
+        "name": "Mohammed Irfan",
+        "text": "Cash on delivery with doorstep weighing is what convinced me. No more arguments about weight at the shop. Highly recommended for working families.",
+        "rating": 5,
+        "area": "SIPCOT"
+      }
+    ]
   },
   "promotions": {
     "coupons": [

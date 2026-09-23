@@ -83,6 +83,23 @@ router.patch('/settings', (req, res) => {
         if (patch.business[key] !== undefined) current[key] = String(patch.business[key]).trim();
       }
     }
+    if (patch.promotions) {
+      const promos = settings.promotions || (settings.promotions = {});
+      if (Array.isArray(patch.promotions.coupons)) {
+        const coupons = patch.promotions.coupons.map(c => {
+          const code = String(c.code || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 24);
+          const type = c.type === 'percent' ? 'percent' : 'flat';
+          const value = Number(c.value);
+          const minOrderInr = Math.max(0, Number(c.minOrderInr) || 0);
+          if (!code || !Number.isFinite(value) || value <= 0) throw new Error(`Coupon ${code || '(blank)'} has invalid values`);
+          if (type === 'percent' && value > 90) throw new Error(`Coupon ${code}: percent off cannot exceed 90`);
+          if (type === 'flat' && value > 10000) throw new Error(`Coupon ${code}: flat off cannot exceed \u20B910000`);
+          return { code, type, value, minOrderInr, active: c.active !== false };
+        });
+        if (new Set(coupons.map(c => c.code)).size !== coupons.length) throw new Error('Coupon codes must be unique');
+        promos.coupons = coupons;
+      }
+    }
     if (patch.content) {
       const current = settings.content || (settings.content = {});
       for (const key of ['homeBadge', 'homeTitle', 'homeSubtitle', 'deliveryNoteTitle', 'deliveryNoteText', 'deliveryNoteButton']) {

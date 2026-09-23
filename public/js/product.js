@@ -1,5 +1,5 @@
 (() => {
-  const state = { product: null, related: [], qty: 1 };
+  const state = { product: null, related: [], variants: [], qty: 1 };
   const main = document.querySelector('[data-product-page]');
   const related = document.querySelector('[data-related-grid]');
   const handle = decodeURIComponent(location.pathname.split('/').filter(Boolean).pop() || '');
@@ -52,6 +52,32 @@
     document.body.appendChild(box);
   }
 
+  let stickyObserver = null;
+  function setupStickyAdd(product) {
+    let bar = document.querySelector('.sticky-add');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.className = 'sticky-add';
+      document.body.appendChild(bar);
+    }
+    bar.innerHTML = `
+      <img alt="">
+      <div class="sticky-info"><strong class="sticky-title"></strong><span class="sticky-price"></span></div>
+      <button class="button orange small" type="button" data-sticky-add ${product.stock <= 0 ? 'disabled' : ''}>${product.stock <= 0 ? 'Sold out' : `Add · ${RFS.money(product.priceInr * state.qty)}`}</button>`;
+    bar.querySelector('img').src = product.image;
+    bar.querySelector('img').alt = product.title;
+    bar.querySelector('.sticky-title').textContent = product.title;
+    bar.querySelector('.sticky-price').textContent = `${RFS.money(product.priceInr)} / ${product.unitLabel}${state.qty > 1 ? ` · qty ${state.qty}` : ''}`;
+    bar.querySelector('[data-sticky-add]').addEventListener('click', addCurrent);
+    const panel = main.querySelector('.purchase-panel');
+    if (!panel) return;
+    stickyObserver?.disconnect();
+    stickyObserver = new IntersectionObserver(entries => {
+      bar.classList.toggle('show', !entries[0].isIntersecting);
+    }, { threshold: 0 });
+    stickyObserver.observe(panel);
+  }
+
   function render() {
     const p = state.product;
     document.title = `${p.title} – Rebesta Fresh`;
@@ -68,6 +94,7 @@
           <h1>${p.title}</h1>
           <p class="product-detail-description"></p>
           <div class="detail-price-row"><strong>${RFS.money(p.priceInr)}</strong>${discount ? `<span class="compare">${RFS.money(p.compareAtInr)}</span>` : ''}<span>/ ${p.unitLabel}</span></div>
+          ${state.variants.length > 1 ? `<div class="variant-row"><span class="variant-label">Size</span><div class="variant-pills">${state.variants.map(v => `<a class="variant-pill ${v.handle === p.handle ? 'active' : ''}" href="/products/${encodeURIComponent(v.handle)}">${v.variantTitle || v.unitLabel}</a>`).join('')}</div></div>` : ''}
           <div class="route-facts"><span class="badge ${p.stock > 10 ? 'green' : p.stock > 0 ? 'orange' : 'gray'}">${stockText}</span><span class="badge gray">Tomorrow morning</span><span class="badge gray">${p.sku}</span></div>
           <div class="purchase-panel"><label>Quantity</label><div class="purchase-controls"><span class="qty-stepper"><button type="button" data-qty-minus ${state.qty <= 1 ? 'disabled' : ''}>−</button><span>${state.qty}</span><button type="button" data-qty-plus ${state.qty >= Math.min(50, p.stock) ? 'disabled' : ''}>+</button></span><button class="button primary" type="button" data-add-detail ${p.stock <= 0 ? 'disabled' : ''}>${p.stock <= 0 ? 'Sold out' : 'Add to basket'}</button></div></div>
           <div class="share-row"><a class="button whatsapp" href="${shareHref}" target="_blank" rel="noopener">${waIcon}Share on WhatsApp</a><button class="button ghost" type="button" data-copy-link>Copy link</button></div>
@@ -79,6 +106,7 @@
     main.querySelector('[data-qty-plus]').addEventListener('click', () => { state.qty = Math.min(50, p.stock, state.qty + 1); render(); });
     main.querySelector('[data-add-detail]').addEventListener('click', addCurrent);
     main.querySelector('[data-zoom]')?.addEventListener('click', () => openLightbox(p.image, p.title));
+    setupStickyAdd(p);
     main.querySelector('[data-copy-link]')?.addEventListener('click', async () => {
       try { await navigator.clipboard.writeText(location.href); RFS.toast('Link copied — share it anywhere'); }
       catch { RFS.toast('Could not copy link on this browser', 'error'); }
@@ -92,6 +120,10 @@
       const data = await RFS.api(`/api/products/${encodeURIComponent(handle)}`);
       state.product = data.product;
       const all = await RFS.api('/api/products');
+      const base = data.product.baseHandle || data.product.handle;
+      state.variants = all.products
+        .filter(product => (product.baseHandle || product.handle) === base)
+        .sort((a, b) => Number(a.weightGrams || 0) - Number(b.weightGrams || 0));
       const others = all.products.filter(product => product.handle !== handle);
       const sameCategory = others.filter(product => product.category === data.product.category);
       const featured = others.filter(product => product.featured && product.category !== data.product.category);

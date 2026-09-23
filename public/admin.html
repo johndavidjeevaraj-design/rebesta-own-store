@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Rebesta Fresh Admin</title>
-  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><link rel="stylesheet" href="/css/styles.css?v=20260923p6">
+  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><link rel="stylesheet" href="/css/styles.css?v=20260924p7">
 </head>
 <body>
   <header class="site-header">
@@ -28,6 +28,7 @@
               <button class="button primary full" type="submit" data-connect-admin style="margin-top:14px">Connect dashboard</button>
             </form>
             <button class="button ghost full" type="button" data-refresh-admin>Refresh data</button>
+            <button class="button ghost full" type="button" data-alert-toggle style="margin-top:9px">🔔 Order alerts: ON</button>
             <p class="summary-note">Production key is set with the ADMIN_KEY environment variable. Keep it private.</p>
           </aside>
           <div data-admin-content hidden>
@@ -58,6 +59,18 @@
                 <div class="field"><label for="maxRoadKm">Maximum road-km delivery radius</label><input id="maxRoadKm" name="maxRoadKm" inputmode="decimal"></div>
                 <div class="field"><label for="freeOverInr">Basket value for free delivery</label><input id="freeOverInr" name="freeOverInr" inputmode="decimal"></div>
                 <div class="field wide">
+                  <div class="section-head" style="margin:16px 0 12px">
+                    <div><strong style="color:var(--forest-2)">🎟 Coupon codes</strong><br><small style="color:var(--muted)">Customers apply these at checkout. Flat ₹ off or % off, with an optional minimum basket.</small></div>
+                    <button class="button ghost small" type="button" data-add-coupon>+ Add coupon</button>
+                  </div>
+                  <div class="admin-table-wrap" style="border-radius:16px">
+                    <table class="admin-table coupons-table" style="min-width:620px">
+                      <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Min basket ₹</th><th>Active</th><th></th></tr></thead>
+                      <tbody data-coupon-body></tbody>
+                    </table>
+                  </div>
+                </div>
+                <div class="field wide">
                   <div class="section-head" style="margin:10px 0 12px">
                     <div><strong style="color:var(--green-900)">Delivery fee tiers by road distance</strong><br><small id="tier-help" style="color:var(--muted)">Edit distance ranges and prices carefully. Changes apply at checkout immediately.</small></div>
                     <button class="button ghost small" type="button" data-reset-tiers>Reset default tiers</button>
@@ -79,6 +92,6 @@
       </div>
     </section>
   </main>
-  <script src="/js/store.js?v=20260923p6" defer></script><script src="/js/admin.js?v=20260923p6" defer></script>
+  <script src="/js/store.js?v=20260924p7" defer></script><script src="/js/admin.js?v=20260924p7" defer></script>
 </body>
 </html>

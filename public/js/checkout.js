@@ -1,5 +1,5 @@
 (() => {
-  const state = { products: [], byHandle: new Map(), settings: null, quote: null, coords: null, map: null, marker: null };
+  const state = { products: [], byHandle: new Map(), settings: null, quote: null, coords: null, map: null, marker: null, coupon: null };
   const $ = selector => document.querySelector(selector);
 
   const nodes = {
@@ -134,8 +134,13 @@
 
   function renderSummary() {
     const products = subtotal();
+    if (state.coupon && products < Number(state.coupon.minOrderInr || 0)) {
+      state.coupon = null;
+      RFS.toast('Coupon removed — basket is below the minimum order', 'error');
+    }
     const fee = state.quote?.eligible ? Number(state.quote.deliveryFeeInr || 0) : null;
-    const total = products + (fee || 0);
+    const discount = state.coupon ? Number(state.coupon.discountInr || 0) : 0;
+    const total = Math.max(0, products + (fee || 0) - discount);
     nodes.summary.innerHTML = '';
     const h2 = document.createElement('h2'); h2.textContent = 'Order summary';
     nodes.summary.appendChild(h2);
@@ -169,6 +174,45 @@
       div.querySelector('strong').textContent = value;
       nodes.summary.appendChild(div);
     }
+    if (state.coupon) {
+      const couponRow = document.createElement('div');
+      couponRow.className = 'summary-row coupon-applied-row';
+      couponRow.innerHTML = '<span></span><strong></strong>';
+      couponRow.querySelector('span').textContent = `Coupon ${state.coupon.code}`;
+      couponRow.querySelector('strong').textContent = `−${RFS.money(discount)}`;
+      nodes.summary.appendChild(couponRow);
+    }
+    const couponBox = document.createElement('div');
+    couponBox.className = 'coupon-box';
+    if (state.coupon) {
+      couponBox.innerHTML = `<div class="coupon-applied"><span>🎟 <strong></strong> applied</span><button type="button" class="remove-link" data-coupon-remove>Remove</button></div>`;
+      couponBox.querySelector('strong').textContent = state.coupon.code;
+      couponBox.querySelector('[data-coupon-remove]').addEventListener('click', () => {
+        state.coupon = null;
+        renderSummary();
+        RFS.toast('Coupon removed');
+      });
+    } else {
+      couponBox.innerHTML = `<label for="couponInput">Have a coupon code?</label><div class="coupon-row"><input id="couponInput" data-coupon-input placeholder="e.g. WELCOME50" maxlength="24" autocomplete="off"><button type="button" class="button ghost small" data-apply-coupon>Apply</button></div><div class="coupon-msg" data-coupon-msg></div>`;
+      const input = couponBox.querySelector('[data-coupon-input]');
+      const msg = couponBox.querySelector('[data-coupon-msg]');
+      const apply = async () => {
+        const code = input.value.trim();
+        if (!code) { msg.textContent = 'Enter a code first'; msg.className = 'coupon-msg error'; return; }
+        msg.textContent = 'Checking…'; msg.className = 'coupon-msg';
+        try {
+          const data = await RFS.api('/api/coupon/check', { method: 'POST', body: JSON.stringify({ code, subtotalInr: products }) });
+          state.coupon = data.coupon;
+          RFS.toast(`Coupon ${data.coupon.code} applied — you save ${RFS.money(data.coupon.discountInr)}`);
+          renderSummary();
+        } catch (error) {
+          msg.textContent = error.message; msg.className = 'coupon-msg error';
+        }
+      };
+      couponBox.querySelector('[data-apply-coupon]').addEventListener('click', apply);
+      input.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); apply(); } });
+    }
+    nodes.summary.appendChild(couponBox);
     const totalRow = document.createElement('div'); totalRow.className = 'summary-total';
     totalRow.innerHTML = '<span>Total to pay</span><strong></strong>';
     totalRow.querySelector('strong').textContent = RFS.money(total);
@@ -312,6 +356,7 @@
     payload.items = items();
     payload.slotId = slot;
     payload.paymentMethod = payment;
+    if (state.coupon) payload.couponCode = state.coupon.code;
     RFS.setBusy(nodes.placeOrder, true, 'Securing your order…');
     try {
       const order = await RFS.api('/api/orders', { method: 'POST', body: JSON.stringify(payload) });

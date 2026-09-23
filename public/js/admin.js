@@ -114,6 +114,29 @@
     if (input) input.value = value ?? '';
   }
 
+  function renderCouponRows(coupons) {
+    const body = document.querySelector('[data-coupon-body]');
+    body.innerHTML = '';
+    for (const c of coupons) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" class="coupon-code small-input" style="width:110px;text-transform:uppercase" value=""></td>
+        <td><select class="coupon-type small-input"><option value="flat">Flat ₹</option><option value="percent">% off</option></select></td>
+        <td><input type="number" class="coupon-value small-input" min="1" step="1"></td>
+        <td><input type="number" class="coupon-min small-input" min="0" step="1"></td>
+        <td><label><input type="checkbox" class="coupon-active" checked> Live</label></td>
+        <td><button type="button" class="button ghost small" data-remove-coupon>✕</button></td>
+      `;
+      tr.querySelector('.coupon-code').value = c.code || '';
+      tr.querySelector('.coupon-type').value = c.type === 'percent' ? 'percent' : 'flat';
+      tr.querySelector('.coupon-value').value = Number(c.value || 0);
+      tr.querySelector('.coupon-min').value = Number(c.minOrderInr || 0);
+      tr.querySelector('.coupon-active').checked = c.active !== false;
+      tr.querySelector('[data-remove-coupon]').addEventListener('click', () => { tr.remove(); RFS.toast('Row removed — Save settings to apply'); });
+      body.appendChild(tr);
+    }
+  }
+
   function renderTierRows(tiers) {
     const body = document.querySelector('[data-tier-body]');
     body.innerHTML = '';
@@ -146,6 +169,7 @@
     setField('maxRoadKm', delivery.maxRoadKm);
     setField('freeOverInr', delivery.freeOverInr);
     renderTierRows(delivery.tiers?.length ? delivery.tiers : DEFAULT_TIERS);
+    renderCouponRows(Array.isArray(state.settings.promotions?.coupons) ? state.settings.promotions.coupons : []);
   }
 
   function collectSettings() {
@@ -166,7 +190,15 @@
       return { min, max, label, feeInr };
     });
     if (!tiers.length) throw new Error('Keep at least one delivery tier');
+    const coupons = [...document.querySelectorAll('[data-coupon-body] tr')].map(row => ({
+      code: row.querySelector('.coupon-code').value,
+      type: row.querySelector('.coupon-type').value,
+      value: Number(row.querySelector('.coupon-value').value),
+      minOrderInr: Number(row.querySelector('.coupon-min').value) || 0,
+      active: row.querySelector('.coupon-active').checked
+    })).filter(c => String(c.code || '').trim());
     return {
+      promotions: { coupons },
       content: {
         homeBadge: value('homeBadge'),
         homeTitle: value('homeTitle'),
@@ -210,6 +242,88 @@
     renderTierRows(DEFAULT_TIERS);
     RFS.toast('Default tiers loaded. Click Save site settings to apply.');
   });
+
+  document.querySelector('[data-add-coupon]')?.addEventListener('click', () => {
+    const existing = [...document.querySelectorAll('[data-coupon-body] tr')].map(row => ({
+      code: row.querySelector('.coupon-code').value,
+      type: row.querySelector('.coupon-type').value,
+      value: row.querySelector('.coupon-value').value,
+      minOrderInr: row.querySelector('.coupon-min').value,
+      active: row.querySelector('.coupon-active').checked
+    }));
+    existing.push({ code: '', type: 'flat', value: 50, minOrderInr: 399, active: true });
+    renderCouponRows(existing);
+    const rows = document.querySelectorAll('[data-coupon-body] tr');
+    rows[rows.length - 1]?.querySelector('.coupon-code')?.focus();
+  });
+
+  // ---- live order alerts ----
+  let alertsOn = localStorage.getItem('rebesta_admin_alerts') !== 'off';
+  let lastOrderId = null;
+  let alertTimer = null;
+
+  function updateAlertButton() {
+    const button = document.querySelector('[data-alert-toggle]');
+    if (button) button.textContent = alertsOn ? '🔔 Order alerts: ON' : '🔕 Order alerts: OFF';
+  }
+
+  function orderBeep() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new Ctx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.setValueAtTime(1318, ctx.currentTime + 0.14);
+      gain.gain.setValueAtTime(0.22, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      osc.start(); osc.stop(ctx.currentTime + 0.65);
+    } catch {}
+  }
+
+  async function pollOrders() {
+    if (!state.key) return;
+    try {
+      const data = await api('/api/admin/orders');
+      const sorted = [...(data.orders || [])].sort((a, b) => String(b.placedAt || '').localeCompare(String(a.placedAt || '')));
+      const newest = sorted[0];
+      if (lastOrderId && newest && newest.id !== lastOrderId) {
+        const fresh = [];
+        for (const order of sorted) {
+          if (order.id === lastOrderId) break;
+          fresh.push(order);
+        }
+        if (fresh.length) {
+          if (alertsOn) orderBeep();
+          RFS.toast(`🔔 ${fresh.length} new order${fresh.length === 1 ? '' : 's'}! ${fresh[0].id} · ${RFS.money(fresh[0].totalInr)}`);
+          if (alertsOn && 'Notification' in window && Notification.permission === 'granted') {
+            try { new Notification('🥬 New Rebesta order!', { body: `${fresh[0].id} — ${RFS.money(fresh[0].totalInr)}` }); } catch {}
+          }
+          refreshAll().catch(() => {});
+        }
+      }
+      if (newest) lastOrderId = newest.id;
+    } catch {}
+  }
+
+  function startOrderAlerts() {
+    if (alertTimer) return;
+    pollOrders();
+    alertTimer = setInterval(pollOrders, 25000);
+  }
+
+  document.querySelector('[data-alert-toggle]')?.addEventListener('click', async () => {
+    alertsOn = !alertsOn;
+    localStorage.setItem('rebesta_admin_alerts', alertsOn ? 'on' : 'off');
+    if (alertsOn && 'Notification' in window && Notification.permission === 'default') {
+      try { await Notification.requestPermission(); } catch {}
+    }
+    updateAlertButton();
+    RFS.toast(alertsOn ? 'Order alerts on — you will hear a beep on every new order' : 'Order alerts muted');
+  });
+  updateAlertButton();
 
   async function renderProducts() {
     const data = await api('/api/admin/products');
@@ -308,6 +422,7 @@
     try {
       await refreshAll();
       document.querySelector('[data-admin-content]').hidden = false;
+      startOrderAlerts();
       RFS.toast('Admin dashboard connected');
     } catch (error) {
       showError(error.message);
@@ -320,7 +435,7 @@
   document.querySelector('[data-refresh-admin]').addEventListener('click', () => refreshAll().catch(e => RFS.toast(e.message, 'error')));
   document.querySelector('[name="adminKey"]').value = state.key;
   if (state.key) {
-    refreshAll().then(() => { document.querySelector('[data-admin-content]').hidden = false; }).catch(error => {
+    refreshAll().then(() => { document.querySelector('[data-admin-content]').hidden = false; startOrderAlerts(); }).catch(error => {
       showError(error.message);
     });
   }

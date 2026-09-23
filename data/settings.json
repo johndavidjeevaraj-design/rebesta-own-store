@@ -80,5 +80,23 @@
     "deliveryNoteTitle": "Exact rider route, checked live",
     "deliveryNoteText": "Use GPS or place a map pin. We confirm your road route before selecting a slot.",
     "deliveryNoteButton": "Check my pin"
+  },
+  "promotions": {
+    "coupons": [
+      {
+        "code": "WELCOME50",
+        "type": "flat",
+        "value": 50,
+        "minOrderInr": 399,
+        "active": true
+      },
+      {
+        "code": "COMBO10",
+        "type": "percent",
+        "value": 10,
+        "minOrderInr": 599,
+        "active": true
+      }
+    ]
   }
 }

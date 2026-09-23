@@ -1091,3 +1091,70 @@ body{font-size:16px}
 .logo img{height:24px;width:auto}
 .footer-logo img{height:28px;width:auto}
 @media(max-width:840px){.logo img{height:19px;width:auto}}
+
+/* ============================================================
+   PASS 5 — bottom nav, search dropdown, sticky add, variants,
+   coupons, install banner
+   ============================================================ */
+
+/* --- Mobile bottom nav --- */
+.bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:900;display:none;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(255,255,255,.1);background:linear-gradient(180deg,rgba(4,14,8,.94),rgba(4,14,8,.99));backdrop-filter:blur(18px) saturate(150%);box-shadow:0 -16px 44px rgba(0,0,0,.32);padding:5px 4px calc(5px + env(safe-area-inset-bottom))}
+.bn-item{position:relative;display:grid;justify-items:center;align-content:center;gap:3px;min-height:50px;border-radius:14px;color:#a9c7ab;font-size:.6rem;font-weight:1000;letter-spacing:.03em;transition:color .16s ease,background .16s ease}
+.bn-item:active{background:rgba(255,255,255,.08)}
+.bn-item:hover{color:#fff}
+.bn-cart{color:#ffd8c6}
+.bn-badge{position:absolute;top:3px;left:calc(50% + 8px);display:grid;place-items:center;min-width:17px;height:17px;border-radius:999px;padding:0 4px;color:#fff;background:linear-gradient(135deg,var(--orange),#e94712);font-size:.58rem;font-weight:1000}
+
+/* --- Instant search dropdown --- */
+.search-drop{position:absolute;top:calc(100% + 9px);left:0;right:0;z-index:600;overflow:hidden;border:1px solid var(--line-2);border-radius:16px;background:#fff;box-shadow:var(--shadow-mid);animation:alertPop .22s var(--ease-out) both}
+.search-drop-item{display:grid;grid-template-columns:40px minmax(0,1fr) auto;align-items:center;gap:10px;padding:9px 12px;color:var(--ink)}
+.search-drop-item + .search-drop-item{border-top:1px solid var(--line)}
+.search-drop-item:hover{background:var(--green-soft)}
+.search-drop-item img{width:40px;height:40px;object-fit:contain;border-radius:10px;background:#f6f7f2;padding:3px}
+.search-drop-item strong{display:block;overflow:hidden;font-size:.8rem;font-weight:1000;white-space:nowrap;text-overflow:ellipsis}
+.search-drop-item span{color:var(--muted);font-size:.67rem;font-weight:800}
+.search-drop-item em{font-style:normal;color:var(--green);font-size:.8rem;font-weight:1000;white-space:nowrap}
+
+/* --- Sticky add-to-basket bar (product page) --- */
+.sticky-add{position:fixed;left:10px;right:10px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:880;display:none;align-items:center;gap:10px;border:1px solid var(--line-2);border-radius:18px;padding:8px 10px;background:rgba(255,255,255,.98);backdrop-filter:blur(14px);box-shadow:0 18px 44px rgba(3,44,19,.22);transform:translateY(130%);opacity:0;visibility:hidden;transition:transform .32s var(--ease-spring),opacity .32s ease,visibility .32s}
+.sticky-add.show{transform:none;opacity:1;visibility:visible}
+.sticky-add img{width:44px;height:44px;flex:0 0 auto;object-fit:contain;border-radius:10px;background:#f6f7f2;padding:3px}
+.sticky-info{flex:1;min-width:0}
+.sticky-title{display:block;overflow:hidden;font-size:.8rem;font-weight:1000;white-space:nowrap;text-overflow:ellipsis}
+.sticky-price{font-size:.72rem;font-weight:1000;color:var(--green)}
+
+/* --- Variant selector (product page) --- */
+.variant-row{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-top:14px}
+.variant-label{color:var(--muted);font-size:.72rem;font-weight:1000;text-transform:uppercase;letter-spacing:.08em}
+.variant-pills{display:inline-flex;gap:6px;flex-wrap:wrap}
+.variant-pill{display:inline-flex;align-items:center;min-height:37px;border:1px solid var(--line-2);border-radius:999px;padding:7px 14px;color:var(--ink-2);background:#fff;font-size:.76rem;font-weight:1000;transition:border-color .16s ease,background .16s ease,color .16s ease,box-shadow .16s ease}
+.variant-pill:hover{border-color:var(--green)}
+.variant-pill.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,var(--green),#075c1f);box-shadow:0 9px 20px rgba(13,135,54,.22)}
+
+/* --- Coupon UI (checkout) --- */
+.coupon-box{margin-top:14px;border:1px dashed var(--line-2);border-radius:14px;padding:12px;background:#fafbf7}
+.coupon-box label{display:block;margin-bottom:7px;color:var(--ink-2);font-size:.72rem;font-weight:1000}
+.coupon-row{display:flex;gap:8px}
+.coupon-row input{flex:1;min-width:0;min-height:38px;border:1px solid var(--line-2);border-radius:10px;padding:8px 11px;background:#fff;font-size:.82rem;font-weight:800;text-transform:uppercase}
+.coupon-row input:focus{outline:0;border-color:var(--green);box-shadow:0 0 0 4px rgba(13,135,54,.1)}
+.coupon-msg{margin-top:7px;color:var(--muted);font-size:.72rem;font-weight:800}
+.coupon-msg.error{color:var(--danger)}
+.coupon-applied{display:flex;align-items:center;justify-content:space-between;gap:9px;font-size:.8rem;font-weight:900;color:#07591f}
+.coupon-applied-row strong{color:#0d8736}
+.coupon-applied .remove-link{min-height:30px}
+
+/* --- PWA install banner --- */
+.install-banner{position:fixed;left:10px;right:10px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:870;display:flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:10px 12px;color:#fff;background:rgba(4,14,8,.95);backdrop-filter:blur(16px);box-shadow:0 18px 44px rgba(0,0,0,.32);font-size:.76rem;font-weight:800;animation:itemEnter .32s var(--ease-out) both}
+.install-banner span{flex:1}
+.install-close{display:grid;place-items:center;width:34px;height:34px;border:0;border-radius:50%;color:#b9d3ba;background:transparent;font-size:1rem;cursor:pointer}
+.install-close:hover{color:#fff;background:rgba(255,255,255,.1)}
+@media(min-width:841px){.install-banner{display:none}}
+
+/* --- Mobile behaviour for nav + bars --- */
+@media(max-width:840px){
+  .bottom-nav{display:grid}
+  .mobile-cart-bar{display:none!important}
+  body{padding-bottom:calc(66px + env(safe-area-inset-bottom))}
+  .sticky-add{display:flex}
+  .toast-region{bottom:calc(74px + env(safe-area-inset-bottom))}
+}

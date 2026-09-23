@@ -3,6 +3,8 @@ import crypto from 'node:crypto';
 import { config } from '../config.js';
 import {
   loadSettings,
+  findCoupon,
+  couponDiscount,
   publicCatalog,
   getProduct,
   buildCart,
@@ -106,6 +108,22 @@ router.post('/quote', async (req, res) => {
   } catch (error) { flattenError(res, error, 'Could not calculate delivery'); }
 });
 
+router.post('/coupon/check', (req, res) => {
+  try {
+    const coupon = findCoupon(req.body?.code);
+    const subtotal = Number(req.body?.subtotalInr || 0);
+    if (!coupon) return res.status(400).json({ ok: false, error: 'That coupon code is not valid' });
+    const minOrderInr = Number(coupon.minOrderInr || 0);
+    if (subtotal < minOrderInr) {
+      return res.status(400).json({ ok: false, error: `Add items worth ${'\u20B9'}${minOrderInr - subtotal} more to use ${coupon.code} (min basket ${'\u20B9'}${minOrderInr})` });
+    }
+    const discountInr = couponDiscount(coupon, subtotal);
+    res.json({ ok: true, coupon: { code: coupon.code, type: coupon.type, value: Number(coupon.value || 0), minOrderInr, discountInr } });
+  } catch (error) {
+    flattenError(res, error, 'Could not check coupon');
+  }
+});
+
 router.post('/orders', async (req, res) => {
   try {
     const cart = buildCart(req.body?.items || []);
@@ -135,12 +153,25 @@ router.post('/orders', async (req, res) => {
     if (!['cod', 'online'].includes(paymentMethod)) throw Object.assign(new Error('Choose a valid payment method'), { status: 400 });
 
     const deliveryFee = Number(quote.deliveryFeeInr || 0);
-    const total = Math.round((cart.subtotalInr + deliveryFee) * 100) / 100;
+    let discountInr = 0;
+    let couponCode = '';
+    if (req.body?.couponCode) {
+      const coupon = findCoupon(req.body.couponCode);
+      if (!coupon) throw Object.assign(new Error('Coupon code is not valid'), { status: 400 });
+      discountInr = couponDiscount(coupon, cart.subtotalInr);
+      if (!discountInr) {
+        throw Object.assign(new Error(`Coupon ${coupon.code} needs a minimum basket of ${'\u20B9'}${Number(coupon.minOrderInr || 0)}`), { status: 400 });
+      }
+      couponCode = coupon.code;
+    }
+    const total = Math.round((cart.subtotalInr - discountInr + deliveryFee) * 100) / 100;
     const order = addOrder({
       customer,
       address,
       items: cart.lines,
       subtotalInr: cart.subtotalInr,
+      discountInr,
+      couponCode,
       deliveryFeeInr: deliveryFee,
       totalInr: total,
       distanceKm: quote.distanceKm,

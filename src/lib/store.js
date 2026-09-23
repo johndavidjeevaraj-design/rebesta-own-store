@@ -50,6 +50,8 @@ export function publicCatalog({ includeInactive = false } = {}) {
     .filter(p => includeInactive || p.active)
     .map(p => ({
       handle: p.handle,
+      baseHandle: p.baseHandle || p.handle,
+      variantTitle: p.variantTitle || '',
       title: p.title,
       description: p.description,
       vendor: p.vendor,
@@ -243,6 +245,8 @@ export function maskCustomer(order) {
     updatedAt: o.updatedAt,
     items: o.items,
     subtotalInr: o.subtotalInr,
+    discountInr: o.discountInr || 0,
+    couponCode: o.couponCode || '',
     deliveryFeeInr: o.deliveryFeeInr,
     totalInr: o.totalInr,
     distanceKm: o.distanceKm,
@@ -265,4 +269,20 @@ export function maskCustomer(order) {
 
 export function maskOrders(orders) {
   return orders.map(maskCustomer);
+}
+
+export function findCoupon(code) {
+  const settings = loadSettings();
+  const list = Array.isArray(settings.promotions?.coupons) ? settings.promotions.coupons : [];
+  const wanted = String(code || '').trim().toUpperCase();
+  if (!wanted) return null;
+  return list.find(c => String(c.code || '').trim().toUpperCase() === wanted && c.active !== false) || null;
+}
+
+export function couponDiscount(coupon, subtotalInr) {
+  if (!coupon) return 0;
+  const subtotal = Number(subtotalInr || 0);
+  if (subtotal < Number(coupon.minOrderInr || 0)) return 0;
+  const raw = coupon.type === 'percent' ? subtotal * Number(coupon.value || 0) / 100 : Number(coupon.value || 0);
+  return Math.max(0, Math.min(Math.round(raw), Math.round(subtotal)));
 }

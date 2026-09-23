@@ -1,5 +1,5 @@
 (() => {
-  const state = { products: [], byHandle: new Map() };
+  const state = { products: [], byHandle: new Map(), settings: null };
   const itemsNode = document.querySelector('[data-cart-items]');
   const emptyNode = document.querySelector('[data-cart-empty]');
   const layoutNode = document.querySelector('[data-cart-layout]');
@@ -92,6 +92,15 @@
     total.className = 'summary-total';
     total.innerHTML = `<span>Items total</span><strong></strong>`;
     total.querySelector('strong').textContent = RFS.money(subtotal);
+    const waNumber = String(state.settings?.business?.whatsapp || '918438765119').replace(/\D/g, '');
+    const waText = `Hi Rebesta Fresh! \u{1F966} I'd like to order:\n\n${lines().map(item => `\u2022 ${item.product.title} (${item.product.unitLabel}) \u00D7 ${item.qty} \u2014 ${RFS.money(item.product.priceInr * item.qty)}`).join('\n')}\n\nItems total: ${RFS.money(subtotal)}\n\n(I will confirm the delivery pin and slot with you.)`;
+    const whatsapp = document.createElement('a');
+    whatsapp.className = 'button whatsapp full';
+    whatsapp.style.marginTop = '9px';
+    whatsapp.target = '_blank';
+    whatsapp.rel = 'noopener';
+    whatsapp.href = `https://wa.me/${waNumber}?text=${encodeURIComponent(waText)}`;
+    whatsapp.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Zm0 2a8 8 0 1 1-4.2 14.8l-.4-.3-3 .8.8-2.9-.3-.4A8 8 0 0 1 12 4Zm-2.9 4c-.2 0-.5 0-.7.3-.3.3-.9.9-.9 2.1s.9 2.4 1 2.6c.2.2 1.8 2.9 4.5 3.9 2.2.8 2.7.7 3.2.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2-.1-.1-.3-.2-.6-.3l-2-1c-.3-.1-.5-.2-.7.1l-1 1.2c-.2.2-.4.2-.6.1a6.7 6.7 0 0 1-3.3-2.8c-.2-.4 0-.6.1-.7l.5-.6c.2-.2.2-.3.3-.5.1-.3 0-.4 0-.6L9.4 8.6c-.2-.4-.2-.6-.3-.6Z"/></svg> Order on WhatsApp';
     const checkout = document.createElement('a');
     checkout.href = '/checkout';
     checkout.className = 'button orange full';
@@ -100,7 +109,7 @@
     const note = document.createElement('p');
     note.className = 'summary-note';
     note.textContent = 'Delivery charges: ₹20–₹100 for 0–9 road km. Locations beyond 9 road km do not receive the standard local delivery rate.';
-    frag.append(meter, notice, total, checkout, note);
+    frag.append(meter, notice, total, checkout, whatsapp, note);
     summaryNode.appendChild(frag);
   }
 
@@ -148,8 +157,9 @@
 
   async function init() {
     try {
-      const data = await RFS.api('/api/products');
+      const [data, settingsData] = await Promise.all([RFS.api('/api/products'), RFS.api('/api/settings')]);
       state.products = data.products;
+      state.settings = settingsData;
       state.byHandle = new Map(data.products.map(p => [p.handle, p]));
       render();
     } catch (error) {

@@ -286,7 +286,70 @@
     }
   }
 
-  searchInput?.addEventListener('input', () => { state.search = searchInput.value; renderGrid(); });
+  const searchHost = document.querySelector('.market-search');
+  let searchDrop = null, searchTimer = null;
+  function hideSearchDrop() { searchDrop?.remove(); searchDrop = null; }
+  function renderSearchDrop() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      if (!searchHost) return;
+      const q = state.search.trim().toLowerCase();
+      if (!q) return hideSearchDrop();
+      const matches = state.products.filter(p => [p.title, p.category, ...(p.tags || [])].join(' ').toLowerCase().includes(q)).slice(0, 7);
+      hideSearchDrop();
+      if (!matches.length) return;
+      searchDrop = document.createElement('div');
+      searchDrop.className = 'search-drop';
+      searchDrop.setAttribute('role', 'listbox');
+      for (const product of matches) {
+        const link = document.createElement('a');
+        link.className = 'search-drop-item';
+        link.href = `/products/${encodeURIComponent(product.handle)}`;
+        link.innerHTML = '<img alt=""><div><strong></strong><span></span></div><em></em>';
+        link.querySelector('img').src = product.image;
+        link.querySelector('img').alt = product.title;
+        link.querySelector('img').loading = 'lazy';
+        link.querySelector('img').decoding = 'async';
+        link.querySelector('strong').textContent = product.title;
+        link.querySelector('span').textContent = `${product.category} · ${product.unitLabel}`;
+        link.querySelector('em').textContent = RFS.money(product.priceInr);
+        searchDrop.appendChild(link);
+      }
+      searchHost.appendChild(searchDrop);
+    }, 130);
+  }
+  searchInput?.addEventListener('input', () => { state.search = searchInput.value; renderGrid(); renderSearchDrop(); });
+  searchInput?.addEventListener('keydown', event => {
+    if (event.key === 'Escape') { hideSearchDrop(); searchInput.blur(); }
+    if (event.key === 'Enter' && searchDrop) { event.preventDefault(); searchDrop.querySelector('a')?.click(); }
+  });
+  document.addEventListener('click', event => { if (searchHost && !searchHost.contains(event.target)) hideSearchDrop(); });
+
+  // --- PWA install banner ---
+  let installPrompt = null;
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    installPrompt = event;
+    showInstallBanner();
+  });
+  function showInstallBanner() {
+    if (document.querySelector('.install-banner')) return;
+    if (window.matchMedia('(display-mode: standalone)').matches) return;
+    const dismissedAt = Number(localStorage.getItem('rebesta_install_dismissed_at') || 0);
+    if (dismissedAt && Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000) return;
+    const banner = document.createElement('div');
+    banner.className = 'install-banner';
+    banner.innerHTML = `<span>📲 Install Rebesta Fresh — opens like an app, loads instantly.</span><button class="button orange small" type="button" data-install-now>Install</button><button class="install-close" type="button" aria-label="Dismiss">✕</button>`;
+    document.body.appendChild(banner);
+    banner.querySelector('[data-install-now]').addEventListener('click', async () => {
+      if (installPrompt) { installPrompt.prompt(); await installPrompt.userChoice; }
+      banner.remove();
+    });
+    banner.querySelector('.install-close').addEventListener('click', () => {
+      localStorage.setItem('rebesta_install_dismissed_at', String(Date.now()));
+      banner.remove();
+    });
+  }
 
   const offersToggle = document.querySelector('[data-offers-only]');
   offersToggle?.addEventListener('change', () => { state.offersOnly = offersToggle.checked; renderGrid(); });

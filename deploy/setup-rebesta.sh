@@ -167,7 +167,7 @@ echo "✅ firewall on (SSH + web only)"
 # Auto-update: checks GitHub every 5 minutes, deploys new code automatically
 mkdir -p /etc/cron.d
 cat > /etc/cron.d/rebesta-update <<EOF
-*/5 * * * * root $APP_DIR/deploy/update.sh >> /var/log/rebesta-update.log 2>&1
+*/5 * * * * root bash $APP_DIR/deploy/update.sh >> /var/log/rebesta-update.log 2>&1
 EOF
 chmod +x "$APP_DIR/deploy/update.sh" 2>/dev/null || true
 echo "✅ auto-update every 5 min (git push = live in minutes)"

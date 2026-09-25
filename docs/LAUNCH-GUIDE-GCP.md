@@ -89,13 +89,15 @@ So you NEVER get a surprise bill:
 
 Expected usage: **₹1,000–1,400/month** in Mumbai (VM + disk + traffic + GST) — all paid from your ₹25,000 credit, ₹0 from your pocket. The budget alert only fires if something goes genuinely wrong (e.g. a runaway service) — which is exactly when you want an email. 📧
 
-## STEP 7 — Set a phone reminder for Day 80 📅
+## STEP 7 — THE PLAN: switch to Hostinger at Day 80 📅
 
-Your ₹25,000 credits expire at **day 90**. Add a calendar reminder now for **Day 80** with the note:
+**Decision locked:** 3 months free on Google Cloud → then migrate to Hostinger for ₹707/mo India speed forever.
 
-> "Ping Arena — decide GCP endgame: US free server (₹0) / stay Mumbai (~₹600/mo) / move to Hostinger"
+Add a calendar reminder now for **Day 80**:
 
-I'll handle the whole migration when the time comes — 15 minutes, orders untouched.
+> "Migrate Rebesta to Hostinger — open docs/MIGRATION-GCP-TO-HOSTINGER.md and ping Arena"
+
+The migration playbook is already written and waiting in your repo: **15 minutes, zero downtime, every order kept**. I'll walk you through it when the reminder fires.
 
 ---
 

@@ -5,9 +5,9 @@
 
 > **The plan in one picture:**
 > - Google gives new accounts **₹25,000 ($300) free credit** valid 90 days
-> - Our store's server costs only ~₹450/month → **the credit pays for everything**
-> - After 90 days: we migrate to Google's always-free US server (**₹0 forever**) or upgrade — your choice, I'll handle it either way. 15 minutes, zero data loss.
-> - One-time **₹1,000 prepay** activates your account (refundable whenever you close it)
+> - The server burns ~₹1,000–1,400/month → **the credit pays ALL of it → ₹0 from your pocket**
+> - **Day 80: we migrate to Hostinger (₹707/mo) for India speed forever** — playbook already written, I handle it with you. Zero downtime, every order kept.
+> - One-time **₹1,000 prepay** activates your account (refundable when you close it at migration)
 
 ---
 

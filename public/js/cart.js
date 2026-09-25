@@ -46,7 +46,10 @@
     const remove = document.createElement('button');
     remove.type = 'button'; remove.className = 'remove-link'; remove.textContent = 'Remove';
     remove.addEventListener('click', () => { RFS.removeItem(product.handle); render(); RFS.syncCartUI(state.products); });
-    actions.append(stepper, remove);
+    const mobileTotal = document.createElement('span');
+    mobileTotal.className = 'cart-line-total mobile-line-total';
+    mobileTotal.textContent = RFS.money(product.priceInr * qty);
+    actions.append(stepper, remove, mobileTotal);
     main.append(title, meta, actions);
 
     const total = document.createElement('div');

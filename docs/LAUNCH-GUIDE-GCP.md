@@ -85,9 +85,9 @@ So you NEVER get a surprise bill:
 
 1. Console → ☰ menu → **Billing** → your billing account
 2. **Budgets & alerts** → **Create budget**
-3. Set budget amount: **₹500** → alerts at 50%, 90%, 100% → Finish
+3. Set budget amount: **₹2,500** → alerts at 50%, 90%, 100% → Finish
 
-Our server uses ~₹450/month, so you'd only ever get an email if something's wrong — which is exactly when you want one. 📧
+Expected usage: **₹1,000–1,400/month** in Mumbai (VM + disk + traffic + GST) — all paid from your ₹25,000 credit, ₹0 from your pocket. The budget alert only fires if something goes genuinely wrong (e.g. a runaway service) — which is exactly when you want an email. 📧
 
 ## STEP 7 — Set a phone reminder for Day 80 📅
 

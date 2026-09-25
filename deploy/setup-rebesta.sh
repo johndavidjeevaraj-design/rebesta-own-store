@@ -25,6 +25,22 @@ apt-get update -y -qq || apt-get update -y
 apt-get install -y -qq curl git ca-certificates gnupg ufw >/dev/null 2>&1 || apt-get install -y curl git ca-certificates gnupg ufw
 echo "✅ curl + git installed"
 
+# Swap file — small servers (e2-micro, 1 GB RAM) ship with none and npm/pm2
+# can get OOM-killed mid-install. 2 GB swap makes everything survivable.
+if [ "$(swapon --show=NAME --noheadings 2>/dev/null | wc -l)" -eq 0 ]; then
+  if [ ! -f /swapfile ]; then
+    dd if=/dev/zero of=/swapfile bs=1M count=2048 status=none
+    chmod 600 /swapfile
+    mkswap /swapfile >/dev/null
+  fi
+  swapon /swapfile 2>/dev/null || true
+  grep -q '^/swapfile' /etc/fstab 2>/dev/null || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  sysctl -w vm.swappiness=10 >/dev/null 2>&1 || true
+  echo "✅ 2 GB swap added (protects the 1 GB RAM server from memory kills)"
+else
+  echo "✅ swap already active"
+fi
+
 STEP="2/9 Node.js 20"
 step "$STEP"
 if ! command -v node >/dev/null 2>&1 || ! node -v | grep -q '^v2[02]'; then
@@ -113,11 +129,19 @@ STEP="7/9 Start the store (auto-restart on crash + boot)"
 step "$STEP"
 cd "$APP_DIR"
 pm2 delete rebesta-store >/dev/null 2>&1 || true
-pm2 start ecosystem.config.js --env production >/dev/null 2>&1
-pm2 save >/dev/null 2>&1
+pm2 start ecosystem.config.cjs >/dev/null 2>&1 || {
+  echo "❗ pm2 could not start the store — showing the real reason:"
+  pm2 logs --nostream --lines 25 2>/dev/null | grep -v "^\[TAILING\]" | tail -35
+  fail "$STEP"
+}
+pm2 save >/dev/null 2>&1 || true
 env PATH=$PATH:/usr/bin pm2 startup systemd -u root --hp /root >/dev/null 2>&1 || true
 sleep 2
-pm2 pid rebesta-store >/dev/null 2>&1 && echo "✅ store is RUNNING (PID $(pm2 pid rebesta-store))"
+pm2 pid rebesta-store >/dev/null 2>&1 && echo "✅ store is RUNNING (PID $(pm2 pid rebesta-store))" || {
+  echo "❗ store process died right after start — showing logs:"
+  pm2 logs rebesta-store --nostream --lines 25 2>/dev/null | grep -v "^\[TAILING\]" | tail -35
+  fail "$STEP"
+}
 
 STEP="8/9 Domain + SSL + firewall"
 step "$STEP"

@@ -15,5 +15,5 @@ REMOTE=$(git rev-parse origin/main)
 
 git reset --hard origin/main --quiet
 npm install --omit=dev --no-audit --no-fund --silent >/dev/null 2>&1 || npm install --omit=dev --no-audit --no-fund
-pm2 restart rebesta-store --update-env >/dev/null 2>&1 || pm2 start ecosystem.config.js --env production >/dev/null 2>&1
+pm2 restart rebesta-store --update-env >/dev/null 2>&1 || pm2 start ecosystem.config.cjs >/dev/null 2>&1
 echo "$(date '+%Y-%m-%d %H:%M:%S') ✅ deployed $(git rev-parse --short HEAD)"

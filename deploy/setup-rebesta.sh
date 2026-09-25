@@ -165,6 +165,7 @@ ufw --force enable >/dev/null 2>&1
 echo "✅ firewall on (SSH + web only)"
 
 # Auto-update: checks GitHub every 5 minutes, deploys new code automatically
+mkdir -p /etc/cron.d
 cat > /etc/cron.d/rebesta-update <<EOF
 */5 * * * * root $APP_DIR/deploy/update.sh >> /var/log/rebesta-update.log 2>&1
 EOF

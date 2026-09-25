@@ -71,10 +71,16 @@ export async function reverseGeocode(lat, lng) {
   url.searchParams.set('format', 'jsonv2');
   url.searchParams.set('lat', coordinates.lat);
   url.searchParams.set('lon', coordinates.lng);
-  const data = await fetchJson(url);
+  let data = null;
+  try {
+    data = await fetchJson(url, 8000);
+  } catch {
+    // Label lookup failed — the pin itself is still perfectly usable
+    data = null;
+  }
   const result = {
     ...coordinates,
-    label: data.display_name || 'Selected map pin',
+    label: (data && data.display_name) || 'Selected map pin',
     provider: 'openstreetmap-reverse'
   };
   cacheSet(`reverse:${key}`, result);
@@ -93,20 +99,29 @@ export function haversineKm(origin, destination) {
 
 export async function drivingRouteKm(origin, destination) {
   const key = `${origin.lat.toFixed(5)}:${origin.lng.toFixed(5)}-${destination.lat.toFixed(5)}:${destination.lng.toFixed(5)}`;
+  if (cacheGet(`routefail:${key}`)) {
+    throw Object.assign(new Error('Routing temporarily unavailable for this pin'), { status: 502 });
+  }
   const cached = cacheGet(`route:${key}`);
   if (cached) return cached;
   const url = new URL(`https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}`);
   url.searchParams.set('overview', 'false');
   url.searchParams.set('steps', 'false');
   url.searchParams.set('annotations', 'false');
-  const data = await fetchJson(url);
-  const metres = Number(data.routes?.[0]?.distance);
-  if (data.code !== 'Ok' || !Number.isFinite(metres) || metres <= 0) {
-    throw Object.assign(new Error('Could not calculate a driving route to that pin. Try another exact pin.'), { status: 400 });
+  try {
+    const data = await fetchJson(url, 8000);
+    const metres = Number(data.routes?.[0]?.distance);
+    if (data.code !== 'Ok' || !Number.isFinite(metres) || metres <= 0) {
+      throw new Error(`No route (${data.code || 'unknown'})`);
+    }
+    const result = { distanceKm: metres / 1000, provider: 'osrm-driving-route' };
+    cacheSet(`route:${key}`, result, ONE_DAY_MS);
+    return result;
+  } catch (error) {
+    // Remember the failure for 60s so repeated quotes don't re-wait on a slow/rate-limited router
+    cacheSet(`routefail:${key}`, true, 60 * 1000);
+    throw Object.assign(new Error('Could not calculate a driving route to that pin.'), { status: 502 });
   }
-  const result = { distanceKm: metres / 1000, provider: 'osrm-driving-route' };
-  cacheSet(`route:${key}`, result, ONE_DAY_MS);
-  return result;
 }
 
 function getDeliveryDate() {
@@ -153,7 +168,15 @@ export async function quoteDelivery({ cart, location = {}, address = {} }) {
     point = await geocodeAddress(addressParts.join(', '));
   }
 
-  const route = await drivingRouteKm({ lat: delivery.hubLat, lng: delivery.hubLng }, point);
+  let route;
+  try {
+    route = await drivingRouteKm({ lat: delivery.hubLat, lng: delivery.hubLng }, point);
+  } catch {
+    // Free public router failed (unmapped road / rate limit / timeout) — never block a customer.
+    // Fall back to air-line distance with a standard road-detour estimate of 1.25x.
+    const airKm = haversineKm({ lat: delivery.hubLat, lng: delivery.hubLng }, point);
+    route = { distanceKm: airKm * 1.25, provider: 'air-distance-estimate' };
+  }
   const distanceKm = route.distanceKm;
   const maxRoadKm = Number(delivery.maxRoadKm || 9);
   const eligible = distanceKm <= maxRoadKm;

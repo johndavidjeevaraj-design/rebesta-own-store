@@ -19,6 +19,7 @@ import {
 import { orderPlacedEmails } from '../lib/mailer.js';
 import { quoteDelivery, reverseGeocode } from '../lib/delivery.js';
 import { createPayuPayment, validatePayuResponse } from '../lib/payu.js';
+import { findPartnerById, getPosition } from '../lib/partners.js';
 
 export const router = express.Router();
 
@@ -272,5 +273,21 @@ router.get('/orders/:id', (req, res) => {
   if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
   const phone = normalizePhone(req.query.phone);
   // Public tracking by link ID; link is intentionally long/random. Full address is masked.
-  res.json({ ok: true, order: maskCustomer(order), phoneVerified: phone ? order.customer?.phone === phone : null });
+  const payload = { ok: true, order: maskCustomer(order), phoneVerified: phone ? order.customer?.phone === phone : null };
+  // Live partner location for the customer while the order is on the road
+  if (order.assignedPartnerId && order.status === 'OUT_FOR_DELIVERY') {
+    const partner = findPartnerById(order.assignedPartnerId);
+    const position = partner ? getPosition(partner.id, 5 * 60 * 1000) : null;
+    if (partner && position) {
+      payload.deliveryPartner = {
+        name: partner.name,
+        lat: position.lat,
+        lng: position.lng,
+        updatedAt: position.updatedAt
+      };
+    } else if (partner) {
+      payload.deliveryPartner = { name: partner.name, lat: null, lng: null, updatedAt: null };
+    }
+  }
+  res.json(payload);
 });

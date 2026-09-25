@@ -10,7 +10,9 @@ fs.mkdirSync(path.join(dataDir, 'orders'), { recursive: true });
 const files = {
   products: path.join(dataDir, 'products.json'),
   settings: path.join(dataDir, 'settings.json'),
-  orders: path.join(dataDir, 'orders.json')
+  orders: path.join(dataDir, 'orders.json'),
+  partners: path.join(dataDir, 'partners.json'),
+  positions: path.join(dataDir, 'partner-positions.json')
 };
 
 function readJson(file, fallback) {
@@ -126,6 +128,24 @@ export function readOrders() {
 export function saveOrders(orders) {
   writeJson(files.orders, orders);
   return orders;
+}
+
+export function loadPartners() {
+  return readJson(files.partners, []);
+}
+
+export function savePartners(partners) {
+  writeJson(files.partners, partners);
+  return partners;
+}
+
+export function loadPositions() {
+  return readJson(files.positions, {});
+}
+
+export function savePositions(positions) {
+  writeJson(files.positions, positions);
+  return positions;
 }
 
 export function addOrder(order) {
@@ -410,7 +430,9 @@ export function createBackup() {
     files: {
       products: readJson(files.products, []),
       orders: readJson(files.orders, []),
-      settings: readJson(files.settings, {})
+      settings: readJson(files.settings, {}),
+      partners: readJson(files.partners, []),
+      positions: readJson(files.positions, {})
     }
   };
 }

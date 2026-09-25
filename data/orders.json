@@ -42,7 +42,7 @@
     "deliveryFeeInr": 70,
     "totalInr": 130,
     "distanceKm": 6,
-    "deliveryTierLabel": "6–7 km",
+    "deliveryTierLabel": "6\u20137 km",
     "freeDeliveryApplied": false,
     "deliveryDate": {
       "iso": "2026-09-24",
@@ -50,7 +50,7 @@
     },
     "slot": {
       "id": "am2",
-      "label": "9:00 AM – 11:00 AM",
+      "label": "9:00 AM \u2013 11:00 AM",
       "startHour": 9,
       "endHour": 11,
       "date": "2026-09-24",

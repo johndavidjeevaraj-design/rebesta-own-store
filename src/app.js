@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import { config } from './config.js';
 import { router as publicRouter } from './routes/public.js';
 import { router as adminRouter } from './routes/admin.js';
+import { router as partnerRouter } from './routes/partner.js';
 import { publicCatalog } from './lib/store.js';
 import { rateLimit } from './lib/rateLimit.js';
 
@@ -43,6 +44,7 @@ ${productUrls}
   app.use('/api/coupon', rateLimit({ windowMs: 60_000, max: 20, message: 'Too many coupon attempts. Please wait one minute.' }));
   app.use('/api', publicRouter);
   app.use('/api/admin', adminRouter);
+  app.use('/api/partner', partnerRouter);
   app.use(express.static(config.publicDir, {
     extensions: ['html'],
     index: false,
@@ -50,7 +52,7 @@ ${productUrls}
   }));
 
   app.get('/', (req, res) => res.sendFile('index.html', { root: config.publicDir }));
-  app.get(['/cart', '/checkout', '/order-success', '/track', '/about', '/faq', '/terms', '/privacy', '/refund'], (req, res) => {
+  app.get(['/cart', '/checkout', '/order-success', '/track', '/about', '/faq', '/terms', '/privacy', '/refund', '/partner'], (req, res) => {
     res.sendFile(`${req.path.slice(1)}.html`, { root: config.publicDir });
   });
   app.get('/products/:handle', (req, res) => res.sendFile('product.html', { root: config.publicDir }));

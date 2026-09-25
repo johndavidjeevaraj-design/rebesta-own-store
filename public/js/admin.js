@@ -3,7 +3,11 @@
     key: localStorage.getItem('rebesta_admin_key') || '',
     products: [],
     orders: [],
-    settings: null
+    settings: null,
+    partners: [],
+    map: null,
+    mapMarkers: {},
+    mapTimer: null
   };
   const $ = selector => document.querySelector(selector);
   const statuses = ['PENDING_PAYMENT', 'PLACED', 'CONFIRMED', 'PACKING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'PAYMENT_FAILED', 'PAID_NEEDS_REVIEW'];
@@ -432,7 +436,7 @@
     }
     const table = document.createElement('table');
     table.className = 'admin-table';
-    table.innerHTML = '<thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Delivery</th><th>Total</th><th>Status</th></tr></thead><tbody></tbody>';
+    table.innerHTML = '<thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Delivery</th><th>Partner</th><th>Total</th><th>Status</th></tr></thead><tbody></tbody>';
     const body = table.querySelector('tbody');
     for (const order of state.orders) {
       const tr = document.createElement('tr');
@@ -443,6 +447,7 @@
         <td><strong>${order.customer?.name || ''}</strong><br><span>${order.customer?.phone || ''}</span></td>
         <td>${itemText}</td>
         <td><strong>${order.slot?.label || ''}</strong><br><span>${addr}</span><br><span>${order.location ? `Pin: ${order.location.lat}, ${order.location.lng}` : ''}</span></td>
+        <td data-partner-cell></td>
         <td><strong>${RFS.money(order.totalInr)}</strong><br><span>${order.paymentMethod.toUpperCase()} · ${order.paymentStatus.replaceAll('_', ' ').toLowerCase()}</span>${order.paymentMethod === 'cod' && order.paymentStatus === 'PAY_ON_DELIVERY' && !['DELIVERED', 'CANCELLED'].includes(order.status) ? '<br><button class="button ghost small" type="button" data-mark-cash>💵 Mark cash received</button>' : ''}</td>
         <td><select class="status-select"></select></td>
       `;
@@ -469,15 +474,202 @@
           refreshDashboard();
         } catch (error) { RFS.toast(error.message, 'error'); select.value = order.status; }
       });
+      const partnerCell = tr.querySelector('[data-partner-cell]');
+      const activePartners = state.partners.filter(p => p.active);
+      if (['DELIVERED', 'CANCELLED'].includes(order.status)) {
+        partnerCell.innerHTML = order.assignedPartnerName ? `<span>${order.assignedPartnerName}</span>` : '<span style="color:var(--muted)">—</span>';
+      } else if (!activePartners.length) {
+        partnerCell.innerHTML = '<span style="color:var(--muted);font-size:.85rem">No partners yet</span>';
+      } else {
+        const pSelect = document.createElement('select');
+        pSelect.style.cssText = 'padding:7px;border-radius:9px;border:1px solid #cbd8c5;font-size:.85rem;max-width:130px';
+        pSelect.appendChild(new Option('— assign —', ''));
+        for (const partner of activePartners) {
+          const opt = new Option(`${partner.name} (${partner.activeOrders})`, partner.id);
+          if (order.assignedPartnerId === partner.id) opt.selected = true;
+          pSelect.appendChild(opt);
+        }
+        pSelect.addEventListener('change', async () => {
+          try {
+            await api(`/api/admin/orders/${encodeURIComponent(order.id)}/assign`, { method: 'POST', body: JSON.stringify({ partnerId: pSelect.value || null }) });
+            RFS.toast(pSelect.value ? `Assigned to ${pSelect.selectedOptions[0].text.split(' (')[0]} 🛵` : 'Order unassigned');
+            await refreshPartners();
+            renderOrders();
+          } catch (error) { RFS.toast(error.message, 'error'); pSelect.value = order.assignedPartnerId || ''; }
+        });
+        partnerCell.appendChild(pSelect);
+      }
       body.appendChild(tr);
     }
     wrap.appendChild(table);
     renderPacking();
   }
 
+  /* ============ Delivery partners ============ */
+
+  async function refreshPartners() {
+    try {
+      const data = await api('/api/admin/partners');
+      state.partners = data.partners || [];
+    } catch { state.partners = state.partners || []; }
+    renderPartners();
+  }
+
+  function partnerLiveDot(partner) {
+    const pos = partner.lastPosition;
+    if (!pos) return '';
+    const ageMin = Math.round((Date.now() - Date.parse(pos.updatedAt)) / 60000);
+    if (ageMin <= 10) return ' <span style="color:#1f7a3d" title="Live now">●</span>';
+    if (ageMin <= 60) return ` <span style="color:#f28c28" title="Seen ${ageMin}m ago">●</span>`;
+    return '';
+  }
+
+  function renderPartners() {
+    const panel = $('[data-partners-panel]');
+    if (!panel) return;
+    const rows = state.partners.map(p => `
+      <tr>
+        <td><strong>${p.name}</strong>${partnerLiveDot(p)}<br><small style="color:var(--muted)">${p.id}</small></td>
+        <td>+91 ${p.phone}</td>
+        <td>${p.activeOrders}</td>
+        <td>${p.deliveredTotal}</td>
+        <td>${p.active ? '<span class="badge green">active</span>' : '<span class="badge gray">disabled</span>'}</td>
+        <td style="white-space:nowrap">
+          <button class="button ghost small" type="button" data-partner-toggle="${p.id}">${p.active ? 'Disable' : 'Enable'}</button>
+          <button class="button ghost small" type="button" data-partner-pin="${p.id}">Reset PIN</button>
+          <button class="button danger small" type="button" data-partner-delete="${p.id}">Remove</button>
+        </td>
+      </tr>`).join('');
+    panel.innerHTML = `
+      <div class="section-head" style="margin-bottom:18px">
+        <div><h2 style="margin-bottom:5px">🛵 Delivery partners</h2><p class="section-subtitle" style="font-size:.94rem">Partners sign in at <strong>/partner</strong> on their phone with mobile + PIN. Assign orders to them in the orders table below.</p></div>
+      </div>
+      ${state.partners.length ? `
+      <div class="admin-table-wrap" style="border-radius:16px;margin-bottom:18px">
+        <table class="admin-table" style="min-width:640px">
+          <thead><tr><th>Partner</th><th>Phone</th><th>Active orders</th><th>Delivered total</th><th>Status</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>` : '<div class="alert info">No delivery partners yet — add your first partner below 👇</div>'}
+      <form data-add-partner class="form-grid" style="align-items:end">
+        <div class="field"><label>Partner name</label><input name="name" maxlength="60" placeholder="e.g. Ramesh" required></div>
+        <div class="field"><label>Mobile number</label><input name="phone" inputmode="numeric" maxlength="10" placeholder="10-digit number" required></div>
+        <div class="field"><label>PIN (4–6 digits)</label><input name="pin" inputmode="numeric" maxlength="6" placeholder="e.g. 4821" required></div>
+        <div class="field" style="justify-content:end"><button class="button orange" type="submit">+ Add partner</button></div>
+      </form>`;
+
+    panel.querySelector('[data-add-partner]')?.addEventListener('submit', async event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const payload = Object.fromEntries(new FormData(form).entries());
+      if (!/^[6-9]\d{9}$/.test(payload.phone.replace(/\D/g, ''))) return RFS.toast('Enter a valid 10-digit mobile number', 'error');
+      if (!/^\d{4,6}$/.test(payload.pin)) return RFS.toast('PIN must be 4–6 digits', 'error');
+      try {
+        const data = await api('/api/admin/partners', { method: 'POST', body: JSON.stringify(payload) });
+        RFS.toast(`${data.partner.name} added — share the PIN 🛵`, 'success');
+        await refreshPartners();
+        renderOrders();
+      } catch (error) { RFS.toast(error.message, 'error'); }
+    });
+
+    panel.querySelectorAll('[data-partner-toggle]').forEach(btn => btn.addEventListener('click', async () => {
+      try {
+        const partner = state.partners.find(p => p.id === btn.dataset.partnerToggle);
+        await api(`/api/admin/partners/${encodeURIComponent(btn.dataset.partnerToggle)}`, { method: 'PATCH', body: JSON.stringify({ active: !partner.active }) });
+        await refreshPartners();
+      } catch (error) { RFS.toast(error.message, 'error'); }
+    }));
+
+    panel.querySelectorAll('[data-partner-pin]').forEach(btn => btn.addEventListener('click', async () => {
+      const pin = prompt('New 4–6 digit PIN for this partner:');
+      if (!pin) return;
+      try {
+        await api(`/api/admin/partners/${encodeURIComponent(btn.dataset.partnerPin)}`, { method: 'PATCH', body: JSON.stringify({ pin }) });
+        RFS.toast('PIN updated — partner uses it from next sign-in', 'success');
+      } catch (error) { RFS.toast(error.message, 'error'); }
+    }));
+
+    panel.querySelectorAll('[data-partner-delete]').forEach(btn => btn.addEventListener('click', async () => {
+      const partner = state.partners.find(p => p.id === btn.dataset.partnerDelete);
+      if (!confirm(`Remove ${partner?.name}? Their assigned orders will be unassigned.`)) return;
+      try {
+        await api(`/api/admin/partners/${encodeURIComponent(btn.dataset.partnerDelete)}`, { method: 'DELETE' });
+        RFS.toast('Partner removed', 'success');
+        await refreshPartners();
+        renderOrders();
+      } catch (error) { RFS.toast(error.message, 'error'); }
+    }));
+  }
+
+  /* ============ Live tracking map ============ */
+
+  function partnerIcon(name, live) {
+    return L.divIcon({
+      className: '',
+      html: `<div style="transform:translate(-50%,-100%);text-align:center;white-space:nowrap">
+        <div style="display:inline-flex;align-items:center;gap:4px;background:${live ? '#074015' : '#8a9784'};color:#fff;font-weight:700;font-size:.8rem;padding:4px 10px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.35)">🛵 ${name}${live ? ' <span style=\"color:#7CFC98\">●</span>' : ''}</div>
+        <div style="width:14px;height:14px;background:${live ? '#074015' : '#8a9784'};border:2.5px solid #fff;border-radius:50%;margin:-4px auto 0;box-shadow:0 1px 6px rgba(0,0,0,.4)"></div>
+      </div>`,
+      iconSize: [0, 0],
+      iconAnchor: [0, 0]
+    });
+  }
+
+  async function refreshTracking() {
+    const panel = $('[data-tracking-panel]');
+    if (!panel || !window.L) return;
+    let data;
+    try { data = await api('/api/admin/tracking'); } catch { return; }
+    const live = data.partners || [];
+
+    if (!state.map) {
+      panel.innerHTML = `
+        <div class="section-head" style="margin-bottom:12px">
+          <div><h2 style="margin-bottom:5px">📡 Live delivery tracking</h2><p class="section-subtitle" style="font-size:.94rem">Partners appear here in real time while tracking is ON in their app. Map refreshes every 10 seconds.</p></div>
+          <span class="badge ${live.length ? 'green' : 'gray'}">${live.length ? live.length + ' live' : 'nobody live'}</span>
+        </div>
+        <div id="trackMap" style="height:420px;border-radius:16px;border:1px solid #dbe5d6;z-index:0"></div>
+        ${live.length ? '' : '<p class="summary-note" style="margin-top:10px">Nobody is tracking right now. Partners tap “Start live tracking” in their app while delivering.</p>'}`;
+      const hub = data.hub && Number.isFinite(Number(data.hub.lat)) ? data.hub : { lat: 12.728582, lng: 77.824784 };
+      state.map = L.map('trackMap').setView([hub.lat, hub.lng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(state.map);
+      L.circle([hub.lat, hub.lng], { radius: 9000, color: '#1f7a3d', weight: 1.5, fillOpacity: 0.06 }).addTo(state.map);
+      L.marker([hub.lat, hub.lng], { icon: L.divIcon({ className: '', html: '<div style="transform:translate(-50%,-100%)"><div style="background:#f28c28;color:#fff;font-weight:800;font-size:.8rem;padding:4px 10px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.35)">🏪 Rebesta hub</div></div>', iconSize: [0, 0] }) }).addTo(state.map);
+    }
+
+    const seen = new Set();
+    for (const row of live) {
+      const ageMin = Math.round((Date.now() - Date.parse(row.position.updatedAt)) / 60000);
+      const isLive = ageMin <= 2;
+      const popup = `<strong>${row.partner.name}</strong> · ${isLive ? '<span style="color:#1f7a3d">LIVE</span>' : `seen ${ageMin} min ago`}<br>
+        ${row.orders.length ? row.orders.map(o => `🧾 ${o.id} — ${o.customer} (${RFS.money(o.totalInr)}) ${o.slot}`).join('<br>') : 'no active orders'}`;
+      if (state.mapMarkers[row.partner.id]) {
+        state.mapMarkers[row.partner.id].setLatLng([row.position.lat, row.position.lng]).setIcon(partnerIcon(row.partner.name, isLive)).setPopupContent(popup);
+      } else {
+        state.mapMarkers[row.partner.id] = L.marker([row.position.lat, row.position.lng], { icon: partnerIcon(row.partner.name, isLive) }).addTo(state.map).bindPopup(popup);
+      }
+      seen.add(row.partner.id);
+    }
+    for (const [id, marker] of Object.entries(state.mapMarkers)) {
+      if (!seen.has(id)) { state.map.removeLayer(marker); delete state.mapMarkers[id]; }
+    }
+    if (live.length && !state.map._fitDone) {
+      state.map.fitBounds(live.map(r => [r.position.lat, r.position.lng]), { padding: [60, 60], maxZoom: 14 });
+      state.map._fitDone = true;
+    }
+  }
+
   async function refreshAll() {
     await refreshDashboard();
-    await Promise.all([renderSettings(), renderProducts(), renderOrders()]);
+    await Promise.all([renderSettings(), renderProducts(), renderOrders(), refreshPartners()]);
+    refreshTracking();
+    clearInterval(state.mapTimer);
+    state.mapTimer = setInterval(() => {
+      if (document.visibilityState === 'visible') refreshTracking();
+    }, 10000);
     renderLowStock();
     renderSales();
   }

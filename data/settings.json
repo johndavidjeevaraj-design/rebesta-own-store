@@ -111,6 +111,17 @@
   "promotions": {
     "coupons": [
       {
+        "code": "LOY-TKEYB6",
+        "type": "flat",
+        "value": 10,
+        "minOrderInr": 299,
+        "active": true,
+        "maxUses": 1,
+        "usedCount": 0,
+        "expiresAt": "2026-11-24T17:32:34.611Z",
+        "note": "Loyalty reward for RB-TEST-PARTNER"
+      },
+      {
         "code": "WELCOME50",
         "type": "flat",
         "value": 50,

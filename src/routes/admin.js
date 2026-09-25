@@ -1,6 +1,7 @@
 import express from 'express';
 import { config } from '../config.js';
-import { loadProducts, loadSettings, readOrders, saveOrders, updateOrderStatus, updateProduct, saveSettings, createBackup, awardLoyalty, awardReferral } from '../lib/store.js';
+import { loadProducts, loadSettings, loadPartners, savePartners, readOrders, saveOrders, updateOrderStatus, updateProduct, saveSettings, createBackup, awardLoyalty, awardReferral } from '../lib/store.js';
+import { createPartner, updatePartner, deletePartner, publicPartner, freshPositions } from '../lib/partners.js';
 import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
 
 export const router = express.Router();
@@ -239,4 +240,108 @@ router.get('/orders.csv', (req, res) => {
 router.get('/backup', (req, res) => {
   const backup = createBackup();
   res.type('application/json').attachment(`rebesta-backup-${new Date().toISOString().slice(0, 10)}.json`).send(JSON.stringify(backup, null, 2));
+});
+
+/* ================= Delivery partners ================= */
+
+const ACTIVE_STATUSES = ['PLACED', 'CONFIRMED', 'PACKING', 'OUT_FOR_DELIVERY', 'PENDING_PAYMENT'];
+
+router.get('/partners', (req, res) => {
+  const partners = loadPartners();
+  const positions = freshPositions(6 * 60 * 60 * 1000);
+  const orders = readOrders();
+  res.json({
+    ok: true,
+    partners: partners.map(partner => {
+      const row = positions.find(p => p.partner.id === partner.id);
+      return {
+        ...publicPartner(partner),
+        lastPosition: row ? row.position : null,
+        activeOrders: orders.filter(o => o.assignedPartnerId === partner.id && ACTIVE_STATUSES.includes(o.status)).length,
+        deliveredTotal: orders.filter(o => o.assignedPartnerId === partner.id && o.status === 'DELIVERED').length
+      };
+    })
+  });
+});
+
+router.post('/partners', (req, res) => {
+  try {
+    const partner = createPartner(req.body || {});
+    res.status(201).json({ ok: true, partner: publicPartner(partner) });
+  } catch (error) {
+    res.status(error.status || 400).json({ ok: false, error: error.message || 'Could not create partner' });
+  }
+});
+
+router.patch('/partners/:id', (req, res) => {
+  try {
+    const partner = updatePartner(req.params.id, req.body || {});
+    if (!partner) return res.status(404).json({ ok: false, error: 'Partner not found' });
+    res.json({ ok: true, partner: publicPartner(partner) });
+  } catch (error) {
+    res.status(error.status || 400).json({ ok: false, error: error.message || 'Could not update partner' });
+  }
+});
+
+router.delete('/partners/:id', (req, res) => {
+  const partner = deletePartner(req.params.id);
+  if (!partner) return res.status(404).json({ ok: false, error: 'Partner not found' });
+  const orders = readOrders();
+  let unassigned = 0;
+  for (const order of orders) {
+    if (order.assignedPartnerId === partner.id) {
+      delete order.assignedPartnerId;
+      delete order.assignedPartnerName;
+      order.updatedAt = new Date().toISOString();
+      order.history.push({ status: order.status, at: order.updatedAt, note: `Partner ${partner.name} removed — order unassigned` });
+      unassigned++;
+    }
+  }
+  if (unassigned) saveOrders(orders);
+  res.json({ ok: true, unassigned });
+});
+
+router.post('/orders/:id/assign', (req, res) => {
+  const orders = readOrders();
+  const order = orders.find(o => o.id === req.params.id);
+  if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
+  const partnerId = req.body?.partnerId || null;
+  if (partnerId) {
+    const partner = loadPartners().find(p => p.id === partnerId);
+    if (!partner) return res.status(404).json({ ok: false, error: 'Partner not found' });
+    if (partner.active === false) return res.status(409).json({ ok: false, error: `${partner.name} is disabled — enable the partner first` });
+    if (order.assignedPartnerId && order.assignedPartnerId !== partner.id) {
+      order.history.push({ status: order.status, at: new Date().toISOString(), note: `Reassigned from ${order.assignedPartnerName || 'partner'} to ${partner.name}` });
+    }
+    order.assignedPartnerId = partner.id;
+    order.assignedPartnerName = partner.name;
+    if (!order.history?.some(h => h.note === `Assigned to ${partner.name} (${partner.id})`)) {
+      order.history.push({ status: order.status, at: new Date().toISOString(), note: `Assigned to ${partner.name} (${partner.id})` });
+    }
+  } else {
+    if (order.assignedPartnerId) {
+      order.history.push({ status: order.status, at: new Date().toISOString(), note: `Unassigned from ${order.assignedPartnerName || 'partner'}` });
+    }
+    delete order.assignedPartnerId;
+    delete order.assignedPartnerName;
+  }
+  order.updatedAt = new Date().toISOString();
+  saveOrders(orders);
+  res.json({ ok: true, order });
+});
+
+/* Live tracking feed for the admin map */
+router.get('/tracking', (req, res) => {
+  const settings = loadSettings();
+  const orders = readOrders();
+  res.json({
+    ok: true,
+    hub: { lat: settings.delivery?.hubLat ?? null, lng: settings.delivery?.hubLng ?? null },
+    partners: freshPositions(30 * 60 * 1000).map(row => ({
+      ...row,
+      orders: orders
+        .filter(o => o.assignedPartnerId === row.partner.id && ACTIVE_STATUSES.includes(o.status))
+        .map(o => ({ id: o.id, customer: o.customer?.name || '', totalInr: o.totalInr, slot: o.slot?.label || '', status: o.status }))
+    }))
+  });
 });

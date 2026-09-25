@@ -1,7 +1,7 @@
 /* Rebesta Fresh — Delivery Partner app */
 (() => {
   const $ = id => document.getElementById(id);
-  const state = { token: localStorage.getItem('rebesta_partner_token') || '', partner: null, orders: [], watchId: null, lastSentAt: 0, refreshTimer: null };
+  const state = { token: localStorage.getItem('rebesta_partner_token') || '', partner: null, hub: null, orders: [], watchId: null, lastSentAt: 0, lastPos: null, refreshTimer: null, lastVersion: '' };
 
   async function api(path, options = {}) {
     const res = await fetch(path, {
@@ -23,6 +23,20 @@
 
   const money = v => `₹${Number(v || 0) % 1 === 0 ? Number(v || 0) : Number(v || 0).toFixed(2)}`;
 
+  function airKm(a, b) {
+    if (!a || !b) return null;
+    const toRad = d => d * Math.PI / 180;
+    const dLat = toRad(b.lat - a.lat), dLng = toRad(b.lng - a.lng);
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+    return 6371 * 2 * Math.asin(Math.sqrt(h));
+  }
+  const etaMin = km => km == null ? null : Math.min(90, Math.max(3, Math.ceil((km * 1.25) / 18 * 60)));
+  const rideLabel = order => {
+    const from = state.lastPos || (state.hub && Number.isFinite(Number(state.hub.lat)) ? state.hub : null);
+    const km = airKm(from, order.location);
+    return km == null ? '' : ` · <span style="color:#1f7a3d;font-weight:700">≈${etaMin(km)} min ride</span>`;
+  };
+
   function mapsLink(order) {
     const pin = order.location && Number.isFinite(Number(order.location.lat)) ? `${order.location.lat},${order.location.lng}` : null;
     if (pin) return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(pin)}&travelmode=two_wheeler`;
@@ -40,7 +54,7 @@
 
     $('hello').innerHTML = `
       <div class="order-card" style="margin-bottom:14px">
-        <div class="oc-name">Vanakkam, ${state.partner.name} 👋</div>
+        <div class="oc-name">Vanakkam, ${state.partner.name} 👋 <span style="float:right;font-size:.72rem;color:#1f7a3d;font-weight:700">● live updates</span></div>
         <div style="font-size:.82rem;color:#6b7a66">Have a smooth morning — deliver fresh, collect smiles.</div>
       </div>`;
     $('stats').innerHTML = `
@@ -68,7 +82,7 @@
           <div class="oc-addr">📍 ${[order.address?.line1, order.address?.area, order.address?.city].filter(Boolean).join(', ')}<br>
             <a href="tel:+91${order.customer?.phone || ''}" style="color:#1f7a3d;font-weight:700">📞 +91 ${order.customer?.phone || ''}</a>
           </div>
-          <div class="oc-items">🧺 ${items}</div>
+          <div class="oc-items">🧺 ${items}${rideLabel(order)}</div>
           <div class="oc-actions">
             <a class="button orange" style="display:flex;align-items:center;justify-content:center" href="${mapsLink(order)}" target="_blank" rel="noopener">📍 Navigate</a>
             <button class="button ghost" type="button" data-call="${order.customer?.phone || ''}">📞 Call</button>
@@ -125,6 +139,7 @@
   /* ---------- live tracking ---------- */
 
   function sendPosition(pos) {
+    state.lastPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
     const now = Date.now();
     if (now - state.lastSentAt < 8000) return;
     state.lastSentAt = now;
@@ -187,16 +202,32 @@
     location.reload();
   });
 
+  let knownIds = new Set();
+
+  async function pollVersion() {
+    if (document.visibilityState !== 'visible' || !state.token) return;
+    try {
+      const data = await api('/api/partner/version');
+      if (data.v === state.lastVersion) return;
+      const first = !state.lastVersion;
+      state.lastVersion = data.v;
+      if (first) return;
+      const before = new Set(state.orders.active.map(o => o.id).concat(state.orders.doneToday.map(o => o.id)));
+      await loadOrders();
+      const fresh = state.orders.active.filter(o => !before.has(o.id));
+      if (fresh.length) {
+        toast(`🆕 New order assigned! ${fresh[0].customer?.name || ''} · ${money(fresh[0].totalInr)}`, 'success');
+        try { navigator.vibrate && navigator.vibrate([120, 60, 120]); } catch {}
+      }
+    } catch {}
+  }
+
   function enterApp() {
     $('loginCard').hidden = true;
     $('mainCard').hidden = false;
     loadOrders().catch(e => toast(e.message, 'error'));
     clearInterval(state.refreshTimer);
-    state.refreshTimer = setInterval(() => {
-      if (document.visibilityState === 'visible' && state.token) {
-        loadOrders().catch(() => {});
-      }
-    }, 60000);
+    state.refreshTimer = setInterval(pollVersion, 10000);
   }
 
   (async function init() {
@@ -204,6 +235,7 @@
     try {
       const data = await api('/api/partner/session');
       state.partner = data.partner;
+      state.hub = data.hub;
       enterApp();
     } catch {
       state.token = '';

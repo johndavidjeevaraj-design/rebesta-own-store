@@ -1,5 +1,5 @@
 import express from 'express';
-import { readOrders, saveOrders, updateOrderStatus, awardLoyalty, awardReferral } from '../lib/store.js';
+import { readOrders, saveOrders, updateOrderStatus, awardLoyalty, awardReferral, loadSettings } from '../lib/store.js';
 import { verifyPartnerToken, findPartnerByPhone, partnerToken, hashPin, publicPartner, recordPosition } from '../lib/partners.js';
 import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
 
@@ -53,7 +53,16 @@ router.post('/login', (req, res) => {
 });
 
 router.get('/session', partnerOnly, (req, res) => {
-  res.json({ ok: true, partner: publicPartner(req.partner) });
+  const delivery = loadSettings().delivery || {};
+  res.json({ ok: true, partner: publicPartner(req.partner), hub: { lat: delivery.hubLat ?? null, lng: delivery.hubLng ?? null } });
+});
+
+/* Tiny version stamp — the app polls this (10s) and only reloads orders when it changes */
+router.get('/version', partnerOnly, (req, res) => {
+  const mine = readOrders().filter(o => o.assignedPartnerId === req.partner.id);
+  const active = mine.filter(o => !['DELIVERED', 'CANCELLED'].includes(o.status));
+  const newest = mine.reduce((max, o) => (String(o.updatedAt || '') > max ? String(o.updatedAt || '') : max), '');
+  res.json({ ok: true, v: `${mine.length}:${active.length}:${newest}` });
 });
 
 /* Orders assigned to this partner: active work first, then today's completed */

@@ -1,7 +1,7 @@
 import express from 'express';
 import { config } from '../config.js';
-import { loadProducts, loadSettings, loadPartners, savePartners, readOrders, saveOrders, updateOrderStatus, updateProduct, saveSettings, createBackup, awardLoyalty, awardReferral } from '../lib/store.js';
-import { createPartner, updatePartner, deletePartner, publicPartner, freshPositions } from '../lib/partners.js';
+import { loadProducts, loadSettings, loadPartners, savePartners, readOrders, saveOrders, updateOrderStatus, updateProduct, saveSettings, createBackup, awardLoyalty, awardReferral, dataVersions } from '../lib/store.js';
+import { createPartner, updatePartner, deletePartner, publicPartner, freshPositions, haversineKm, etaMinutesFromKm } from '../lib/partners.js';
 import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
 
 export const router = express.Router();
@@ -330,7 +330,7 @@ router.post('/orders/:id/assign', (req, res) => {
   res.json({ ok: true, order });
 });
 
-/* Live tracking feed for the admin map */
+/* Live tracking feed for the admin map (includes per-order ETA from partner's live position) */
 router.get('/tracking', (req, res) => {
   const settings = loadSettings();
   const orders = readOrders();
@@ -341,7 +341,22 @@ router.get('/tracking', (req, res) => {
       ...row,
       orders: orders
         .filter(o => o.assignedPartnerId === row.partner.id && ACTIVE_STATUSES.includes(o.status))
-        .map(o => ({ id: o.id, customer: o.customer?.name || '', totalInr: o.totalInr, slot: o.slot?.label || '', status: o.status }))
+        .map(o => {
+          const entry = { id: o.id, customer: o.customer?.name || '', totalInr: o.totalInr, slot: o.slot?.label || '', status: o.status };
+          const pin = o.location && Number.isFinite(Number(o.location.lat)) ? o.location : null;
+          if (pin) {
+            entry.location = pin;
+            const airKm = haversineKm({ lat: row.position.lat, lng: row.position.lng }, { lat: pin.lat, lng: pin.lng });
+            entry.distanceKm = Math.round(airKm * 10) / 10;
+            entry.etaMinutes = etaMinutesFromKm(airKm);
+          }
+          return entry;
+        })
     }))
   });
+});
+
+/* Cheap version stamps so the dashboard can live-poll without heavy reloads */
+router.get('/version', (req, res) => {
+  res.json({ ok: true, versions: dataVersions() });
 });

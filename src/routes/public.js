@@ -19,7 +19,7 @@ import {
 import { orderPlacedEmails } from '../lib/mailer.js';
 import { quoteDelivery, reverseGeocode } from '../lib/delivery.js';
 import { createPayuPayment, validatePayuResponse } from '../lib/payu.js';
-import { findPartnerById, getPosition } from '../lib/partners.js';
+import { findPartnerById, getPosition, haversineKm, etaMinutesFromKm } from '../lib/partners.js';
 
 export const router = express.Router();
 
@@ -279,11 +279,13 @@ router.get('/orders/:id', (req, res) => {
     const partner = findPartnerById(order.assignedPartnerId);
     const position = partner ? getPosition(partner.id, 5 * 60 * 1000) : null;
     if (partner && position) {
+      const pin = order.location && Number.isFinite(Number(order.location.lat)) ? order.location : null;
       payload.deliveryPartner = {
         name: partner.name,
         lat: position.lat,
         lng: position.lng,
-        updatedAt: position.updatedAt
+        updatedAt: position.updatedAt,
+        ...(pin ? { etaMinutes: etaMinutesFromKm(haversineKm({ lat: position.lat, lng: position.lng }, { lat: pin.lat, lng: pin.lng })) } : {})
       };
     } else if (partner) {
       payload.deliveryPartner = { name: partner.name, lat: null, lng: null, updatedAt: null };

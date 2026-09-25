@@ -153,3 +153,11 @@ export function freshPositions(maxAgeMs = 30 * 60 * 1000) {
 export function findPartnerById(id) {
   return loadPartners().find(p => p.id === id) || null;
 }
+
+/* ETA: air-line km -> rough two-wheeler minutes in town traffic (road factor 1.25, ~18 km/h) */
+export { haversineKm } from './delivery.js';
+export function etaMinutesFromKm(airKm) {
+  const roadKm = Number(airKm) * 1.25;
+  const minutes = Math.ceil((roadKm / 18) * 60);
+  return Math.min(90, Math.max(3, minutes));
+}

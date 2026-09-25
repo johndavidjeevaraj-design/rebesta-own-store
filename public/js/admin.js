@@ -7,7 +7,10 @@
     partners: [],
     map: null,
     mapMarkers: {},
-    mapTimer: null
+    mapTimer: null,
+    versions: null,
+    knownOrderIds: new Set(),
+    orderFilter: { status: '', search: '' }
   };
   const $ = selector => document.querySelector(selector);
   const statuses = ['PENDING_PAYMENT', 'PLACED', 'CONFIRMED', 'PACKING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'PAYMENT_FAILED', 'PAID_NEEDS_REVIEW'];
@@ -99,6 +102,17 @@
           <div class="top-products">${topHtml}</div>
         </div>
       </div>`;
+  }
+
+  function wireOrderFilters() {
+    const statusSelect = $('[data-order-status-filter]');
+    const searchInput = $('[data-order-search]');
+    statusSelect?.addEventListener('change', () => { state.orderFilter.status = statusSelect.value; renderOrders(); });
+    let t;
+    searchInput?.addEventListener('input', () => {
+      clearTimeout(t);
+      t = setTimeout(() => { state.orderFilter.search = searchInput.value || ''; renderOrders(); }, 250);
+    });
   }
 
   async function refreshDashboard() {
@@ -345,35 +359,11 @@
     } catch {}
   }
 
-  async function pollOrders() {
-    if (!state.key) return;
-    try {
-      const data = await api('/api/admin/orders');
-      const sorted = [...(data.orders || [])].sort((a, b) => String(b.placedAt || '').localeCompare(String(a.placedAt || '')));
-      const newest = sorted[0];
-      if (lastOrderId && newest && newest.id !== lastOrderId) {
-        const fresh = [];
-        for (const order of sorted) {
-          if (order.id === lastOrderId) break;
-          fresh.push(order);
-        }
-        if (fresh.length) {
-          if (alertsOn) orderBeep();
-          RFS.toast(`🔔 ${fresh.length} new order${fresh.length === 1 ? '' : 's'}! ${fresh[0].id} · ${RFS.money(fresh[0].totalInr)}`);
-          if (alertsOn && 'Notification' in window && Notification.permission === 'granted') {
-            try { new Notification('🥬 New Rebesta order!', { body: `${fresh[0].id} — ${RFS.money(fresh[0].totalInr)}` }); } catch {}
-          }
-          refreshAll().catch(() => {});
-        }
-      }
-      if (newest) lastOrderId = newest.id;
-    } catch {}
-  }
-
+  /* Live polling: 10s version check (tiny), full re-render only when something changed */
   function startOrderAlerts() {
     if (alertTimer) return;
-    pollOrders();
-    alertTimer = setInterval(pollOrders, 25000);
+    pollLive();
+    alertTimer = setInterval(pollLive, 10000);
   }
 
   document.querySelector('[data-alert-toggle]')?.addEventListener('click', async () => {
@@ -425,20 +415,39 @@
     wrap.appendChild(table);
   }
 
+  function filteredOrders() {
+    const q = state.orderFilter.search.trim().toLowerCase();
+    return state.orders.filter(o => {
+      if (state.orderFilter.status === 'ACTIVE') {
+        if (['DELIVERED', 'CANCELLED'].includes(o.status)) return false;
+      } else if (state.orderFilter.status && o.status !== state.orderFilter.status) {
+        return false;
+      }
+      if (q) {
+        const hay = `${o.id} ${o.customer?.name || ''} ${o.customer?.phone || ''} ${o.address?.area || ''}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }
+
   async function renderOrders() {
-    const data = await api('/api/admin/orders');
-    state.orders = data.orders;
     const wrap = $('[data-orders-table]');
     wrap.innerHTML = '';
     if (!state.orders.length) {
       wrap.innerHTML = '<div class="empty-state"><h3>No orders yet</h3><p>Orders placed from your own checkout will appear here.</p></div>';
       return;
     }
+    const shown = filteredOrders();
+    if (!shown.length) {
+      wrap.innerHTML = '<div class="empty-state"><h3>No matching orders</h3><p>Try a different filter or search.</p></div>';
+      return;
+    }
     const table = document.createElement('table');
     table.className = 'admin-table';
     table.innerHTML = '<thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Delivery</th><th>Partner</th><th>Total</th><th>Status</th></tr></thead><tbody></tbody>';
     const body = table.querySelector('tbody');
-    for (const order of state.orders) {
+    for (const order of shown) {
       const tr = document.createElement('tr');
       const itemText = order.items.map(i => `${i.title} × ${i.qty}`).join(', ');
       const addr = [order.address?.line1, order.address?.area, order.address?.city, order.address?.pincode].filter(Boolean).join(', ');
@@ -662,13 +671,89 @@
     }
   }
 
+  /* ============ Tabs ============ */
+
+  function switchTab(name) {
+    document.querySelectorAll('[data-tab-btn]').forEach(btn => btn.classList.toggle('active', btn.dataset.tabBtn === name));
+    document.querySelectorAll('[data-tab]').forEach(sec => { sec.hidden = sec.dataset.tab !== name; });
+    if (name === 'fleet') refreshTracking();
+    if (name === 'dashboard') renderRecent();
+    localStorage.setItem('rebesta_admin_tab', name);
+  }
+
+  document.addEventListener('click', event => {
+    const btn = event.target.closest('[data-tab-btn]');
+    if (btn) switchTab(btn.dataset.tabBtn);
+  });
+
+  /* ============ Recent orders (dashboard) ============ */
+
+  function renderRecent() {
+    const panel = $('[data-recent-panel]');
+    if (!panel) return;
+    const recent = [...state.orders].sort((a, b) => String(b.placedAt).localeCompare(String(a.placedAt))).slice(0, 6);
+    panel.innerHTML = `
+      <div class="section-head" style="margin-bottom:8px"><h2>Latest orders</h2><button class="button ghost small" type="button" data-tab-btn="orders">See all →</button></div>
+      ${recent.length ? recent.map(o => `
+        <div class="recent-row" data-tab-btn="orders">
+          <span class="ri">${o.status === 'DELIVERED' ? '✅' : o.status === 'CANCELLED' ? '❌' : o.status === 'OUT_FOR_DELIVERY' ? '🛵' : '🧾'}</span>
+          <div><strong>${o.id}</strong> · ${o.customer?.name || ''}<br><span class="rmeta">${new Date(o.placedAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} · ${o.paymentMethod === 'cod' ? 'COD' : 'Online'}${o.assignedPartnerName ? ' · 🛵 ' + o.assignedPartnerName : ''}</span></div>
+          <span class="rtotal">${RFS.money(o.totalInr)}</span>
+        </div>`).join('') : '<div class="empty-state"><h3>No orders yet</h3><p>They will appear here automatically — with a chime.</p></div>'}`;
+  }
+
+  /* ============ Live updates (light polling, render only on change) ============ */
+
+  function detectNewOrders() {
+    const fresh = state.orders.filter(o => !state.knownOrderIds.has(o.id));
+    if (state.knownOrderIds.size && fresh.length && alertsOn) {
+      orderBeep();
+      RFS.toast(`🆕 New order${fresh.length > 1 ? 's' : ''}! ${fresh.map(o => o.id + ' · ' + RFS.money(o.totalInr)).join(', ')}`, 'success');
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try { new Notification('🥬 New Rebesta order!', { body: fresh.map(o => `${o.id} — ${RFS.money(o.totalInr)}`).join('\n') }); } catch {}
+      }
+    }
+    for (const o of state.orders) state.knownOrderIds.add(o.id);
+  }
+
+  async function pollLive() {
+    if (document.visibilityState !== 'visible' || !state.key) return;
+    let data;
+    try { data = await api('/api/admin/version'); } catch { return; }
+    const v = data.versions || {};
+    if (!state.versions) { state.versions = v; return; }
+    if (v.orders !== state.versions.orders) {
+      try { state.orders = (await api('/api/admin/orders')).orders; } catch { return; }
+      detectNewOrders();
+      renderOrders();
+      renderRecent();
+      refreshDashboard();
+      renderPacking();
+    }
+    if (v.products !== state.versions.products) { await renderProducts(); refreshDashboard(); }
+    if (v.partners !== state.versions.partners) { await refreshPartners(); renderOrders(); }
+    if (v.settings !== state.versions.settings) {
+      const form = document.querySelector('[data-settings-form]');
+      const editing = form && form.contains(document.activeElement);
+      if (!editing) await renderSettings();
+    }
+    state.versions = v;
+  }
+
   async function refreshAll() {
     await refreshDashboard();
     await Promise.all([renderSettings(), renderProducts(), renderOrders(), refreshPartners()]);
+    detectNewOrders();
+    renderRecent();
+    wireOrderFilters();
     refreshTracking();
+    switchTab(localStorage.getItem('rebesta_admin_tab') || 'dashboard');
     clearInterval(state.mapTimer);
     state.mapTimer = setInterval(() => {
-      if (document.visibilityState === 'visible') refreshTracking();
+      if (document.visibilityState === 'visible') {
+        refreshTracking();
+        pollLive();
+      }
     }, 10000);
     renderLowStock();
     renderSales();

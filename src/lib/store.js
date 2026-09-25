@@ -423,6 +423,18 @@ export function cancelOrderPublic(id, phone) {
   return updateOrderStatus(id, 'CANCELLED', 'Cancelled by customer');
 }
 
+/* --- Cheap change-detection versions for live polling (no full reads) --- */
+export function dataVersions() {
+  const mtime = file => { try { return fs.statSync(file).mtimeMs; } catch { return 0; } };
+  return {
+    orders: `${readOrders().length}:${mtime(files.orders)}`,
+    products: `${loadProducts().length}:${mtime(files.products)}`,
+    settings: `${mtime(files.settings)}`,
+    partners: `${loadPartners().length}:${mtime(files.partners)}`,
+    positions: `${mtime(files.positions)}`
+  };
+}
+
 /* --- Backups: snapshot of all JSON data --- */
 export function createBackup() {
   return {

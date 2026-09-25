@@ -64,7 +64,7 @@ function renderPartnerLive(d){const p=d.deliveryPartner;if(!p){partnerBox.innerH
  partnerBox.innerHTML=`<div style="display:flex;align-items:center;gap:12px;background:#eef5ea;border:1px solid #cfe3c8;border-radius:14px;padding:12px 14px">
  <span style="font-size:1.7rem">🛵</span>
  <div style="flex:1"><strong style="color:#074015">${p.name} is on the way to you!</strong><br>
- <small style="color:#4b5f46">${p.lat!=null?(dist!=null?dist.toFixed(1)+' km away · ':'')+'location updated '+(ago===0?'just now':ago+' min ago'):'The shop will share live location while delivering'}</small></div></div>`;}
+ <small style="color:#4b5f46">${p.lat!=null?((p.etaMinutes?'<strong style=\"color:#074015\">arriving in ~'+p.etaMinutes+' min</strong> · ':(dist!=null?dist.toFixed(1)+' km away · ':''))+'location updated '+(ago===0?'just now':ago+' min ago')):'The shop will share live location while delivering'}</small></div></div>`;}
 renderPartnerLive(data);
 clearInterval(window.__partnerLive);
 window.__partnerLive=setInterval(async()=>{try{const d2=await RFS.api(`/api/orders/${encodeURIComponent(id)}?phone=${encodeURIComponent(phone)}`);renderPartnerLive(d2);}catch{}},15000);

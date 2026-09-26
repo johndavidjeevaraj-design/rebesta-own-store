@@ -80,6 +80,9 @@ router.get('/settings', (req, res) => {
       enabled: Boolean(settings.maintenance?.enabled),
       message: String(settings.maintenance?.message || '')
     },
+    integrations: {
+      gaId: String(settings.integrations?.gaId || '')
+    },
     testimonials: Array.isArray(settings.content?.testimonials) ? settings.content.testimonials.slice(0, 12) : [],
     rewards: {
       loyaltyEnabled: Boolean(settings.promotions?.loyalty?.enabled),

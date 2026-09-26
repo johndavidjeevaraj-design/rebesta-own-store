@@ -14,12 +14,18 @@ import {
   maskCustomer,
   markPayuPayment,
   ordersByPhone,
-  cancelOrderPublic
+  cancelOrderPublic,
+  slotUsageFor,
+  slotCapacity,
+  getSubscription,
+  loadSubscriptions,
+  saveSubscriptions
 } from '../lib/store.js';
 import { orderPlacedEmails } from '../lib/mailer.js';
 import { quoteDelivery, reverseGeocode } from '../lib/delivery.js';
 import { createPayuPayment, validatePayuResponse } from '../lib/payu.js';
 import { findPartnerById, getPosition, haversineKm, etaMinutesFromKm } from '../lib/partners.js';
+import { createSubscriptionFromOrder, publicSubscription } from '../lib/subscriptions.js';
 
 export const router = express.Router();
 
@@ -119,6 +125,17 @@ router.post('/quote', async (req, res) => {
     const cart = buildCart(req.body?.items || []);
     const address = normalizeAddress(req.body?.address || {});
     const quote = await quoteDelivery({ cart, location: req.body?.location || {}, address });
+    // Slot capacity: never over-promise a morning
+    const capacity = slotCapacity();
+    const usage = slotUsageFor(quote.deliveryDate.iso);
+    quote.slotCapacity = capacity;
+    for (const slot of quote.slots || []) {
+      const used = usage[slot.id] || 0;
+      slot.used = used;
+      slot.capacity = capacity;
+      slot.remaining = Math.max(0, capacity - used);
+      slot.full = used >= capacity;
+    }
     res.json({ ok: true, quote });
   } catch (error) { flattenError(res, error, 'Could not calculate delivery'); }
 });
@@ -164,6 +181,13 @@ router.post('/orders', async (req, res) => {
 
     const slot = (quote.slots || []).find(s => s.id === req.body?.slotId);
     if (!slot) throw Object.assign(new Error('Choose a delivery slot'), { status: 400 });
+
+    // Slot capacity guard (re-checked at order time, not just quote time)
+    const capacity = slotCapacity();
+    const usedNow = slotUsageFor(quote.deliveryDate.iso)[slot.id] || 0;
+    if (usedNow >= capacity) {
+      throw Object.assign(new Error(`The ${slot.label} slot just filled up (${capacity} orders). Please choose the other morning slot.`), { status: 409 });
+    }
 
     const paymentMethod = String(req.body?.paymentMethod || 'cod').toLowerCase();
     const onlineEnabled = Boolean(loadSettings().payments?.payuEnabled && config.payu.key && config.payu.salt);
@@ -256,6 +280,83 @@ router.get('/orders/history', (req, res) => {
   if (!phone) return res.status(400).json({ ok: false, error: 'Enter a valid phone number' });
   res.json({ ok: true, orders: ordersByPhone(phone) });
 });
+
+/* ================= Weekly subscriptions (customer self-service) ================= */
+
+router.get('/subscriptions', (req, res) => {
+  const phone = normalizePhone(req.query.phone);
+  if (!phone) return res.status(400).json({ ok: false, error: 'Enter a valid phone number' });
+  const mine = loadSubscriptions()
+    .filter(s => String(s.phone || '').replace(/\D/g, '').endsWith(phone))
+    .map(publicSubscription);
+  res.json({ ok: true, subscriptions: mine });
+});
+
+router.post('/subscriptions', (req, res) => {
+  try {
+    const order = getOrder(req.body?.orderId);
+    if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
+    const phone = normalizePhone(req.body?.phone);
+    if (!phone || !String(order.customer?.phone || '').replace(/\D/g, '').endsWith(phone)) {
+      throw Object.assign(new Error('Phone number does not match this order'), { status: 403 });
+    }
+    if (['CANCELLED', 'PAYMENT_FAILED'].includes(order.status)) {
+      throw Object.assign(new Error('Cancelled orders cannot become subscriptions'), { status: 400 });
+    }
+    const subscription = createSubscriptionFromOrder(order, { weekday: req.body?.weekday });
+    orderPlacedEmails(subscriptionCreatedNotice(subscription));
+    res.status(201).json({ ok: true, subscription: publicSubscription(subscription) });
+  } catch (error) { flattenError(res, error, 'Could not create the subscription'); }
+});
+
+router.patch('/subscriptions/:id', (req, res) => {
+  try {
+    const subscription = getSubscription(req.params.id);
+    if (!subscription) return res.status(404).json({ ok: false, error: 'Subscription not found' });
+    const phone = normalizePhone(req.body?.phone);
+    if (!phone || !String(subscription.phone || '').replace(/\D/g, '').endsWith(phone)) {
+      throw Object.assign(new Error('Phone number does not match this subscription'), { status: 403 });
+    }
+    const action = String(req.body?.action || '').toLowerCase();
+    if (action === 'pause') {
+      subscription.status = 'PAUSED';
+      subscription.pauseReason = 'Paused by customer';
+    } else if (action === 'resume') {
+      subscription.status = 'ACTIVE';
+      subscription.pauseReason = '';
+    } else if (action === 'cancel') {
+      subscription.status = 'CANCELLED';
+      subscription.cancelledAt = new Date().toISOString();
+    } else {
+      throw Object.assign(new Error('Action must be pause, resume or cancel'), { status: 400 });
+    }
+    const all = loadSubscriptions();
+    const row = all.find(s => s.id === subscription.id);
+    Object.assign(row, subscription);
+    saveSubscriptions(all);
+    res.json({ ok: true, subscription: publicSubscription(subscription) });
+  } catch (error) { flattenError(res, error, 'Could not update the subscription'); }
+});
+
+function subscriptionCreatedNotice(subscription) {
+  // Reuse the owner-email shape so the shop knows a new weekly basket started
+  return {
+    id: subscription.id,
+    status: 'PLACED',
+    paymentMethod: 'cod',
+    paymentStatus: 'SUBSCRIPTION',
+    placedAt: subscription.createdAt,
+    customer: { name: subscription.name, phone: subscription.phone, email: subscription.email },
+    items: subscription.items.map(i => ({ title: i.handle, qty: i.qty, lineTotalInr: 0 })),
+    subtotalInr: 0,
+    totalInr: 0,
+    deliveryFeeInr: 0,
+    slot: { label: `${subscription.weekdayLabel} weekly` },
+    deliveryDate: { label: `next ${subscription.weekdayLabel}` },
+    address: subscription.address,
+    source: 'subscription-created'
+  };
+}
 
 router.post('/orders/:id/cancel', (req, res) => {
   try {

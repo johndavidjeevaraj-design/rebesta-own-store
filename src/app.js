@@ -8,6 +8,9 @@ import { router as adminRouter } from './routes/admin.js';
 import { router as partnerRouter } from './routes/partner.js';
 import { publicCatalog } from './lib/store.js';
 import { rateLimit } from './lib/rateLimit.js';
+import { startSubscriptionScheduler } from './lib/subscriptions.js';
+import path from 'node:path';
+import fs from 'node:fs';
 
 export function createStoreApp() {
   const app = express();
@@ -52,10 +55,23 @@ ${productUrls}
   }));
 
   app.get('/', (req, res) => res.sendFile('index.html', { root: config.publicDir }));
-  app.get(['/cart', '/checkout', '/order-success', '/track', '/about', '/faq', '/terms', '/privacy', '/refund', '/partner'], (req, res) => {
+  app.get(['/cart', '/checkout', '/order-success', '/track', '/about', '/faq', '/terms', '/privacy', '/refund', '/partner', '/subscriptions'], (req, res) => {
     res.sendFile(`${req.path.slice(1)}.html`, { root: config.publicDir });
   });
   app.get('/products/:handle', (req, res) => res.sendFile('product.html', { root: config.publicDir }));
+
+  /* Uploaded product photos — stored in the data dir, outside git */
+  app.get('/img/products/:file', (req, res) => {
+    const file = String(req.params.file || '');
+    if (!/^[A-Za-z0-9._-]+$/.test(file) || file.includes('..')) return res.status(404).end();
+    const target = path.join(config.dataDir, 'uploads', 'products', file);
+    if (!fs.existsSync(target)) return res.status(404).end();
+    res.set('Cache-Control', 'public, max-age=2592000');
+    res.sendFile(target);
+  });
+
+  /* 🔁 Weekly subscription engine — runs at boot + every 15 minutes */
+  startSubscriptionScheduler();
 
   app.use('/api', (req, res) => res.status(404).json({ ok: false, error: 'API route not found' }));
   app.use((req, res) => {

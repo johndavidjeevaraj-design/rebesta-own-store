@@ -12,7 +12,8 @@ const files = {
   settings: path.join(dataDir, 'settings.json'),
   orders: path.join(dataDir, 'orders.json'),
   partners: path.join(dataDir, 'partners.json'),
-  positions: path.join(dataDir, 'partner-positions.json')
+  positions: path.join(dataDir, 'partner-positions.json'),
+  subscriptions: path.join(dataDir, 'subscriptions.json')
 };
 
 function readJson(file, fallback) {
@@ -90,6 +91,11 @@ export function updateProduct(handle, patch) {
   }
   if (patch.active !== undefined) p.active = Boolean(patch.active);
   if (patch.featured !== undefined) p.featured = Boolean(patch.featured);
+  if (patch.image !== undefined) {
+    const image = String(patch.image || '').trim();
+    if (image && !/^\/[A-Za-z0-9._\-\/]+$/.test(image)) throw new Error('Image path must be a site-relative URL');
+    p.image = image.slice(0, 300);
+  }
   saveProducts(products);
   return p;
 }
@@ -146,6 +152,38 @@ export function loadPositions() {
 export function savePositions(positions) {
   writeJson(files.positions, positions);
   return positions;
+}
+
+/* --- Weekly subscriptions --- */
+export function loadSubscriptions() {
+  return readJson(files.subscriptions, []);
+}
+
+export function saveSubscriptions(subscriptions) {
+  writeJson(files.subscriptions, subscriptions);
+  return subscriptions;
+}
+
+export function getSubscription(id) {
+  return loadSubscriptions().find(s => s.id === String(id || '').trim().toUpperCase());
+}
+
+/* Slot capacity: count live orders per slot for a delivery date (IST) */
+export function slotUsageFor(dateIso) {
+  const day = String(dateIso || '').slice(0, 10);
+  const counts = {};
+  for (const order of readOrders()) {
+    if (order.status === 'CANCELLED' || order.status === 'PAYMENT_FAILED') continue;
+    if (String(order.deliveryDate?.iso || '').slice(0, 10) !== day) continue;
+    const slotId = order.slot?.id;
+    if (slotId) counts[slotId] = (counts[slotId] || 0) + 1;
+  }
+  return counts;
+}
+
+export function slotCapacity() {
+  const value = Number(loadSettings().delivery?.slotCapacity);
+  return Number.isFinite(value) && value >= 1 ? Math.round(value) : 25;
 }
 
 export function addOrder(order) {
@@ -431,7 +469,8 @@ export function dataVersions() {
     products: `${loadProducts().length}:${mtime(files.products)}`,
     settings: `${mtime(files.settings)}`,
     partners: `${loadPartners().length}:${mtime(files.partners)}`,
-    positions: `${mtime(files.positions)}`
+    positions: `${mtime(files.positions)}`,
+    subscriptions: `${loadSubscriptions().length}:${mtime(files.subscriptions)}`
   };
 }
 
@@ -444,7 +483,8 @@ export function createBackup() {
       orders: readJson(files.orders, []),
       settings: readJson(files.settings, {}),
       partners: readJson(files.partners, []),
-      positions: readJson(files.positions, {})
+      positions: readJson(files.positions, {}),
+      subscriptions: readJson(files.subscriptions, [])
     }
   };
 }

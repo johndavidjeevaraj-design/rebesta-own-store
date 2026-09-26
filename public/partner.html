@@ -5,7 +5,7 @@
   <title>Rebesta Fresh Partner</title>
   <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015">
   <meta name="description" content="Rebesta Fresh delivery partner app — today's orders, navigation and live tracking.">
-  <link rel="stylesheet" href="/css/styles.css?v=20260926m2">
+  <link rel="stylesheet" href="/css/styles.css?v=20260926f1">
   <style>
     body { background: #f4f7f2; }
     .partner-wrap { max-width: 640px; margin: 0 auto; padding: 18px 14px 90px; }
@@ -69,9 +69,13 @@
     <div id="mainCard" hidden>
       <div id="hello"></div>
       <div class="p-stats" id="stats"></div>
+      <div id="weekStats"></div>
 
       <button class="track-toggle" id="trackToggle" type="button">🛵 Start live tracking</button>
       <div class="track-note" id="trackNote">Owner sees your live location only while tracking is ON. Uses little battery.</div>
+
+      <div class="p-section-title" id="routeTitle" hidden>🧭 Smart route</div>
+      <div id="routePanel"></div>
 
       <div class="p-section-title">Today's deliveries</div>
       <div id="ordersList"></div>
@@ -83,6 +87,7 @@
     </div>
   </div>
   <div class="offline-note" id="toast" hidden></div>
-  <script src="/js/partner.js?v=20260925p1" defer></script>
+  <div id="waNotify" hidden></div>
+  <script src="/js/partner.js?v=20260926f1" defer></script>
 </body>
 </html>

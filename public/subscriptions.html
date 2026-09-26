@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Weekly subscriptions — Rebesta Fresh</title>
+  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015">
+  <meta name="description" content="Manage your weekly vegetable basket subscriptions from Rebesta Fresh, Hosur.">
+  <link rel="stylesheet" href="/css/styles.css?v=20260926f1">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="/"><img src="/assets/brand/logo.png" alt="Rebesta Fresh" width="191" height="24"></a>
+      <span class="header-location">Weekly baskets</span>
+      <span></span>
+      <div class="header-actions"><a class="cart-link" href="/track">Track order</a></div>
+    </div>
+  </header>
+  <main>
+    <section class="section">
+      <div class="container narrow">
+        <div class="eyebrow">Set &amp; forget</div>
+        <h1 class="section-title">Your weekly veg basket 🔁</h1>
+        <p class="section-subtitle">Same fresh vegetables, same morning slot, every week. Pay on delivery each time. Pause, resume or cancel anytime — no charges, no calls.</p>
+
+        <div class="shop-panel" style="margin-top:26px">
+          <form data-sub-lookup class="form-grid">
+            <div class="field wide"><label for="subPhone">Mobile number used on your orders</label><input id="subPhone" name="phone" class="num" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="10-digit number" required></div>
+            <button class="button primary wide" type="submit" data-sub-find>Show my subscriptions</button>
+          </form>
+          <div data-sub-list style="margin-top:18px"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div class="toast-note" id="toast" hidden></div>
+  <script src="/js/store.js?v=20260924p8" defer></script>
+  <script src="/js/subscriptions.js?v=20260926f1" defer></script>
+</body>
+</html>

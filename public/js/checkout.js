@@ -247,22 +247,39 @@
     }
     nodes.quoteBox.append(alert, facts);
     if (state.quote.eligible) {
+      let firstSelectable = null;
       for (const slot of state.quote.slots || []) {
         const label = document.createElement('label');
-        label.className = 'option-card';
+        const full = Boolean(slot.full);
+        label.className = `option-card${full ? ' disabled' : ''}`;
         label.innerHTML = '<input type="radio" name="slotId"><div><strong></strong><span></span></div>';
         const radio = label.querySelector('input');
         radio.value = slot.id;
         radio.name = 'deliverySlot';
+        radio.disabled = full;
         label.querySelector('strong').textContent = slot.label;
-        label.querySelector('span').textContent = `${slot.dateLabel || state.quote.deliveryDate.label || ''} · Local morning delivery`;
+        const left = Number(slot.remaining ?? slot.capacity ?? '');
+        label.querySelector('span').textContent = full
+          ? `${slot.dateLabel || ''} · Full — pick the other slot 🌕`
+          : `${slot.dateLabel || state.quote.deliveryDate.label || ''} · Local morning delivery${Number.isFinite(left) && left <= 8 ? ` · ${left} left` : ''}`;
         radio.addEventListener('change', () => {
           document.querySelectorAll('[data-slots] .option-card').forEach(el => el.classList.toggle('checked', el.querySelector('input').checked));
           renderSummary();
         });
-        label.addEventListener('click', () => { radio.checked = true; radio.dispatchEvent(new Event('change')); });
+        label.addEventListener('click', () => { if (!full) { radio.checked = true; radio.dispatchEvent(new Event('change')); } });
         nodes.slots.appendChild(label);
-        if (!nodes.slots.querySelector('input:checked')) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
+        if (!full && !firstSelectable) firstSelectable = radio;
+        if (!nodes.slots.querySelector('input:checked') && !full) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
+      }
+      if (!nodes.slots.querySelector('input:checked') && firstSelectable) {
+        firstSelectable.checked = true;
+        firstSelectable.dispatchEvent(new Event('change'));
+      }
+      const subscribeDay = document.querySelector('[data-subscribe-day]');
+      if (subscribeDay && !subscribeDay.dataset.preset) {
+        const isoWeekday = new Date(`${state.quote.deliveryDate.iso}T00:00:00Z`).getUTCDay();
+        subscribeDay.value = String(isoWeekday);
+        subscribeDay.dataset.preset = '1';
       }
     }
     renderSummary();
@@ -364,6 +381,16 @@
     try {
       const order = await RFS.api('/api/orders', { method: 'POST', body: JSON.stringify(payload) });
       RFS.saveCart([]);
+      // 🔁 optional weekly subscription from this order
+      const subscribeBox = document.querySelector('[data-subscribe]');
+      if (subscribeBox?.checked) {
+        const weekday = Number(document.querySelector('[data-subscribe-day]')?.value);
+        try {
+          await RFS.api('/api/subscriptions', { method: 'POST', body: JSON.stringify({ orderId: order.orderId, phone: payload.customer.phone, weekday }) });
+        } catch (error) {
+          RFS.toast(`Subscription could not be set: ${error.message}`, 'error');
+        }
+      }
       if (order.payu?.action) {
         const paymentForm = document.createElement('form');
         paymentForm.method = order.payu.method || 'POST';

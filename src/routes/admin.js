@@ -1,8 +1,12 @@
 import express from 'express';
+import fs from 'node:fs';
+import path from 'node:path';
 import { config } from '../config.js';
-import { loadProducts, loadSettings, loadPartners, savePartners, readOrders, saveOrders, updateOrderStatus, updateProduct, saveSettings, createBackup, awardLoyalty, awardReferral, dataVersions } from '../lib/store.js';
-import { createPartner, updatePartner, deletePartner, publicPartner, freshPositions, haversineKm, etaMinutesFromKm } from '../lib/partners.js';
+import { loadProducts, loadSettings, loadPartners, savePartners, readOrders, saveOrders, updateOrderStatus, updateProduct, saveSettings, createBackup, awardLoyalty, awardReferral, dataVersions, loadSubscriptions, saveSubscriptions, getSubscription } from '../lib/store.js';
+import { createPartner, updatePartner, deletePartner, publicPartner, freshPositions, haversineKm, etaMinutesFromKm, partnerScore } from '../lib/partners.js';
 import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
+import { publicSubscription } from '../lib/subscriptions.js';
+import { whatsappLink, sendWhatsAppAuto } from '../lib/whatsapp.js';
 
 export const router = express.Router();
 
@@ -65,6 +69,11 @@ router.patch('/settings', (req, res) => {
           if (!Number.isFinite(value) || value < 0) return res.status(400).json({ ok: false, error: `Invalid ${key}` });
           d[key] = value;
         }
+      }
+      if (patch.delivery.slotCapacity !== undefined) {
+        const cap = Number(patch.delivery.slotCapacity);
+        if (!Number.isInteger(cap) || cap < 1 || cap > 500) return res.status(400).json({ ok: false, error: 'Slot capacity must be 1–500 orders' });
+        d.slotCapacity = cap;
       }
       if (Array.isArray(patch.delivery.tiers)) {
         const tiers = patch.delivery.tiers.map(tier => ({
@@ -187,7 +196,11 @@ router.patch('/orders/:id/status', (req, res) => {
       if (referral) rewardCouponEmail(order, referral.friendCoupon, 'Referral thank-you! \u{1F381}');
     }
     statusChangedEmail(order);
-    res.json({ ok: true, order, rewards });
+    // WhatsApp: one-tap link in the response + auto-send if a provider is configured
+    const event = ['CONFIRMED', 'PACKING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'].includes(order.status) ? order.status : null;
+    const wa = event ? whatsappLink(order, event) : null;
+    if (event && order.status !== 'CANCELLED') sendWhatsAppAuto(event, order);
+    res.json({ ok: true, order, rewards, whatsapp: wa });
   } catch (error) {
     res.status(error.status || 400).json({ ok: false, error: error.message || 'Could not update order' });
   }
@@ -242,6 +255,78 @@ router.get('/backup', (req, res) => {
   res.type('application/json').attachment(`rebesta-backup-${new Date().toISOString().slice(0, 10)}.json`).send(JSON.stringify(backup, null, 2));
 });
 
+/* ================= Weekly subscriptions (admin) ================= */
+
+router.get('/subscriptions', (req, res) => {
+  const subscriptions = loadSubscriptions().map(s => ({
+    ...publicSubscription(s),
+    phone: s.phone,
+    nextRunLabel: s.nextRunOn
+  }));
+  res.json({ ok: true, subscriptions });
+});
+
+router.patch('/subscriptions/:id', (req, res) => {
+  try {
+    const subscription = getSubscription(req.params.id);
+    if (!subscription) return res.status(404).json({ ok: false, error: 'Subscription not found' });
+    const action = String(req.body?.action || '').toLowerCase();
+    if (action === 'pause') {
+      subscription.status = 'PAUSED';
+      subscription.pauseReason = 'Paused by owner';
+    } else if (action === 'resume') {
+      subscription.status = 'ACTIVE';
+      subscription.pauseReason = '';
+    } else if (action === 'cancel') {
+      subscription.status = 'CANCELLED';
+      subscription.cancelledAt = new Date().toISOString();
+    } else {
+      return res.status(400).json({ ok: false, error: 'Action must be pause, resume or cancel' });
+    }
+    const all = loadSubscriptions();
+    Object.assign(all.find(s => s.id === subscription.id), subscription);
+    saveSubscriptions(all);
+    res.json({ ok: true, subscription: { ...publicSubscription(subscription), phone: subscription.phone } });
+  } catch (error) {
+    res.status(400).json({ ok: false, error: error.message || 'Could not update the subscription' });
+  }
+});
+
+/* ================= Product photo upload (phone camera / gallery) ================= */
+
+const UPLOAD_DIR = path.join(config.dataDir, 'uploads', 'products');
+
+function sniffImageType(buffer) {
+  if (buffer.length >= 3 && buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) return 'jpg';
+  if (buffer.length >= 4 && buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) return 'png';
+  if (buffer.length >= 12 && buffer.toString('ascii', 0, 4) === 'RIFF' && buffer.toString('ascii', 8, 12) === 'WEBP') return 'webp';
+  return null;
+}
+
+router.post('/products/:handle/photo', (req, res) => {
+  try {
+    const dataUrl = String(req.body?.imageDataUrl || '');
+    const match = /^data:image\/(jpeg|jpg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
+    if (!match) return res.status(400).json({ ok: false, error: 'Send a JPEG, PNG or WebP image' });
+    const buffer = Buffer.from(match[2], 'base64');
+    if (buffer.length < 500) return res.status(400).json({ ok: false, error: 'Image looks empty' });
+    if (buffer.length > 6 * 1024 * 1024) return res.status(400).json({ ok: false, error: 'Image too large — keep it under 6 MB' });
+    const ext = sniffImageType(buffer);
+    if (!ext) return res.status(400).json({ ok: false, error: 'That file is not a valid image' });
+
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+    const file = `${String(req.params.handle).replace(/[^a-z0-9-]/gi, '')}-${Date.now()}.${ext}`;
+    fs.writeFileSync(path.join(UPLOAD_DIR, file), buffer);
+    const imagePath = `/img/products/${file}`;
+    const product = updateProduct(req.params.handle, { image: imagePath });
+    if (!product) return res.status(404).json({ ok: false, error: 'Product not found' });
+    console.log(JSON.stringify({ event: 'product.photo_uploaded', handle: product.handle, file, bytes: buffer.length }));
+    res.json({ ok: true, image: imagePath, product });
+  } catch (error) {
+    res.status(error.status || 500).json({ ok: false, error: error.message || 'Could not save the photo' });
+  }
+});
+
 /* ================= Delivery partners ================= */
 
 const ACTIVE_STATUSES = ['PLACED', 'CONFIRMED', 'PACKING', 'OUT_FOR_DELIVERY', 'PENDING_PAYMENT'];
@@ -258,7 +343,7 @@ router.get('/partners', (req, res) => {
         ...publicPartner(partner),
         lastPosition: row ? row.position : null,
         activeOrders: orders.filter(o => o.assignedPartnerId === partner.id && ACTIVE_STATUSES.includes(o.status)).length,
-        deliveredTotal: orders.filter(o => o.assignedPartnerId === partner.id && o.status === 'DELIVERED').length
+        ...partnerScore(orders, partner.id)
       };
     })
   });

@@ -1,7 +1,9 @@
 import express from 'express';
 import { readOrders, saveOrders, updateOrderStatus, awardLoyalty, awardReferral, loadSettings } from '../lib/store.js';
-import { verifyPartnerToken, findPartnerByPhone, partnerToken, hashPin, publicPartner, recordPosition } from '../lib/partners.js';
+import { verifyPartnerToken, findPartnerByPhone, partnerToken, hashPin, publicPartner, recordPosition, partnerScore } from '../lib/partners.js';
 import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
+import { planRoute } from '../lib/route.js';
+import { whatsappLink, sendWhatsAppAuto } from '../lib/whatsapp.js';
 
 export const router = express.Router();
 
@@ -104,7 +106,10 @@ router.patch('/orders/:id/status', partnerOnly, (req, res) => {
       if (referral) rewardCouponEmail(updated, referral.friendCoupon, 'Referral thank-you! \u{1F381}');
     }
     statusChangedEmail(updated);
-    res.json({ ok: true, order: updated, rewards });
+    // WhatsApp update: one-tap link back to the partner + auto-send if provider configured
+    const wa = whatsappLink(updated, status, { partner: req.partner.name });
+    if (wa) sendWhatsAppAuto(status, updated, { partner: req.partner.name });
+    res.json({ ok: true, order: updated, rewards, whatsapp: wa });
   } catch (error) {
     res.status(error.status || 400).json({ ok: false, error: error.message || 'Could not update the order' });
   }
@@ -135,4 +140,48 @@ router.post('/position', partnerOnly, (req, res) => {
   } catch (error) {
     res.status(error.status || 400).json({ ok: false, error: error.message || 'Invalid position' });
   }
+});
+
+/* 🧭 Smart route: auto-sorts today's stops into the shortest morning route */
+router.get('/route', partnerOnly, async (req, res) => {
+  try {
+    const mine = readOrders().filter(o => o.assignedPartnerId === req.partner.id);
+    const active = mine.filter(o => !['DELIVERED', 'CANCELLED'].includes(o.status) && o.location && Number.isFinite(Number(o.location.lat)));
+    if (!active.length) return res.json({ ok: true, route: { ordered: [], totalKm: 0, mapsUrl: null, stops: 0 } });
+    const delivery = loadSettings().delivery || {};
+    const hub = { lat: Number(delivery.hubLat), lng: Number(delivery.hubLng) };
+    const slotId = String(req.query.slot || '');
+    const stops = (slotId ? active.filter(o => o.slot?.id === slotId) : active).map(order => ({
+      order: {
+        id: order.id,
+        customer: order.customer,
+        address: order.address,
+        slot: order.slot,
+        totalInr: order.totalInr,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
+        items: order.items,
+        status: order.status
+      },
+      location: order.location
+    }));
+    const startHour = Number(stops[0]?.order?.slot?.startHour) >= 0 ? Number(stops[0].order.slot.startHour) : 7;
+    const route = await planRoute({ hub, stops, startHour });
+    const ordered = route.ordered.map(entry => ({
+      ...entry.stop.order,
+      stopNumber: entry.stopNumber,
+      legKm: entry.legKm,
+      cumulativeKm: entry.cumulativeKm,
+      etaClock: entry.etaClock
+    }));
+    res.json({ ok: true, route: { ordered, totalKm: route.totalKm, provider: route.provider, mapsUrl: route.mapsUrl, stops: ordered.length } });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message || 'Could not plan the route' });
+  }
+});
+
+/* 📈 Own scorecard: deliveries + average time per delivery */
+router.get('/stats', partnerOnly, (req, res) => {
+  const score = partnerScore(readOrders(), req.partner.id);
+  res.json({ ok: true, stats: score });
 });

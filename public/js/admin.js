@@ -186,6 +186,7 @@
     setField('hubLng', delivery.hubLng);
     setField('maxRoadKm', delivery.maxRoadKm);
     setField('freeOverInr', delivery.freeOverInr);
+    setField('slotCapacity', delivery.slotCapacity ?? 25);
     renderTierRows(delivery.tiers?.length ? delivery.tiers : DEFAULT_TIERS);
     renderCouponRows(Array.isArray(state.settings.promotions?.coupons) ? state.settings.promotions.coupons : []);
     setField('fssai', business.fssai);
@@ -294,6 +295,7 @@
         hubLng: deliveryNumber('hubLng'),
         maxRoadKm: deliveryNumber('maxRoadKm'),
         freeOverInr: deliveryNumber('freeOverInr'),
+        slotCapacity: Math.max(1, Math.round(numberOr('slotCapacity', 25))),
         tiers
       }
     };
@@ -384,35 +386,85 @@
     wrap.innerHTML = '';
     const table = document.createElement('table');
     table.className = 'admin-table';
-    table.innerHTML = '<thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Visibility</th><th>Save</th></tr></thead><tbody></tbody>';
+    table.innerHTML = '<thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Visibility</th><th>Photo</th><th>Save</th></tr></thead><tbody></tbody>';
     const body = table.querySelector('tbody');
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+    fileInput.addEventListener('change', () => uploadProductPhoto(fileInput.dataset.handle, fileInput.files?.[0]));
+    wrap.appendChild(fileInput);
+
+    async function uploadProductPhoto(handle, file) {
+      if (!file) return;
+      try {
+        RFS.toast('📦 Compressing photo…');
+        const dataUrl = await compressImage(file, 1000, 0.82);
+        await api(`/api/admin/products/${encodeURIComponent(handle)}/photo`, { method: 'POST', body: JSON.stringify({ imageDataUrl: dataUrl }) });
+        RFS.toast('📸 Photo updated — customers see it instantly', 'success');
+        await renderProducts();
+        refreshDashboard();
+      } catch (error) { RFS.toast(error.message, 'error'); }
+      finally { fileInput.value = ''; }
+    }
+
     for (const p of state.products) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><strong>${p.title}</strong><br><span>${p.handle}</span></td>
+        <td class="prod-cell"><img class="prod-thumb" src="${p.image || '/assets/brand/basket.jpg'}" alt="" loading="lazy"><div><strong>${p.title}</strong><br><span>${p.handle}</span></div></td>
         <td></td>
         <td><input class="small-input" type="number" min="0" step="0.01" value="${p.priceInr}"></td>
         <td><input class="small-input" type="number" min="0" step="1" value="${p.stock}"></td>
         <td><label><input type="checkbox" ${p.active ? 'checked' : ''}> Live</label></td>
+        <td><button class="button ghost small" type="button" data-photo>📸 Photo</button></td>
         <td><button class="button ghost small" type="button">Save</button></td>
       `;
       tr.children[1].textContent = p.category;
+      tr.querySelector('[data-photo]').addEventListener('click', () => {
+        fileInput.dataset.handle = p.handle;
+        fileInput.click();
+      });
       const [price, stock, active] = tr.querySelectorAll('input');
-      tr.querySelector('button').addEventListener('click', async event => {
-        RFS.setBusy(event.currentTarget, true, 'Saving…');
-        try {
-          await api(`/api/admin/products/${encodeURIComponent(p.handle)}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ priceInr: Number(price.value), stock: Number(stock.value), active: active.checked })
+      tr.querySelectorAll('button').forEach(btn => {
+        if (btn.hasAttribute('data-photo')) return;
+        btn.addEventListener('click', async event => {
+          RFS.setBusy(event.currentTarget, true, 'Saving…');
+          try {
+            await api(`/api/admin/products/${encodeURIComponent(p.handle)}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ priceInr: Number(price.value), stock: Number(stock.value), active: active.checked })
+            });
+            RFS.toast(`${p.title} updated`);
+            refreshDashboard();
+          } catch (error) { RFS.toast(error.message, 'error'); }
+          finally { RFS.setBusy(event.currentTarget, false); }
           });
-          RFS.toast(`${p.title} updated`);
-          refreshDashboard();
-        } catch (error) { RFS.toast(error.message, 'error'); }
-        finally { RFS.setBusy(event.currentTarget, false); }
       });
       body.appendChild(tr);
     }
     wrap.appendChild(table);
+  }
+
+  /* Client-side photo compression — keeps uploads small on mobile data */
+  function compressImage(file, maxSide, quality) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Could not read that photo'));
+      reader.onload = async () => {
+        try {
+          const bitmap = await createImageBitmap(new Blob([reader.result]), { imageOrientation: 'from-image' });
+          const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+          canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+          canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          if (!dataUrl || dataUrl.length < 100) throw new Error('Could not process that photo');
+          resolve(dataUrl);
+        } catch (error) { reject(error); }
+      };
+      reader.readAsArrayBuffer(file);
+    });
   }
 
   function filteredOrders() {
@@ -451,8 +503,10 @@
       const tr = document.createElement('tr');
       const itemText = order.items.map(i => `${i.title} × ${i.qty}`).join(', ');
       const addr = [order.address?.line1, order.address?.area, order.address?.city, order.address?.pincode].filter(Boolean).join(', ');
+      const isSub = String(order.source || '').startsWith('subscription:');
+      const waEvent = ['CONFIRMED', 'PACKING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'].includes(order.status) ? order.status : null;
       tr.innerHTML = `
-        <td><strong>${order.id}</strong><br><span>${new Date(order.placedAt).toLocaleString('en-IN')}</span></td>
+        <td><strong>${order.id}</strong>${isSub ? ' <span class="badge orange" title="Auto-created weekly subscription order">🔁</span>' : ''}<br><span>${new Date(order.placedAt).toLocaleString('en-IN')}</span>${waEvent ? `<br><a class="wa-mini" target="_blank" rel="noopener" data-wa-send>💬 WhatsApp update</a>` : ''}</td>
         <td><strong>${order.customer?.name || ''}</strong><br><span>${order.customer?.phone || ''}</span></td>
         <td>${itemText}</td>
         <td><strong>${order.slot?.label || ''}</strong><br><span>${addr}</span><br><span>${order.location ? `Pin: ${order.location.lat}, ${order.location.lng}` : ''}</span></td>
@@ -460,6 +514,19 @@
         <td><strong>${RFS.money(order.totalInr)}</strong><br><span>${order.paymentMethod.toUpperCase()} · ${order.paymentStatus.replaceAll('_', ' ').toLowerCase()}</span>${order.paymentMethod === 'cod' && order.paymentStatus === 'PAY_ON_DELIVERY' && !['DELIVERED', 'CANCELLED'].includes(order.status) ? '<br><button class="button ghost small" type="button" data-mark-cash>💵 Mark cash received</button>' : ''}</td>
         <td><select class="status-select"></select></td>
       `;
+      tr.querySelector('[data-wa-send]')?.addEventListener('click', () => {
+        const phone = String(order.customer?.phone || '').replace(/\D/g, '').slice(-10);
+        const first = String(order.customer?.name || '').split(' ')[0] || 'there';
+        const texts = {
+          CONFIRMED: `✅ Your Rebesta Fresh order ${order.id} is confirmed, ${first}! We are sourcing your vegetables fresh from the farms.`,
+          PACKING: `🧺 We are packing your order ${order.id} with care — coming your way ${order.slot?.label || 'tomorrow morning'}.`,
+          OUT_FOR_DELIVERY: `🛵 Good news ${first}! Order ${order.id} is OUT FOR DELIVERY.\nETA: about 20–30 minutes.\nLive tracking: ${location.origin}/track?id=${order.id}`,
+          DELIVERED: `🎉 Delivered! Your order ${order.id} was handed over. Enjoy your fresh vegetables, ${first}! 🥬`,
+          CANCELLED: `Hi ${first}, your Rebesta Fresh order ${order.id} has been cancelled as requested. We hope to serve you again soon! 🌱`
+        };
+        const text = texts[waEvent];
+        if (text) window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+      });
       const select = tr.querySelector('select');
       for (const status of statuses) {
         const opt = new Option(status.replaceAll('_', ' '), status);
@@ -541,7 +608,8 @@
         <td><strong>${p.name}</strong>${partnerLiveDot(p)}<br><small style="color:var(--muted)">${p.id}</small></td>
         <td>+91 ${p.phone}</td>
         <td>${p.activeOrders}</td>
-        <td>${p.deliveredTotal}</td>
+        <td><strong>${p.deliveredToday ?? 0}</strong> today<br><small style="color:var(--muted)">${p.delivered7d ?? 0} this week · ${p.deliveredTotal ?? 0} total</small></td>
+        <td>${p.avgDeliverMin != null ? `<strong>${p.avgDeliverMin} min</strong><br><small style="color:var(--muted)">avg per stop</small>` : '<span style="color:var(--muted)">—</span>'}</td>
         <td>${p.active ? '<span class="badge green">active</span>' : '<span class="badge gray">disabled</span>'}</td>
         <td style="white-space:nowrap">
           <button class="button ghost small" type="button" data-partner-toggle="${p.id}">${p.active ? 'Disable' : 'Enable'}</button>
@@ -551,12 +619,12 @@
       </tr>`).join('');
     panel.innerHTML = `
       <div class="section-head" style="margin-bottom:18px">
-        <div><h2 style="margin-bottom:5px">🛵 Delivery partners</h2><p class="section-subtitle" style="font-size:.94rem">Partners sign in at <strong>/partner</strong> on their phone with mobile + PIN. Assign orders to them in the orders table below.</p></div>
+        <div><h2 style="margin-bottom:5px">🛵 Delivery partners — scorecards</h2><p class="section-subtitle" style="font-size:.94rem">Partners sign in at <strong>/partner</strong> on their phone with mobile + PIN. Avg time = collected → delivered.</p></div>
       </div>
       ${state.partners.length ? `
       <div class="admin-table-wrap" style="border-radius:16px;margin-bottom:18px">
-        <table class="admin-table" style="min-width:640px">
-          <thead><tr><th>Partner</th><th>Phone</th><th>Active orders</th><th>Delivered total</th><th>Status</th><th></th></tr></thead>
+        <table class="admin-table" style="min-width:760px">
+          <thead><tr><th>Partner</th><th>Phone</th><th>Active</th><th>Deliveries</th><th>Avg time</th><th>Status</th><th></th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>` : '<div class="alert info">No delivery partners yet — add your first partner below 👇</div>'}
@@ -671,13 +739,85 @@
     }
   }
 
+  /* ============ 🔁 Weekly subscriptions panel (dashboard) ============ */
+
+  async function renderSubs() {
+    const panel = $('[data-subs-panel]');
+    if (!panel) return;
+    let data;
+    try { data = await api('/api/admin/subscriptions'); } catch { return; }
+    const subs = data.subscriptions || [];
+    const active = subs.filter(s => s.status === 'ACTIVE');
+    const nextUp = [...active].sort((a, b) => String(a.nextRunOn).localeCompare(String(b.nextRunOn)))[0];
+    const rows = subs.slice(0, 8).map(s => `
+      <tr>
+        <td><strong>${s.name}</strong><br><small style="color:var(--muted)">+91 ${s.phone}</small></td>
+        <td>every ${s.weekdayLabel}<br><small style="color:var(--muted)">${s.itemCount} items · ${s.slotId || '—'}</small></td>
+        <td>${s.status === 'ACTIVE' ? s.nextRunOn : '—'}</td>
+        <td>${s.status === 'ACTIVE' ? '<span class="badge green">active</span>' : s.status === 'PAUSED' ? `<span class="badge orange">paused</span><br><small style="color:var(--muted)">${String(s.pauseReason || '').slice(0, 40)}</small>` : '<span class="badge gray">cancelled</span>'}</td>
+        <td style="white-space:nowrap">
+          ${s.status !== 'CANCELLED' ? `<button class="button ghost small" type="button" data-sub-action="${s.id}:${s.status === 'ACTIVE' ? 'pause' : 'resume'}">${s.status === 'ACTIVE' ? 'Pause' : 'Resume'}</button>` : ''}
+          ${s.status !== 'CANCELLED' ? `<button class="button danger small" type="button" data-sub-action="${s.id}:cancel">Cancel</button>` : ''}
+        </td>
+      </tr>`).join('');
+    panel.innerHTML = `
+      <div class="section-head" style="margin-bottom:14px">
+        <div><h2 style="margin-bottom:5px">🔁 Weekly subscriptions</h2>
+        <p class="section-subtitle" style="font-size:.94rem">${active.length} active${nextUp ? ` · next auto-order: <strong>${nextUp.weekdayLabel} ${nextUp.nextRunOn}</strong> (${nextUp.name})` : ''} · orders appear automatically the day before delivery.</p></div>
+      </div>
+      ${subs.length ? `
+      <div class="admin-table-wrap" style="border-radius:16px">
+        <table class="admin-table" style="min-width:680px">
+          <thead><tr><th>Customer</th><th>Repeat</th><th>Next delivery</th><th>Status</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>` : '<div class="empty-state"><h3>No subscriptions yet</h3><p>Customers tick "🔁 Repeat weekly" at checkout. You can also point them to <strong>/subscriptions</strong> to manage their baskets.</p></div>'}`;
+
+    panel.querySelectorAll('[data-sub-action]').forEach(btn => btn.addEventListener('click', async () => {
+      const [id, action] = btn.dataset.subAction.split(':');
+      try {
+        await api(`/api/admin/subscriptions/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ action }) });
+        RFS.toast(action === 'cancel' ? 'Subscription cancelled' : action === 'pause' ? 'Subscription paused' : 'Subscription resumed', 'success');
+        await renderSubs();
+      } catch (error) { RFS.toast(error.message, 'error'); }
+    }));
+  }
+
+  /* ============ 📅 Slot capacity meters (dashboard) ============ */
+
+  function renderSlotUsage() {
+    const panel = $('[data-slots-panel]');
+    if (!panel) return;
+    const active = state.orders.filter(o => !['CANCELLED', 'PAYMENT_FAILED'].includes(o.status));
+    const upcoming = active.map(o => o.deliveryDate?.iso).filter(Boolean).sort().find(d => d >= new Date().toISOString().slice(0, 10));
+    if (!upcoming) { panel.innerHTML = ''; return; }
+    const settings = state.settings || {};
+    const slots = settings.delivery?.slots || [];
+    const capacity = Number(settings.delivery?.slotCapacity) || 25;
+    const meters = slots.map(slot => {
+      const used = active.filter(o => o.deliveryDate?.iso === upcoming && o.slot?.id === slot.id).length;
+      const pct = Math.min(100, Math.round(used / capacity * 100));
+      const tone = used >= capacity ? 'full' : pct > 75 ? 'warm' : 'ok';
+      return `
+        <div class="slot-meter">
+          <div class="slot-meter-top"><strong>${slot.label}</strong><span>${used}/${capacity} orders</span></div>
+          <div class="slot-meter-bar"><span class="${tone}" style="width:${Math.max(3, pct)}%"></span></div>
+          <small>${used >= capacity ? 'Full — new customers pick the other slot' : `${capacity - used} left · tomorrow's morning`}</small>
+        </div>`;
+    }).join('');
+    panel.innerHTML = `
+      <h2>📅 Slot capacity <span class="badge green">next delivery day</span></h2>
+      <div class="slot-meter-grid">${meters}</div>
+      <p class="summary-note">Caps per morning slot (change in Settings). Customers cannot over-book a full slot.</p>`;
+  }
+
   /* ============ Tabs ============ */
 
   function switchTab(name) {
     document.querySelectorAll('[data-tab-btn]').forEach(btn => btn.classList.toggle('active', btn.dataset.tabBtn === name));
     document.querySelectorAll('[data-tab]').forEach(sec => { sec.hidden = sec.dataset.tab !== name; });
     if (name === 'fleet') refreshTracking();
-    if (name === 'dashboard') renderRecent();
+    if (name === 'dashboard') { renderRecent(); renderSubs(); renderSlotUsage(); }
     localStorage.setItem('rebesta_admin_tab', name);
   }
 
@@ -729,9 +869,11 @@
       renderRecent();
       refreshDashboard();
       renderPacking();
+      renderSlotUsage();
     }
     if (v.products !== state.versions.products) { await renderProducts(); refreshDashboard(); }
     if (v.partners !== state.versions.partners) { await refreshPartners(); renderOrders(); }
+    if (v.subscriptions !== state.versions.subscriptions) { renderSubs(); }
     if (v.settings !== state.versions.settings) {
       const form = document.querySelector('[data-settings-form]');
       const editing = form && form.contains(document.activeElement);
@@ -742,11 +884,14 @@
 
   async function refreshAll() {
     await refreshDashboard();
+    try { state.orders = (await api('/api/admin/orders')).orders; } catch { state.orders = state.orders || []; }
     await Promise.all([renderSettings(), renderProducts(), renderOrders(), refreshPartners()]);
     detectNewOrders();
     renderRecent();
     wireOrderFilters();
     refreshTracking();
+    renderSubs();
+    renderSlotUsage();
     switchTab(localStorage.getItem('rebesta_admin_tab') || 'dashboard');
     clearInterval(state.mapTimer);
     state.mapTimer = setInterval(() => {

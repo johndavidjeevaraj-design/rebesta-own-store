@@ -1269,3 +1269,70 @@ body{font-size:16px}
   body.packing-print-mode #packing-sheet{position:absolute;left:0;top:0;width:100%}
   .packing-card{break-inside:avoid;page-break-inside:avoid}
 }
+
+/* ============ FEATURE PACK: WhatsApp / route / scorecards / slots / subscriptions / photos ============ */
+
+/* WhatsApp one-tap buttons (partner + admin) */
+.wa-btn{background:#25D366!important;color:#fff!important;border:1px solid #1eb757!important;font-weight:700}
+.wa-mini{display:inline-block;margin-top:5px;background:#25D366;color:#fff;font-size:.74rem;font-weight:800;padding:4px 10px;border-radius:999px;text-decoration:none}
+.wa-mini:hover{background:#1eb757}
+.wa-notify-btn{position:fixed;bottom:14px;left:14px;right:14px;max-width:612px;margin:0 auto;z-index:60;display:flex;align-items:center;justify-content:center;gap:8px;background:#25D366;color:#fff;font-weight:800;font-size:1rem;padding:15px 14px;border-radius:14px;box-shadow:0 6px 22px rgba(18,140,74,.45);text-decoration:none;animation:waPop .25s ease}
+@keyframes waPop{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+
+/* Partner smart route */
+.route-btn{width:100%;padding:15px;font-size:1rem;font-weight:800;color:#074015;background:#fff;border:2px dashed #b7c9b0;border-radius:14px;cursor:pointer}
+.route-summary{background:#074015;color:#fff;border-radius:14px;padding:12px 14px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.route-summary strong{font-size:1.05rem}
+.route-summary span{font-size:.78rem;opacity:.85}
+.route-stops{background:#fff;border:1px solid #e3e9de;border-radius:14px;overflow:hidden;margin-bottom:10px}
+.route-stop{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #eef2ea}
+.route-stop:last-child{border-bottom:none}
+.route-stop small{color:#6b7a66}
+.route-num{flex:0 0 auto;width:27px;height:27px;border-radius:50%;background:#074015;color:#fff;font-weight:800;font-size:.85rem;display:flex;align-items:center;justify-content:center}
+.route-eta{margin-left:auto;text-align:right;font-weight:800;color:#1f7a3d;font-size:.9rem;line-height:1.25}
+.route-eta small{color:#6b7a66;font-weight:600}
+.route-maps{display:flex;align-items:center;justify-content:center;gap:8px;background:#1f7a3d;color:#fff;font-weight:800;padding:14px;border-radius:14px;text-decoration:none;margin-bottom:8px}
+.route-clear{width:100%;background:none;border:none;color:#8a2f2f;font-size:.82rem;text-decoration:underline;cursor:pointer;padding:6px}
+.route-note{font-size:.78rem;color:#6b7a66;text-align:center;margin-top:6px}
+.stop-badge{flex:0 0 auto;min-width:26px;height:26px;border-radius:50%;background:#074015;color:#fff;font-weight:800;font-size:.82rem;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
+.week-strip{background:#eef5ea;border:1px solid #cfe3c8;color:#33452f;font-size:.82rem;font-weight:600;border-radius:12px;padding:9px 12px;margin:-6px 0 14px;text-align:center}
+
+/* Admin: slot capacity meters */
+.slot-meter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.slot-meter{background:#f7faf5;border:1px solid #e3e9de;border-radius:14px;padding:13px 14px}
+.slot-meter-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+.slot-meter-top span{font-size:.8rem;color:#6b7a66;font-weight:700;white-space:nowrap}
+.slot-meter-bar{height:9px;border-radius:99px;background:#e3e9de;overflow:hidden}
+.slot-meter-bar span{display:block;height:100%;border-radius:99px;transition:width .4s}
+.slot-meter-bar span.ok{background:#1f7a3d}
+.slot-meter-bar span.warm{background:#f28c28}
+.slot-meter-bar span.full{background:#c0392b}
+.slot-meter small{display:block;margin-top:7px;color:#6b7a66;font-size:.76rem}
+
+/* Customer subscription cards + checkout offer */
+.sub-card{background:#fff;border:1px solid #e3e9de;border-radius:16px;padding:15px;margin-bottom:12px;box-shadow:0 1px 3px rgba(20,40,15,.05)}
+.sub-card.inactive{opacity:.75}
+.sub-card-top{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:1.02rem}
+.sub-card-row{font-size:.88rem;color:#44543e;line-height:1.5;margin:3px 0}
+.sub-card-note{font-size:.78rem;color:#6b7a66;background:#f7faf5;border-radius:9px;padding:8px 10px;margin-top:9px}
+.sub-card-actions{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap}
+.sub-offer{display:flex;gap:12px;align-items:flex-start;background:#f7faf5;border:1.5px dashed #b7c9b0;border-radius:14px;padding:13px 14px;cursor:pointer}
+.sub-offer input[type="checkbox"]{width:21px;height:21px;margin-top:2px;accent-color:#074015;flex:0 0 auto}
+.sub-offer div{display:flex;flex-direction:column;gap:3px}
+.sub-offer strong{font-size:.95rem;color:#22321e}
+.sub-offer span{font-size:.8rem;color:#6b7a66;line-height:1.4}
+.sub-day-row{margin-top:4px;display:flex;align-items:center;gap:7px;font-weight:700;color:#33452f}
+.sub-day-row select{border:1px solid #cbd8c5;border-radius:9px;padding:6px 9px;font-size:.9rem;background:#fff}
+
+/* Admin product thumbnails */
+.prod-cell{display:flex;align-items:center;gap:10px}
+.prod-thumb{width:44px;height:44px;object-fit:cover;border-radius:10px;border:1px solid #e3e9de;background:#f2f6f0;flex:0 0 auto}
+@media(max-width:720px){.prod-thumb{width:38px;height:38px}}
+
+/* Small screens: route + wa notify breathing room */
+@media(max-width:540px){
+  .route-stop{padding:9px 10px}
+  .route-eta{font-size:.82rem}
+  .wa-notify-btn{font-size:.92rem;padding:13px 10px}
+  .sub-offer{padding:11px 12px}
+}

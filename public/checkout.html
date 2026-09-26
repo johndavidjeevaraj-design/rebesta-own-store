@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#074015"><meta name="description" content="Fast checkout with map-pin delivery, morning slots, coupons and COD."><meta property="og:title" content="Checkout"><meta property="og:description" content="Fast checkout with map-pin delivery, morning slots, coupons and COD."><meta property="og:type" content="website"><meta property="og:image" content="/assets/brand/logo.png"><meta name="twitter:card" content="summary">
-  <link rel="stylesheet" href="/css/styles.css?v=20260926m2">
+  <link rel="stylesheet" href="/css/styles.css?v=20260926f1">
   <link rel="stylesheet" href="/assets/vendor/leaflet.css?v=194" crossorigin="">
 </head>
 <body class="shop-page">
@@ -79,6 +79,18 @@
           <div class="shop-panel checkout-section">
             <h2><span class="step-number">4</span>Payment</h2>
             <div class="slot-list" data-payment-list></div>
+            <label class="sub-offer" style="margin-top:14px">
+              <input type="checkbox" data-subscribe>
+              <div>
+                <strong>🔁 Make it a weekly order</strong>
+                <span>Same vegetables, same slot, every week. Pay on delivery each time — pause or cancel anytime.</span>
+                <span class="sub-day-row">Deliver every <select data-subscribe-day>
+                  <option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option>
+                  <option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option>
+                  <option value="0">Sunday</option>
+                </select></span>
+              </div>
+            </label>
             <div class="field" style="margin-top:14px"><label for="notes">Delivery notes <small style="display:inline">(optional)</small></label><textarea id="notes" name="notes" maxlength="500" placeholder="Gate code, nearby shop, call on arrival…"></textarea></div>
           </div>
         </div>
@@ -134,6 +146,6 @@
 </footer>
   <script src="/assets/vendor/leaflet.js?v=194" defer crossorigin=""></script>
   <script src="/js/store.js?v=20260924p8" defer></script>
-  <script src="/js/checkout.js?v=20260924p8" defer></script>
+  <script src="/js/checkout.js?v=20260926f1" defer></script>
 </body>
 </html>

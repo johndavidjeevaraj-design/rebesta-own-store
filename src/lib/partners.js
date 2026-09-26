@@ -161,3 +161,32 @@ export function etaMinutesFromKm(airKm) {
   const minutes = Math.ceil((roadKm / 18) * 60);
   return Math.min(90, Math.max(3, minutes));
 }
+
+/* Partner scorecard: deliveries + avg on-road time from the order history */
+export function partnerScore(orders, partnerId) {
+  const mine = orders.filter(o => o.assignedPartnerId === partnerId);
+  const delivered = mine.filter(o => o.status === 'DELIVERED');
+  const today = new Date().toISOString().slice(0, 10);
+  const weekAgo = Date.now() - 7 * 86400000;
+  const monthAgo = Date.now() - 30 * 86400000;
+  const roadMinutes = [];
+  for (const order of delivered) {
+    let lastOut = null;
+    for (const entry of order.history || []) {
+      if (entry.status === 'OUT_FOR_DELIVERY') lastOut = Date.parse(entry.at);
+      else if (entry.status === 'DELIVERED' && lastOut && Date.parse(entry.at) >= lastOut) {
+        roadMinutes.push((Date.parse(entry.at) - lastOut) / 60000);
+        lastOut = null;
+      }
+    }
+  }
+  const avgDeliverMin = roadMinutes.length ? Math.round(roadMinutes.reduce((a, b) => a + b, 0) / roadMinutes.length) : null;
+  return {
+    deliveredToday: delivered.filter(o => String(o.updatedAt || '').startsWith(today)).length,
+    delivered7d: delivered.filter(o => Date.parse(o.updatedAt || 0) > weekAgo).length,
+    delivered30d: delivered.filter(o => Date.parse(o.updatedAt || 0) > monthAgo).length,
+    deliveredTotal: delivered.length,
+    avgDeliverMin,
+    revenue7dInr: Math.round(delivered.filter(o => Date.parse(o.updatedAt || 0) > weekAgo).reduce((s, o) => s + Number(o.totalInr || 0), 0))
+  };
+}

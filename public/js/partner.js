@@ -1,7 +1,7 @@
 /* Rebesta Fresh — Delivery Partner app */
 (() => {
   const $ = id => document.getElementById(id);
-  const state = { token: localStorage.getItem('rebesta_partner_token') || '', partner: null, hub: null, orders: [], watchId: null, lastSentAt: 0, lastPos: null, refreshTimer: null, lastVersion: '' };
+  const state = { token: localStorage.getItem('rebesta_partner_token') || '', partner: null, hub: null, orders: [], watchId: null, lastSentAt: 0, lastPos: null, refreshTimer: null, lastVersion: '', routeSeq: null, routeInfo: null, stats: null };
 
   async function api(path, options = {}) {
     const res = await fetch(path, {
@@ -44,6 +44,35 @@
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`;
   }
 
+  /* ---------- WhatsApp one-tap updates ---------- */
+
+  function waLinkFor(order, event) {
+    const phone = String(order.customer?.phone || '').replace(/\D/g, '').slice(-10);
+    if (phone.length !== 10) return null;
+    const first = String(order.customer?.name || '').split(' ')[0] || 'there';
+    const link = `${location.origin}/track?id=${encodeURIComponent(order.id)}`;
+    const texts = {
+      OUT_FOR_DELIVERY: `🛵 Good news ${first}! Your Rebesta Fresh order ${order.id} is OUT FOR DELIVERY with ${state.partner?.name || 'our delivery partner'}.\nETA: about 20–30 minutes.\n\nLive tracking: ${link}`,
+      DELIVERED: `🎉 Delivered! Your order ${order.id} was handed over. Enjoy your fresh vegetables, ${first}! 🥬\nOrder again anytime: ${location.origin}`
+    };
+    const text = texts[event];
+    if (!text) return null;
+    return `https://wa.me/91${phone}?text=${encodeURIComponent(text)}`;
+  }
+
+  const waEventFor = order => order.status === 'OUT_FOR_DELIVERY' ? 'OUT_FOR_DELIVERY' : null;
+
+  function showWaNotify(order, event, label) {
+    const url = waLinkFor(order, event);
+    if (!url) return;
+    const bar = $('waNotify');
+    bar.hidden = false;
+    bar.innerHTML = `<a class="wa-notify-btn" href="${url}" target="_blank" rel="noopener">💬 ${label} — ${order.customer?.name || 'customer'}</a>`;
+    clearTimeout(showWaNotify._t);
+    showWaNotify._t = setTimeout(() => { bar.hidden = true; }, 90 * 1000);
+    try { navigator.vibrate && navigator.vibrate([80, 40, 80]); } catch {}
+  }
+
   /* ---------- render ---------- */
 
   function render() {
@@ -62,17 +91,34 @@
       <div class="p-stat"><b>${stats.out}</b><span>ON THE ROAD</span></div>
       <div class="p-stat"><b>${stats.done}</b><span>DELIVERED</span></div>`;
 
+    /* 📈 own scorecard strip */
+    const ws = $('weekStats');
+    if (state.stats && (state.stats.delivered7d > 0 || state.stats.avgDeliverMin)) {
+      ws.innerHTML = `<div class="week-strip">📈 This week: <strong>${state.stats.delivered7d} deliveries</strong>${state.stats.avgDeliverMin ? ` · ⏱ avg <strong>${state.stats.avgDeliverMin} min</strong> per stop` : ''} · 🏆 total <strong>${state.stats.deliveredTotal}</strong></div>`;
+    } else {
+      ws.innerHTML = '';
+    }
+
+    renderRoutePanel();
+
     const list = $('ordersList');
     if (!state.orders.active.length) {
       list.innerHTML = '<div class="order-card"><div class="oc-name" style="text-align:center">📭 No orders assigned yet</div><div style="font-size:.82rem;color:#6b7a66;text-align:center">The shop owner assigns orders from the admin dashboard.</div></div>';
     } else {
-      list.innerHTML = state.orders.active.map(order => {
+      const active = [...state.orders.active];
+      if (state.routeSeq) {
+        active.sort((a, b) => (state.routeSeq.get(a.id) || 99) - (state.routeSeq.get(b.id) || 99));
+      }
+      list.innerHTML = active.map(order => {
         const out = order.status === 'OUT_FOR_DELIVERY';
         const cod = order.paymentMethod === 'cod' && order.paymentStatus !== 'PAID_CASH_ON_DELIVERY' && order.paymentStatus !== 'PAID_ONLINE';
         const items = (order.items || []).map(i => `${i.title} ×${i.qty}`).join(' · ');
+        const stopNo = state.routeSeq ? state.routeSeq.get(order.id) : null;
+        const waUrl = waLinkFor(order, waEventFor(order));
         return `
         <div class="order-card ${out ? 'out' : 'ready'}" data-order="${order.id}">
           <div class="oc-top">
+            ${stopNo ? `<span class="stop-badge">${stopNo}</span>` : ''}
             <strong>${order.id}</strong>
             <span class="oc-slot">${order.slot?.label || ''}</span>
             ${out ? '<span class="badge orange">ON THE ROAD</span>' : '<span class="badge green">READY</span>'}
@@ -86,6 +132,7 @@
           <div class="oc-actions">
             <a class="button orange" style="display:flex;align-items:center;justify-content:center" href="${mapsLink(order)}" target="_blank" rel="noopener">📍 Navigate</a>
             <button class="button ghost" type="button" data-call="${order.customer?.phone || ''}">📞 Call</button>
+            ${waUrl ? `<a class="button wa-btn" style="display:flex;align-items:center;justify-content:center" href="${waUrl}" target="_blank" rel="noopener">💬 Notify</a>` : ''}
             ${out
               ? '<button class="button primary wide" type="button" data-deliver="' + order.id + '">✅ Delivered</button>'
               : '<button class="button primary wide" type="button" data-collect="' + order.id + '">🛒 Collected from shop</button>'}
@@ -103,18 +150,70 @@
       </div>`).join('');
   }
 
+  /* ---------- 🧭 smart route ---------- */
+
+  function renderRoutePanel() {
+    const title = $('routeTitle');
+    const panel = $('routePanel');
+    if (!title || !panel) return;
+    const hasActive = state.orders?.active?.length > 0;
+    title.hidden = !hasActive;
+    if (!hasActive) { panel.innerHTML = ''; state.routeSeq = null; state.routeInfo = null; return; }
+
+    if (!state.routeInfo) {
+      const withPin = state.orders.active.filter(o => o.location && Number.isFinite(Number(o.location.lat))).length;
+      panel.innerHTML = withPin >= 2
+        ? `<button class="route-btn" type="button" id="routeGo">🧭 Sort my route — shortest first</button>
+           <div class="route-note">Auto-arranges today's stops and gives one Google Maps link for the whole trip.</div>`
+        : `<div class="route-note">Route sorting needs map pins on orders (at least 2).</div>`;
+      return;
+    }
+
+    const info = state.routeInfo;
+    panel.innerHTML = `
+      <div class="route-summary">
+        <strong>${info.stops} stops · ${info.totalKm} km</strong>
+        <span>${info.provider === 'osrm-road' ? 'road distances' : 'estimated distances'} · start ${state.orders.active[0]?.slot?.label || 'morning'}</span>
+      </div>
+      <div class="route-stops">
+        ${info.ordered.map(s => `
+          <div class="route-stop">
+            <span class="route-num">${s.stopNumber}</span>
+            <div><strong>${s.customer?.name || ''}</strong><br><small>${s.id} · ${money(s.totalInr)}</small></div>
+            <span class="route-eta">≈ ${s.etaClock}<br><small>+${s.legKm} km</small></span>
+          </div>`).join('')}
+      </div>
+      <a class="route-maps" href="${info.mapsUrl}" target="_blank" rel="noopener">🧭 Open full route in Google Maps</a>
+      <button class="route-clear" type="button" id="routeClear">✖ Clear route order</button>`;
+  }
+
+  async function optimizeRoute() {
+    try {
+      const data = await api('/api/partner/route');
+      if (!data.route?.stops) return toast('No routable stops right now', 'error');
+      state.routeInfo = data.route;
+      state.routeSeq = new Map(data.route.ordered.map((s, i) => [s.id, i + 1]));
+      render();
+      toast(`🧭 Route sorted — ${data.route.stops} stops, ${data.route.totalKm} km`, 'success');
+    } catch (error) { toast(error.message, 'error'); }
+  }
+
   /* ---------- actions ---------- */
 
   async function loadOrders() {
     const data = await api('/api/partner/orders');
     state.orders = data;
+    api('/api/partner/stats').then(d => { state.stats = d.stats; render(); }).catch(() => {});
     render();
   }
 
   async function setStatus(orderId, status) {
     try {
-      await api(`/api/partner/orders/${encodeURIComponent(orderId)}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+      const data = await api(`/api/partner/orders/${encodeURIComponent(orderId)}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
       toast(status === 'DELIVERED' ? '🎉 Marked delivered — great job!' : '🛵 Marked as on the road', 'success');
+      if (data.whatsapp?.url) {
+        showWaNotify(data.order, status, status === 'DELIVERED' ? 'Send "Delivered" WhatsApp' : 'Send "Out for delivery" WhatsApp');
+      }
       await loadOrders();
     } catch (error) { toast(error.message, 'error'); }
   }
@@ -122,6 +221,8 @@
   document.addEventListener('click', async event => {
     const btn = event.target.closest('button');
     if (!btn) return;
+    if (btn.id === 'routeGo') return optimizeRoute();
+    if (btn.id === 'routeClear') { state.routeSeq = null; state.routeInfo = null; render(); return; }
     if (btn.dataset.collect) return setStatus(btn.dataset.collect, 'OUT_FOR_DELIVERY');
     if (btn.dataset.deliver) return setStatus(btn.dataset.deliver, 'DELIVERED');
     if (btn.dataset.call) { location.href = 'tel:+91' + btn.dataset.call; return; }

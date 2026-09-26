@@ -74,7 +74,7 @@ export function whatsappLink(order, event, extra = {}) {
   if (!to) return null;
   const text = renderWhatsApp(event, order, extra);
   if (!text) return null;
-  return { phone: to, text, url: `https://wa.me/${to}?text=${encodeURIComponent(text)}` };
+  return { phone: to, text, url: `https://api.whatsapp.com/send/?phone=${to}&text=${encodeURIComponent(text)}` };
 }
 
 /* Optional auto-send through a configured provider. Never throws. */

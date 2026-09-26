@@ -121,6 +121,12 @@ function setupReveal() {
     }
     const unit = document.createElement('span'); unit.className = 'unit'; unit.textContent = `/ ${product.unitLabel}`;
     priceRow.appendChild(unit);
+    if (product.stock > 0 && product.stock <= 5) {
+      const low = document.createElement('span');
+      low.className = 'chip-lowstock';
+      low.textContent = `🔥 Only ${product.stock} left`;
+      priceRow.appendChild(low);
+    }
 
     const actions = document.createElement('div');
     actions.className = 'card-actions';

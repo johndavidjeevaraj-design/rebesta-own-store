@@ -1,7 +1,7 @@
 /* Rebesta Fresh — Delivery Partner app */
 (() => {
   const $ = id => document.getElementById(id);
-  const state = { token: localStorage.getItem('rebesta_partner_token') || '', partner: null, hub: null, orders: [], watchId: null, lastSentAt: 0, lastPos: null, refreshTimer: null, lastVersion: '', routeSeq: null, routeInfo: null, stats: null };
+  const state = { token: localStorage.getItem('rebesta_partner_token') || '', partner: null, hub: null, orders: [], watchId: null, lastSentAt: 0, lastPos: null, refreshTimer: null, lastVersion: '', routeSeq: null, routeInfo: null, routeCleared: false, stats: null };
 
   async function api(path, options = {}) {
     const res = await fetch(path, {
@@ -57,7 +57,7 @@
     };
     const text = texts[event];
     if (!text) return null;
-    return `https://wa.me/91${phone}?text=${encodeURIComponent(text)}`;
+    return `https://api.whatsapp.com/send/?phone=91${phone}&text=${encodeURIComponent(text)}`;
   }
 
   const waEventFor = order => order.status === 'OUT_FOR_DELIVERY' ? 'OUT_FOR_DELIVERY' : null;
@@ -164,7 +164,7 @@
       const withPin = state.orders.active.filter(o => o.location && Number.isFinite(Number(o.location.lat))).length;
       panel.innerHTML = withPin >= 2
         ? `<button class="route-btn" type="button" id="routeGo">🧭 Sort my route — shortest first</button>
-           <div class="route-note">Auto-arranges today's stops and gives one Google Maps link for the whole trip.</div>`
+           <div class="route-note">Auto-sorted by default — tap only if you cleared the order.</div>`
         : `<div class="route-note">Route sorting needs map pins on orders (at least 2).</div>`;
       return;
     }
@@ -173,7 +173,7 @@
     panel.innerHTML = `
       <div class="route-summary">
         <strong>${info.stops} stops · ${info.totalKm} km</strong>
-        <span>${info.provider === 'osrm-road' ? 'road distances' : 'estimated distances'} · start ${state.orders.active[0]?.slot?.label || 'morning'}</span>
+        <span>${info.provider === 'osrm-road' ? 'road distances' : 'estimated distances'} · auto-sorted shortest first</span>
       </div>
       <div class="route-stops">
         ${info.ordered.map(s => `
@@ -184,13 +184,30 @@
           </div>`).join('')}
       </div>
       <a class="route-maps" href="${info.mapsUrl}" target="_blank" rel="noopener">🧭 Open full route in Google Maps</a>
-      <button class="route-clear" type="button" id="routeClear">✖ Clear route order</button>`;
+      <div class="route-actions">
+        <button class="route-clear" type="button" id="routeClear">✖ Clear order</button>
+      </div>`;
+  }
+
+  /* Route is automatic: planned silently whenever orders load (≥2 stops with pins).
+     Only a manual "Clear" pauses it for the session. */
+  async function autoPlanRoute() {
+    const withPin = state.orders?.active?.filter(o => o.location && Number.isFinite(Number(o.location.lat))) || [];
+    if (state.routeCleared || withPin.length < 2) return;
+    try {
+      const data = await api('/api/partner/route');
+      if (!data.route?.stops) return;
+      state.routeInfo = data.route;
+      state.routeSeq = new Map(data.route.ordered.map((s, i) => [s.id, i + 1]));
+      render();
+    } catch {}
   }
 
   async function optimizeRoute() {
     try {
       const data = await api('/api/partner/route');
       if (!data.route?.stops) return toast('No routable stops right now', 'error');
+      state.routeCleared = false;
       state.routeInfo = data.route;
       state.routeSeq = new Map(data.route.ordered.map((s, i) => [s.id, i + 1]));
       render();
@@ -204,7 +221,32 @@
     const data = await api('/api/partner/orders');
     state.orders = data;
     api('/api/partner/stats').then(d => { state.stats = d.stats; render(); }).catch(() => {});
+    autoPlanRoute();
     render();
+  }
+
+  /* 💬 Auto-WhatsApp: after Collected/Delivered, jump straight into WhatsApp with
+     the message typed — the partner only taps Send. Toggle below the map button. */
+  const autoWaOn = () => localStorage.getItem('rebesta_partner_autowa') !== 'off';
+
+  function renderAutoWaToggle() {
+    const note = $('trackNote');
+    if (!note) return;
+    let row = document.getElementById('autoWaRow');
+    if (!row) {
+      row = document.createElement('button');
+      row.id = 'autoWaRow';
+      row.type = 'button';
+      row.className = 'route-clear';
+      row.style.cssText = 'width:100%;margin-top:8px;color:#1f7a3d;font-weight:800';
+      row.addEventListener('click', () => {
+        localStorage.setItem('rebesta_partner_autowa', autoWaOn() ? 'off' : 'on');
+        renderAutoWaToggle();
+        toast(autoWaOn() ? '💬 Auto WhatsApp ON — opens automatically after each status' : '💬 Auto WhatsApp OFF — green button instead', 'success');
+      });
+      note.insertAdjacentElement('afterend', row);
+    }
+    row.textContent = autoWaOn() ? '💬 Auto WhatsApp: ON (tap to turn off)' : '💬 Auto WhatsApp: OFF (tap to turn on)';
   }
 
   async function setStatus(orderId, status) {
@@ -212,7 +254,13 @@
       const data = await api(`/api/partner/orders/${encodeURIComponent(orderId)}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
       toast(status === 'DELIVERED' ? '🎉 Marked delivered — great job!' : '🛵 Marked as on the road', 'success');
       if (data.whatsapp?.url) {
-        showWaNotify(data.order, status, status === 'DELIVERED' ? 'Send "Delivered" WhatsApp' : 'Send "Out for delivery" WhatsApp');
+        if (autoWaOn()) {
+          // WhatsApp opens with the message ready — the partner just taps Send
+          showWaNotify(data.order, status, status === 'DELIVERED' ? 'Send "Delivered" WhatsApp' : 'Send "Out for delivery" WhatsApp');
+          setTimeout(() => { location.href = data.whatsapp.url; }, 600);
+        } else {
+          showWaNotify(data.order, status, status === 'DELIVERED' ? 'Send "Delivered" WhatsApp' : 'Send "Out for delivery" WhatsApp');
+        }
       }
       await loadOrders();
     } catch (error) { toast(error.message, 'error'); }
@@ -222,7 +270,7 @@
     const btn = event.target.closest('button');
     if (!btn) return;
     if (btn.id === 'routeGo') return optimizeRoute();
-    if (btn.id === 'routeClear') { state.routeSeq = null; state.routeInfo = null; render(); return; }
+    if (btn.id === 'routeClear') { state.routeSeq = null; state.routeInfo = null; state.routeCleared = true; render(); return; }
     if (btn.dataset.collect) return setStatus(btn.dataset.collect, 'OUT_FOR_DELIVERY');
     if (btn.dataset.deliver) return setStatus(btn.dataset.deliver, 'DELIVERED');
     if (btn.dataset.call) { location.href = 'tel:+91' + btn.dataset.call; return; }
@@ -326,6 +374,7 @@
   function enterApp() {
     $('loginCard').hidden = true;
     $('mainCard').hidden = false;
+    renderAutoWaToggle();
     loadOrders().catch(e => toast(e.message, 'error'));
     clearInterval(state.refreshTimer);
     state.refreshTimer = setInterval(pollVersion, 10000);

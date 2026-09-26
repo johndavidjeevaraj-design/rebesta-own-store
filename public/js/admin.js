@@ -45,7 +45,9 @@
         <span><strong>${p.title}</strong><br><small>${p.category} · ${p.unitLabel}</small></span>
         <span class="stock-count">${Number(p.stock) <= 0 ? 'Sold out' : `Only ${p.stock} left`}</span>
       </div>`).join('');
-    panel.innerHTML = `<h2>Stock alerts <span class="badge orange">${low.length} low</span></h2><div class="stock-chip-grid">${chips}</div>`;
+    const restockText = `Rebesta Fresh — restock needed 🥬\n\n${low.map(p => `${p.title} (${p.unitLabel}) — ${Number(p.stock) <= 0 ? 'SOLD OUT' : `${p.stock} left`}`).join('\n')}\n\nPlease send fresh stock. Thank you! 🙏`;
+    const restockHref = `https://wa.me/?text=${encodeURIComponent(restockText)}`;
+    panel.innerHTML = `<h2>Stock alerts <span class="badge orange">${low.length} low</span></h2><div class="stock-chip-grid">${chips}</div><a class="button wa-btn" style="display:flex;align-items:center;justify-content:center;margin-top:14px" href="${restockHref}" target="_blank" rel="noopener">📩 Send restock list on WhatsApp</a><p class="summary-note" style="margin-top:8px">You get a beep + notification the moment any product drops below 10 — while this dashboard is open.</p>`;
   }
 
   function renderSales() {
@@ -339,6 +341,28 @@
   let alertsOn = localStorage.getItem('rebesta_admin_alerts') !== 'off';
   let lastOrderId = null;
   let alertTimer = null;
+  let knownLowStock = new Set();
+  let lowStockInitialized = false;
+
+  /* ⚠️ Low-stock crossing alert: beep + browser notification when a product
+     first drops to ≤10 while the dashboard is open */
+  function detectLowStock() {
+    const low = state.products.filter(p => p.active && Number(p.stock) <= 10);
+    const handles = low.map(p => p.handle);
+    const fresh = low.filter(p => !knownLowStock.has(p.handle));
+    if (lowStockInitialized && fresh.length) {
+      const names = fresh.map(p => `${p.title} (${p.stock} left)`);
+      if (alertsOn) {
+        orderBeep();
+        RFS.toast(`⚠️ Low stock: ${names.join(' · ')}`, 'error');
+        if ('Notification' in window && Notification.permission === 'granted') {
+          try { new Notification('⚠️ Stock running low', { body: names.join('\n') + '\n— restock soon or hide the products.' }); } catch {}
+        }
+      }
+    }
+    knownLowStock = new Set(handles);
+    lowStockInitialized = true;
+  }
 
   function updateAlertButton() {
     const button = document.querySelector('[data-alert-toggle]');
@@ -525,7 +549,7 @@
           CANCELLED: `Hi ${first}, your Rebesta Fresh order ${order.id} has been cancelled as requested. We hope to serve you again soon! 🌱`
         };
         const text = texts[waEvent];
-        if (text) window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+        if (text) window.open(`https://api.whatsapp.com/send/?phone=91${phone}&text=${encodeURIComponent(text)}`, '_blank', 'noopener');
       });
       const select = tr.querySelector('select');
       for (const status of statuses) {
@@ -871,7 +895,7 @@
       renderPacking();
       renderSlotUsage();
     }
-    if (v.products !== state.versions.products) { await renderProducts(); refreshDashboard(); }
+    if (v.products !== state.versions.products) { await renderProducts(); refreshDashboard(); renderLowStock(); detectLowStock(); }
     if (v.partners !== state.versions.partners) { await refreshPartners(); renderOrders(); }
     if (v.subscriptions !== state.versions.subscriptions) { renderSubs(); }
     if (v.settings !== state.versions.settings) {
@@ -902,6 +926,7 @@
     }, 10000);
     renderLowStock();
     renderSales();
+    detectLowStock();
   }
 
   $('#admin-key-form').addEventListener('submit', async event => {

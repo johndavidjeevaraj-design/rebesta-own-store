@@ -242,7 +242,7 @@ router.post('/orders', async (req, res) => {
     const whatsappDigits = String(settings.business?.whatsapp || '918438765119').replace(/\D/g, '');
     const lines = order.items.map(item => `• ${item.title} × ${item.qty} — ₹${item.lineTotalInr}`).join('\n');
     const message = `Rebesta Fresh order ${order.id}\n\n${lines}\n\nSubtotal: ₹${order.subtotalInr}\nDelivery: ₹${order.deliveryFeeInr}\nTotal: ₹${order.totalInr}\nName: ${order.customer.name}\nPhone: ${order.customer.phone}\nDelivery: ${order.slot.label} (${order.deliveryDate.label})\nAddress: ${address.line1}, ${address.area || ''}, ${address.city} ${address.pincode}\nExact pin: ${quote.location.lat}, ${quote.location.lng}`;
-    const whatsappUrl = `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://api.whatsapp.com/send/?phone=${whatsappDigits}&text=${encodeURIComponent(message)}`;
     const payu = paymentMethod === 'online' ? createPayuPayment(order) : null;
 
     res.status(201).json({

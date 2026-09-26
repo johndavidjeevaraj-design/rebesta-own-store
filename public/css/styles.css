@@ -1336,3 +1336,9 @@ body{font-size:16px}
   .wa-notify-btn{font-size:.92rem;padding:13px 10px}
   .sub-offer{padding:11px 12px}
 }
+
+/* ============ PASS 4: urgency badges + auto-route polish ============ */
+.stock-urgency{margin:12px 0 2px;background:#fff1e8;border:1.5px solid #f6b48a;color:#a15c00;font-weight:800;font-size:.92rem;padding:10px 13px;border-radius:12px;line-height:1.35}
+.chip-lowstock{margin-left:auto;background:#fff1e8;color:#a15c00;font-size:.7rem;font-weight:800;padding:3px 8px;border-radius:999px;white-space:nowrap;border:1px solid #f6b48a}
+.route-actions{display:flex;justify-content:center;gap:14px}
+@media(max-width:540px){.stock-urgency{font-size:.86rem;padding:9px 11px}.chip-lowstock{font-size:.64rem}}

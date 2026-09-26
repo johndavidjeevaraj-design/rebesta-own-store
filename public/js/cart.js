@@ -102,7 +102,7 @@
     whatsapp.style.marginTop = '9px';
     whatsapp.target = '_blank';
     whatsapp.rel = 'noopener';
-    whatsapp.href = `https://wa.me/${waNumber}?text=${encodeURIComponent(waText)}`;
+    whatsapp.href = `https://api.whatsapp.com/send/?phone=${waNumber}&text=${encodeURIComponent(waText)}`;
     whatsapp.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Zm0 2a8 8 0 1 1-4.2 14.8l-.4-.3-3 .8.8-2.9-.3-.4A8 8 0 0 1 12 4Zm-2.9 4c-.2 0-.5 0-.7.3-.3.3-.9.9-.9 2.1s.9 2.4 1 2.6c.2.2 1.8 2.9 4.5 3.9 2.2.8 2.7.7 3.2.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2-.1-.1-.3-.2-.6-.3l-2-1c-.3-.1-.5-.2-.7.1l-1 1.2c-.2.2-.4.2-.6.1a6.7 6.7 0 0 1-3.3-2.8c-.2-.4 0-.6.1-.7l.5-.6c.2-.2.2-.3.3-.5.1-.3 0-.4 0-.6L9.4 8.6c-.2-.4-.2-.6-.3-.6Z"/></svg> Order on WhatsApp';
     const checkout = document.createElement('a');
     checkout.href = '/checkout';

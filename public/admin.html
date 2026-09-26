@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Rebesta Fresh Admin</title>
-  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><meta name="description" content="Rebesta Fresh store administration."><meta property="og:title" content="Admin"><meta property="og:description" content="Rebesta Fresh store administration."><meta property="og:type" content="website"><meta property="og:image" content="/assets/brand/logo.png"><meta name="twitter:card" content="summary"><link rel="stylesheet" href="/css/styles.css?v=20260926f2">
+  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><meta name="description" content="Rebesta Fresh store administration."><meta property="og:title" content="Admin"><meta property="og:description" content="Rebesta Fresh store administration."><meta property="og:type" content="website"><meta property="og:image" content="/assets/brand/logo.png"><meta name="twitter:card" content="summary"><link rel="stylesheet" href="/css/styles.css?v=20260926f3">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
     .admin-tabs{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding:6px;background:#eaf1e6;border-radius:16px;margin-bottom:20px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
@@ -108,7 +108,38 @@
 
             <!-- ============ PRODUCTS ============ -->
             <section data-tab="products" hidden>
-              <section class="shop-panel"><h2>Products</h2><div class="admin-table-wrap" data-products-table data-admin-panel></div></section>
+              <section class="shop-panel" style="margin-bottom:20px">
+                <div class="section-head" style="margin-bottom:14px;flex-wrap:wrap;gap:10px">
+                  <h2>Products</h2>
+                  <button class="button orange small" type="button" data-open-editor>➕ Add product</button>
+                </div>
+                <form data-product-form class="form-grid" data-editor hidden>
+                  <input type="hidden" name="handle">
+                  <div class="field"><label>Product title *</label><input name="title" maxlength="100" required placeholder="e.g. Ooty Beans"></div>
+                  <div class="field"><label>Category</label><input name="category" maxlength="60" list="categoryList" placeholder="Seasonal"><datalist id="categoryList"></datalist></div>
+                  <div class="field"><label>Price ₹ *</label><input name="priceInr" type="number" min="0" step="0.01" required inputmode="decimal"></div>
+                  <div class="field"><label>Compare-at ₹ <small>(strike-through, optional)</small></label><input name="compareAtInr" type="number" min="0" step="0.01" inputmode="decimal"></div>
+                  <div class="field"><label>Unit</label><input name="unitLabel" maxlength="30" list="unitList" placeholder="1 kg"><datalist id="unitList"><option>1 kg</option><option>500 g</option><option>250 g</option><option>1 bunch</option><option>1 piece</option><option>1 pack</option><option>2 kg</option></datalist></div>
+                  <div class="field"><label>Stock *</label><input name="stock" type="number" min="0" step="1" required inputmode="numeric"></div>
+                  <div class="field wide"><label>Description <small>(what customers read)</small></label><textarea name="description" maxlength="1500" rows="3" placeholder="Short, tasty description…"></textarea></div>
+                  <div class="field wide"><div class="toggle-row"><label class="switch"><input type="checkbox" name="featured"><span></span></label><span>Featured on home page</span></div></div>
+                  <div class="field wide">
+                    <label>Photo — camera or gallery</label>
+                    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                      <input type="file" accept="image/*" data-editor-photo style="display:none">
+                      <button class="button ghost small" type="button" data-editor-photo-btn>📸 Choose photo</button>
+                      <span style="font-size:.8rem;color:var(--muted)" data-editor-photo-note>No photo yet — a basket image is used</span>
+                      <img data-editor-preview style="width:62px;height:62px;object-fit:cover;border-radius:10px;border:1px solid var(--line-2)" alt="" hidden>
+                    </div>
+                  </div>
+                  <div class="field wide" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                    <button class="button orange" type="submit" data-editor-save>➕ Add product</button>
+                    <button class="button ghost" type="button" data-editor-cancel>Cancel</button>
+                    <span style="font-size:.82rem;color:var(--muted)" data-editor-hint></span>
+                  </div>
+                </form>
+                <div class="admin-table-wrap" data-products-table data-admin-panel></div>
+              </section>
             </section>
 
             <!-- ============ SETTINGS ============ -->
@@ -189,6 +220,6 @@
       </div>
     </section>
   </main>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script><script src="/js/store.js?v=20260924p8" defer></script><script src="/js/admin.js?v=20260926f3" defer></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script><script src="/js/store.js?v=20260924p8" defer></script><script src="/js/admin.js?v=20260926f4" defer></script>
 </body>
 </html>

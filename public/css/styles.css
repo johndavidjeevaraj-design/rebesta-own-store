@@ -1342,3 +1342,10 @@ body{font-size:16px}
 .chip-lowstock{margin-left:auto;background:#fff1e8;color:#a15c00;font-size:.7rem;font-weight:800;padding:3px 8px;border-radius:999px;white-space:nowrap;border:1px solid #f6b48a}
 .route-actions{display:flex;justify-content:center;gap:14px}
 @media(max-width:540px){.stock-urgency{font-size:.86rem;padding:9px 11px}.chip-lowstock{font-size:.64rem}}
+
+/* ============ PASS 5: delivery proof + product editor polish ============ */
+.proof-box{background:#f7faf5;border:1px solid #dbe5d6;border-radius:14px;padding:12px 13px;margin-top:14px}
+.proof-box strong{display:block;font-size:.86rem;color:#33452f;margin-bottom:9px}
+.proof-box img{width:100%;max-width:420px;border-radius:11px;display:block;border:1px solid #e3e9de}
+.proof-link{display:inline-block;margin-top:4px;font-size:.76rem;font-weight:800;color:#1f7a3d}
+@media(max-width:540px){.proof-box img{max-width:100%}}

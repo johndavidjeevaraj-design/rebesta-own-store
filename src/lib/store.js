@@ -84,11 +84,24 @@ export function updateProduct(handle, patch) {
     if (!Number.isFinite(price) || price < 0) throw new Error('Invalid price');
     p.priceInr = Math.round(price * 100) / 100;
   }
+  if (patch.compareAtInr !== undefined) {
+    const compare = Number(patch.compareAtInr);
+    if (!Number.isFinite(compare) || compare < 0) throw new Error('Invalid compare-at price');
+    p.compareAtInr = compare > 0 ? Math.round(compare * 100) / 100 : null;
+  }
   if (patch.stock !== undefined) {
     const stock = Number(patch.stock);
     if (!Number.isInteger(stock) || stock < 0) throw new Error('Stock must be a non-negative integer');
     p.stock = stock;
   }
+  if (patch.title !== undefined) {
+    const title = String(patch.title || '').trim().slice(0, 100);
+    if (title.length < 2) throw new Error('Title must be at least 2 characters');
+    p.title = title;
+  }
+  if (patch.description !== undefined) p.description = String(patch.description || '').trim().slice(0, 1500);
+  if (patch.category !== undefined) p.category = String(patch.category || 'Seasonal').trim().slice(0, 60) || 'Seasonal';
+  if (patch.unitLabel !== undefined) p.unitLabel = String(patch.unitLabel || '1 kg').trim().slice(0, 30) || '1 kg';
   if (patch.active !== undefined) p.active = Boolean(patch.active);
   if (patch.featured !== undefined) p.featured = Boolean(patch.featured);
   if (patch.image !== undefined) {
@@ -98,6 +111,48 @@ export function updateProduct(handle, patch) {
   }
   saveProducts(products);
   return p;
+}
+
+/* Shop-owner product creation — no code, no CSV, straight from the admin dashboard */
+export function createProduct(payload = {}) {
+  const title = String(payload.title || '').trim().slice(0, 100);
+  if (title.length < 2) throw Object.assign(new Error('Enter a product title'), { status: 400 });
+  const priceInr = Number(payload.priceInr);
+  if (!Number.isFinite(priceInr) || priceInr < 0 || priceInr > 100000) throw Object.assign(new Error('Enter a valid price'), { status: 400 });
+  const stock = Number(payload.stock);
+  if (!Number.isInteger(stock) || stock < 0) throw Object.assign(new Error('Stock must be a whole number, 0 or more'), { status: 400 });
+  const compareRaw = Number(payload.compareAtInr);
+  const compareAtInr = Number.isFinite(compareRaw) && compareRaw > priceInr ? Math.round(compareRaw * 100) / 100 : null;
+
+  const products = loadProducts();
+  const base = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'product';
+  let handle = base;
+  let suffix = 2;
+  while (products.some(p => p.handle === handle)) handle = `${base}-${suffix++}`;
+
+  const product = {
+    handle,
+    baseHandle: handle,
+    variantTitle: '',
+    title,
+    description: String(payload.description || '').trim().slice(0, 1500),
+    vendor: 'Rebesta Fresh',
+    category: String(payload.category || 'Seasonal').trim().slice(0, 60) || 'Seasonal',
+    tags: [],
+    sku: `VEG-AD-${crypto.randomBytes(2).toString('hex').toUpperCase()}`,
+    priceInr: Math.round(priceInr * 100) / 100,
+    compareAtInr,
+    image: String(payload.image || '/assets/brand/basket.jpg').slice(0, 300),
+    unitLabel: String(payload.unitLabel || '1 kg').trim().slice(0, 30) || '1 kg',
+    weightGrams: 1000,
+    stock,
+    featured: Boolean(payload.featured),
+    active: true,
+    createdAt: new Date().toISOString()
+  };
+  products.unshift(product);
+  saveProducts(products);
+  return product;
 }
 
 export function buildCart(rawItems) {
@@ -320,7 +375,8 @@ export function maskCustomer(order) {
       pincode: o.address?.pincode || '',
       area: o.address?.area || ''
     },
-    history: o.history || []
+    history: o.history || [],
+    deliveryPhoto: o.deliveryPhoto || ''
   });
   return Array.isArray(order) ? order.map(clean) : clean(order);
 }

@@ -136,6 +136,7 @@
             ${out
               ? '<button class="button primary wide" type="button" data-deliver="' + order.id + '">✅ Delivered</button>'
               : '<button class="button primary wide" type="button" data-collect="' + order.id + '">🛒 Collected from shop</button>'}
+            ${out ? '<button class="button ghost wide" type="button" data-photo-order="' + order.id + '" style="font-size:.85rem">📸 Delivery photo (proof)</button>' : ''}
             <button class="button ghost wide" type="button" data-problem="' + order.id + '" style="font-size:.82rem">⚠️ Report a problem</button>
           </div>
         </div>`;
@@ -271,6 +272,12 @@
     if (!btn) return;
     if (btn.id === 'routeGo') return optimizeRoute();
     if (btn.id === 'routeClear') { state.routeSeq = null; state.routeInfo = null; state.routeCleared = true; render(); return; }
+    if (btn.dataset.photoOrder) {
+      const input = document.getElementById('deliveryPhotoInput');
+      input.dataset.order = btn.dataset.photoOrder;
+      input.click();
+      return;
+    }
     if (btn.dataset.collect) return setStatus(btn.dataset.collect, 'OUT_FOR_DELIVERY');
     if (btn.dataset.deliver) return setStatus(btn.dataset.deliver, 'DELIVERED');
     if (btn.dataset.call) { location.href = 'tel:+91' + btn.dataset.call; return; }
@@ -371,10 +378,60 @@
     } catch {}
   }
 
+  /* 📸 Delivery proof photo — snapped at the door, shown on the customer's tracking page */
+  function compressImage(file, maxSide, quality) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Could not read that photo'));
+      reader.onload = async () => {
+        try {
+          const bitmap = await createImageBitmap(new Blob([reader.result]), { imageOrientation: 'from-image' });
+          const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+          canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+          canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          if (!dataUrl || dataUrl.length < 100) throw new Error('Could not process that photo');
+          resolve(dataUrl);
+        } catch (error) { reject(error); }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  async function uploadDeliveryPhoto(orderId, file) {
+    try {
+      toast('📦 Compressing photo…');
+      const dataUrl = await compressImage(file, 1100, 0.8);
+      await api(`/api/partner/orders/${encodeURIComponent(orderId)}/photo`, { method: 'POST', body: JSON.stringify({ imageDataUrl: dataUrl }) });
+      toast('📸 Proof photo saved — customer sees it on tracking', 'success');
+      await loadOrders();
+    } catch (error) { toast(error.message, 'error'); }
+  }
+
+  function ensurePhotoInput() {
+    let input = document.getElementById('deliveryPhotoInput');
+    if (input) return input;
+    input = document.createElement('input');
+    input.type = 'file';
+    input.id = 'deliveryPhotoInput';
+    input.accept = 'image/*';
+    input.style.display = 'none';
+    input.addEventListener('change', () => {
+      const file = input.files?.[0];
+      if (file && input.dataset.order) uploadDeliveryPhoto(input.dataset.order, file);
+      input.value = '';
+    });
+    document.body.appendChild(input);
+    return input;
+  }
+
   function enterApp() {
     $('loginCard').hidden = true;
     $('mainCard').hidden = false;
     renderAutoWaToggle();
+    ensurePhotoInput();
     loadOrders().catch(e => toast(e.message, 'error'));
     clearInterval(state.refreshTimer);
     state.refreshTimer = setInterval(pollVersion, 10000);

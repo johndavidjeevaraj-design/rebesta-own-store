@@ -60,11 +60,13 @@ ${productUrls}
   });
   app.get('/products/:handle', (req, res) => res.sendFile('product.html', { root: config.publicDir }));
 
-  /* Uploaded product photos — stored in the data dir, outside git */
-  app.get('/img/products/:file', (req, res) => {
+  /* Uploaded images (product photos, delivery proof) — stored in the data dir, outside git */
+  const IMAGE_DIRS = { products: 'products', delivery: 'delivery' };
+  app.get('/img/:kind/:file', (req, res) => {
+    const kind = IMAGE_DIRS[req.params.kind];
     const file = String(req.params.file || '');
-    if (!/^[A-Za-z0-9._-]+$/.test(file) || file.includes('..')) return res.status(404).end();
-    const target = path.join(config.dataDir, 'uploads', 'products', file);
+    if (!kind || !/^[A-Za-z0-9._-]+$/.test(file) || file.includes('..')) return res.status(404).end();
+    const target = path.join(config.dataDir, 'uploads', kind, file);
     if (!fs.existsSync(target)) return res.status(404).end();
     res.set('Cache-Control', 'public, max-age=2592000');
     res.sendFile(target);

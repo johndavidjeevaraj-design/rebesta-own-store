@@ -410,7 +410,7 @@
     wrap.innerHTML = '';
     const table = document.createElement('table');
     table.className = 'admin-table';
-    table.innerHTML = '<thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Visibility</th><th>Photo</th><th>Save</th></tr></thead><tbody></tbody>';
+    table.innerHTML = '<thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Visibility</th><th>Photo</th><th>Save</th><th></th></tr></thead><tbody></tbody>';
     const body = table.querySelector('tbody');
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -442,15 +442,24 @@
         <td><label><input type="checkbox" ${p.active ? 'checked' : ''}> Live</label></td>
         <td><button class="button ghost small" type="button" data-photo>📸 Photo</button></td>
         <td><button class="button ghost small" type="button">Save</button></td>
+        <td></td>
       `;
       tr.children[1].textContent = p.category;
       tr.querySelector('[data-photo]').addEventListener('click', () => {
         fileInput.dataset.handle = p.handle;
         fileInput.click();
       });
+      const editBtn = document.createElement('button');
+      editBtn.className = 'button ghost small';
+      editBtn.type = 'button';
+      editBtn.dataset.edit = '1';
+      editBtn.textContent = '✏️ Edit';
+      editBtn.title = 'Edit title, description, unit…';
+      editBtn.addEventListener('click', () => openProductEditor(p));
+      tr.lastElementChild.appendChild(editBtn);
       const [price, stock, active] = tr.querySelectorAll('input');
       tr.querySelectorAll('button').forEach(btn => {
-        if (btn.hasAttribute('data-photo')) return;
+        if (btn.hasAttribute('data-photo') || btn.hasAttribute('data-edit')) return;
         btn.addEventListener('click', async event => {
           RFS.setBusy(event.currentTarget, true, 'Saving…');
           try {
@@ -530,7 +539,7 @@
       const isSub = String(order.source || '').startsWith('subscription:');
       const waEvent = ['CONFIRMED', 'PACKING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'].includes(order.status) ? order.status : null;
       tr.innerHTML = `
-        <td><strong>${order.id}</strong>${isSub ? ' <span class="badge orange" title="Auto-created weekly subscription order">🔁</span>' : ''}<br><span>${new Date(order.placedAt).toLocaleString('en-IN')}</span>${waEvent ? `<br><a class="wa-mini" target="_blank" rel="noopener" data-wa-send>💬 WhatsApp update</a>` : ''}</td>
+        <td><strong>${order.id}</strong>${isSub ? ' <span class="badge orange" title="Auto-created weekly subscription order">🔁</span>' : ''}<br><span>${new Date(order.placedAt).toLocaleString('en-IN')}</span>${waEvent ? `<br><a class="wa-mini" target="_blank" rel="noopener" data-wa-send>💬 WhatsApp update</a>` : ''}${order.deliveryPhoto ? `<br><a href="${order.deliveryPhoto}" target="_blank" rel="noopener" class="proof-link">📸 Proof</a>` : ''}</td>
         <td><strong>${order.customer?.name || ''}</strong><br><span>${order.customer?.phone || ''}</span></td>
         <td>${itemText}</td>
         <td><strong>${order.slot?.label || ''}</strong><br><span>${addr}</span><br><span>${order.location ? `Pin: ${order.location.lat}, ${order.location.lng}` : ''}</span></td>
@@ -928,6 +937,116 @@
     renderSales();
     detectLowStock();
   }
+
+
+  /* ============ ➕✏️ Product add/edit editor ============ */
+
+  const editorState = { photoFile: null, editingHandle: '' };
+
+  function openProductEditor(product = null) {
+    const form = $('[data-product-form]');
+    form.hidden = false;
+    form.reset();
+    editorState.photoFile = null;
+    editorState.editingHandle = product?.handle || '';
+    const set = (name, value) => { form.querySelector(`[name="${name}"]`).value = value ?? ''; };
+    if (product) {
+      set('handle', product.handle);
+      set('title', product.title);
+      set('category', product.category);
+      set('priceInr', product.priceInr);
+      set('compareAtInr', product.compareAtInr || '');
+      set('unitLabel', product.unitLabel);
+      set('stock', product.stock);
+      set('description', product.description || '');
+      form.querySelector('[name="featured"]').checked = Boolean(product.featured);
+      $('[data-editor-save]').textContent = '💾 Save changes';
+      $('[data-editor-hint]').textContent = `Editing ${product.handle}`;
+      const preview = $('[data-editor-preview]');
+      preview.hidden = false;
+      preview.src = product.image || '/assets/brand/basket.jpg';
+      $('[data-editor-photo-note]').textContent = 'Keeping current photo';
+    } else {
+      set('handle', '');
+      $('[data-editor-save]').textContent = '➕ Add product';
+      $('[data-editor-hint]').textContent = '';
+      $('[data-editor-preview]').hidden = true;
+      $('[data-editor-photo-note]').textContent = 'No photo yet — a basket image is used';
+    }
+    // category suggestions from the live catalog
+    const categories = [...new Set(state.products.map(p => p.category).filter(Boolean))];
+    $('#categoryList').innerHTML = categories.map(c => `<option value="${String(c).replace(/"/g, '&quot;')}">`).join('');
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    form.querySelector('[name="title"]').focus();
+  }
+
+  function closeProductEditor() {
+    const form = $('[data-product-form]');
+    form.hidden = true;
+    form.reset();
+    editorState.photoFile = null;
+    editorState.editingHandle = '';
+  }
+
+  document.querySelector('[data-open-editor]')?.addEventListener('click', () => openProductEditor());
+  document.querySelector('[data-editor-cancel]')?.addEventListener('click', closeProductEditor);
+  document.querySelector('[data-editor-photo-btn]')?.addEventListener('click', () => document.querySelector('[data-editor-photo]')?.click());
+  document.querySelector('[data-editor-photo]')?.addEventListener('change', event => {
+    const file = event.currentTarget.files?.[0];
+    if (!file) return;
+    editorState.photoFile = file;
+    const preview = $('[data-editor-preview]');
+    preview.hidden = false;
+    preview.src = URL.createObjectURL(file);
+    $('[data-editor-photo-note]').textContent = `📷 ${file.name.slice(0, 28)} — will upload on save`;
+  });
+
+  document.querySelector('[data-product-form]')?.addEventListener('submit', async event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = $('[data-editor-save]');
+    const data = Object.fromEntries(new FormData(form).entries());
+    if (!String(data.title || '').trim()) return RFS.toast('Enter a title', 'error');
+    const payload = {
+      title: String(data.title).trim(),
+      category: String(data.category || 'Seasonal').trim() || 'Seasonal',
+      priceInr: Number(data.priceInr),
+      stock: Math.max(0, Math.round(Number(data.stock) || 0)),
+      unitLabel: String(data.unitLabel || '1 kg').trim() || '1 kg',
+      description: String(data.description || '').trim(),
+      compareAtInr: Number(data.compareAtInr) || 0,
+      featured: form.querySelector('[name="featured"]').checked
+    };
+    if (!Number.isFinite(payload.priceInr) || payload.priceInr < 0) return RFS.toast('Enter a valid price', 'error');
+    RFS.setBusy(button, true, editorState.editingHandle ? 'Saving…' : 'Adding…');
+    try {
+      let handle;
+      if (editorState.editingHandle) {
+        await api(`/api/admin/products/${encodeURIComponent(editorState.editingHandle)}`, { method: 'PATCH', body: JSON.stringify(payload) });
+        handle = editorState.editingHandle;
+        RFS.toast(`${payload.title} updated`, 'success');
+      } else {
+        const created = await api('/api/admin/products', { method: 'POST', body: JSON.stringify(payload) });
+        handle = created.product.handle;
+        RFS.toast(`${payload.title} added — live on the store now 🎉`, 'success');
+      }
+      if (editorState.photoFile) {
+        try {
+          const dataUrl = await compressImage(editorState.photoFile, 1000, 0.82);
+          await api(`/api/admin/products/${encodeURIComponent(handle)}/photo`, { method: 'POST', body: JSON.stringify({ imageDataUrl: dataUrl }) });
+          RFS.toast('📸 Photo uploaded', 'success');
+        } catch (error) { RFS.toast(`Photo failed: ${error.message}`, 'error'); }
+      }
+      closeProductEditor();
+      await renderProducts();
+      refreshDashboard();
+      renderLowStock();
+    } catch (error) {
+      RFS.toast(error.message, 'error');
+    } finally {
+      RFS.setBusy(button, false);
+    }
+  });
 
   $('#admin-key-form').addEventListener('submit', async event => {
     event.preventDefault();

@@ -1,4 +1,7 @@
 import express from 'express';
+import fs from 'node:fs';
+import path from 'node:path';
+import { config } from '../config.js';
 import { readOrders, saveOrders, updateOrderStatus, awardLoyalty, awardReferral, loadSettings } from '../lib/store.js';
 import { verifyPartnerToken, findPartnerByPhone, partnerToken, hashPin, publicPartner, recordPosition, partnerScore } from '../lib/partners.js';
 import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
@@ -184,4 +187,40 @@ router.get('/route', partnerOnly, async (req, res) => {
 router.get('/stats', partnerOnly, (req, res) => {
   const score = partnerScore(readOrders(), req.partner.id);
   res.json({ ok: true, stats: score });
+});
+
+/* 📸 Delivery proof photo — partner snaps at the door, customer sees it on tracking */
+const DELIVERY_UPLOAD_DIR = path.join(config.dataDir, 'uploads', 'delivery');
+
+router.post('/orders/:id/photo', partnerOnly, (req, res) => {
+  try {
+    const orders = readOrders();
+    const order = orders.find(o => o.id === req.params.id && o.assignedPartnerId === req.partner.id);
+    if (!order) return res.status(404).json({ ok: false, error: 'Order not assigned to you' });
+    if (!['OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.status)) {
+      return res.status(409).json({ ok: false, error: 'Add the photo while delivering (after collecting the order)' });
+    }
+    const dataUrl = String(req.body?.imageDataUrl || '');
+    const match = /^data:image\/(jpeg|jpg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
+    if (!match) return res.status(400).json({ ok: false, error: 'Send a JPEG, PNG or WebP photo' });
+    const buffer = Buffer.from(match[2], 'base64');
+    if (buffer.length < 500) return res.status(400).json({ ok: false, error: 'Photo looks empty' });
+    if (buffer.length > 6 * 1024 * 1024) return res.status(400).json({ ok: false, error: 'Photo too large — keep it under 6 MB' });
+    if (!(buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) &&
+        !(buffer[0] === 0x89 && buffer[1] === 0x50) &&
+        !(buffer.toString('ascii', 0, 4) === 'RIFF' && buffer.toString('ascii', 8, 12) === 'WEBP')) {
+      return res.status(400).json({ ok: false, error: 'That file is not a valid photo' });
+    }
+    fs.mkdirSync(DELIVERY_UPLOAD_DIR, { recursive: true });
+    const file = `${order.id}-${Date.now()}.jpg`;
+    fs.writeFileSync(path.join(DELIVERY_UPLOAD_DIR, file), buffer);
+    order.deliveryPhoto = `/img/delivery/${file}`;
+    order.updatedAt = new Date().toISOString();
+    order.history.push({ status: order.status, at: order.updatedAt, note: `📸 Delivery photo added by ${req.partner.name}` });
+    saveOrders(orders);
+    console.log(JSON.stringify({ event: 'delivery.photo_added', order: order.id, partner: req.partner.id, bytes: buffer.length }));
+    res.json({ ok: true, deliveryPhoto: order.deliveryPhoto });
+  } catch (error) {
+    res.status(error.status || 500).json({ ok: false, error: error.message || 'Could not save the photo' });
+  }
 });

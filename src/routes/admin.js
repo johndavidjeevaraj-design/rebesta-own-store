@@ -2,7 +2,7 @@ import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from '../config.js';
-import { loadProducts, loadSettings, loadPartners, savePartners, readOrders, saveOrders, updateOrderStatus, updateProduct, saveSettings, createBackup, awardLoyalty, awardReferral, dataVersions, loadSubscriptions, saveSubscriptions, getSubscription } from '../lib/store.js';
+import { loadProducts, loadSettings, loadPartners, savePartners, readOrders, saveOrders, updateOrderStatus, updateProduct, createProduct, saveSettings, createBackup, awardLoyalty, awardReferral, dataVersions, loadSubscriptions, saveSubscriptions, getSubscription } from '../lib/store.js';
 import { createPartner, updatePartner, deletePartner, publicPartner, freshPositions, haversineKm, etaMinutesFromKm, partnerScore } from '../lib/partners.js';
 import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
 import { publicSubscription } from '../lib/subscriptions.js';
@@ -40,6 +40,16 @@ router.get('/dashboard', (req, res) => {
 router.get('/products', (req, res) => {
   const products = loadProducts();
   res.json({ ok: true, products });
+});
+
+router.post('/products', (req, res) => {
+  try {
+    const product = createProduct(req.body || {});
+    console.log(JSON.stringify({ event: 'product.created', handle: product.handle, title: product.title }));
+    res.status(201).json({ ok: true, product });
+  } catch (error) {
+    res.status(error.status || 400).json({ ok: false, error: error.message || 'Could not create the product' });
+  }
 });
 
 router.patch('/products/:handle', (req, res) => {

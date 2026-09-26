@@ -355,9 +355,13 @@ h1,h2,h3,h4,p,dl,dt,dd{margin-top:0}
   .product-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
   .product-detail-layout,.admin-layout{grid-template-columns:1fr}.admin-side{position:static}.footer-grid{grid-template-columns:1fr 1fr}
 }
+@media(max-width:840px){
+  .product-detail-layout{gap:18px}
+  .product-detail-media img{aspect-ratio:1/.82;padding:15px}
+}
 @media(max-width:540px){
   body.shop-page{padding-bottom:74px}.section{padding:40px 0}.page-hero{padding:31px 0 22px}.hero-market{align-items:start}.hero-subtitle{font-size:.9rem}.hero-actions .button{flex:1 1 calc(50% - 5px)}.hero-facts{gap:5px}.hero-visual{grid-template-columns:1fr minmax(110px,.48fr);min-height:300px}.hero-card.featured{min-height:300px;padding:14px}.hero-card.featured img{height:190px}.hero-card.small{min-height:138px;padding:9px}.hero-card.small img{height:72px}.hero-card.small h3{font-size:.74rem}.hero-caption{display:none}
-  .product-heading{margin-bottom:11px}.product-heading h2{font-size:1.08rem}.shop-count{font-size:.63rem;min-height:27px}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.product-card{border-radius:15px}.product-body{min-height:166px;padding:9px}.product-title{font-size:.77rem}.price{font-size:.9rem}.unit{font-size:.56rem}.card-actions .button{min-height:31px;font-size:.66rem}.qty-stepper{height:31px}.qty-stepper button{width:26px;height:26px}
+  .product-detail-copy h1{font-size:clamp(1.65rem,7.5vw,2.3rem)}.product-detail-description{font-size:.9rem}.product-heading{margin-bottom:11px}.product-heading h2{font-size:1.08rem}.shop-count{font-size:.63rem;min-height:27px}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.product-card{border-radius:15px}.product-body{min-height:166px;padding:9px}.product-title{font-size:.77rem}.price{font-size:.9rem}.unit{font-size:.56rem}.card-actions .button{min-height:31px;font-size:.66rem}.qty-stepper{height:31px}.qty-stepper button{width:26px;height:26px}
   .market-note-inner{align-items:flex-start;flex-direction:column}.market-note .button{width:100%}.form-grid{grid-template-columns:1fr}.shop-panel,.summary-card,.admin-side{border-radius:18px;padding:13px}
   .cart-item{grid-template-columns:64px minmax(0,1fr);gap:8px 12px;padding:11px 10px}
   .cart-item-image{width:64px;border-radius:12px}
@@ -1024,8 +1028,8 @@ body{font-size:16px}
    testimonials, FAQ
    ============================================================ */
 
-/* Product page */
-.product-detail-layout{grid-template-columns:minmax(340px,1.05fr) minmax(0,1.15fr)}
+/* Product page (desktop only - phones stack, see mobile sections) */
+@media(min-width:841px){.product-detail-layout{grid-template-columns:minmax(340px,1.05fr) minmax(0,1.15fr)}}
 .product-detail-media img[data-zoom]{cursor:zoom-in}
 .share-row{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
 .button.whatsapp{color:#fff;background:linear-gradient(135deg,#25d366,#0e9c4c);box-shadow:0 12px 26px rgba(18,156,76,.26)}

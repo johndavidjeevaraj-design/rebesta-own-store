@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#074015"><meta name="description" content="Fast checkout with map-pin delivery, morning slots, coupons and COD."><meta property="og:title" content="Checkout"><meta property="og:description" content="Fast checkout with map-pin delivery, morning slots, coupons and COD."><meta property="og:type" content="website"><meta property="og:image" content="/assets/brand/logo.png"><meta name="twitter:card" content="summary">
-  <link rel="stylesheet" href="/css/styles.css?v=20260926f4">
+  <link rel="stylesheet" href="/css/styles.css?v=20260926f5">
   <link rel="stylesheet" href="/assets/vendor/leaflet.css?v=194" crossorigin="">
 </head>
 <body class="shop-page">
@@ -80,18 +80,36 @@
           <div class="shop-panel checkout-section">
             <h2><span class="step-number">4</span>Payment</h2>
             <div class="slot-list" data-payment-list></div>
-            <label class="sub-offer" style="margin-top:14px">
-              <input type="checkbox" data-subscribe>
-              <div>
-                <strong>🔁 Make it a weekly order</strong>
-                <span>Same vegetables, same slot, every week. Pay on delivery each time — pause or cancel anytime.</span>
-                <span class="sub-day-row">Deliver every <select data-subscribe-day>
-                  <option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option>
-                  <option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option>
-                  <option value="0">Sunday</option>
-                </select></span>
+            <div class="sub-card" data-sub-card>
+              <input type="checkbox" id="subCheck" data-subscribe hidden>
+              <label class="sub-card-head" for="subCheck">
+                <span class="sub-ico" aria-hidden="true">🔁</span>
+                <span class="sub-card-title">
+                  <strong>Make it a weekly order</strong>
+                  <span>Same veggies, same morning slot — automatic, every week.</span>
+                </span>
+                <span class="sub-check" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15"><path d="M9.5 16.2 5.3 12l-1.4 1.4 5.6 5.6 12-12-1.4-1.4z" fill="currentColor"/></svg></span>
+              </label>
+              <div class="sub-card-body">
+                <div class="sub-benefits"><span>🚚 Fresh every week</span><span>💵 Pay on delivery</span><span>⏸ Pause anytime</span></div>
+                <div class="sub-day-title">Deliver every</div>
+                <div class="sub-day-pills" data-sub-day-pills>
+                  <button type="button" class="sub-day-pill" data-sub-day="1">Mon</button>
+                  <button type="button" class="sub-day-pill" data-sub-day="2">Tue</button>
+                  <button type="button" class="sub-day-pill" data-sub-day="3">Wed</button>
+                  <button type="button" class="sub-day-pill" data-sub-day="4">Thu</button>
+                  <button type="button" class="sub-day-pill" data-sub-day="5">Fri</button>
+                  <button type="button" class="sub-day-pill" data-sub-day="6">Sat</button>
+                  <button type="button" class="sub-day-pill" data-sub-day="0">Sun</button>
+                </div>
+                <p class="sub-note">Your basket repeats automatically on the chosen weekday. We WhatsApp you before each delivery — skip a week with one tap.</p>
               </div>
-            </label>
+              <select data-subscribe-day hidden>
+                <option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option>
+                <option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option>
+                <option value="0">Sunday</option>
+              </select>
+            </div>
             <div class="field" style="margin-top:14px"><label for="notes">Delivery notes <small style="display:inline">(optional)</small></label><textarea id="notes" name="notes" maxlength="500" placeholder="Gate code, nearby shop, call on arrival…"></textarea></div>
           </div>
         </div>
@@ -148,6 +166,6 @@
 </footer>
   <script src="/assets/vendor/leaflet.js?v=194" defer crossorigin=""></script>
   <script src="/js/store.js?v=20260924p8" defer></script>
-  <script src="/js/checkout.js?v=20260926f2" defer></script>
+  <script src="/js/checkout.js?v=20260926f3" defer></script>
 </body>
 </html>

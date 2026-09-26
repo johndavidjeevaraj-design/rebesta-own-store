@@ -1,4 +1,16 @@
 (() => {
+  /* ============ 🔁 Weekly-order offer card wiring ============ */
+  const subCard = document.querySelector('[data-sub-card]');
+  if (subCard) {
+    const subCheck = subCard.querySelector('[data-subscribe]');
+    const select = subCard.querySelector('[data-subscribe-day]');
+    const pills = [...subCard.querySelectorAll('[data-sub-day]')];
+    const syncPills = () => pills.forEach(p => p.classList.toggle('on', p.dataset.subDay === select.value));
+    pills.forEach(p => p.addEventListener('click', () => { select.value = p.dataset.subDay; syncPills(); }));
+    select.addEventListener('change', syncPills);
+    subCheck.addEventListener('change', () => subCard.classList.toggle('active', subCheck.checked));
+    syncPills();
+  }
   const state = { products: [], byHandle: new Map(), settings: null, quote: null, coords: null, map: null, marker: null, coupon: null };
   const $ = selector => document.querySelector(selector);
 
@@ -280,6 +292,7 @@
         const isoWeekday = new Date(`${state.quote.deliveryDate.iso}T00:00:00Z`).getUTCDay();
         subscribeDay.value = String(isoWeekday);
         subscribeDay.dataset.preset = '1';
+        subscribeDay.dispatchEvent(new Event('change'));
       }
     }
     renderSummary();

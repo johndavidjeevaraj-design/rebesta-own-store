@@ -1369,3 +1369,26 @@ body{font-size:16px}
 .review-admin-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid var(--line-2);border-radius:12px;padding:10px 12px;font-size:.9rem}
 .p-stat.cash b{color:#1f7a3d}
 @media(max-width:540px){.review-admin-row{flex-direction:column;align-items:flex-start}}
+
+/* ============ PASS 7: weekly-order offer card (checkout) ============ */
+.sub-card{margin-top:14px;border:1.5px solid #d7e2d0;border-radius:16px;background:#fff;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.sub-card.active{border-color:#128a3e;box-shadow:0 0 0 3px rgba(18,138,62,.12)}
+.sub-card-head{display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sub-ico{font-size:1.45rem;width:44px;height:44px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eaf6e6,#d7eed0);border-radius:12px}
+.sub-card-title{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.sub-card-title strong{font-size:.98rem;color:#1c2b18;letter-spacing:.01em}
+.sub-card-title span{font-size:.78rem;color:#6b7a66;line-height:1.35}
+.sub-check{width:26px;height:26px;flex:0 0 auto;border:2px solid #c4d3bc;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;background:#fff;transition:all .18s}
+.sub-card.active .sub-check{background:#128a3e;border-color:#128a3e;transform:scale(1.06)}
+.sub-card.active .sub-ico{background:linear-gradient(135deg,#d3f0d9,#a9e2b8)}
+.sub-card-body{display:none;padding:0 14px 14px;flex-direction:column;gap:10px}
+.sub-card.active .sub-card-body{display:flex}
+.sub-benefits{display:flex;gap:6px;flex-wrap:wrap}
+.sub-benefits span{font-size:.72rem;font-weight:700;color:#2c4a2e;background:#f2f8ef;border:1px solid #dcead7;border-radius:99px;padding:4px 10px}
+.sub-day-title{font-size:.8rem;font-weight:800;color:#33452f;text-transform:uppercase;letter-spacing:.05em}
+.sub-day-pills{display:flex;gap:6px;flex-wrap:wrap}
+.sub-day-pill{border:1.5px solid #cfdcc7;background:#fff;color:#4b5c46;border-radius:99px;padding:8px 0;flex:1;min-width:40px;text-align:center;font-weight:800;font-size:.85rem;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s}
+.sub-day-pill.on{background:#074015;border-color:#074015;color:#fff;transform:translateY(-1px)}
+.sub-day-pill:not(.on):hover{border-color:#8fae86}
+.sub-note{font-size:.74rem;color:#7d8b77;line-height:1.5;margin:0}
+@media(max-width:540px){.sub-ico{width:38px;height:38px;font-size:1.2rem}.sub-day-pill{padding:9px 0}}

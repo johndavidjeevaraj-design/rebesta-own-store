@@ -97,7 +97,7 @@
       '@type': 'Product',
       name: p.title,
       description: p.description,
-      image: [p.image],
+      image: [new URL(p.image, location.origin).href],
       sku: p.sku,
       brand: { '@type': 'Brand', name: 'Rebesta Fresh' },
       offers: {

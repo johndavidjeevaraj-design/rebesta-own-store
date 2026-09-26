@@ -19,7 +19,9 @@ import {
   slotCapacity,
   getSubscription,
   loadSubscriptions,
-  saveSubscriptions
+  saveSubscriptions,
+  addCustomerReview,
+  approvedReviewsForProduct
 } from '../lib/store.js';
 import { orderPlacedEmails } from '../lib/mailer.js';
 import { quoteDelivery, reverseGeocode } from '../lib/delivery.js';
@@ -114,6 +116,32 @@ router.get('/products/:handle', (req, res) => {
   const product = getProduct(req.params.handle);
   if (!product || !product.active) return res.status(404).json({ ok: false, error: 'Product not found' });
   res.json({ ok: true, product });
+});
+
+/* ============ Customer reviews (moderated) ============ */
+
+router.post('/reviews', (req, res) => {
+  try {
+    const orderId = String(req.body?.orderId || '').trim().toUpperCase();
+    const phone = normalizePhone(req.body?.phone);
+    const order = getOrder(orderId);
+    if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
+    if (!phone || String(order.customer?.phone || '').replace(/\D/g, '').endsWith(phone) === false) {
+      return res.status(403).json({ ok: false, error: 'Order ID and phone do not match' });
+    }
+    const review = addCustomerReview({ orderId, rating: req.body?.rating, text: req.body?.text });
+    res.status(201).json({ ok: true, review: { rating: review.rating, name: review.name, approved: review.approved } });
+  } catch (error) {
+    flattenError(res, error, 'Could not save your review');
+  }
+});
+
+router.get('/reviews', (req, res) => {
+  const handle = String(req.query.product || '').trim();
+  if (!handle) return res.status(400).json({ ok: false, error: 'Product handle required' });
+  const reviews = approvedReviewsForProduct(handle);
+  const avg = reviews.length ? Math.round((reviews.reduce((s, r) => s + Number(r.rating || 0), 0) / reviews.length) * 10) / 10 : null;
+  res.json({ ok: true, count: reviews.length, averageRating: avg, reviews });
 });
 
 router.get('/location/reverse', async (req, res) => {

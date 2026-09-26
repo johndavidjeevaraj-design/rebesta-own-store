@@ -1,5 +1,5 @@
 (() => {
-  const state = { product: null, related: [], variants: [], qty: 1 };
+  const state = { product: null, related: [], variants: [], qty: 1, reviews: [] };
   const main = document.querySelector('[data-product-page]');
   const related = document.querySelector('[data-related-grid]');
   const handle = decodeURIComponent(location.pathname.split('/').filter(Boolean).pop() || '');
@@ -148,6 +148,31 @@
     });
     related.innerHTML = '';
     state.related.forEach(product => related.appendChild(relatedCard(product)));
+    renderReviews(p);
+  }
+
+  function renderReviews(p) {
+    let box = document.querySelector('[data-product-reviews]');
+    if (!box) {
+      box = document.createElement('section');
+      box.className = 'product-reviews';
+      box.setAttribute('data-product-reviews', '');
+      related.parentElement.insertBefore(box, related);
+    }
+    const rv = state.reviews;
+    if (!rv.length) { box.hidden = true; box.innerHTML = ''; return; }
+    const avg = Math.round((rv.reduce((s, r) => s + Number(r.rating || 0), 0) / rv.length) * 10) / 10;
+    const stars = n => '★'.repeat(Math.round(n)) + '☆'.repeat(5 - Math.round(n));
+    box.hidden = false;
+    box.innerHTML = `
+      <span class="eyebrow">Customer reviews</span>
+      <h2 class="section-title" style="font-size:1.25rem">⭐ ${avg} / 5 <span class="review-count">· ${rv.length} review${rv.length > 1 ? 's' : ''} for ${p.title}</span></h2>
+      <div class="review-list">${rv.map(r => `
+        <div class="review-card">
+          <div class="review-head"><strong>${r.name}</strong><span class="review-stars">${stars(r.rating)}</span></div>
+          ${r.text ? `<p>${r.text.replace(/</g, '&lt;')}</p>` : ''}
+        </div>`).join('')}
+      </div>`;
   }
 
   async function init() {
@@ -163,6 +188,10 @@
       const sameCategory = others.filter(product => product.category === data.product.category);
       const featured = others.filter(product => product.featured && product.category !== data.product.category);
       state.related = [...sameCategory, ...featured].slice(0, 10);
+      try {
+        const rv = await RFS.api(`/api/reviews?product=${encodeURIComponent(handle)}`);
+        state.reviews = rv.reviews || [];
+      } catch { state.reviews = []; }
       render();
     } catch (error) {
       main.innerHTML = `<div class="empty-state"><h2>Product not found</h2><p>${error.message}</p><a class="button primary" href="/#shop">Back to shop</a></div>`;

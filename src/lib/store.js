@@ -13,8 +13,21 @@ const files = {
   orders: path.join(dataDir, 'orders.json'),
   partners: path.join(dataDir, 'partners.json'),
   positions: path.join(dataDir, 'partner-positions.json'),
-  subscriptions: path.join(dataDir, 'subscriptions.json')
+  subscriptions: path.join(dataDir, 'subscriptions.json'),
+  reviews: path.join(dataDir, 'reviews.json'),
+  cashLog: path.join(dataDir, 'cash-log.json')
 };
+
+const randomSku = () => crypto.randomBytes(4).toString('hex');
+
+/* India/Kolkata calendar day (YYYY-MM-DD) for an ISO timestamp */
+export function istDay(iso) {
+  try {
+    return new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  } catch {
+    return '';
+  }
+}
 
 function readJson(file, fallback) {
   try {
@@ -219,6 +232,136 @@ export function saveSubscriptions(subscriptions) {
   return subscriptions;
 }
 
+/* --- Customer reviews (moderated) --- */
+
+export function loadReviews() {
+  return readJson(files.reviews, []);
+}
+
+export function saveReviews(reviews) {
+  writeJson(files.reviews, reviews);
+  return reviews;
+}
+
+export function reviewForOrder(orderId) {
+  return loadReviews().find(r => r.orderId === String(orderId || '').toUpperCase()) || null;
+}
+
+export function addCustomerReview({ orderId, rating, text }) {
+  const reviews = loadReviews();
+  const id = String(orderId || '').trim().toUpperCase();
+  const order = getOrder(id);
+  if (!order) { const e = new Error('Order not found'); e.status = 404; throw e; }
+  if (order.status !== 'DELIVERED') { const e = new Error('You can review after the order is delivered'); e.status = 409; throw e; }
+  if (reviews.some(r => r.orderId === id)) { const e = new Error('This order already has a review'); e.status = 409; throw e; }
+  const stars = Math.round(Number(rating));
+  if (!Number.isInteger(stars) || stars < 1 || stars > 5) { const e = new Error('Rating must be 1–5 stars'); e.status = 400; throw e; }
+  const nameRaw = String(order.customer?.name || 'Customer').trim();
+  const parts = nameRaw.split(/\s+/);
+  const displayName = parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : parts[0];
+  const review = {
+    id: `REV-${randomSku()}`,
+    orderId: id,
+    productHandles: (order.items || []).map(i => i.handle).filter(Boolean),
+    name: displayName,
+    rating: stars,
+    text: String(text || '').trim().slice(0, 400),
+    approved: false,
+    createdAt: new Date().toISOString()
+  };
+  reviews.push(review);
+  saveReviews(reviews);
+  return review;
+}
+
+export function setReviewApproval(id, approved) {
+  const reviews = loadReviews();
+  const review = reviews.find(r => r.id === id);
+  if (!review) return null;
+  review.approved = Boolean(approved);
+  saveReviews(reviews);
+  return review;
+}
+
+export function deleteReview(id) {
+  const reviews = loadReviews();
+  const next = reviews.filter(r => r.id !== id);
+  if (next.length === reviews.length) return false;
+  saveReviews(next);
+  return true;
+}
+
+export function approvedReviewsForProduct(handle) {
+  return loadReviews()
+    .filter(r => r.approved && (r.productHandles || []).includes(handle))
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+    .slice(0, 12)
+    .map(r => ({ name: r.name, rating: r.rating, text: r.text, createdAt: r.createdAt }));
+}
+
+/* --- COD cash reconciliation --- */
+
+export function loadCashLog() {
+  return readJson(files.cashLog, []);
+}
+
+function deliveredAtOf(order) {
+  const entry = (order.history || []).find(h => h.status === 'DELIVERED');
+  return entry?.at || order.updatedAt || order.placedAt || '';
+}
+
+export function cashSummary(dateIso) {
+  const day = dateIso || istDay(new Date().toISOString());
+  const partners = loadPartners();
+  const rows = partners.map(p => ({ partnerId: p.id, name: p.name, active: p.active !== false, orderCount: 0, collectedInr: 0, receivedInr: 0 }));
+  const byPartner = new Map(rows.map(r => [r.partnerId, r]));
+  const ordersToday = [];
+  for (const o of readOrders()) {
+    if (o.paymentMethod !== 'cod' || o.status !== 'DELIVERED' || !o.assignedPartnerId) continue;
+    if (istDay(deliveredAtOf(o)) !== day) continue;
+    const row = byPartner.get(o.assignedPartnerId);
+    if (!row) continue;
+    row.orderCount += 1;
+    row.collectedInr += Number(o.totalInr) || 0;
+    ordersToday.push({ id: o.id, partnerId: o.assignedPartnerId, partnerName: o.assignedPartnerName, totalInr: o.totalInr });
+  }
+  for (const h of loadCashLog()) {
+    if (h.date !== day) continue;
+    const row = byPartner.get(h.partnerId);
+    if (row) row.receivedInr += Number(h.amount) || 0;
+  }
+  for (const row of rows) row.pendingInr = Math.max(0, row.collectedInr - row.receivedInr);
+  return {
+    date: day,
+    partners: rows,
+    orders: ordersToday,
+    totals: {
+      collectedInr: rows.reduce((s, r) => s + r.collectedInr, 0),
+      receivedInr: rows.reduce((s, r) => s + r.receivedInr, 0),
+      pendingInr: rows.reduce((s, r) => s + r.pendingInr, 0)
+    }
+  };
+}
+
+export function recordCashReceived({ partnerId, amount, date, note }) {
+  const partner = loadPartners().find(p => p.id === partnerId);
+  if (!partner) { const e = new Error('Partner not found'); e.status = 404; throw e; }
+  const value = Number(amount);
+  if (!Number.isFinite(value) || value <= 0 || value > 1000000) { const e = new Error('Enter a valid amount'); e.status = 400; throw e; }
+  const log = loadCashLog();
+  log.push({
+    id: `CASH-${randomSku()}`,
+    partnerId,
+    partnerName: partner.name,
+    amount: Math.round(value * 100) / 100,
+    date: date || istDay(new Date().toISOString()),
+    note: String(note || '').slice(0, 120),
+    receivedAt: new Date().toISOString()
+  });
+  writeJson(files.cashLog, log);
+  return cashSummary(date);
+}
+
 export function getSubscription(id) {
   return loadSubscriptions().find(s => s.id === String(id || '').trim().toUpperCase());
 }
@@ -376,7 +519,8 @@ export function maskCustomer(order) {
       area: o.address?.area || ''
     },
     history: o.history || [],
-    deliveryPhoto: o.deliveryPhoto || ''
+    deliveryPhoto: o.deliveryPhoto || '',
+    reviewed: o.status === 'DELIVERED' ? Boolean(reviewForOrder(o.id)) : false
   });
   return Array.isArray(order) ? order.map(clean) : clean(order);
 }

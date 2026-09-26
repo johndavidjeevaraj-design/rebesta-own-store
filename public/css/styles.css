@@ -1349,3 +1349,23 @@ body{font-size:16px}
 .proof-box img{width:100%;max-width:420px;border-radius:11px;display:block;border:1px solid #e3e9de}
 .proof-link{display:inline-block;margin-top:4px;font-size:.76rem;font-weight:800;color:#1f7a3d}
 @media(max-width:540px){.proof-box img{max-width:100%}}
+
+/* ============ PASS 6: reviews + COD cash + nudge ============ */
+.review-box{background:#fffdf4;border:1px solid #e9dfb8;border-radius:14px;padding:14px;margin-top:14px}
+.review-box strong{display:block;font-size:.9rem;margin-bottom:8px;color:#4a3f14}
+.star-row{display:flex;gap:4px;margin-bottom:10px}
+.star-btn{background:none;border:1px solid #d9cfa4;border-radius:10px;font-size:1.5rem;line-height:1;color:#d9cfa4;padding:4px 10px;cursor:pointer}
+.star-btn.on{color:#f5a623;border-color:#f5a623;background:#fff8e8}
+.review-text{width:100%;min-height:74px;border:1px solid var(--line-2);border-radius:12px;padding:10px 12px;font:inherit;font-size:.92rem;margin-bottom:10px;box-sizing:border-box}
+.product-reviews{margin-top:26px}
+.product-reviews .review-count{font-size:.9rem;color:var(--muted);font-weight:600}
+.review-list{display:grid;gap:10px;margin-top:12px}
+.review-card{background:#fff;border:1px solid var(--line-2);border-radius:14px;padding:12px 14px}
+.review-card p{margin:6px 0 0;font-size:.92rem;color:#3c4a38}
+.review-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.review-stars{color:#f5a623;letter-spacing:2px;font-size:.95rem}
+.cash-pending{color:#b3540a}
+.review-admin-list{display:grid;gap:8px}
+.review-admin-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid var(--line-2);border-radius:12px;padding:10px 12px;font-size:.9rem}
+.p-stat.cash b{color:#1f7a3d}
+@media(max-width:540px){.review-admin-row{flex-direction:column;align-items:flex-start}}

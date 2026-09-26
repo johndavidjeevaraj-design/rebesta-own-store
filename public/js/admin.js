@@ -545,7 +545,7 @@
       const isSub = String(order.source || '').startsWith('subscription:');
       const waEvent = ['CONFIRMED', 'PACKING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'].includes(order.status) ? order.status : null;
       tr.innerHTML = `
-        <td><strong>${order.id}</strong>${isSub ? ' <span class="badge orange" title="Auto-created weekly subscription order">🔁</span>' : ''}<br><span>${new Date(order.placedAt).toLocaleString('en-IN')}</span>${waEvent ? `<br><a class="wa-mini" target="_blank" rel="noopener" data-wa-send>💬 WhatsApp update</a>` : ''}${order.deliveryPhoto ? `<br><a href="${order.deliveryPhoto}" target="_blank" rel="noopener" class="proof-link">📸 Proof</a>` : ''}</td>
+        <td><strong>${order.id}</strong>${isSub ? ' <span class="badge orange" title="Auto-created weekly subscription order">🔁</span>' : ''}<br><span>${new Date(order.placedAt).toLocaleString('en-IN')}</span>${waEvent ? `<br><a class="wa-mini" target="_blank" rel="noopener" data-wa-send>💬 WhatsApp update</a>` : ''}${order.deliveryPhoto ? `<br><a href="${order.deliveryPhoto}" target="_blank" rel="noopener" class="proof-link">📸 Proof</a>` : ''}${order.status === 'DELIVERED' ? `<br><a class="wa-mini" target="_blank" rel="noopener" data-wa-nudge>💬 Nudge reorder</a>` : ''}</td>
         <td><strong>${order.customer?.name || ''}</strong><br><span>${order.customer?.phone || ''}</span></td>
         <td>${itemText}</td>
         <td><strong>${order.slot?.label || ''}</strong><br><span>${addr}</span><br><span>${order.location ? `Pin: ${order.location.lat}, ${order.location.lng}` : ''}</span></td>
@@ -553,6 +553,13 @@
         <td><strong>${RFS.money(order.totalInr)}</strong><br><span>${order.paymentMethod.toUpperCase()} · ${order.paymentStatus.replaceAll('_', ' ').toLowerCase()}</span>${order.paymentMethod === 'cod' && order.paymentStatus === 'PAY_ON_DELIVERY' && !['DELIVERED', 'CANCELLED'].includes(order.status) ? '<br><button class="button ghost small" type="button" data-mark-cash>💵 Mark cash received</button>' : ''}</td>
         <td><select class="status-select"></select></td>
       `;
+      tr.querySelector('[data-wa-nudge]')?.addEventListener('click', () => {
+        const phone = String(order.customer?.phone || '').replace(/\D/g, '');
+        const first = String(order.customer?.name || '').split(' ')[0] || 'there';
+        const top = order.items.slice(0, 2).map(i => `${i.title} (${i.unitLabel})`).join(' + ');
+        const msg = `Hi ${first}! 👋 Fresh farm vegetables delivered tomorrow morning in Hosur. Your last order: ${top}…\nRefill the same basket in one tap 👉 https://rebestafresh.in/track?phone=${phone.slice(-10)}`;
+        window.open(`https://api.whatsapp.com/send/?phone=${phone}&text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+      });
       tr.querySelector('[data-wa-send]')?.addEventListener('click', () => {
         const phone = String(order.customer?.phone || '').replace(/\D/g, '').slice(-10);
         const first = String(order.customer?.name || '').split(' ')[0] || 'there';
@@ -855,7 +862,8 @@
   function switchTab(name) {
     document.querySelectorAll('[data-tab-btn]').forEach(btn => btn.classList.toggle('active', btn.dataset.tabBtn === name));
     document.querySelectorAll('[data-tab]').forEach(sec => { sec.hidden = sec.dataset.tab !== name; });
-    if (name === 'fleet') refreshTracking();
+    if (name === 'fleet') { refreshTracking(); renderCashPanel(); }
+    if (name === 'products') renderReviewsPanel();
     if (name === 'dashboard') { renderRecent(); renderSubs(); renderSlotUsage(); }
     localStorage.setItem('rebesta_admin_tab', name);
   }
@@ -909,6 +917,7 @@
       refreshDashboard();
       renderPacking();
       renderSlotUsage();
+      renderCashPanel();
     }
     if (v.products !== state.versions.products) { await renderProducts(); refreshDashboard(); renderLowStock(); detectLowStock(); }
     if (v.partners !== state.versions.partners) { await refreshPartners(); renderOrders(); }
@@ -1103,6 +1112,69 @@
   });
 
   // --- Packing lists ---
+  /* ============ COD cash reconciliation panel ============ */
+
+  async function renderCashPanel() {
+    const panel = $('[data-cash-panel]');
+    if (!panel) return;
+    let data;
+    try { data = await api('/api/admin/cash'); } catch { return; }
+    const s = data.summary;
+    const rowsHtml = s.partners.filter(p => p.collectedInr > 0 || p.receivedInr > 0).map(p => `
+      <tr>
+        <td><strong>${p.name}</strong></td>
+        <td>${p.orderCount}</td>
+        <td><strong>${RFS.money(p.collectedInr)}</strong></td>
+        <td>${RFS.money(p.receivedInr)}</td>
+        <td><strong class="${p.pendingInr > 0 ? 'cash-pending' : ''}">${RFS.money(p.pendingInr)}</strong></td>
+        <td>${p.pendingInr > 0 ? `<button class="button orange small" type="button" data-cash-received="${p.partnerId}" data-amount="${p.pendingInr}">✅ Received</button>` : '<span class="badge green">settled</span>'}</td>
+      </tr>`).join('');
+    panel.innerHTML = `
+      <div class="section-head" style="margin-bottom:12px;flex-wrap:wrap;gap:10px">
+        <div><h2 style="margin-bottom:4px">💵 COD cash — ${s.date}</h2><p class="section-subtitle" style="font-size:.92rem">Cash partners collected today. Mark received when they hand the money over.</p></div>
+        <div style="text-align:right"><strong style="font-size:1.15rem">${RFS.money(s.totals.collectedInr)}</strong><br><small style="color:var(--muted)">collected · ${RFS.money(s.totals.pendingInr)} pending</small></div>
+      </div>
+      ${rowsHtml ? `<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Partner</th><th>COD orders</th><th>Collected</th><th>Received</th><th>Pending</th><th></th></tr></thead><tbody>${rowsHtml}</tbody></table></div>` : '<div class="empty-state" style="padding:14px"><p>No COD deliveries today yet.</p></div>'}`;
+    panel.querySelectorAll('[data-cash-received]').forEach(btn => btn.addEventListener('click', async () => {
+      const partner = s.partners.find(p => p.partnerId === btn.dataset.cashReceived);
+      const amount = window.prompt(`How much cash did ${partner?.name || 'the partner'} hand over? (₹)`, btn.dataset.amount || '');
+      if (amount === null) return;
+      try {
+        await api('/api/admin/cash/received', { method: 'POST', body: JSON.stringify({ partnerId: btn.dataset.cashReceived, amount: Number(amount) }) });
+        RFS.toast('💵 Cash marked as received', 'success');
+        renderCashPanel();
+      } catch (error) { RFS.toast(error.message || 'Could not record cash', 'error'); }
+    }));
+  }
+
+  /* ============ Review moderation ============ */
+
+  async function renderReviewsPanel() {
+    const panel = $('[data-reviews-panel]');
+    if (!panel) return;
+    let data;
+    try { data = await api('/api/admin/reviews'); } catch { return; }
+    const reviews = data.reviews || [];
+    const pending = reviews.filter(r => !r.approved);
+    const approved = reviews.filter(r => r.approved);
+    if (!reviews.length) { panel.innerHTML = '<p style="color:var(--muted);margin:0">⭐ No customer reviews yet — they can review from the Track page after delivery.</p>'; return; }
+    const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
+    panel.innerHTML = `
+      <div class="section-head" style="margin-bottom:10px"><h3 style="margin:0">⭐ Reviews — ${pending.length} waiting</h3><small style="color:var(--muted)">${approved.length} approved</small></div>
+      ${pending.length ? `<div class="review-admin-list">${pending.map(r => `
+        <div class="review-admin-row">
+          <div><strong>${r.name}</strong> <span class="review-stars">${stars(r.rating)}</span> <small style="color:var(--muted)">· ${r.orderId}</small><br><span>${String(r.text || '(no text)').replace(/</g, '&lt;')}</span></div>
+          <div style="display:flex;gap:6px;flex-shrink:0"><button class="button primary small" type="button" data-review-approve="${r.id}">✅ Approve</button><button class="button ghost small" type="button" data-review-delete="${r.id}">🗑 Delete</button></div>
+        </div>`).join('')}</div>` : '<p style="color:var(--muted);margin:0 0 8px">No pending reviews — all caught up ✅</p>'}`;
+    panel.querySelectorAll('[data-review-approve]').forEach(btn => btn.addEventListener('click', async () => {
+      try { await api(`/api/admin/reviews/${encodeURIComponent(btn.dataset.reviewApprove)}/approve`, { method: 'POST', body: JSON.stringify({ approved: true }) }); RFS.toast('Review approved — now shown on the product page', 'success'); renderReviewsPanel(); } catch (e) { RFS.toast(e.message || 'Failed', 'error'); }
+    }));
+    panel.querySelectorAll('[data-review-delete]').forEach(btn => btn.addEventListener('click', async () => {
+      if (!window.confirm('Delete this review permanently?')) return;
+      try { await api(`/api/admin/reviews/${encodeURIComponent(btn.dataset.reviewDelete)}`, { method: 'DELETE' }); RFS.toast('Review deleted'); renderReviewsPanel(); } catch (e) { RFS.toast(e.message || 'Failed', 'error'); }
+    }));
+  }
+
   function renderPacking() {
     const dateInput = $('[data-packing-date]');
     const slotSelect = $('[data-packing-slot]');

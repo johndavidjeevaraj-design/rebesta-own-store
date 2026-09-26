@@ -2,7 +2,7 @@ import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from '../config.js';
-import { loadProducts, loadSettings, loadPartners, savePartners, readOrders, saveOrders, updateOrderStatus, updateProduct, createProduct, saveSettings, createBackup, awardLoyalty, awardReferral, dataVersions, loadSubscriptions, saveSubscriptions, getSubscription } from '../lib/store.js';
+import { loadProducts, loadSettings, loadPartners, savePartners, readOrders, saveOrders, updateOrderStatus, updateProduct, createProduct, saveSettings, createBackup, awardLoyalty, awardReferral, dataVersions, loadSubscriptions, saveSubscriptions, getSubscription, cashSummary, recordCashReceived, loadReviews, setReviewApproval, deleteReview } from '../lib/store.js';
 import { createPartner, updatePartner, deletePartner, publicPartner, freshPositions, haversineKm, etaMinutesFromKm, partnerScore } from '../lib/partners.js';
 import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
 import { publicSubscription } from '../lib/subscriptions.js';
@@ -399,6 +399,50 @@ router.delete('/partners/:id', (req, res) => {
   }
   if (unassigned) saveOrders(orders);
   res.json({ ok: true, unassigned });
+});
+
+/* ============ COD cash reconciliation ============ */
+
+router.get('/cash', (req, res) => {
+  try {
+    res.json({ ok: true, summary: cashSummary(String(req.query.date || '').trim() || undefined) });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: 'Could not load cash summary' });
+  }
+});
+
+router.post('/cash/received', (req, res) => {
+  try {
+    const summary = recordCashReceived({
+      partnerId: req.body?.partnerId,
+      amount: req.body?.amount,
+      date: req.body?.date,
+      note: req.body?.note
+    });
+    console.error(JSON.stringify({ event: 'cash.received', partnerId: req.body?.partnerId, amount: req.body?.amount }));
+    res.json({ ok: true, summary });
+  } catch (error) {
+    res.status(error.status || 400).json({ ok: false, error: error.message || 'Could not record cash' });
+  }
+});
+
+/* ============ Review moderation ============ */
+
+router.get('/reviews', (req, res) => {
+  const reviews = loadReviews().slice().sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  res.json({ ok: true, reviews });
+});
+
+router.post('/reviews/:id/approve', (req, res) => {
+  const review = setReviewApproval(req.params.id, req.body?.approved !== false);
+  if (!review) return res.status(404).json({ ok: false, error: 'Review not found' });
+  res.json({ ok: true, review });
+});
+
+router.delete('/reviews/:id', (req, res) => {
+  const removed = deleteReview(req.params.id);
+  if (!removed) return res.status(404).json({ ok: false, error: 'Review not found' });
+  res.json({ ok: true });
 });
 
 router.post('/orders/:id/assign', (req, res) => {

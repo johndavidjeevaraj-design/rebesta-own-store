@@ -86,10 +86,15 @@
         <div class="oc-name">Vanakkam, ${state.partner.name} 👋 <span style="float:right;font-size:.72rem;color:#1f7a3d;font-weight:700">● live updates</span></div>
         <div style="font-size:.82rem;color:#6b7a66">Have a smooth morning — deliver fresh, collect smiles.</div>
       </div>`;
+    /* 💵 COD cash collected today (delivered COD orders) */
+    const cashToday = (state.orders.doneToday || []).filter(o => o.paymentMethod === 'cod');
+    const cashSum = cashToday.reduce((s, o) => s + (Number(o.totalInr) || 0), 0);
+
     $('stats').innerHTML = `
       <div class="p-stat"><b>${stats.todo}</b><span>TO COLLECT</span></div>
       <div class="p-stat"><b>${stats.out}</b><span>ON THE ROAD</span></div>
-      <div class="p-stat"><b>${stats.done}</b><span>DELIVERED</span></div>`;
+      <div class="p-stat"><b>${stats.done}</b><span>DELIVERED</span></div>
+      <div class="p-stat cash"><b>₹${cashSum}</b><span>CASH TODAY (${cashToday.length})</span></div>`;
 
     /* 📈 own scorecard strip */
     const ws = $('weekStats');

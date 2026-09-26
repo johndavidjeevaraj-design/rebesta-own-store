@@ -8,6 +8,7 @@ import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
 import { publicSubscription } from '../lib/subscriptions.js';
 import { whatsappLink, sendWhatsAppAuto } from '../lib/whatsapp.js';
 import { payuEnabled } from '../lib/payu.js';
+import { mailerReady } from '../lib/mailer.js';
 
 export const router = express.Router();
 
@@ -65,7 +66,8 @@ router.patch('/products/:handle', (req, res) => {
 
 router.get('/settings', (req, res) => {
   const settings = loadSettings();
-  res.json({ ok: true, settings, payuServerKeys: payuEnabled() });
+  const smtpSafe = settings.smtp ? { ...settings.smtp, pass: settings.smtp.pass ? '********' : '' } : undefined;
+  res.json({ ok: true, settings: { ...settings, smtp: smtpSafe }, payuServerKeys: payuEnabled(), mailReady: mailerReady() });
 });
 
 router.patch('/settings', (req, res) => {
@@ -176,6 +178,24 @@ router.patch('/settings', (req, res) => {
     if (patch.payments) {
       const current = settings.payments || (settings.payments = {});
       if (patch.payments.payuEnabled !== undefined) current.payuEnabled = Boolean(patch.payments.payuEnabled);
+    }
+    if (patch.smtp) {
+      const current = settings.smtp || (settings.smtp = {});
+      const s = patch.smtp;
+      if (s.user !== undefined) current.user = String(s.user || '').trim().slice(0, 120);
+      const passRaw = String(s.pass || '').replace(/\s+/g, '');
+      if (passRaw && !/^(\*+)$/.test(passRaw)) current.pass = passRaw.slice(0, 120); // never save the masked value back
+      if (s.notify !== undefined) current.notify = String(s.notify || '').trim().slice(0, 120);
+      if (String(s.user || '').trim()) {
+        // Gmail by default; auto host/port unless customised
+        current.host = String(s.host || '').trim().slice(0, 120) || 'smtp.gmail.com';
+        current.port = Number(s.port) === 587 ? 587 : 465;
+        current.from = current.user;
+      }
+      if (String(s.user || '').trim() === '' && String(s.pass || '').trim() === '') {
+        // clearing both = disable email
+        delete settings.smtp;
+      }
     }
     if (patch.integrations) {
       const current = settings.integrations || (settings.integrations = {});

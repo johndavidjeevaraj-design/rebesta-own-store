@@ -206,6 +206,11 @@
     if (payuStatus) payuStatus.textContent = data.payuServerKeys ? '✅ PayU merchant keys configured on the server — customers can pay online.' : '⚠️ PayU merchant keys are NOT on the server yet — add PAYU_KEY and PAYU_SALT to /opt/rebesta-store/.env and restart (guide from Arena). Toggle saves anyway.';
     setField('maintenanceMessage', data.settings.maintenance?.message || '');
     setField('gaId', data.settings.integrations?.gaId || '');
+    setField('smtpUser', data.settings.smtp?.user || '');
+    setField('smtpNotify', data.settings.smtp?.notify || '');
+    const passInput = document.querySelector('[data-settings-form] [name="smtpPass"]'); if (passInput) passInput.value = '';
+    const mailStatus = document.querySelector('[data-mail-status]');
+    if (mailStatus) mailStatus.textContent = data.mailReady ? '✅ Email notifications active' : '⚠️ Not configured yet — add Gmail + App Password (2-Step Verification required)';
     renderTestimonialRows(Array.isArray(content.testimonials) ? content.testimonials : []);
   }
 
@@ -290,6 +295,11 @@
       },
       payments: {
         payuEnabled: Boolean(document.querySelector('[data-settings-form] [name="payuEnabled"]')?.checked)
+      },
+      smtp: {
+        user: value('smtpUser'),
+        pass: value('smtpPass'),
+        notify: value('smtpNotify')
       },
       maintenance: {
         enabled: Boolean(document.querySelector('[data-settings-form] [name="maintenanceEnabled"]')?.checked),

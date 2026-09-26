@@ -1,23 +1,43 @@
 import nodemailer from 'nodemailer';
 import { config } from '../config.js';
+import { loadSettings } from './store.js';
 
 const money = inr => `₹${Number(inr || 0).toLocaleString('en-IN')}`;
 
 let cachedTransport = null;
+let cachedKey = '';
+
+/* SMTP credentials live in admin Settings (smtp section) with env fallback */
+function smtpConfig() {
+  const s = (loadSettings().smtp) || {};
+  const merged = {
+    host: String(s.host || config.smtp.host || '').trim(),
+    port: Number(s.port || config.smtp.port || 465),
+    user: String(s.user || config.smtp.user || '').trim(),
+    pass: String(s.pass || config.smtp.pass || ''),
+    from: String(s.from || config.smtp.from || s.user || config.smtp.user || '').trim(),
+    notify: String(s.notify || config.smtp.notify || s.user || config.smtp.user || '').trim()
+  };
+  return merged;
+}
 
 export function mailerReady() {
-  return Boolean(config.smtp.host && config.smtp.user && config.smtp.pass && config.smtp.from);
+  const c = smtpConfig();
+  return Boolean(c.host && c.user && c.pass && c.from);
 }
 
 function transport() {
   if (!mailerReady()) return null;
-  if (!cachedTransport) {
+  const c = smtpConfig();
+  const key = `${c.host}:${c.port}:${c.user}:${c.pass.slice(-4)}`;
+  if (!cachedTransport || cachedKey !== key) {
     cachedTransport = nodemailer.createTransport({
-      host: config.smtp.host,
-      port: config.smtp.port,
-      secure: config.smtp.port === 465,
-      auth: { user: config.smtp.user, pass: config.smtp.pass }
+      host: c.host,
+      port: c.port,
+      secure: c.port === 465,
+      auth: { user: c.user, pass: c.pass }
     });
+    cachedKey = key;
   }
   return cachedTransport;
 }
@@ -58,7 +78,7 @@ export async function sendMail({ to, subject, title, bodyHtml }) {
     return false;
   }
   try {
-    await tx.sendMail({ from: config.smtp.from, to, subject, html: shell(title, bodyHtml) });
+    await tx.sendMail({ from: smtpConfig().from, to, subject, html: shell(title, bodyHtml) });
     console.log(JSON.stringify({ event: 'mail.sent', to, subject }));
     return true;
   } catch (error) {
@@ -85,7 +105,7 @@ export function orderPlacedEmails(order) {
   });
   // To the shop owner
   sendMail({
-    to: config.smtp.notify,
+    to: smtpConfig().notify,
     subject: `🛒 New order ${order.id} — ${money(order.totalInr)}`,
     title: 'New order received!',
     bodyHtml: `

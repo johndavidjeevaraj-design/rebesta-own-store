@@ -202,6 +202,10 @@
                     <div class="field wide"><label>Maintenance message</label><input name="maintenanceMessage" maxlength="200" placeholder="We are briefly paused for restocking — orders resume soon!"></div>
                     <div class="field wide"><label>FSSAI licence number (shown in footer & About)</label><input name="fssai" maxlength="20" placeholder="e.g. 21523005000123"></div>
                     <div class="field wide"><label>Google Analytics ID (optional)</label><input name="gaId" maxlength="15" placeholder="G-XXXXXXXXXX"></div>
+                    <div class="section-head" style="margin:18px 0 10px"><h3>📧 Email notifications</h3><small data-mail-status style="color:var(--muted)"></small></div>
+                    <div class="field"><label>Gmail address (sends the emails)</label><input name="smtpUser" type="email" placeholder="you@gmail.com" autocomplete="off"></div>
+                    <div class="field"><label>Gmail App Password</label><input name="smtpPass" type="password" placeholder="unchanged — paste 16-char app password" autocomplete="new-password"></div>
+                    <div class="field wide"><label>Send order alerts to (email)</label><input name="smtpNotify" type="email" placeholder="defaults to the Gmail above"></div>
                     <div class="field wide">
                       <div class="section-head" style="margin:10px 0 12px">
                         <div><strong style="color:var(--green-900)">Delivery fee tiers by road distance</strong><br><small id="tier-help" style="color:var(--muted)">Edit distance ranges and prices carefully. Changes apply at checkout immediately.</small></div>
@@ -223,6 +227,6 @@
       </div>
     </section>
   </main>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script><script src="/js/store.js?v=20260924p8" defer></script><script src="/js/admin.js?v=20260926f6" defer></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script><script src="/js/store.js?v=20260924p8" defer></script><script src="/js/admin.js?v=20260926f7" defer></script>
 </body>
 </html>

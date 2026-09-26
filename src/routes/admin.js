@@ -7,6 +7,7 @@ import { createPartner, updatePartner, deletePartner, publicPartner, freshPositi
 import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
 import { publicSubscription } from '../lib/subscriptions.js';
 import { whatsappLink, sendWhatsAppAuto } from '../lib/whatsapp.js';
+import { payuEnabled } from '../lib/payu.js';
 
 export const router = express.Router();
 
@@ -64,7 +65,7 @@ router.patch('/products/:handle', (req, res) => {
 
 router.get('/settings', (req, res) => {
   const settings = loadSettings();
-  res.json({ ok: true, settings });
+  res.json({ ok: true, settings, payuServerKeys: payuEnabled() });
 });
 
 router.patch('/settings', (req, res) => {
@@ -171,6 +172,10 @@ router.patch('/settings', (req, res) => {
       const current = settings.maintenance || (settings.maintenance = {});
       if (patch.maintenance.enabled !== undefined) current.enabled = Boolean(patch.maintenance.enabled);
       if (patch.maintenance.message !== undefined) current.message = String(patch.maintenance.message || '').trim().slice(0, 200);
+    }
+    if (patch.payments) {
+      const current = settings.payments || (settings.payments = {});
+      if (patch.payments.payuEnabled !== undefined) current.payuEnabled = Boolean(patch.payments.payuEnabled);
     }
     if (patch.integrations) {
       const current = settings.integrations || (settings.integrations = {});

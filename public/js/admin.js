@@ -201,6 +201,9 @@
     checked('loyaltyEnabled', promotions.loyalty?.enabled);
     checked('referralEnabled', promotions.referral?.enabled);
     checked('maintenanceEnabled', data.settings.maintenance?.enabled);
+    checked('payuEnabled', data.settings.payments?.payuEnabled);
+    const payuStatus = document.querySelector('[data-payu-key-status]');
+    if (payuStatus) payuStatus.textContent = data.payuServerKeys ? '✅ PayU merchant keys configured on the server — customers can pay online.' : '⚠️ PayU merchant keys are NOT on the server yet — add PAYU_KEY and PAYU_SALT to /opt/rebesta-store/.env and restart (guide from Arena). Toggle saves anyway.';
     setField('maintenanceMessage', data.settings.maintenance?.message || '');
     setField('gaId', data.settings.integrations?.gaId || '');
     renderTestimonialRows(Array.isArray(content.testimonials) ? content.testimonials : []);
@@ -284,6 +287,9 @@
         phoneDisplay: value('phoneDisplay'),
         city: value('city'),
         fssai: value('fssai')
+      },
+      payments: {
+        payuEnabled: Boolean(document.querySelector('[data-settings-form] [name="payuEnabled"]')?.checked)
       },
       maintenance: {
         enabled: Boolean(document.querySelector('[data-settings-form] [name="maintenanceEnabled"]')?.checked),

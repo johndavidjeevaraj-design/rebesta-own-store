@@ -197,7 +197,7 @@ router.post('/orders', async (req, res) => {
     const customer = {
       name: String(req.body?.customer?.name || '').trim(),
       phone: normalizePhone(req.body?.customer?.phone),
-      email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(req.body?.customer?.email || '')) ? String(req.body?.customer?.email).trim().toLowerCase() : ''
+      email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(req.body?.customer?.email || '').trim()) ? String(req.body?.customer?.email).trim().toLowerCase() : ''
     };
     if (customer.name.length < 2) throw Object.assign(new Error('Enter your full name'), { status: 400 });
     if (!customer.phone) throw Object.assign(new Error('Enter a valid Indian mobile number'), { status: 400 });

@@ -22,7 +22,7 @@
   function formData() {
     const fd = new FormData($('[data-checkout-form]'));
     return {
-      customer: { name: String(fd.get('name') || '').trim(), phone: String(fd.get('phone') || '').trim() },
+      customer: { name: String(fd.get('name') || '').trim(), phone: String(fd.get('phone') || '').trim(), email: String(fd.get('email') || '').trim() },
       address: {
         line1: String(fd.get('address1') || '').trim(),
         line2: String(fd.get('address2') || '').trim(),

@@ -21,6 +21,10 @@ function smtpConfig() {
   return merged;
 }
 
+export function notifyAddress() {
+  return smtpConfig().notify;
+}
+
 export function mailerReady() {
   const c = smtpConfig();
   return Boolean(c.host && c.user && c.pass && c.from);

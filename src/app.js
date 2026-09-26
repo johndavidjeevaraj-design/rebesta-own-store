@@ -9,6 +9,7 @@ import { router as partnerRouter } from './routes/partner.js';
 import { publicCatalog } from './lib/store.js';
 import { rateLimit } from './lib/rateLimit.js';
 import { startSubscriptionScheduler } from './lib/subscriptions.js';
+import { startDigestScheduler } from './lib/digest.js';
 import path from 'node:path';
 import fs from 'node:fs';
 
@@ -76,6 +77,7 @@ ${productUrls}
 
   /* 🔁 Weekly subscription engine — runs at boot + every 15 minutes */
   startSubscriptionScheduler();
+  startDigestScheduler();
 
   app.use('/api', (req, res) => res.status(404).json({ ok: false, error: 'API route not found' }));
   app.use((req, res) => {

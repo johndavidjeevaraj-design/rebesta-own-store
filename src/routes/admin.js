@@ -9,6 +9,7 @@ import { publicSubscription } from '../lib/subscriptions.js';
 import { whatsappLink, sendWhatsAppAuto } from '../lib/whatsapp.js';
 import { payuEnabled } from '../lib/payu.js';
 import { mailerReady } from '../lib/mailer.js';
+import { sendMorningDigest } from '../lib/digest.js';
 
 export const router = express.Router();
 
@@ -419,6 +420,20 @@ router.delete('/partners/:id', (req, res) => {
   }
   if (unassigned) saveOrders(orders);
   res.json({ ok: true, unassigned });
+});
+
+/* ============ Morning digest ============ */
+router.post('/digest/test', async (req, res) => {
+  try {
+    const result = await sendMorningDigest({ force: true });
+    if (result.ok === false && result.reason === 'smtp_not_configured') {
+      return res.status(400).json({ ok: false, error: 'SMTP is not configured in Settings yet' });
+    }
+    res.json(result);
+  } catch (error) {
+    console.error(JSON.stringify({ event: 'digest.test.error', error: String(error?.message || error).slice(0, 200) }));
+    res.status(500).json({ ok: false, error: 'Could not send digest' });
+  }
 });
 
 /* ============ COD cash reconciliation ============ */

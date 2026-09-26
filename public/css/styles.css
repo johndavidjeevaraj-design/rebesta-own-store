@@ -1391,3 +1391,80 @@ body{font-size:16px}
 .sub-day-pill:not(.on):hover{border-color:#8fae86}
 .sub-note{font-size:.74rem;color:#7d8b77;line-height:1.5;margin:0}
 @media(max-width:540px){.sub-day-pill{padding:9px 0}}
+
+/* ============ PASS 8: admin beauty pass (scoped to body.admin-theme) ============ */
+.admin-theme{background:linear-gradient(180deg,#f5f9f1 0%,#eef4e9 320px,#f3f7ef 100%);min-height:100vh}
+.admin-theme .section{padding-top:26px;padding-bottom:60px}
+
+/* --- page header text --- */
+.admin-theme .eyebrow{color:#1f7a3d}
+.admin-theme .section-title{letter-spacing:-.02em}
+.admin-theme .section-subtitle{color:#5c6b57;max-width:60ch}
+
+/* --- tab bar: premium segmented control --- */
+.admin-theme [data-admin-content]{min-width:0}
+.admin-theme .admin-tabs{background:#fff;border:1px solid #dfe8d7;box-shadow:inset 0 1px 2px rgba(23,58,32,.05),0 1px 2px rgba(23,58,32,.04);padding:5px;border-radius:15px;gap:3px}
+.admin-theme .admin-tab{padding:9px 15px;border-radius:11px;color:#41523c;font-size:.9rem;transition:background .16s ease,color .16s ease,box-shadow .16s ease,transform .12s ease}
+.admin-theme .admin-tab:hover{background:#f0f5ec}
+.admin-theme .admin-tab:active{transform:scale(.97)}
+.admin-theme .admin-tab.active{background:linear-gradient(135deg,#0b4d1c,#116b2d);color:#fff;box-shadow:0 4px 14px -4px rgba(11,77,28,.45)}
+.admin-theme .live-pill{color:#177a3b;background:#eaf6ec;border:1px solid #d3ebd8;border-radius:99px;padding:6px 12px}
+
+/* --- connection / login card --- */
+.admin-theme .admin-side{background:#fff;border:1px solid #e0e8d8;border-top:3px solid #0d8736;border-radius:18px;padding:20px;box-shadow:0 1px 2px rgba(23,58,32,.05),0 14px 34px -22px rgba(23,58,32,.25)}
+.admin-theme .admin-side h2{font-size:1.02rem;letter-spacing:-.01em;margin-bottom:12px;color:#1c2b18}
+.admin-theme .summary-note{font-size:.78rem;color:#66735f;line-height:1.55;background:#f6faf3;border:1px dashed #d5e2cc;border-radius:12px;padding:10px 12px;margin-top:12px}
+
+/* --- panels (admin instances only) --- */
+.admin-theme .shop-panel{background:#fff;border:1px solid #e2e9da;border-radius:18px;box-shadow:0 1px 2px rgba(23,58,32,.04),0 12px 32px -24px rgba(23,58,32,.22)}
+.admin-theme .section-head h2{font-size:1.05rem;letter-spacing:-.015em;color:#1c2b18}
+.admin-theme .section-head h3{letter-spacing:-.01em;color:#1c2b18}
+
+/* --- metric tiles: tabular numbers + hero revenue tile --- */
+.admin-theme .metric-grid{gap:9px}
+.admin-theme .metric{border:1px solid #e2e9da;border-radius:15px;padding:13px 12px;background:#fff;box-shadow:0 1px 2px rgba(23,58,32,.04)}
+.admin-theme .metric strong{font-size:1.38rem;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#123d1c}
+.admin-theme .metric span{font-size:.63rem;letter-spacing:.09em;text-transform:uppercase;color:#66735f}
+.admin-theme .metric:first-child{background:linear-gradient(135deg,#0b4d1c 0%,#128a3e 100%);border-color:#0b4d1c;box-shadow:0 10px 24px -12px rgba(11,77,28,.55)}
+.admin-theme .metric:first-child strong{color:#fff}
+.admin-theme .metric:first-child span{color:#bfe6cb}
+.admin-theme .metric:hover{transform:translateY(-2px);box-shadow:0 10px 26px -16px rgba(23,58,32,.3)}
+
+/* --- tables --- */
+.admin-theme .admin-table-wrap{border:1px solid #e2e9da;border-radius:15px;box-shadow:0 1px 2px rgba(23,58,32,.04)}
+.admin-theme .admin-table th{background:#f6f9f2;color:#5c6b57;font-size:.6rem;letter-spacing:.1em}
+.admin-theme .admin-table td{color:#2c3a28}
+.admin-theme .admin-table tbody tr:hover{background:#f8fbf5}
+.admin-theme .admin-table tbody tr:last-child td{border-bottom:none}
+
+/* --- buttons: tactile + focused (shape lock: 11px radius family) --- */
+.admin-theme .button{border-radius:11px;transition:transform .12s ease,box-shadow .16s ease,background .16s ease}
+.admin-theme .button:active{transform:scale(.98)}
+.admin-theme .button.primary{background:linear-gradient(135deg,#0b4d1c,#128a3e);box-shadow:0 6px 16px -8px rgba(11,77,28,.5)}
+.admin-theme .button.orange{background:linear-gradient(135deg,#a85500,#bd5b07);box-shadow:0 6px 16px -8px rgba(168,85,0,.4)}
+.admin-theme .button.ghost{background:#fff;border:1px solid #d8e2cf;color:#33452f}
+.admin-theme .button.ghost:hover{background:#f4f8f0}
+.admin-theme .button:focus-visible,.admin-theme .admin-tab:focus-visible{outline:3px solid rgba(18,138,62,.35);outline-offset:2px}
+
+/* --- forms --- */
+.admin-theme .field input,.admin-theme .field select,.admin-theme .field textarea,.admin-theme .orders-filter select,.admin-theme .orders-filter input{border:1px solid #ccd9c5;border-radius:11px;background:#fff;transition:border-color .15s ease,box-shadow .15s ease}
+.admin-theme .field input:focus,.admin-theme .field select:focus,.admin-theme .field textarea:focus,.admin-theme .orders-filter select:focus,.admin-theme .orders-filter input:focus{border-color:#128a3e;box-shadow:0 0 0 3px rgba(18,138,62,.14);outline:none}
+
+/* --- chips & rows --- */
+.admin-theme .badge{border-radius:99px;font-size:.66rem}
+.admin-theme .recent-row{border-bottom:1px solid #eef3ea;border-radius:10px}
+.admin-theme .recent-row:hover{background:#f6faf3}
+.admin-theme .recent-row .rtotal{color:#0d8736}
+
+/* --- quiet scrollbars inside tables --- */
+.admin-theme .admin-table-wrap::-webkit-scrollbar{height:8px}
+.admin-theme .admin-table-wrap::-webkit-scrollbar-thumb{background:#d3decb;border-radius:99px}
+
+/* --- skill rule: respect reduced motion --- */
+@media (prefers-reduced-motion:reduce){.admin-theme *{transition:none!important;animation:none!important;transform:none!important}}
+@media(max-width:720px){
+  .admin-theme .admin-side{position:static;border-radius:16px}
+  .admin-theme .metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-theme .metric:first-child{grid-column:1 / -1}
+  .admin-theme .metric strong{font-size:1.28rem}
+}

@@ -12,6 +12,28 @@
     `).join('');
   }
 
+  // Send an anonymous purchase event to Google Analytics (if enabled).
+  // Only product names/quantities/order value — never customer name, phone or address.
+  function trackPurchase(order) {
+    try {
+      if (typeof window.gtag !== 'function') return;                       // GA not configured
+      if (order.paymentStatus === 'FAILED') return;                        // don't count failed payments
+      const key = `ga-purchase-${order.id}`;
+      try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch (e) {}
+      window.gtag('event', 'purchase', {
+        transaction_id: order.id,
+        value: Number(order.totalInr) || 0,
+        currency: 'INR',
+        items: (order.items || []).map(i => ({
+          item_id: i.handle || i.title,
+          item_name: i.title,
+          price: Number(i.lineTotalInr && i.qty ? i.lineTotalInr / i.qty : i.priceInr) || 0,
+          quantity: Number(i.qty) || 1
+        }))
+      });
+    } catch (e) { /* never break the success page for analytics */ }
+  }
+
   async function load() {
     if (!id) {
       summary.innerHTML = '<div class="alert error">Order ID missing. Return to the basket and try again.</div>';
@@ -46,6 +68,7 @@
         <div class="summary-total"><span>Total</span><strong>${RFS.money(order.totalInr)}</strong></div>
         <div class="track-list">${history(order)}</div>
       `;
+      trackPurchase(order);
       fetch('/api/settings').then(r => r.json()).then(s => {
         const perks = [];
         if (s.rewards?.loyaltyEnabled) perks.push('🎁 <strong>Earn a reward:</strong> once this order is delivered you get a LOY- coupon (about 2% back) on the <a href="/track">Track page</a>');

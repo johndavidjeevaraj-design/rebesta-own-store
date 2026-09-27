@@ -1502,3 +1502,11 @@ body{font-size:16px}
   .shelf .product-image img{padding:8px}
 }
 @media (prefers-reduced-motion:reduce){.shelf-link,.shelf-rail>*{transition:none!important;animation:none!important}}
+
+/* ============ PASS 10: conversion polish ============ */
+.addon-chips{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 4px}
+.addon-label{width:100%;font-size:.66rem;font-weight:1000;letter-spacing:.07em;text-transform:uppercase;color:#6b7a66}
+.addon-chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #d8e2cf;border-radius:99px;padding:6px 11px;font:inherit;font-size:.78rem;font-weight:700;color:#33452f;cursor:pointer;transition:background .15s ease,transform .12s ease,border-color .15s ease}
+.addon-chip:hover{background:#f0f5ec;border-color:#b9d6be}
+.addon-chip:active{transform:scale(.95)}
+.addon-chip strong{color:#0d8736}

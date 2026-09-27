@@ -86,6 +86,30 @@
     meter.innerHTML = `
       <div class="delivery-meter-copy"><span>Free delivery progress</span><strong>${subtotal >= 500 ? 'Unlocked' : `${RFS.money(500)} target`}</strong></div>
       <div class="delivery-meter-track"><span class="delivery-meter-fill" style="--progress:${progress}%"></span></div>`;
+    /* One-tap add-ons: cheapest in-stock picks to cross the free-delivery line */
+    let addonChips = null;
+    if (remaining > 0) {
+      const inCartHandles = new Set(lines().map(item => item.product.handle));
+      const picks = state.products
+        .filter(p => p.stock > 0 && !inCartHandles.has(p.handle) && Number(p.priceInr) <= 60)
+        .sort((a, b) => Number(a.priceInr) - Number(b.priceInr))
+        .slice(0, 4);
+      if (picks.length) {
+        addonChips = document.createElement('div');
+        addonChips.className = 'addon-chips';
+        addonChips.innerHTML = '<span class="addon-label">Quick add to cross ₹500</span>';
+        for (const p of picks) {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'addon-chip';
+          chip.innerHTML = '<span></span><strong></strong>';
+          chip.querySelector('span').textContent = p.title;
+          chip.querySelector('strong').textContent = RFS.money(p.priceInr);
+          chip.addEventListener('click', () => { RFS.addItem(p.handle, 1); render(); RFS.syncCartUI(state.products); });
+          addonChips.appendChild(chip);
+        }
+      }
+    }
     const notice = document.createElement('div');
     notice.className = `alert ${subtotal >= 500 ? 'success' : 'info'}`;
     notice.textContent = subtotal >= 500
@@ -112,7 +136,7 @@
     const note = document.createElement('p');
     note.className = 'summary-note';
     note.textContent = 'Delivery charges: ₹20–₹100 for 0–9 road km. Locations beyond 9 road km do not receive the standard local delivery rate.';
-    frag.append(meter, notice, total, checkout, whatsapp, note);
+    frag.append(meter, ...(addonChips ? [addonChips] : []), notice, total, checkout, whatsapp, note);
     summaryNode.appendChild(frag);
   }
 

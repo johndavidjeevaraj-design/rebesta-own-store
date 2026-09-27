@@ -8,23 +8,6 @@
 
   const inCart = handle => RFS.readCart().find(row => row.handle === handle)?.qty || 0;
 
-    const PRICE_BOARD_ITEMS = ['tomato', 'onion-big', 'potato', 'coriander-leaves', 'green-chilli', 'carrot-ooty', 'garlic', 'small-onion-shallot'];
-    function renderPriceBoard(products) {
-    const board = document.querySelector('[data-price-board]');
-    const countEl = document.querySelector('[data-board-count]');
-    if (!board) return;
-    const picks = PRICE_BOARD_ITEMS.map(h => products.find(p => p.handle === h)).filter(Boolean).filter(p => p.stockInrUnits === undefined || Number(p.stockInrUnits) > 0).slice(0, 6);
-    if (!picks.length) { board.closest('.price-board-section').style.display = 'none'; return; }
-    board.innerHTML = picks.map(p => `
-      <a class="price-tile" href="/products/${encodeURIComponent(p.handle)}">
-        <span class="pt-name">${p.title.replace(/\s*—\s*[^—]*$/, '')}</span>
-        <span class="pt-unit">${p.unitLabel || ''}</span>
-        <span class="pt-price">₹${p.priceInr}</span>
-      </a>`).join('');
-    if (countEl) countEl.textContent = String(products.length);
-    if (state.reveal) [...board.querySelectorAll('.price-tile')].forEach(reveal);
-  }
-
     function renderTestimonials(items) {
     if (!items.length) return;
     const main = document.querySelector('main');
@@ -360,12 +343,6 @@ function setupReveal() {
       setupReveal();
       const [data, settings] = await Promise.all([RFS.api('/api/products'), RFS.api('/api/settings')]);
       state.settings = settings; applySettings(settings);
-      const fssaiHero = document.querySelector('[data-fssai-hero]');
-      if (fssaiHero && settings.business?.fssai) fssaiHero.textContent = String(settings.business.fssai);
-      const notifyLink = document.querySelector('[data-upi-notify]');
-      if (notifyLink && settings.business?.whatsapp) {
-        notifyLink.href = `https://wa.me/${settings.business.whatsapp}?text=${encodeURIComponent('Hi Rebesta Fresh! Please ping me when UPI/card payments go live 🙏')}`;
-      }
       const curated = settings.testimonials || [];
       if (curated.length) renderTestimonials(curated);
       else loadCustomerReviews();
@@ -376,7 +353,7 @@ function setupReveal() {
       if (stockFact) stockFact.textContent = String(data.products.length);
       const searchInput = document.querySelector('[data-product-search]');
       if (searchInput) searchInput.placeholder = `Search ${data.products.length}+ fresh products…`;
-      renderCategories(); renderHeroShowcase(); renderShelves(); renderGrid(); renderPriceBoard(state.products); RFS.syncCartUI(state.products);
+      renderCategories(); renderHeroShowcase(); renderShelves(); renderGrid(); RFS.syncCartUI(state.products);
     } catch (error) {
       grid.innerHTML = `<div class="empty-state" style="grid-column:1 / -1"><h3>Could not load products</h3><p>${error.message}</p></div>`;
       RFS.toast(error.message, 'error');

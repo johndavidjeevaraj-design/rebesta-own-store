@@ -1,5 +1,5 @@
 (() => {
-  const state = { products: [], categories: [], settings: null, activeCategory: 'All', search: '', sort: 'featured', offersOnly: false, reveal: null };
+  const state = { products: [], categories: [], settings: null, activeCategory: 'All', search: '', sort: 'featured', offersOnly: false, showAll: false, reveal: null };
   const grid = document.querySelector('[data-product-grid]');
   const categoryRow = document.querySelector('[data-category-row]');
   const searchInput = document.querySelector('[data-product-search]');
@@ -215,7 +215,37 @@ function setupReveal() {
       grid.appendChild(empty);
       return;
     }
-    products.forEach((product, index) => grid.appendChild(card(product, index)));
+    /* Cap the wall: first 24 render, the rest wait behind one "Show all" tap. */
+    const cap = state.showAll ? products.length : Math.min(24, products.length);
+    products.slice(0, cap).forEach((product, index) => grid.appendChild(card(product, index)));
+    const revealBar = document.querySelector('[data-grid-reveal]');
+    if (revealBar) {
+      revealBar.hidden = !(products.length > cap);
+      const label = revealBar.querySelector('[data-show-all-count]');
+      if (label && products.length > cap) label.textContent = String(products.length);
+    }
+  }
+
+  /* ============ Curated shelves (guided shopping) ============ */
+  const ESSENTIALS = ['tomato', 'onion-big', 'potato', 'carrot-ooty', 'green-chilli', 'coriander-leaves', 'garlic', 'small-onion-shallot'];
+
+  function renderShelves() {
+    const discount = p => Number(p.compareAtInr) > 0 ? 1 - Number(p.priceInr) / Number(p.compareAtInr) : 0;
+    const put = (key, list) => {
+      const shelf = document.querySelector(`[data-shelf="${key}"]`);
+      if (!shelf) return;
+      const rail = shelf.querySelector('[data-shelf-rail]');
+      if (!rail || !list.length) { shelf.hidden = true; return; }
+      shelf.hidden = false;
+      rail.innerHTML = '';
+      list.forEach((product, index) => rail.appendChild(card(product, index)));
+      const count = shelf.querySelector('[data-shelf-count]');
+      if (count) count.textContent = String(list.length);
+    };
+    put('greens', state.products.filter(p => p.category === 'Leafy Greens').slice(0, 10));
+    put('essentials', ESSENTIALS.map(handle => state.products.find(p => p.handle === handle)).filter(Boolean).slice(0, 8));
+    put('boxes', state.products.filter(p => ['Veg boxes', 'Combos & Kits'].includes(p.category)).slice(0, 5));
+    put('offers', state.products.filter(p => discount(p) > 0).sort((a, b) => discount(b) - discount(a)).slice(0, 8));
   }
 
   function renderHeroShowcase() {
@@ -299,7 +329,7 @@ function setupReveal() {
       fillOffersBanner();
       const stockFact = document.querySelector('[data-fact-stock]');
       if (stockFact) stockFact.textContent = String(data.products.length);
-      renderCategories(); renderHeroShowcase(); renderGrid(); RFS.syncCartUI(state.products);
+      renderCategories(); renderHeroShowcase(); renderShelves(); renderGrid(); RFS.syncCartUI(state.products);
     } catch (error) {
       grid.innerHTML = `<div class="empty-state" style="grid-column:1 / -1"><h3>Could not load products</h3><p>${error.message}</p></div>`;
       RFS.toast(error.message, 'error');
@@ -379,11 +409,30 @@ function setupReveal() {
     renderGrid();
   }));
   document.querySelector('[data-offers-cta]')?.addEventListener('click', () => {
-    state.offersOnly = true;
-    if (offersToggle) offersToggle.checked = true;
-    renderGrid();
-    document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const offersShelf = document.querySelector('[data-shelf="offers"]');
+    if (offersShelf && !offersShelf.hidden) offersShelf.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else {
+      state.offersOnly = true;
+      if (offersToggle) offersToggle.checked = true;
+      renderGrid();
+      document.getElementById('browse')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   });
+  document.querySelectorAll('[data-shelf-all]').forEach(btn => btn.addEventListener('click', () => {
+    const target = btn.getAttribute('data-shelf-all');
+    if (target === 'offers') {
+      state.offersOnly = true; state.activeCategory = 'All';
+      if (offersToggle) offersToggle.checked = true;
+    } else {
+      state.activeCategory = target;
+    }
+    renderCategories(); renderGrid();
+    document.getElementById('browse')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+  document.querySelectorAll('[data-shelf-goto]').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelector(btn.getAttribute('data-shelf-goto') || '#browse')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+  document.querySelector('[data-show-all]')?.addEventListener('click', () => { state.showAll = true; renderGrid(); });
   window.addEventListener('rebesta:cart-changed', () => { RFS.syncCartUI(state.products); renderGrid(); });
   init();
 })();

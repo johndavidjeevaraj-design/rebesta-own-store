@@ -5,7 +5,7 @@
   <title>Rebesta Fresh – Advanced fresh shopping in Hosur</title>
   <meta name="description" content="Rebesta Fresh quick-commerce: live fresh stock, exact road-pin delivery and modern shopping for Hosur.">
   <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><meta name="description" content="Rebesta Fresh: handpicked farm vegetables delivered to your doorstep in Hosur with fixed morning slots. Free delivery over ₹500. COD available."><meta property="og:title" content="Fresh vegetables in Hosur — delivered every morning"><meta property="og:description" content="Rebesta Fresh: handpicked farm vegetables delivered to your doorstep in Hosur with fixed morning slots. Free delivery over ₹500. COD available."><meta property="og:type" content="website"><meta property="og:image" content="https://rebestafresh.in/assets/brand/logo.png"><meta name="twitter:card" content="summary">
-  <link rel="stylesheet" href="/css/styles.css?v=20260926f7">
+  <link rel="stylesheet" href="/css/styles.css?v=20260926f8">
   <link rel="canonical" href="https://rebestafresh.in/">
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"GroceryStore","name":"Rebesta Fresh","url":"https://rebestafresh.in/","logo":"https://rebestafresh.in/assets/brand/logo.png","image":"https://rebestafresh.in/assets/brand/logo.png","description":"Handpicked farm vegetables delivered fresh every morning in Hosur, Tamil Nadu. Free delivery over \u20b9500. COD, UPI and card accepted.","address":{"@type":"PostalAddress","addressLocality":"Hosur","addressRegion":"Tamil Nadu","addressCountry":"IN"},"priceRange":"\u20b9\u20b9","currenciesAccepted":"INR","paymentAccepted":"Cash on Delivery, UPI, Card"}
@@ -57,13 +57,51 @@
       </div>
     </section>
 
-    <section class="category-shelf" id="shop" aria-label="Browse categories">
-      <div class="container"><div class="category-row" data-category-row><button class="category-pill active" type="button"><img src="/assets/brand/basket.jpg" alt=""><span>All</span></button></div></div>
+    <section class="shop-shelf" id="shop" data-shop-shelves aria-label="Shop fresh vegetables">
+      <div class="container">
+
+        <div class="shelf shelf-greens" data-shelf="greens" hidden>
+          <div class="shelf-head">
+            <h2>Greens, picked this morning</h2>
+            <button class="shelf-link" type="button" data-shelf-all="Leafy Greens">See all greens <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+          <div class="shelf-rail" data-shelf-rail="greens"></div>
+        </div>
+
+        <div class="shelf" data-shelf="essentials" hidden>
+          <div class="shelf-head">
+            <h2>Everyday kitchen staples</h2>
+            <button class="shelf-link" type="button" data-shelf-goto="#browse">Browse the whole market <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+          <div class="shelf-rail" data-shelf-rail="essentials"></div>
+        </div>
+
+        <div class="shelf shelf-boxes" data-shelf="boxes" hidden>
+          <div class="shelf-head">
+            <div>
+              <h2>Weekly veg boxes</h2>
+              <p class="shelf-sub">One tap, every week — pause or skip anytime.</p>
+            </div>
+            <a class="shelf-link" href="/subscriptions">How boxes work <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          </div>
+          <div class="shelf-rail" data-shelf-rail="boxes"></div>
+        </div>
+
+        <div class="shelf" data-shelf="offers" hidden>
+          <div class="shelf-head">
+            <h2>Today’s offers <span class="shelf-count" data-shelf-count>0</span></h2>
+            <button class="shelf-link" type="button" data-shelf-all="offers">All offers <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+          <div class="shelf-rail" data-shelf-rail="offers"></div>
+        </div>
+
+      </div>
     </section>
 
-    <section class="product-section">
+    <section class="product-section" id="browse" data-browse-section>
       <div class="container">
-        <div class="product-heading"><h2>Today’s fresh stock</h2><div class="shop-count" data-result-count>Loading…</div></div>
+        <div class="product-heading"><h2>The whole market</h2><div class="shop-count" data-result-count>Loading…</div></div>
+        <div class="category-row" data-category-row><button class="category-pill active" type="button"><img src="/assets/brand/basket.jpg" alt=""><span>All</span></button></div>
         <div class="filter-bar">
           <label class="offers-toggle"><input type="checkbox" data-offers-only><span class="tgl" aria-hidden="true"></span><span>Offers only</span></label>
           <div class="sort-group" role="group" aria-label="Sort products">
@@ -77,6 +115,7 @@
           <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
           <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
         </div>
+        <div class="grid-reveal" data-grid-reveal hidden><button class="button ghost full" type="button" data-show-all>Show all <span data-show-all-count>0</span> products</button></div>
         <div class="market-note" id="delivery">
           <div class="market-note-inner">
             <div class="market-note-copy"><div class="market-note-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 17h2l2-8h8l1 5h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="19" r="2" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="2" stroke="currentColor" stroke-width="2"/></svg></div><div><strong data-delivery-note-title>Delivery by real road distance</strong><p data-delivery-note-text>Choose GPS or map pin at checkout. We confirm the rider route before the slot.</p></div></div>
@@ -230,6 +269,6 @@
   </div>
   <div class="container minimal-footer-inner"><span>© 2026 Rebesta Fresh · Fresh from farms, Hosur</span></div>
 </footer>
-  <script src="/js/store.js?v=20260924p8" defer></script><script src="/js/home.js?v=20260926f2" defer></script>
+  <script src="/js/store.js?v=20260924p8" defer></script><script src="/js/home.js?v=20260926f3" defer></script>
 </body>
 </html>

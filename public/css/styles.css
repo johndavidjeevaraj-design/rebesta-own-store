@@ -1468,3 +1468,36 @@ body{font-size:16px}
   .admin-theme .metric:first-child{grid-column:1 / -1}
   .admin-theme .metric strong{font-size:1.28rem}
 }
+
+/* ============ PASS 9: home shop shelves (guided browsing) ============ */
+.shop-shelf{padding:30px 0 6px}
+.shelf{margin-bottom:36px}
+.shelf-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:14px}
+.shelf-head h2{font-size:1.32rem;letter-spacing:-.02em;color:#17251b;margin:0}
+.shelf-sub{margin:4px 0 0;font-size:.84rem;color:#6b7a66}
+.shelf-count{display:inline-block;min-width:22px;text-align:center;background:#f28c28;color:#fff;font-size:.68rem;font-weight:800;border-radius:99px;padding:2px 7px;vertical-align:3px;margin-left:6px}
+.shelf-link{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:#0d8736;font-weight:700;font-size:.88rem;cursor:pointer;padding:7px 11px;border-radius:99px;transition:background .15s ease,transform .12s ease;font-family:inherit;text-decoration:none;flex:0 0 auto}
+.shelf-link:hover{background:#eaf6ec}
+.shelf-link:active{transform:scale(.96)}
+.shelf-link:focus-visible{outline:3px solid rgba(18,138,62,.35);outline-offset:2px}
+.shelf-rail{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.shelf-greens{background:linear-gradient(180deg,#eef6ea,#f7faf4);border:1px solid #dfead8;border-radius:22px;padding:18px 18px 20px}
+.shelf-greens .shelf-rail{grid-template-columns:repeat(4,minmax(0,1fr))}
+.shelf-boxes .shelf-rail{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid-reveal{margin-top:18px}
+.grid-reveal .button{border:1px solid #d8e2cf}
+.shelf-rail::-webkit-scrollbar{display:none}
+.product-section{padding-top:8px}
+@media(max-width:900px){
+  .shelf-rail{display:flex;overflow-x:auto;gap:10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}
+  .shelf-rail>*{flex:0 0 44%;scroll-snap-align:start}
+  .shelf-greens .shelf-rail>*,.shelf-boxes .shelf-rail>*{flex:0 0 66%}
+  .shelf-greens{padding:14px}
+  .shelf-head{align-items:center}
+  .shelf-head h2{font-size:1.18rem}
+}
+@media(max-width:520px){
+  .shelf-rail>*{flex:0 0 54%}
+  .shelf-greens .shelf-rail>*,.shelf-boxes .shelf-rail>*{flex:0 0 74%}
+}
+@media (prefers-reduced-motion:reduce){.shelf-link,.shelf-rail>*{transition:none!important;animation:none!important}}

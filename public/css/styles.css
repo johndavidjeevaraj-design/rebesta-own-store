@@ -1525,3 +1525,20 @@ body{font-size:16px}
 .shelf .price-row{margin-top:6px}
 .shelf .product-image{flex:1 1 auto;min-height:122px}
 @media(min-width:841px){.shelf .product-image{min-height:200px}}
+
+/* ============ PASS 12: today's price board (conversion batch) ============ */
+.price-board{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.price-tile{display:flex;flex-direction:column;gap:2px;border:1px solid #dfe8d7;border-radius:14px;background:#fff;padding:10px 12px;text-decoration:none;transition:border-color .15s ease,transform .15s ease}
+.price-tile:hover{border-color:var(--green);transform:translateY(-1px)}
+.price-tile .pt-name{font-size:.8rem;font-weight:800;color:#253622;line-height:1.25}
+.price-tile .pt-unit{font-size:.62rem;color:#7c8876;font-weight:700;letter-spacing:.02em}
+.price-tile .pt-price{font-size:1.02rem;font-weight:1000;color:#10180e;margin-top:3px}
+.price-board-more{margin:14px 0 0;font-size:.85rem;font-weight:700}
+.price-board-more a{color:var(--green)}
+@media(max-width:840px){
+  .price-board{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .price-tile{padding:9px 10px;border-radius:12px}
+  .price-tile .pt-name{font-size:.74rem}
+  .price-tile .pt-price{font-size:.92rem}
+  .price-board-more{text-align:center}
+}

@@ -1520,6 +1520,8 @@ body{font-size:16px}
 .rewards-teaser{margin-top:18px;display:flex;flex-direction:column;gap:10px;border:1px solid #dfe8d7;border-radius:16px;background:#f8faf5;padding:14px 16px;font-size:.86rem;color:#33452f;text-align:left}
 .rewards-teaser .button{align-self:flex-start}
 
-/* ============ PASS 11: shelf cards — price hugs the title (no forced gap) ============ */
-.shelf .product-body{min-height:0}
+/* ============ PASS 11: shelf cards — tight cards, photo absorbs the stretch ============ */
+.shelf .product-body{min-height:0;flex:0 0 auto}
 .shelf .price-row{margin-top:6px}
+.shelf .product-image{flex:1 1 auto;min-height:122px}
+@media(min-width:841px){.shelf .product-image{min-height:200px}}

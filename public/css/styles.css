@@ -1542,3 +1542,10 @@ body{font-size:16px}
   .price-tile .pt-price{font-size:.92rem}
   .price-board-more{text-align:center}
 }
+
+/* ============ PASS 13: payments note banner (conversion batch) ============ */
+.pay-note{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:14px 0 0;border:1px solid #dfe8d7;border-radius:14px;background:#f6faf2;padding:10px 14px}
+.pay-note-text{font-size:.8rem;color:#33452f;font-weight:600;line-height:1.4}
+.pay-note-cta{flex:0 0 auto;font-size:.76rem;font-weight:900;color:#074015;text-decoration:none;border:1px solid #b9cfab;border-radius:99px;padding:6px 13px;background:#fff;transition:background .15s ease}
+.pay-note-cta:hover{background:#eef5e8}
+@media(max-width:840px){.pay-note{padding:9px 12px}.pay-note-text{font-size:.74rem}.pay-note-cta{font-size:.72rem;padding:5px 11px}}

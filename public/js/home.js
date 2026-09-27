@@ -443,6 +443,41 @@ function setupReveal() {
     }, 130);
   }
   searchInput?.addEventListener('input', () => { state.search = searchInput.value; renderGrid(); renderSearchDrop(); });
+
+  /* ---- Voice search — speak Tamil or English, works on Chrome/Android ---- */
+  (function setupVoice() {
+    const btn = document.querySelector('[data-voice-search]');
+    if (!btn) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return; // mic stays hidden — typing still works everywhere
+    btn.hidden = false;
+    let rec = null, listening = false;
+    btn.addEventListener('click', () => {
+      if (listening) { rec?.stop(); return; }
+      rec = new SR();
+      rec.lang = 'en-IN';
+      rec.interimResults = false;
+      rec.maxAlternatives = 3;
+      const base = searchInput.placeholder;
+      rec.onstart = () => { listening = true; btn.classList.add('listening'); searchInput.placeholder = 'Listening… speak now'; };
+      rec.onend = () => { listening = false; btn.classList.remove('listening'); searchInput.placeholder = base; };
+      rec.onerror = () => { listening = false; btn.classList.remove('listening'); searchInput.placeholder = base; };
+      rec.onresult = event => {
+        const alts = [...event.results[0]].map(r => r.transcript.trim()).filter(Boolean);
+        if (!alts.length) return;
+        searchInput.value = alts[0];
+        state.search = alts[0];
+        renderGrid(); renderSearchDrop();
+        // fallback: if the first transcript finds nothing, quietly try the other interpretations
+        if (alts.length > 1 && !state.products.some(p => matchesQuery(p, alts[0].toLowerCase()))) {
+          for (const alt of alts.slice(1)) {
+            if (state.products.some(p => matchesQuery(p, alt.toLowerCase()))) { searchInput.value = alt; state.search = alt; renderGrid(); renderSearchDrop(); break; }
+          }
+        }
+      };
+      rec.start();
+    });
+  })();
   searchInput?.addEventListener('keydown', event => {
     if (event.key === 'Escape') { hideSearchDrop(); searchInput.blur(); }
     if (event.key === 'Enter' && searchDrop) { event.preventDefault(); searchDrop.querySelector('a')?.click(); }

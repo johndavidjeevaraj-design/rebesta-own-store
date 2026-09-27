@@ -118,7 +118,9 @@ export function buildMorningDigest(now = new Date()) {
 }
 
 /* Sends the digest to the owner (notify address). force=true ignores the
-   once-per-day guard — used by the admin "send test" endpoint. */
+   once-per-day guard — used by the admin "send test" endpoint. A forced
+   test never updates lastSentFor, so a test sent between midnight and
+   09:00 IST can never suppress the real morning send. */
 export async function sendMorningDigest({ force = false } = {}) {
   if (!mailerReady()) return { ok: false, reason: 'smtp_not_configured' };
   const todayIso = istTodayIso();
@@ -128,8 +130,8 @@ export async function sendMorningDigest({ force = false } = {}) {
   const digest = buildMorningDigest(new Date());
   const sent = await sendMail({ to: notifyAddress(), subject: digest.subject, title: digest.title, bodyHtml: digest.bodyHtml });
   if (sent) {
-    writeState({ ...(state || {}), lastSentFor: todayIso, lastSentAt: new Date().toISOString() });
-    console.log(JSON.stringify({ event: 'digest.sent', for: todayIso, stats: { orders: digest.stats.ordersYesterday, revenue: digest.stats.revenueYesterday } }));
+    writeState({ ...(state || {}), lastSentFor: force ? state.lastSentFor : todayIso, lastSentAt: new Date().toISOString(), ...(force ? { lastTestAt: new Date().toISOString() } : {}) });
+    console.log(JSON.stringify({ event: force ? 'digest.test.sent' : 'digest.sent', for: todayIso, stats: { orders: digest.stats.ordersYesterday, revenue: digest.stats.revenueYesterday } }));
   }
   return { ok: sent, stats: digest.stats };
 }

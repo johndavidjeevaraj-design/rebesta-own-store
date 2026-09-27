@@ -439,9 +439,23 @@ function setupReveal() {
         link.querySelector('em').textContent = RFS.money(product.priceInr);
         searchDrop.appendChild(link);
       }
-      searchHost.appendChild(searchDrop);
+      document.body.appendChild(searchDrop);
+      positionSearchDrop();
     }, 130);
   }
+  function positionSearchDrop() {
+    if (!searchDrop || !searchInput) return;
+    const r = searchInput.getBoundingClientRect();
+    const width = Math.max(280, Math.round(r.width));
+    const left = Math.min(Math.max(8, Math.round(r.left)), Math.max(8, window.innerWidth - width - 8));
+    const header = document.querySelector('.site-header');
+    const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+    searchDrop.style.left = left + 'px';
+    searchDrop.style.top = Math.round(Math.max(r.bottom, headerBottom) + 8) + 'px';
+    searchDrop.style.width = width + 'px';
+  }
+  window.addEventListener('resize', () => positionSearchDrop(), { passive: true });
+  window.addEventListener('scroll', () => positionSearchDrop(), { passive: true });
   searchInput?.addEventListener('input', () => { state.search = searchInput.value; renderGrid(); renderSearchDrop(); });
 
   /* ---- Voice search — speak Tamil or English, works on Chrome/Android ---- */
@@ -482,7 +496,7 @@ function setupReveal() {
     if (event.key === 'Escape') { hideSearchDrop(); searchInput.blur(); }
     if (event.key === 'Enter' && searchDrop) { event.preventDefault(); searchDrop.querySelector('a')?.click(); }
   });
-  document.addEventListener('click', event => { if (searchHost && !searchHost.contains(event.target)) hideSearchDrop(); });
+  document.addEventListener('click', event => { if (searchHost && !searchHost.contains(event.target) && !(searchDrop && searchDrop.contains(event.target))) hideSearchDrop(); });
 
   // --- PWA install banner ---
   let installPrompt = null;

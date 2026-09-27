@@ -1486,18 +1486,27 @@ body{font-size:16px}
 .shelf-boxes .shelf-rail{grid-template-columns:repeat(3,minmax(0,1fr))}
 .grid-reveal{margin-top:18px}
 .grid-reveal .button{border:1px solid #d8e2cf}
+.shelf-boxes{background:linear-gradient(180deg,#fbf8f0,#fdfbf6);border:1px solid #ece4d0;border-radius:22px;padding:18px 18px 20px}
+.shelf-offers{background:linear-gradient(180deg,#fdf3e3,#fef9f1);border:1px solid #f1e0c4;border-radius:22px;padding:18px 18px 20px}
 .shelf-rail::-webkit-scrollbar{display:none}
 .product-section{padding-top:8px}
 @media(max-width:900px){
-  .shelf-rail{display:flex;overflow-x:auto;gap:10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}
-  .shelf-rail>*{flex:0 0 44%;scroll-snap-align:start}
-  .shelf-greens .shelf-rail>*,.shelf-boxes .shelf-rail>*{flex:0 0 66%}
-  .shelf-greens{padding:14px}
-  .shelf-head{align-items:center}
-  .shelf-head h2{font-size:1.18rem}
-}
-@media(max-width:520px){
-  .shelf-rail>*{flex:0 0 54%}
-  .shelf-greens .shelf-rail>*,.shelf-boxes .shelf-rail>*{flex:0 0 74%}
+  .shop-shelf{padding:22px 0 2px}
+  .shelf{margin-bottom:26px}
+  .shelf-head{margin-bottom:10px;align-items:center;gap:8px}
+  .shelf-head h2{font-size:1.06rem;letter-spacing:-.015em}
+  .shelf-sub{font-size:.76rem;margin-top:3px}
+  .shelf-link{font-size:.78rem;padding:6px 9px}
+  .shelf-count{vertical-align:2px}
+  /* productive mobile: everything visible in 2-col grids — no hidden swipes */
+  .shelf-rail,.shelf-greens .shelf-rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .shelf-greens{padding:12px 12px 14px;border-radius:18px}
+  .shelf-boxes{padding:12px 12px 14px;border-radius:18px}
+  .shelf-offers{padding:12px 12px 14px;border-radius:18px}
+  /* boxes stay a feature strip — 3 big cards swipe naturally */
+  .shelf-boxes .shelf-rail{display:flex;overflow-x:auto;gap:10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
+  .shelf-boxes .shelf-rail>*{flex:0 0 76%;scroll-snap-align:start}
+  .shelf .product-card{border-radius:16px}
+  .shelf .product-image img{padding:8px}
 }
 @media (prefers-reduced-motion:reduce){.shelf-link,.shelf-rail>*{transition:none!important;animation:none!important}}

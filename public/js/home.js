@@ -231,7 +231,8 @@ function setupReveal() {
 
   function renderShelves() {
     const discount = p => Number(p.compareAtInr) > 0 ? 1 - Number(p.priceInr) / Number(p.compareAtInr) : 0;
-    const put = (key, list) => {
+    const MOBILE = window.matchMedia('(max-width: 900px)').matches;
+    const put = (key, list, total) => {
       const shelf = document.querySelector(`[data-shelf="${key}"]`);
       if (!shelf) return;
       const rail = shelf.querySelector('[data-shelf-rail]');
@@ -240,12 +241,15 @@ function setupReveal() {
       rail.innerHTML = '';
       list.forEach((product, index) => rail.appendChild(card(product, index)));
       const count = shelf.querySelector('[data-shelf-count]');
-      if (count) count.textContent = String(list.length);
+      if (count) count.textContent = String(total || list.length);
     };
-    put('greens', state.products.filter(p => p.category === 'Leafy Greens').slice(0, 10));
-    put('essentials', ESSENTIALS.map(handle => state.products.find(p => p.handle === handle)).filter(Boolean).slice(0, 8));
-    put('boxes', state.products.filter(p => ['Veg boxes', 'Combos & Kits'].includes(p.category)).slice(0, 5));
-    put('offers', state.products.filter(p => discount(p) > 0).sort((a, b) => discount(b) - discount(a)).slice(0, 8));
+    const greens = state.products.filter(p => p.category === 'Leafy Greens');
+    const boxes = state.products.filter(p => ['Veg boxes', 'Combos & Kits'].includes(p.category));
+    const offers = state.products.filter(p => discount(p) > 0).sort((a, b) => discount(b) - discount(a));
+    put('greens', greens.slice(0, MOBILE ? 6 : 10), greens.length);
+    put('essentials', ESSENTIALS.map(handle => state.products.find(p => p.handle === handle)).filter(Boolean).slice(0, MOBILE ? 6 : 8));
+    put('boxes', boxes.slice(0, 5), boxes.length);
+    put('offers', offers.slice(0, MOBILE ? 6 : 8), offers.length);
   }
 
   function renderHeroShowcase() {

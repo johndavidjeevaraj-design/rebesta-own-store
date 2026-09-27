@@ -360,6 +360,8 @@ function setupReveal() {
       setupReveal();
       const [data, settings] = await Promise.all([RFS.api('/api/products'), RFS.api('/api/settings')]);
       state.settings = settings; applySettings(settings);
+      const fssaiHero = document.querySelector('[data-fssai-hero]');
+      if (fssaiHero && settings.business?.fssai) fssaiHero.textContent = String(settings.business.fssai);
       const notifyLink = document.querySelector('[data-upi-notify]');
       if (notifyLink && settings.business?.whatsapp) {
         notifyLink.href = `https://wa.me/${settings.business.whatsapp}?text=${encodeURIComponent('Hi Rebesta Fresh! Please ping me when UPI/card payments go live 🙏')}`;

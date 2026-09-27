@@ -1558,3 +1558,14 @@ body{font-size:16px}
 .story-facts strong{font-size:.85rem;font-weight:900;color:#253622}
 .story-facts span{font-size:.76rem;color:#7c8876;line-height:1.45}
 @media(max-width:840px){.story-grid{grid-template-columns:1fr;gap:18px}.story-copy p{font-size:.88rem}.story-facts li{padding:10px 13px}}
+
+/* ============ PASS 15: hygiene + trust badges (conversion batch) ============ */
+.hygiene-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.hygiene-step{display:flex;flex-direction:column;gap:4px;border:1px solid #dfe8d7;border-radius:16px;background:#fff;padding:16px}
+.hygiene-step .hygiene-num{width:26px;height:26px;display:grid;place-items:center;border-radius:99px;background:#eef5e8;color:#074015;font-size:.78rem;font-weight:1000;margin-bottom:4px}
+.hygiene-step strong{font-size:.88rem;font-weight:900;color:#253622}
+.hygiene-step p{margin:0;font-size:.78rem;line-height:1.55;color:#5b6a56}
+.trust-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.trust-badge{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:800;color:#41523c;background:#f6faf2;border:1px solid #dfe8d7;border-radius:99px;padding:7px 12px}
+.trust-badge strong{font-weight:1000}
+@media(max-width:840px){.hygiene-grid{grid-template-columns:1fr;gap:9px}.hygiene-step{padding:13px}.trust-badge{font-size:.68rem;padding:6px 10px}}

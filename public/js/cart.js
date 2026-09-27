@@ -140,11 +140,15 @@
     summaryNode.appendChild(frag);
   }
 
-  function renderRecommendations() {
-    if (!recommendedNode) return;
+  function renderRecommendations(target) {
+    const node = target || recommendedNode;
+    if (!node) return;
     const inCart = new Set(RFS.readCart().map(item => item.handle));
-    const picks = state.products.filter(p => !inCart.has(p.handle) && p.stock > 0).slice(0, 4);
-    recommendedNode.innerHTML = '';
+    const pool = target
+      ? state.products.filter(p => p.stock > 0).sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)))
+      : state.products.filter(p => !inCart.has(p.handle) && p.stock > 0);
+    const picks = pool.slice(0, 4);
+    node.innerHTML = '';
     for (const product of picks) {
       const card = document.createElement('article');
       card.className = 'product-card';
@@ -163,7 +167,7 @@
       card.querySelector('.price').textContent = RFS.money(product.priceInr);
       card.querySelector('.unit').textContent = `/ ${product.unitLabel}`;
       card.querySelector('button').addEventListener('click', () => { RFS.flyToBasket(card.querySelector('.product-image')); RFS.addItem(product.handle); render(); RFS.syncCartUI(state.products); });
-      recommendedNode.appendChild(card);
+      node.appendChild(card);
     }
   }
 
@@ -178,6 +182,8 @@
     if (cartLines.length) {
       renderSummary(subtotal, count);
       renderRecommendations();
+    } else {
+      renderRecommendations(document.querySelector('[data-empty-picks-grid]'));
     }
     RFS.syncCartUI(state.products);
   }

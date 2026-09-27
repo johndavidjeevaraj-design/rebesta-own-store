@@ -84,7 +84,7 @@ h1,h2,h3,h4,p,dl,dt,dd{margin-top:0}
 .cart-link:hover{transform:translateY(-2px) scale(1.015);box-shadow:0 16px 34px rgba(230,71,18,.33)}
 .cart-count{display:inline-grid;place-items:center;min-width:22px;height:22px;border-radius:999px;padding-inline:5px;color:var(--orange);background:#fff;font-size:.68rem;font-weight:1000;transform-origin:center}
 .cart-count.pop{animation:cartPulse .4s var(--ease-spring)}
-.market-search{display:flex;align-items:center;position:relative;min-width:0;height:46px;border:1px solid rgba(255,255,255,.7);border-radius:999px;background:rgba(255,255,255,.96);box-shadow:0 10px 24px rgba(0,0,0,.1);transition:box-shadow .18s ease,transform .18s ease}
+.market-search{-webkit-tap-highlight-color:transparent;display:flex;align-items:center;position:relative;min-width:0;height:46px;border:1px solid rgba(255,255,255,.7);border-radius:999px;background:rgba(255,255,255,.96);box-shadow:0 10px 24px rgba(0,0,0,.1);transition:box-shadow .18s ease,transform .18s ease}
 .market-search>svg{position:absolute;left:15px;color:var(--green);pointer-events:none}
 .market-search input{width:100%;height:100%;border:0;outline:0;padding:0 48px 0 41px;color:var(--ink);background:transparent;font-size:.84rem;font-weight:800}
 .market-search input::-webkit-search-cancel-button,.market-search input::-webkit-search-decoration{-webkit-appearance:none;display:none}
@@ -700,7 +700,7 @@ body::after{display:none}
 .market-search svg{color:var(--green)}
 .market-search input{color:var(--ink)}
 .market-search input::placeholder{color:#81907f}
-.market-search:focus-within{border-color:var(--orange);box-shadow:0 0 0 4px rgba(255,91,32,.11),0 10px 24px rgba(0,0,0,.09);transform:none}
+.market-search:focus-within{background:#fff;border-color:var(--orange);box-shadow:0 0 0 4px rgba(255,91,32,.11),0 10px 24px rgba(0,0,0,.09);transform:none}
 .cart-link{background:linear-gradient(135deg,var(--orange),#e84712);box-shadow:0 10px 24px rgba(232,71,18,.25)}
 .cart-count{color:var(--orange)}
 .header-location{color:#c6dfc7}.header-location strong{color:#fff}

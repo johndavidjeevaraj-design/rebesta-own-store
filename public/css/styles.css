@@ -1510,8 +1510,6 @@ body{font-size:16px}
 .addon-chip:hover{background:#f0f5ec;border-color:#b9d6be}
 .addon-chip:active{transform:scale(.95)}
 .addon-chip strong{color:#0d8736}
-.benefit-row{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 2px}
-.benefit-row span{font-size:.76rem;font-weight:700;color:#41523c;background:#f4f8f0;border:1px solid #e0e8d8;border-radius:99px;padding:5px 11px}
 .track-list{display:flex;flex-direction:column;margin-top:6px}
 .track-list .track-row{position:relative;display:block;padding:0 0 18px 34px}
 .track-list .track-row::before{content:'';position:absolute;left:10px;top:22px;bottom:0;width:2px;background:#dfe8d7;border-radius:2px}

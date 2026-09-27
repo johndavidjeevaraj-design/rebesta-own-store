@@ -1106,7 +1106,7 @@ body{font-size:16px}
    ============================================================ */
 .logo img{height:24px;width:auto}
 .footer-logo img{height:28px;width:auto}
-@media(max-width:840px){.logo img{height:15px;width:auto}.header-inner:focus-within .logo{display:none}}
+@media(max-width:840px){.logo img{height:19px;width:auto}.header-inner:focus-within .logo{display:none}}
 
 /* ============================================================
    PASS 5 — bottom nav, search dropdown, sticky add, variants,

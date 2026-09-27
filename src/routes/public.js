@@ -426,7 +426,7 @@ router.get('/orders/:id', (req, res) => {
         lat: position.lat,
         lng: position.lng,
         updatedAt: position.updatedAt,
-        ...(pin ? { etaMinutes: etaMinutesFromKm(haversineKm({ lat: position.lat, lng: position.lng }, { lat: pin.lat, lng: pin.lng })) } : {})
+        ...(pin ? { etaMinutes: etaMinutesFromKm(haversineKm({ lat: position.lat, lng: position.lng }, { lat: pin.lat, lng: pin.lng })), pin: { lat: pin.lat, lng: pin.lng } } : {})
       };
     } else if (partner) {
       payload.deliveryPartner = { name: partner.name, lat: null, lng: null, updatedAt: null };

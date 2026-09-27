@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="robots" content="noindex"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Track order – Rebesta Fresh</title>
-  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><meta name="description" content="Track your Rebesta Fresh vegetable order in real time."><meta property="og:title" content="Track your order"><meta property="og:description" content="Track your Rebesta Fresh vegetable order in real time."><meta property="og:type" content="website"><meta property="og:image" content="https://rebestafresh.in/assets/brand/logo.png"><meta name="twitter:card" content="summary"><link rel="stylesheet" href="/css/styles.css?v=20260926f17">
+  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><meta name="description" content="Track your Rebesta Fresh vegetable order in real time."><meta property="og:title" content="Track your order"><meta property="og:description" content="Track your Rebesta Fresh vegetable order in real time."><meta property="og:type" content="website"><meta property="og:image" content="https://rebestafresh.in/assets/brand/logo.png"><meta name="twitter:card" content="summary"><link rel="stylesheet" href="/css/styles.css?v=20260926f18">
   <link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css?v=20260927l1">
 </head>
 <body>
@@ -65,7 +65,7 @@ const reviewBox=result.querySelector('[data-review-box]');
 if(reviewBox){let picked=0;const stars=[...reviewBox.querySelectorAll('[data-star]')];const paint=n=>stars.forEach(s=>s.classList.toggle('on',Number(s.dataset.star)<=n));stars.forEach(s=>s.addEventListener('click',()=>{picked=Number(s.dataset.star);paint(picked);}));reviewBox.querySelector('[data-review-send]').addEventListener('click',async()=>{if(!picked){RFS.toast('Tap the stars first — 1 to 5','error');return;}const sendBtn=reviewBox.querySelector('[data-review-send]');sendBtn.disabled=true;sendBtn.textContent='Sending…';try{await RFS.api('/api/reviews',{method:'POST',body:JSON.stringify({orderId:o.id,phone:phone,rating:picked,text:reviewBox.querySelector('[data-review-text]').value})});reviewBox.innerHTML='<div class="alert success">⭐ Thank you! Your review will appear on the product page once approved.</div>';}catch(err){sendBtn.disabled=false;sendBtn.textContent='Send review';RFS.toast(err.message||'Could not send review','error');}});}
 function renderPartnerLive(d){const p=d.deliveryPartner;
  if(!p){partnerBox.innerHTML='';if(window.__trackMap){try{window.__trackMap.remove()}catch(e){}window.__trackMap=null;window.__trackPartnerMarker=null;}return;}
- const home=(o.location&&Number.isFinite(Number(o.location.lat))&&Number.isFinite(Number(o.location.lng)))?o.location:null;
+ const hl=(p.pin&&Number.isFinite(Number(p.pin.lat)))?p.pin:(o.location&&Number.isFinite(Number(o.location.lat))?o.location:null);const home=hl;
  const dist=(p.lat!=null&&home)?(6371*2*Math.asin(Math.sqrt(Math.sin((p.lat-home.lat)*Math.PI/360)**2+Math.cos(home.lat*Math.PI/180)*Math.cos(p.lat*Math.PI/180)*Math.sin((p.lng-home.lng)*Math.PI/360)**2))):null;
  const ago=p.updatedAt?Math.max(0,Math.round((Date.now()-new Date(p.updatedAt))/60000)):null;
  if(!partnerBox.querySelector('.partner-live')){

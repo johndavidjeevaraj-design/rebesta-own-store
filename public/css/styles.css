@@ -1545,3 +1545,4 @@ body{font-size:16px}
 .track-pin-home{background:#fff;border:2px solid #dfe8d7;border-radius:99px}
 .leaflet-container{font:inherit}
 @media(max-width:840px){.partner-map{height:210px}.partner-live-card{margin:-36px 8px 8px;padding:10px 12px}}
+.voice-btn[hidden]{display:none}

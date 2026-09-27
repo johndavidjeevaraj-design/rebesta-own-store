@@ -332,6 +332,8 @@ function setupReveal() {
       fillOffersBanner();
       const stockFact = document.querySelector('[data-fact-stock]');
       if (stockFact) stockFact.textContent = String(data.products.length);
+      const searchInput = document.querySelector('[data-product-search]');
+      if (searchInput) searchInput.placeholder = `Search ${data.products.length}+ fresh products…`;
       renderCategories(); renderHeroShowcase(); renderShelves(); renderGrid(); RFS.syncCartUI(state.products);
     } catch (error) {
       grid.innerHTML = `<div class="empty-state" style="grid-column:1 / -1"><h3>Could not load products</h3><p>${error.message}</p></div>`;

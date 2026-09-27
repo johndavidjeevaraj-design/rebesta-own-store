@@ -336,7 +336,7 @@ function setupReveal() {
     const free = document.querySelector('[data-fact-free]'); if (free && delivery.freeOverInr) free.textContent = `₹${Number(delivery.freeOverInr).toLocaleString('en-IN')}+`;
     const cod = document.querySelector('[data-fact-cod]'); if (cod) cod.textContent = settings.payments?.codEnabled ? 'COD' : 'Pay pending';
     const whatsapp = document.querySelector('.whatsapp-link'); if (whatsapp && business.whatsapp) whatsapp.href = `https://wa.me/${String(business.whatsapp).replace(/\D/g, '')}`;
-    document.title = `${business.name || 'Rebesta Fresh'} – ${content.homeTitle || 'Fresh vegetables in Hosur'}`;
+      document.title = `${business.name || 'Rebesta Fresh'} — Farm-Fresh Vegetables Delivered in Hosur Every Morning`;
   }
 
   function fillOffersBanner() {

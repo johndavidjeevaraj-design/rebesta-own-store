@@ -21,7 +21,8 @@ import {
   loadSubscriptions,
   saveSubscriptions,
   addCustomerReview,
-  approvedReviewsForProduct
+  approvedReviewsForProduct,
+  loadReviews
 } from '../lib/store.js';
 import { orderPlacedEmails } from '../lib/mailer.js';
 import { quoteDelivery, reverseGeocode } from '../lib/delivery.js';
@@ -137,6 +138,14 @@ router.post('/reviews', (req, res) => {
 });
 
 router.get('/reviews', (req, res) => {
+  if (String(req.query.latest) === '1') {
+    const latest = loadReviews()
+      .filter(x => x.approved)
+      .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
+      .slice(0, 6)
+      .map(x => ({ name: x.name, rating: x.rating, text: x.text, createdAt: x.createdAt }));
+    return res.json({ ok: true, count: latest.length, reviews: latest });
+  }
   const handle = String(req.query.product || '').trim();
   if (!handle) return res.status(400).json({ ok: false, error: 'Product handle required' });
   const reviews = approvedReviewsForProduct(handle);

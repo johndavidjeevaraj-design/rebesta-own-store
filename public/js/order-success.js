@@ -72,7 +72,11 @@
       fetch('/api/settings').then(r => r.json()).then(s => {
         const perks = [];
         if (s.rewards?.loyaltyEnabled) perks.push('🎁 <strong>Earn a reward:</strong> once this order is delivered you get a LOY- coupon (about 2% back) on the <a href="/track">Track page</a>');
-        if (s.rewards?.referralEnabled) perks.push(`🤝 <strong>Refer a friend:</strong> give them your mobile number to enter at checkout — you both get ₹${s.rewards.referralBonusInr || 50} after their first delivery`);
+        if (s.rewards?.referralEnabled) {
+          const myPhone = (phone || '').replace(/\D/g, '').slice(-10);
+          const shareText = `🥬 I order fresh vegetables from Rebesta Fresh (Hosur) — morning delivery, exact weight, COD available.\n\nEnter my number ${myPhone} in "Referred by a friend" at checkout and we both get ₹${s.rewards.referralBonusInr || 50} off after your first delivery 🎁\nhttps://rebestafresh.in`;
+          perks.push(`🤝 <strong>Refer a friend:</strong> give them your mobile number to enter at checkout — you both get ₹${s.rewards.referralBonusInr || 50} after their first delivery${myPhone ? ` <a class="button primary small" style="margin-left:8px" href="https://wa.me/?text=${encodeURIComponent(shareText)}" target="_blank" rel="noopener">Share on WhatsApp</a>` : ''}`);
+        }
         if (perks.length) {
           const box = document.createElement('div');
           box.className = 'rewards-teaser';

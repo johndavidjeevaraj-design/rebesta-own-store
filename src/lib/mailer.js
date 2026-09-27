@@ -131,7 +131,12 @@ export function statusChangedEmail(order) {
     title: `Your order is ${STATUS_LABELS[order.status]}`,
     bodyHtml: `<p style="margin:0;color:#333;font-size:13px">Order <strong>${order.id}</strong> is now <strong>${STATUS_LABELS[order.status]}</strong>.
     ${order.status === 'OUT_FOR_DELIVERY' ? 'Your vegetables are on the way — keep the exact amount ready if paying cash. 💵' : ''}
-    ${order.status === 'DELIVERED' ? 'Enjoy your fresh produce! See you soon. 🥬' : ''}</p>`
+    ${order.status === 'DELIVERED' ? 'Enjoy your fresh produce! See you soon. 🥬' : ''}</p>
+    ${order.status === 'DELIVERED' ? `<div style="margin:16px 0 0;padding:16px;background:#f4f9f1;border:1px solid #dcead8;border-radius:12px">
+      <p style="margin:0 0 8px;color:#17251b;font-size:14px;font-weight:700">⭐ How was your order?</p>
+      <p style="margin:0 0 12px;color:#333;font-size:13px">Rate your vegetables in 10 seconds — it helps other Hosur families shop fresh with confidence.</p>
+      <a href="${config.appUrl}/track?order=${order.id}&phone=${String(order.customer?.phone || '').replace(/\D/g, '').slice(-10)}" style="display:inline-block;background:#0d8736;color:#fff;text-decoration:none;font-size:13px;font-weight:700;padding:10px 18px;border-radius:9px">Rate my order ⭐</a>
+    </div>` : ''}`
   });
 }
 

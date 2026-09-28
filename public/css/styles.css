@@ -351,7 +351,7 @@ h1,h2,h3,h4,p,dl,dt,dd{margin-top:0}
 @media(max-width:840px){
   .container{width:calc(100% - 20px)}
   .header-inner{grid-template-columns:auto 1fr auto;gap:8px;min-height:60px}.header-location{display:none}.logo{min-width:112px;height:39px;padding:2px 5px}.logo img{width:110px}.whatsapp-link{display:none}.cart-link{min-height:37px;padding:7px 8px;font-size:.7rem;box-shadow:0 8px 17px rgba(230,71,18,.24)}.market-search{height:38px}.market-search input{padding:0 44px 0 35px;font-size:.77rem}.market-search>svg{left:11px;width:15px;height:15px}.voice-btn{width:30px;height:30px;margin:0 4px 0 4px}.voice-btn svg{width:15px;height:15px}
-  .hero-market{padding:24px 0 18px}.hero-grid{grid-template-columns:1fr;gap:20px}.hero-title{font-size:clamp(2.1rem,11vw,3.2rem)}.hero-visual{grid-template-columns:minmax(190px,250px) minmax(130px,1fr);min-height:330px;gap:12px}.hero-card.featured{min-height:330px}.hero-card.featured img{height:215px}
+  .hero-market{padding:12px 0 18px}.site-header{padding-bottom:12px}.hero-grid{grid-template-columns:1fr;gap:20px}.hero-title{font-size:clamp(2.1rem,11vw,3.2rem)}.hero-visual{grid-template-columns:minmax(190px,250px) minmax(130px,1fr);min-height:330px;gap:12px}.hero-card.featured{min-height:330px}.hero-card.featured img{height:215px}
   .category-pill{min-height:40px}.category-pill img{width:29px;height:29px}
   .product-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
   .product-detail-layout,.admin-layout{grid-template-columns:1fr}.admin-side{position:static}.footer-grid{grid-template-columns:1fr 1fr}
@@ -975,7 +975,7 @@ body{font-size:16px}
    ============================================================ */
 
 /* --- Offers banner (under header) --- */
-.offers-banner{position:relative;overflow:hidden;background:linear-gradient(92deg,#e94712,#ff6a2b 48%,#ff8b3d,#ff6a2b);background-size:220% 100%;animation:offers-bg 9s ease-in-out infinite;box-shadow:0 14px 32px rgba(255,91,32,.22)}
+.offers-banner{position:relative;overflow:hidden;background:linear-gradient(92deg,#e94712,#ff6a2b 48%,#ff8b3d,#ff6a2b);background-size:220% 100%;animation:offers-bg 9s ease-in-out infinite}
 .offers-banner::after{content:'';position:absolute;top:0;bottom:0;left:-45%;width:32%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.38),transparent);transform:skewX(-18deg);animation:stripSweep 5.2s ease-in-out infinite;pointer-events:none}
 @keyframes offers-bg{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 .offers-banner-inner{position:relative;z-index:1;display:flex;align-items:center;gap:14px;min-height:54px;padding:8px 0;color:#fff}
@@ -1555,3 +1555,9 @@ body{font-size:16px}
 .leaflet-container{font:inherit}
 @media(max-width:840px){.partner-map{height:210px}.partner-live-card{margin:-36px 8px 8px;padding:10px 12px}}
 .voice-btn[hidden]{display:none}
+
+/* ============ PASS 18: offers strip symmetry — equal dark space above & below (mobile only) ============ */
+@media(max-width:840px){
+  .site-header{padding-bottom:12px}
+  .hero-market{padding-top:12px}
+}

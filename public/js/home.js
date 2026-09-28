@@ -383,9 +383,13 @@ function setupReveal() {
     const maxOff = Math.max(...offers.map(p => Math.round((1 - Number(p.priceInr) / Number(p.compareAtInr)) * 100)));
     set('[data-offers-max]', `${maxOff}%`);
     const combos = state.products.filter(p => /combo/i.test(p.category || '') || /combo/i.test((p.tags || []).join(' ')));
-    set('[data-offers-combo]', combos.length
-      ? `Family combos from ₹${Math.min(...combos.map(p => Number(p.priceInr)))}.`
-      : 'Fresh deals updated daily.');
+    const comboText = combos.length
+      ? `Family combos from ₹${Math.min(...combos.map(p => Number(p.priceInr)))}`
+      : 'Fresh deals updated daily';
+    const parts = [`${offers.length} fresh deals in stock today`, `up to ${maxOff}% off`, comboText, 'Free delivery over ₹500', 'Cash on delivery'];
+    const msg = parts.join('&nbsp;&nbsp;✦&nbsp;&nbsp;');
+    const track = banner.querySelector('[data-offers-track]');
+    if (track) track.innerHTML = `<p class="offers-copy">${msg}</p><p class="offers-copy" aria-hidden="true">${msg}</p>`;
   }
 
   async function init() {
@@ -531,16 +535,6 @@ function setupReveal() {
     state.sort = pill.dataset.sort || 'featured';
     renderGrid();
   }));
-  document.querySelector('[data-offers-cta]')?.addEventListener('click', () => {
-    const offersShelf = document.querySelector('[data-shelf="offers"]');
-    if (offersShelf && !offersShelf.hidden) offersShelf.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    else {
-      state.offersOnly = true;
-      if (offersToggle) offersToggle.checked = true;
-      renderGrid();
-      document.getElementById('browse')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  });
   document.querySelectorAll('[data-shelf-all]').forEach(btn => btn.addEventListener('click', () => {
     const target = btn.getAttribute('data-shelf-all');
     if (target === 'offers') {

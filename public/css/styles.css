@@ -1561,3 +1561,10 @@ body{font-size:16px}
   .site-header{padding-bottom:12px}
   .hero-market{padding-top:12px}
 }
+
+/* ============ PASS 19: search mic stays INSIDE the pill — mic is absolutely positioned over the pill's right end (the input's right padding reserves its space), so no flexbox/font-metric can ever push it out under the cart ============ */
+.market-search .voice-btn{position:absolute;right:5px;top:50%;transform:translateY(-50%);margin:0}
+@media(max-width:840px){
+  .market-search .voice-btn{right:4px}
+  .market-search input{padding:0 40px 0 28px}
+}

@@ -1569,11 +1569,11 @@ body{font-size:16px}
   .market-search input{padding:0 40px 0 28px}
 }
 
-/* ============ PASS 20: slimmer offers strip on phones — text sits snug instead of floating in ~20px of empty orange above & below ============ */
-@media(max-width:840px){
-  .offers-banner-inner{min-height:38px;padding:5px 0}
-}
-
 /* ============ PASS 21: kill the 1px compositor seam (white line) at the offers-strip boundaries — hero & strip overlap their neighbours by 1px so GPU layer rounding can never expose the white page background ============ */
 .offers-banner{margin-top:-1px}
 .hero-market{margin-top:-1px}
+
+/* ============ PASS 22: offers strip sits FLUSH under the header on phones — no dark gap above the strip (matches desktop), strip restored to full height ============ */
+@media(max-width:840px){
+  .site-header{padding-bottom:0;border-bottom:0}
+}

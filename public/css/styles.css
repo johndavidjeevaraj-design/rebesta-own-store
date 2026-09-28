@@ -1577,3 +1577,10 @@ body{font-size:16px}
 @media(max-width:840px){
   .site-header{padding-bottom:0;border-bottom:0}
 }
+
+/* ============ PASS 23: /shop page — all products on one page + orange show-all button on the homepage ============ */
+.shop-hero{background:linear-gradient(120deg,#032c13,#073f1b 52%,#0a5525);padding:30px 0 26px;color:#fff}
+.shop-hero .eyebrow-light{color:#9fe8b4}
+.shop-title{margin:0;font-family:'Poppins Local',Nunito,sans-serif;font-size:clamp(1.75rem,7vw,2.6rem);line-height:1.08;letter-spacing:-.045em;color:#fff}
+.shop-sub{margin:10px 0 0;max-width:560px;color:#cde8d3;font-size:.95rem;line-height:1.55}
+.shop-sub strong{color:#ffd9a8}

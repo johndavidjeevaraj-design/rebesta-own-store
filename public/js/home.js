@@ -549,7 +549,7 @@ function setupReveal() {
   document.querySelectorAll('[data-shelf-goto]').forEach(btn => btn.addEventListener('click', () => {
     document.querySelector(btn.getAttribute('data-shelf-goto') || '#browse')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }));
-  document.querySelector('[data-show-all]')?.addEventListener('click', () => { state.showAll = true; renderGrid(); });
+  /* Show-all is now a link to /shop — every product lives on its own page. */
   window.addEventListener('rebesta:cart-changed', () => { RFS.syncCartUI(state.products); renderGrid(); });
   init();
 })();

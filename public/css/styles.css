@@ -1573,3 +1573,7 @@ body{font-size:16px}
 @media(max-width:840px){
   .offers-banner-inner{min-height:38px;padding:5px 0}
 }
+
+/* ============ PASS 21: kill the 1px compositor seam (white line) at the offers-strip boundaries — hero & strip overlap their neighbours by 1px so GPU layer rounding can never expose the white page background ============ */
+.offers-banner{margin-top:-1px}
+.hero-market{margin-top:-1px}

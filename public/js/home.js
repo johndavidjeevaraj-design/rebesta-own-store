@@ -535,17 +535,7 @@ function setupReveal() {
     state.sort = pill.dataset.sort || 'featured';
     renderGrid();
   }));
-  document.querySelectorAll('[data-shelf-all]').forEach(btn => btn.addEventListener('click', () => {
-    const target = btn.getAttribute('data-shelf-all');
-    if (target === 'offers') {
-      state.offersOnly = true; state.activeCategory = 'All';
-      if (offersToggle) offersToggle.checked = true;
-    } else {
-      state.activeCategory = target;
-    }
-    renderCategories(); renderGrid();
-    document.getElementById('browse')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }));
+  /* Greens & offers shelves now link straight to /greens and /offers pages. */
   document.querySelectorAll('[data-shelf-goto]').forEach(btn => btn.addEventListener('click', () => {
     document.querySelector(btn.getAttribute('data-shelf-goto') || '#browse')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }));

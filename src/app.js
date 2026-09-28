@@ -58,7 +58,8 @@ ${productUrls}
   }));
 
   app.get('/', (req, res) => res.sendFile('index.html', { root: config.publicDir }));
-  app.get(['/shop', '/cart', '/checkout', '/order-success', '/track', '/about', '/faq', '/terms', '/privacy', '/refund', '/partner', '/subscriptions'], (req, res) => {
+  app.get(['/shop', '/offers', '/greens'], (req, res) => res.sendFile('shop.html', { root: config.publicDir }));
+  app.get(['/cart', '/checkout', '/order-success', '/track', '/about', '/faq', '/terms', '/privacy', '/refund', '/partner', '/subscriptions'], (req, res) => {
     res.sendFile(`${req.path.slice(1)}.html`, { root: config.publicDir });
   });
   app.get('/products/:handle', (req, res) => res.sendFile('product.html', { root: config.publicDir }));

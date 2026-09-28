@@ -3,6 +3,14 @@
    but no 24-item cap: the whole market renders here. */
 (() => {
   const state = { products: [], categories: [], settings: null, activeCategory: 'All', search: '', sort: 'featured', offersOnly: false };
+
+  /* One template, three shops: /shop (everything), /offers (deals only), /greens (keerai & leafy greens). */
+  const PAGE_MODE = (() => {
+    const path = location.pathname.replace(/\/+$/, '') || '/';
+    if (path === '/offers') return { offersOnly: true, heading: 'Today\u2019s offers', title: 'Today\u2019s Offers \u2014 Fresh Vegetable Deals in Hosur | Rebesta Fresh', canonical: '/offers', countWord: 'offer' };
+    if (path === '/greens') return { category: 'Leafy Greens', heading: 'Greens & keerai', title: 'Fresh Greens & Keerai Delivered in Hosur | Rebesta Fresh', canonical: '/greens', countWord: 'green' };
+    return { heading: 'All products', title: null, canonical: '/shop', countWord: 'product' };
+  })();
   const grid = document.querySelector('[data-product-grid]');
   const categoryRow = document.querySelector('[data-category-row]');
   const searchInput = document.querySelector('[data-product-search]');
@@ -242,7 +250,7 @@
     const products = filteredProducts();
     grid.innerHTML = '';
     if (resultCount) {
-      resultCount.textContent = `${products.length} product${products.length === 1 ? '' : 's'}`;
+      resultCount.textContent = `${products.length} ${PAGE_MODE.countWord}${products.length === 1 ? '' : 's'}`;
       resultCount.classList.remove('pulse');
       void resultCount.offsetWidth;
       resultCount.classList.add('pulse');
@@ -321,6 +329,13 @@
       state.settings = settings; applySettings(settings);
       state.products = data.products.slice().sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)) || String(a.title).localeCompare(String(b.title)));
       state.categories = data.categories;
+      if (PAGE_MODE.category) state.activeCategory = PAGE_MODE.category;
+      if (PAGE_MODE.offersOnly) { state.offersOnly = true; const t = document.querySelector('[data-offers-only]'); if (t) t.checked = true; }
+      const heading = document.querySelector('.product-heading h2');
+      if (heading) heading.textContent = PAGE_MODE.heading;
+      if (PAGE_MODE.title) document.title = PAGE_MODE.title;
+      const canonical = document.querySelector('link[rel="canonical"]');
+      if (canonical) canonical.href = `https://rebestafresh.in${PAGE_MODE.canonical}`;
       if (searchInput) searchInput.placeholder = `Search ${data.products.length}+ fresh products…`;
       renderCategories(); renderGrid(); RFS.syncCartUI(state.products);
     } catch (error) {

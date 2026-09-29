@@ -1579,3 +1579,11 @@ body{font-size:16px}
 }
 
 /* ============ PASS 23: /shop page — straight-to-shopping layout: header → category pills → filters → grid (hero band removed on request) ============ */
+
+/* ============ PASS 24: sticky category pills on shop pages — categories always one tap away while scrolling the market ============ */
+@media(max-width:840px){
+  .sticky-cats{position:sticky;top:60px;z-index:300;background:#f6f6ee;padding:7px 2px 9px;box-shadow:0 12px 16px -14px rgba(3,44,19,.3)}
+}
+@media(min-width:841px){
+  .sticky-cats{position:sticky;top:71px;z-index:300;background:#f6f6ee;padding:9px 2px 11px;box-shadow:0 12px 16px -14px rgba(3,44,19,.3)}
+}

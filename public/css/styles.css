@@ -1587,10 +1587,3 @@ body{font-size:16px}
 @media(min-width:841px){
   .sticky-cats{position:sticky;top:71px;z-index:300;background:#f6f6ee;padding:9px 2px 11px;box-shadow:0 12px 16px -14px rgba(3,44,19,.3)}
 }
-
-/* ============ PASS 25: order-by countdown chip (homepage hero) — urgency for the morning slot ============ */
-.order-by-chip{display:inline-flex;align-items:center;gap:9px;margin:11px 0 2px;padding:8px 14px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(255,255,255,.08);backdrop-filter:blur(8px);color:#eafff0;font-size:.78rem;font-weight:800;line-height:1.2;max-width:100%}
-.order-by-chip strong{color:#ffd9a8;white-space:nowrap}
-.ob-dot{position:relative;width:8px;height:8px;border-radius:50%;background:var(--orange);flex:0 0 auto}
-.ob-dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--orange);animation:live-ping 1.5s cubic-bezier(.2,.7,.4,1) infinite}
-@media(max-width:840px){.order-by-chip{font-size:.72rem;padding:7px 12px}}

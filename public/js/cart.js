@@ -177,6 +177,8 @@
     const subtotal = cartLines.reduce((s, item) => s + item.product.priceInr * item.qty, 0);
     layoutNode.hidden = !cartLines.length;
     emptyNode.hidden = cartLines.length > 0;
+    if (emptyNode.hidden) { const ro = document.querySelector('[data-repeat-order]'); if (ro) ro.hidden = true; }
+    else renderRepeatOrder();
     itemsNode.innerHTML = '';
     cartLines.forEach(item => itemsNode.appendChild(renderItem(item)));
     if (cartLines.length) {
@@ -199,6 +201,25 @@
       itemsNode.innerHTML = `<div class="alert error">${error.message}</div>`;
     }
   }
+  /* One-tap repeat: refill the basket with the previous order (kept locally, no login) */
+  function renderRepeatOrder() {
+    const host = document.querySelector('[data-repeat-order]');
+    if (!host) return;
+    let last = null;
+    try { last = JSON.parse(localStorage.getItem('rebesta_last_order') || 'null'); } catch {}
+    const fresh = last && Array.isArray(last.items) && last.items.length && Date.now() - (last.at || 0) < 45 * 864e5;
+    if (!fresh) { host.hidden = true; return; }
+    const known = last.items.filter(i => state.byHandle.has(i.handle));
+    if (!known.length) { host.hidden = true; return; }
+    host.hidden = false;
+    const btn = host.querySelector('button');
+    btn.onclick = () => {
+      for (const item of known) RFS.addItem(item.handle, item.qty);
+      RFS.toast(`${known.length} products from your last order added`, 'success');
+      render(); RFS.syncCartUI(state.products);
+    };
+  }
+
   window.addEventListener('rebesta:cart-changed', () => { render(); RFS.syncCartUI(state.products); });
   init();
 })();

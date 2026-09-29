@@ -56,6 +56,15 @@
         if (titleNode) titleNode.textContent = 'We are waiting for payment verification.';
       }
       document.querySelector('[data-order-id]').textContent = order.id;
+      try {  /* remember for 'Repeat last order' on the empty basket page */
+        if (Array.isArray(order.items) && order.items.length && order.paymentStatus !== 'FAILED') {
+          localStorage.setItem('rebesta_last_order', JSON.stringify({
+            id: order.id,
+            at: Date.now(),
+            items: order.items.map(i => ({ handle: i.handle, qty: Number(i.qty) || 1 })).filter(i => i.handle)
+          }));
+        }
+      } catch { /* silent */ }
       document.querySelector('[data-order-copy]').textContent = `${RFS.money(order.totalInr)} · ${order.slot?.label || 'Morning delivery'} · ${order.deliveryDate?.label || ''}`;
       const items = order.items.map(item => `
         <div class="order-mini"><img src="${item.image}" alt="${item.title}"><div><strong>${item.title}</strong><br><span>${item.qty} × ${item.unitLabel}</span></div><div class="price">${RFS.money(item.lineTotalInr)}</div></div>

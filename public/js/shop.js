@@ -191,6 +191,19 @@
     return button;
   }
 
+  function renderRecent() {
+    const shelf = document.querySelector('[data-recent-shelf]');
+    if (!shelf) return;
+    let handles = [];
+    try { handles = JSON.parse(localStorage.getItem('rebesta_recent') || '[]'); } catch {}
+    const list = handles.map(h => state.products.find(p => p.handle === h)).filter(p => p && p.stock > 0).slice(0, 8);
+    if (list.length < 2) { shelf.hidden = true; return; }
+    shelf.hidden = false;
+    const rail = shelf.querySelector('[data-shelf-rail="recent"]');
+    rail.innerHTML = '';
+    list.forEach((product, index) => rail.appendChild(card(product, index)));
+  }
+
   function renderCategories() {
     categoryRow.innerHTML = '';
     categoryRow.appendChild(makeCategoryButton('All'));
@@ -320,7 +333,7 @@
     });
   })();
 
-  window.addEventListener('rebesta:cart-changed', () => { RFS.syncCartUI(state.products); renderGrid(); });
+  window.addEventListener('rebesta:cart-changed', () => { RFS.syncCartUI(state.products); renderRecent(); renderGrid(); });
 
   async function init() {
     try {
@@ -337,7 +350,7 @@
       const canonical = document.querySelector('link[rel="canonical"]');
       if (canonical) canonical.href = `https://rebestafresh.in${PAGE_MODE.canonical}`;
       if (searchInput) searchInput.placeholder = `Search ${data.products.length}+ fresh products…`;
-      renderCategories(); renderGrid(); RFS.syncCartUI(state.products);
+      renderRecent(); renderCategories(); renderGrid(); RFS.syncCartUI(state.products);
     } catch (error) {
       grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><h3>Could not load products</h3><p>${error.message}</p></div>`;
     }

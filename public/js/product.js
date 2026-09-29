@@ -179,6 +179,12 @@
     try {
       const data = await RFS.api(`/api/products/${encodeURIComponent(handle)}`);
       state.product = data.product;
+      try {  /* remember for the 'Your last looks' rail on /shop */
+        const key = 'rebesta_recent';
+        const seen = JSON.parse(localStorage.getItem(key) || '[]').filter(x => x !== handle);
+        seen.unshift(handle);
+        localStorage.setItem(key, JSON.stringify(seen.slice(0, 12)));
+      } catch { /* private mode etc — silent */ }
       const all = await RFS.api('/api/products');
       const base = data.product.baseHandle || data.product.handle;
       state.variants = all.products

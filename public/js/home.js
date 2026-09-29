@@ -540,6 +540,26 @@ function setupReveal() {
     document.querySelector(btn.getAttribute('data-shelf-goto') || '#browse')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }));
   /* Show-all is now a link to /shop — every product lives on its own page. */
+  /* ---- Order-by countdown: last call for tomorrow morning's mandi run (cutoff 9 PM) ---- */
+  function updateOrderByChip() {
+    const chip = document.querySelector('[data-order-by]');
+    if (!chip) return;
+    chip.hidden = false;
+    const now = new Date();
+    const cutoff = new Date(now);
+    cutoff.setHours(21, 0, 0, 0);
+    let target = cutoff, when = 'tomorrow 7\u20139 AM';
+    if (now >= cutoff) { target = new Date(cutoff.getTime() + 864e5); when = 'day after, 7\u20139 AM'; }
+    const ms = Math.max(0, target - now);
+    const h = Math.floor(ms / 36e5), m = Math.floor((ms % 36e5) / 6e4);
+    const t = chip.querySelector('[data-order-by-time]');
+    const w = chip.querySelector('[data-order-by-when]');
+    if (t) t.textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
+    if (w) w.textContent = when;
+  }
+  updateOrderByChip();
+  setInterval(updateOrderByChip, 30000);
+
   window.addEventListener('rebesta:cart-changed', () => { RFS.syncCartUI(state.products); renderGrid(); });
   init();
 })();

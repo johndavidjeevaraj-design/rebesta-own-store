@@ -407,7 +407,7 @@ function setupReveal() {
       if (stockFact) stockFact.textContent = String(data.products.length);
       const searchInput = document.querySelector('[data-product-search]');
       if (searchInput) searchInput.placeholder = `Search ${data.products.length}+ fresh products…`;
-      renderCategories(); renderHeroShowcase(); renderShelves(); renderGrid(); RFS.syncCartUI(state.products);
+      renderCategories(); renderHeroShowcase(); renderShelves(); renderFestive(); renderGrid(); RFS.syncCartUI(state.products);
     } catch (error) {
       grid.innerHTML = `<div class="empty-state" style="grid-column:1 / -1"><h3>Could not load products</h3><p>${error.message}</p></div>`;
       RFS.toast(error.message, 'error');
@@ -540,6 +540,33 @@ function setupReveal() {
     document.querySelector(btn.getAttribute('data-shelf-goto') || '#browse')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }));
   /* Show-all is now a link to /shop — every product lives on its own page. */
+  /* ---- Festive mode: Deepavali & Pongal shelves light up automatically in season ---- */
+  const FESTIVALS = [
+    { key: 'deepavali', start: '2026-10-25', end: '2026-11-08', emoji: '\u{1FA94}', title: 'Deepavali cooking week',
+      handles: ['onion-big','small-onion-shallot','tomato','garlic','green-chilli','curry-leaves','coriander-leaves','banana-flower','banana-stem','drumstick-moringa','pumpkin','ash-gourd-winter-melon','bottle-gourd-lauki','sweet-potato','mixed-greens-box-1-kg'] },
+    { key: 'pongal', start: '2026-12-31', end: '2027-01-14', emoji: '\u{1F33E}', title: 'Pongal harvest fresh',
+      handles: ['banana-stem','banana-flower','pumpkin','ash-gourd-winter-melon','amaranth-leaves','spinach-palak','fenugreek-leaves-methi','mustard-greens','broad-beans-avarakkai','cluster-beans-gawar','sweet-potato','fresh-coriander-100-g','curry-leaves','mixed-greens-box-1-kg'] }
+  ];
+  function localDateKey(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function renderFestive() {
+    const shelf = document.querySelector('[data-shelf="festive"]');
+    if (!shelf || !state.products.length) return;
+    const today = localDateKey(new Date());
+    const fest = FESTIVALS.find(f => today >= f.start && today <= f.end);
+    if (!fest) return;
+    const list = fest.handles.map(h => state.products.find(p => p.handle === h)).filter(p => p && p.stock > 0).slice(0, 10);
+    if (!list.length) return;
+    shelf.hidden = false;
+    shelf.querySelector('[data-festive-title]').textContent = `${fest.emoji} ${fest.title}`;
+    const rail = shelf.querySelector('[data-shelf-rail="festive"]');
+    rail.innerHTML = '';
+    list.forEach((product, index) => rail.appendChild(card(product, index)));
+    const badge = document.querySelector('[data-home-badge]');
+    if (badge && !badge.textContent.startsWith(fest.emoji)) badge.textContent = `${fest.emoji} ${badge.textContent}`;
+  }
+
   /* ---- Order-by countdown: last call for tomorrow morning's mandi run (cutoff 9 PM) ---- */
   function updateOrderByChip() {
     const chip = document.querySelector('[data-order-by]');

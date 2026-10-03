@@ -6,6 +6,7 @@ import { config } from './config.js';
 import { router as publicRouter } from './routes/public.js';
 import { router as adminRouter } from './routes/admin.js';
 import { router as partnerRouter } from './routes/partner.js';
+import { router as authRouter } from './routes/auth.js';
 import { publicCatalog } from './lib/store.js';
 import { rateLimit } from './lib/rateLimit.js';
 import { startSubscriptionScheduler } from './lib/subscriptions.js';
@@ -48,6 +49,7 @@ ${productUrls}
   app.use('/api/quote', rateLimit({ windowMs: 60_000, max: 90, message: 'Too many delivery-quote attempts. Please wait one minute.' }));
   app.use('/api/orders', rateLimit({ windowMs: 60_000, max: 30, message: 'Too many order requests. Please wait one minute.' }));
   app.use('/api/coupon', rateLimit({ windowMs: 60_000, max: 20, message: 'Too many coupon attempts. Please wait one minute.' }));
+  app.use('/api/auth', authRouter);
   app.use('/api', publicRouter);
   app.use('/api/admin', adminRouter);
   app.use('/api/partner', partnerRouter);
@@ -59,6 +61,7 @@ ${productUrls}
 
   app.get('/', (req, res) => res.sendFile('index.html', { root: config.publicDir }));
   app.get(['/shop', '/offers', '/greens'], (req, res) => res.sendFile('shop.html', { root: config.publicDir }));
+  app.get(['/login', '/signup', '/account'], (req, res) => res.sendFile(`${req.path.slice(1)}.html`, { root: config.publicDir }));
   app.get(['/cart', '/checkout', '/order-success', '/track', '/about', '/faq', '/terms', '/privacy', '/refund', '/partner', '/subscriptions'], (req, res) => {
     res.sendFile(`${req.path.slice(1)}.html`, { root: config.publicDir });
   });

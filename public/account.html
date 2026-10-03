@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="robots" content="noindex"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Your account – Rebesta Fresh</title>
+  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><meta name="description" content="Your Rebesta Fresh account — orders, profile and quick reorder.">
+  <link rel="stylesheet" href="/css/styles.css?v=20260929f37">
+</head>
+<body>
+  <header class="site-header"><div class="container header-inner"><a class="logo" href="/"><img src="/assets/brand/logo.png" alt="Rebesta Fresh" width="191" height="24"></a><span class="header-location">Your account</span><span></span><div class="header-actions"><a class="whatsapp-link" href="https://wa.me/918438765119">Help</a><a class="cart-link" href="/shop">Shop fresh</a></div></div></header>
+  <main><section class="section"><div class="container" style="max-width:730px">
+
+    <div data-account-signedout class="shop-panel" style="padding:36px;text-align:center" hidden>
+      <span class="eyebrow">Account</span>
+      <h1 class="section-title">You're not signed in</h1>
+      <p class="section-subtitle" style="margin-bottom:20px">Sign in to see your orders and profile — or keep shopping, no account needed.</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <a class="button orange" href="/login">Sign in</a>
+        <a class="button ghost" href="/signup">Create account</a>
+      </div>
+    </div>
+
+    <div data-account-view hidden>
+      <div class="shop-panel account-panel" style="padding:24px">
+        <div class="account-head">
+          <span class="account-avatar" data-account-avatar aria-hidden="true">R</span>
+          <div class="account-id">
+            <h1 class="section-title" style="font-size:1.35rem" data-account-name>…</h1>
+            <p class="section-subtitle" style="margin:2px 0 0" data-account-meta></p>
+          </div>
+          <button class="button ghost small" type="button" data-logout>Sign out</button>
+        </div>
+      </div>
+
+      <div style="margin-top:22px">
+        <div class="section-head" style="margin-bottom:12px"><div><span class="eyebrow">History</span><h2 class="section-title" style="font-size:1.2rem">Your orders</h2></div></div>
+        <div data-orders-list></div>
+        <div data-orders-empty class="empty-state" hidden style="padding:28px">
+          <h3>No orders yet</h3>
+          <p>Your first Rebesta order will appear here.</p>
+          <a class="button orange" href="/shop">Start shopping</a>
+        </div>
+      </div>
+    </div>
+
+  </div></section></main>
+  <nav class="bottom-nav" aria-label="Quick navigation">
+    <a class="bn-item" href="/shop"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 8h16l-1.2 11a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8L4 8Zm4 0V6a4 4 0 0 1 8 0v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Shop</span></a>
+    <a class="bn-item" href="/track"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h4l2-5 3 10 2-5h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Track</span></a>
+    <a class="bn-item" href="/account"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Account</span></a>
+    <a class="bn-item bn-cart" href="/cart"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 17h2l2-8h8l1 5h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="19" r="2" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="2" stroke="currentColor" stroke-width="2"/></svg><span>Basket</span><span class="bn-badge" data-cart-count>0</span></a>
+  </nav>
+  <footer class="minimal-footer">
+  <div class="container minimal-footer-inner"><span>© 2026 Rebesta Fresh · Fresh from farms, Hosur</span></div>
+</footer>
+  <script src="/js/store.js?v=20260924p8" defer></script><script src="/js/auth.js?v=20260929a1" defer></script>
+</body>
+</html>

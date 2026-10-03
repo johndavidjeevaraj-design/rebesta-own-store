@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="robots" content="noindex"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sign in – Rebesta Fresh</title>
+  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><meta name="description" content="Sign in to Rebesta Fresh to see your orders and reorder favourites.">
+  <link rel="stylesheet" href="/css/styles.css?v=20260929f37">
+</head>
+<body>
+  <header class="site-header"><div class="container header-inner"><a class="logo" href="/"><img src="/assets/brand/logo.png" alt="Rebesta Fresh" width="191" height="24"></a><span class="header-location">Your account</span><span></span><div class="header-actions"><a class="whatsapp-link" href="https://wa.me/918438765119">Help</a><a class="cart-link" href="/shop">Shop fresh</a></div></div></header>
+  <main><section class="section"><div class="container" style="max-width:560px">
+    <div class="shop-panel" style="padding:32px">
+      <span class="eyebrow">Welcome back</span>
+      <h1 class="section-title">Sign in to Rebesta</h1>
+      <p class="section-subtitle" style="margin-bottom:22px">See every order, reorder in one tap. You can always shop without an account.</p>
+      <form data-login-form class="form-grid" novalidate>
+        <div class="field wide"><label for="loginPhone">Mobile number</label><input id="loginPhone" name="phone" inputmode="tel" autocomplete="tel" required placeholder="10-digit mobile number"></div>
+        <div class="field wide"><label for="loginPassword">Password</label><input id="loginPassword" name="password" type="password" autocomplete="current-password" required placeholder="Your password"></div>
+        <button class="button orange full" type="submit" data-login-submit>Sign in</button>
+      </form>
+      <div data-auth-error class="alert error" hidden style="margin-top:14px"></div>
+      <p class="auth-alt">New to Rebesta? <a href="/signup">Create an account</a> — it takes 30 seconds.</p>
+    </div>
+  </div></section></main>
+  <nav class="bottom-nav" aria-label="Quick navigation">
+    <a class="bn-item" href="/shop"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 8h16l-1.2 11a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8L4 8Zm4 0V6a4 4 0 0 1 8 0v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Shop</span></a>
+    <a class="bn-item" href="/track"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h4l2-5 3 10 2-5h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Track</span></a>
+    <a class="bn-item" href="/account"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Account</span></a>
+    <a class="bn-item bn-cart" href="/cart"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 17h2l2-8h8l1 5h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="19" r="2" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="2" stroke="currentColor" stroke-width="2"/></svg><span>Basket</span><span class="bn-badge" data-cart-count>0</span></a>
+  </nav>
+  <footer class="minimal-footer">
+  <div class="container minimal-footer-inner"><span>© 2026 Rebesta Fresh · Fresh from farms, Hosur</span></div>
+</footer>
+  <script src="/js/store.js?v=20260924p8" defer></script><script src="/js/auth.js?v=20260929a1" defer></script>
+</body>
+</html>

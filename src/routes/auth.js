@@ -8,7 +8,7 @@ import path from 'node:path';
 import { config } from '../config.js';
 import { ordersByPhone } from '../lib/store.js';
 import { rateLimit } from '../lib/rateLimit.js';
-import { otpAvailable, sendOtpSms } from '../sms.js';
+import { otpAvailable, otpMode, sendOtpSms, sendManagedOtp, verifyManagedOtp } from '../sms.js';
 
 const router = express.Router();
 
@@ -169,8 +169,23 @@ router.post('/otp/request', rateLimit({ windowMs: 15 * 60 * 1000, max: 10, messa
   }
 
   const code = String(crypto.randomInt(100000, 1000000));
-  pending.set(phone, { hash: otpHash(phone, code), expiresAt: Date.now() + OTP_MS, sentAt: Date.now(), attempts: 0 });
+  const managed = otpMode() === 'managed';
+  const entry = { hash: otpHash(phone, code), expiresAt: Date.now() + OTP_MS, sentAt: Date.now(), attempts: 0 };
+  if (managed) { entry.managed = true; delete entry.hash; }
 
+  if (managed) {
+    const sent = await sendManagedOtp(phone);
+    if (!sent.ok) {
+      pending.delete(phone);
+      console.error(JSON.stringify({ event: 'otp.sendFailed', phone, error: sent.error }));
+      return res.status(502).json({ ok: false, error: 'Could not send the SMS right now. Please try again in a minute.' });
+    }
+    entry.verificationId = sent.verificationId;
+    pending.set(phone, entry);
+    return res.json({ ok: true, expiresInSeconds: OTP_MS / 1000 });
+  }
+
+  pending.set(phone, entry);
   const sent = await sendOtpSms(phone, code);
   if (!sent.ok) {
     pending.delete(phone);
@@ -178,11 +193,11 @@ router.post('/otp/request', rateLimit({ windowMs: 15 * 60 * 1000, max: 10, messa
     return res.status(502).json({ ok: false, error: 'Could not send the SMS right now. Please try again in a minute.' });
   }
   const out = { ok: true, expiresInSeconds: OTP_MS / 1000 };
-  if (sent.devCode) out.devCode = sent.devCode; // dev sender only — never present for msg91
+  if (sent.devCode) out.devCode = sent.devCode; // dev sender only — never present for real gateways
   res.json(out);
 });
 
-router.post('/otp/verify', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, message: 'Too many attempts. Please wait 15 minutes.' }), (req, res) => {
+router.post('/otp/verify', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, message: 'Too many attempts. Please wait 15 minutes.' }), async (req, res) => {
   const phone = cleanPhone(req.body?.phone);
   const code = String(req.body?.code || '').replace(/\D/g, '');
   if (!phone || code.length !== 6) return res.status(400).json({ ok: false, error: 'Enter the 6-digit code from the SMS.' });
@@ -193,7 +208,16 @@ router.post('/otp/verify', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, messag
     pending.delete(phone);
     return res.status(400).json({ ok: false, error: 'That code expired — send a new one.' });
   }
-  if (otpHash(phone, code) !== entry.hash) {
+
+  if (entry.managed) {
+    const checked = await verifyManagedOtp(entry.verificationId, code);
+    if (!checked.ok) {
+      entry.attempts += 1;
+      if (entry.attempts >= OTP_MAX_ATTEMPTS) pending.delete(phone);
+      console.error(JSON.stringify({ event: 'otp.verifyFailed', phone, error: checked.error }));
+      return res.status(401).json({ ok: false, error: 'That code didn’t match. Check the SMS and try again.' });
+    }
+  } else if (otpHash(phone, code) !== entry.hash) {
     entry.attempts += 1;
     if (entry.attempts >= OTP_MAX_ATTEMPTS) pending.delete(phone);
     return res.status(401).json({ ok: false, error: 'That code didn’t match. Check the SMS and try again.' });

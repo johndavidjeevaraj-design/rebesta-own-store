@@ -13,10 +13,28 @@
       <span class="eyebrow">Welcome back</span>
       <h1 class="section-title">Sign in to Rebesta</h1>
       <p class="section-subtitle" style="margin-bottom:22px">See every order, reorder in one tap. You can always shop without an account.</p>
+      <div class="auth-tabs" data-auth-tabs hidden>
+        <button type="button" class="auth-tab active" data-tab-btn="password">Password</button>
+        <button type="button" class="auth-tab" data-tab-btn="otp">Mobile OTP</button>
+      </div>
       <form data-login-form class="form-grid" novalidate>
         <div class="field wide"><label for="loginPhone">Mobile number</label><input id="loginPhone" name="phone" inputmode="tel" autocomplete="tel" required placeholder="10-digit mobile number"></div>
         <div class="field wide"><label for="loginPassword">Password</label><input id="loginPassword" name="password" type="password" autocomplete="current-password" required placeholder="Your password"></div>
         <button class="button orange full" type="submit" data-login-submit>Sign in</button>
+      </form>
+      <form data-otp-form class="form-grid" hidden novalidate>
+        <div class="field wide" data-otp-step1>
+          <label for="otpPhone">Mobile number</label>
+          <input id="otpPhone" inputmode="tel" autocomplete="tel" placeholder="10-digit mobile number">
+          <button class="button orange full" type="button" data-otp-send style="margin-top:14px">Send code by SMS</button>
+        </div>
+        <div class="field wide" data-otp-step2 hidden>
+          <label for="otpCode">6-digit code from SMS</label>
+          <input id="otpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" class="otp-input">
+          <span class="otp-note" data-otp-sentto></span>
+          <button class="button orange full" type="submit" data-otp-verify style="margin-top:14px">Verify &amp; sign in</button>
+          <p class="otp-resend">Didn’t get it? <a href="#" data-otp-resend>Resend code</a> · <a href="#" data-otp-change>Wrong number?</a></p>
+        </div>
       </form>
       <div data-auth-error class="alert error" hidden style="margin-top:14px"></div>
       <p class="auth-alt">New to Rebesta? <a href="/signup">Create an account</a> — it takes 30 seconds.</p>
@@ -31,6 +49,6 @@
   <footer class="minimal-footer">
   <div class="container minimal-footer-inner"><span>© 2026 Rebesta Fresh · Fresh from farms, Hosur</span></div>
 </footer>
-  <script src="/js/store.js?v=20260924p8" defer></script><script src="/js/auth.js?v=20260929a1" defer></script>
+  <script src="/js/store.js?v=20260924p8" defer></script><script src="/js/auth.js?v=20260929a2" defer></script>
 </body>
 </html>

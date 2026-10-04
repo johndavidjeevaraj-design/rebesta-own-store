@@ -8,6 +8,7 @@ import path from 'node:path';
 import { config } from '../config.js';
 import { ordersByPhone } from '../lib/store.js';
 import { rateLimit } from '../lib/rateLimit.js';
+import { otpAvailable, sendOtpSms } from '../sms.js';
 
 const router = express.Router();
 
@@ -133,6 +134,74 @@ router.post('/login', rateLimit({ windowMs: 15 * 60 * 1000, max: 12, message: 'T
   if (!customer || !verifyPassword(password, customer.pass)) {
     return res.status(401).json({ ok: false, error: 'Wrong mobile number or password.' });
   }
+  setSession(res, req, customer);
+  res.json({ ok: true, customer: publicCustomer(customer) });
+});
+
+/* ---------- one-time codes (in-memory: 10-minute lifetime, restart just means re-request) ---------- */
+const OTP_MS = 10 * 60 * 1000;      // code valid 10 minutes
+const OTP_RESEND_MS = 60 * 1000;    // min 60s between sends to the same number
+const OTP_MAX_ATTEMPTS = 5;         // wrong entries before the code is void
+const pending = new Map();          // phone -> { hash, expiresAt, sentAt, attempts }
+
+function otpHash(phone, code) {
+  return crypto.createHash('sha256').update(`${phone}:${code}`).digest('hex');
+}
+
+/* ---------- OTP sign-in (offered only when an SMS sender is configured) ---------- */
+router.get('/otp/available', (req, res) => {
+  res.json({ ok: true, enabled: otpAvailable() });
+});
+
+router.post('/otp/request', rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: 'Too many code requests. Please wait 15 minutes.' }), async (req, res) => {
+  const phone = cleanPhone(req.body?.phone);
+  if (!phone) return res.status(400).json({ ok: false, error: 'Enter a valid 10-digit Indian mobile number.' });
+  if (!otpAvailable()) return res.status(503).json({ ok: false, error: 'OTP sign-in is not set up yet — please use your password.' });
+
+  // Unknown number → refuse BEFORE spending an SMS (probing numbers costs real money).
+  const customer = loadCustomers().find(c => c.phone === phone);
+  if (!customer) return res.status(404).json({ ok: false, error: 'No account with this number yet — please create an account first.' });
+
+  const existing = pending.get(phone);
+  if (existing && Date.now() - existing.sentAt < OTP_RESEND_MS) {
+    const wait = Math.ceil((OTP_RESEND_MS - (Date.now() - existing.sentAt)) / 1000);
+    return res.status(429).json({ ok: false, error: `Code already sent — it should reach you in a moment. You can resend in ${wait}s.` });
+  }
+
+  const code = String(crypto.randomInt(100000, 1000000));
+  pending.set(phone, { hash: otpHash(phone, code), expiresAt: Date.now() + OTP_MS, sentAt: Date.now(), attempts: 0 });
+
+  const sent = await sendOtpSms(phone, code);
+  if (!sent.ok) {
+    pending.delete(phone);
+    console.error(JSON.stringify({ event: 'otp.sendFailed', phone, error: sent.error }));
+    return res.status(502).json({ ok: false, error: 'Could not send the SMS right now. Please try again in a minute.' });
+  }
+  const out = { ok: true, expiresInSeconds: OTP_MS / 1000 };
+  if (sent.devCode) out.devCode = sent.devCode; // dev sender only — never present for msg91
+  res.json(out);
+});
+
+router.post('/otp/verify', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, message: 'Too many attempts. Please wait 15 minutes.' }), (req, res) => {
+  const phone = cleanPhone(req.body?.phone);
+  const code = String(req.body?.code || '').replace(/\D/g, '');
+  if (!phone || code.length !== 6) return res.status(400).json({ ok: false, error: 'Enter the 6-digit code from the SMS.' });
+
+  const entry = pending.get(phone);
+  if (!entry) return res.status(400).json({ ok: false, error: 'No code was sent — tap “Send code” first.' });
+  if (Date.now() > entry.expiresAt || entry.attempts >= OTP_MAX_ATTEMPTS) {
+    pending.delete(phone);
+    return res.status(400).json({ ok: false, error: 'That code expired — send a new one.' });
+  }
+  if (otpHash(phone, code) !== entry.hash) {
+    entry.attempts += 1;
+    if (entry.attempts >= OTP_MAX_ATTEMPTS) pending.delete(phone);
+    return res.status(401).json({ ok: false, error: 'That code didn’t match. Check the SMS and try again.' });
+  }
+  pending.delete(phone); // one code, one use
+
+  const customer = loadCustomers().find(c => c.phone === phone);
+  if (!customer) return res.status(404).json({ ok: false, error: 'No account with this number yet — please create an account first.' });
   setSession(res, req, customer);
   res.json({ ok: true, customer: publicCustomer(customer) });
 });

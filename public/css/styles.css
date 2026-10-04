@@ -1606,3 +1606,14 @@ body{font-size:16px}
 .ao-main span{color:#6b7a66;font-size:.75rem;font-weight:700}
 .ao-side{display:grid;justify-items:end;gap:4px;flex:0 0 auto;text-align:right}
 .ao-id{color:#9aa79a;font-size:.66rem;font-weight:800;letter-spacing:.03em}
+
+/* PASS 27 — login OTP tab (2026-10-04). OTP tab only appears when SMS delivery is configured. */
+.auth-tabs{display:flex;gap:8px;margin:0 0 18px;background:#efece0;border:1px solid #ddd6c2;border-radius:12px;padding:4px}
+.auth-tab{flex:1;border:0;background:transparent;color:#5c6647;font:inherit;font-weight:600;padding:10px 8px;border-radius:9px;cursor:pointer;transition:background .15s ease,color .15s ease}
+.auth-tab.active{background:#fff;color:#074015;box-shadow:0 1px 4px rgba(7,64,21,.14)}
+.auth-tab:not(.active):hover{color:#074015}
+.otp-input{font-size:26px;letter-spacing:12px;font-weight:700;text-align:center}
+.otp-note{display:block;font-size:13px;color:#5c6647;margin-top:6px}
+.otp-resend{font-size:13px;color:#5c6647;margin:14px 0 0;text-align:center}
+.otp-resend a{color:#c2410c;font-weight:600}
+[data-otp-resend]{pointer-events:auto}

@@ -68,6 +68,7 @@ export async function sendOtpSms(phone, code) {
 
 /* ---------- Message Central VerifyNow (managed OTP, DLT-free) ---------- */
 let mcToken = null; // { token, fetchedAt } — their token lives ~24h, cached in memory
+export function clearMcToken() { mcToken = null; }
 async function mcGetToken(c) {
   if (mcToken && Date.now() - mcToken.fetchedAt < 20 * 60 * 60 * 1000) return mcToken.token;
   const qs = new URLSearchParams({
@@ -84,9 +85,10 @@ async function mcGetToken(c) {
   return token;
 }
 
-/* Ask Message Central to send THEIR OTP to the phone. Returns { ok, verificationId }. */
-export async function sendManagedOtp(phone) {
-  const c = loadSmsConfig() || {};
+/* Ask Message Central to send THEIR OTP to the phone. Returns { ok, verificationId }.
+   cfgOverride lets the admin test unsaved credentials. */
+export async function sendManagedOtp(phone, cfgOverride) {
+  const c = cfgOverride || loadSmsConfig() || {};
   try {
     const token = await mcGetToken(c);
     const qs = new URLSearchParams({ countryCode: '91', flowType: 'SMS', mobileNumber: phone, otpLength: '6' });

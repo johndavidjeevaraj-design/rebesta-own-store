@@ -539,3 +539,62 @@ router.get('/tracking', (req, res) => {
 router.get('/version', (req, res) => {
   res.json({ ok: true, versions: dataVersions() });
 });
+
+/* ---- SMS gateway for OTP sign-in (admin-only; never echoes secrets) ----
+   GET  /api/admin/sms        → current provider status
+   POST /api/admin/sms        → save/replace config {provider, ...} or {provider:'none'} to disable
+   POST /api/admin/sms/test   → dry-run send with UNSAVED credentials {phone, config:{...}} */
+import { loadSmsConfig, otpAvailable, sendManagedOtp, clearMcToken } from '../sms.js';
+
+const SMS_FILE = () => path.join(config.dataDir, 'sms-config.json');
+
+router.get('/sms', (req, res) => {
+  const c = loadSmsConfig() || {};
+  res.json({
+    ok: true, provider: c.provider || null, otpEnabled: otpAvailable(),
+    customerId: c.customerId || null, email: c.email || null, sender: c.sender || null,
+    hasAuthKey: !!c.authKey, hasPassword: !!c.password
+  });
+});
+
+router.post('/sms', (req, res) => {
+  const b = req.body || {};
+  const provider = String(b.provider || '');
+  let out = null;
+  if (provider === 'none') {
+    try { fs.unlinkSync(SMS_FILE()); } catch {}
+  } else if (provider === 'dev') {
+    out = { provider: 'dev' };
+  } else if (provider === 'messagecentral') {
+    if (!b.customerId || !b.email || !b.password) return res.status(400).json({ ok: false, error: 'messagecentral needs customerId, email and password.' });
+    out = { provider, customerId: String(b.customerId), email: String(b.email), password: String(b.password) };
+  } else if (provider === 'msg91') {
+    if (!b.authKey || !b.sender) return res.status(400).json({ ok: false, error: 'msg91 needs authKey and sender.' });
+    out = { provider, authKey: String(b.authKey), sender: String(b.sender) };
+    if (b.route) out.route = String(b.route);
+    if (b.templateId) out.templateId = String(b.templateId);
+    if (b.otpVariable) out.otpVariable = String(b.otpVariable);
+  } else {
+    return res.status(400).json({ ok: false, error: 'provider must be messagecentral, msg91, dev or none.' });
+  }
+  if (out) {
+    fs.mkdirSync(config.dataDir, { recursive: true });
+    fs.writeFileSync(SMS_FILE(), JSON.stringify(out, null, 2));
+  }
+  clearMcToken();
+  console.log(JSON.stringify({ event: 'admin.smsConfig', provider }));
+  res.json({ ok: true, provider: provider === 'none' ? null : provider, otpEnabled: provider === 'none' ? false : otpAvailable() });
+});
+
+router.post('/sms/test', async (req, res) => {
+  const b = req.body || {};
+  const phone = String(b.phone || '').replace(/\D/g, '');
+  if (!/^[6-9]\d{9}$/.test(phone)) return res.status(400).json({ ok: false, error: 'Enter a valid 10-digit Indian mobile number.' });
+  const cfg = b.config && b.config.provider ? b.config : loadSmsConfig();
+  if (!cfg || cfg.provider !== 'messagecentral') return res.status(400).json({ ok: false, error: 'Test send supports the messagecentral provider (set config.provider).' });
+  clearMcToken();
+  const sent = await sendManagedOtp(phone, cfg);
+  res.json(sent.ok
+    ? { ok: true, sent: true, note: 'SMS sent — check the phone for the code.' }
+    : { ok: false, sent: false, error: sent.error });
+});

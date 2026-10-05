@@ -217,6 +217,142 @@
     }
   }).catch(() => {});
 
+  /* ---------- delivery location (quick-commerce style: ask once, shop anywhere) ---------- */
+  const LOC_AREAS = [
+    { name: 'Hosur town / Bus stand', lat: 12.7409, lng: 77.8253 },
+    { name: 'Mathigiri', lat: 12.7180, lng: 77.7900 },
+    { name: 'Maharaja Nagar', lat: 12.7330, lng: 77.8100 },
+    { name: 'Zuzuvadi', lat: 12.7620, lng: 77.8060 },
+    { name: 'SIPCOT Phase 1', lat: 12.7760, lng: 77.8170 },
+    { name: 'Rayakottai Road', lat: 12.7550, lng: 77.7800 },
+    { name: 'Thally Road', lat: 12.7050, lng: 77.8300 },
+    { name: 'Belagondapalli', lat: 12.7160, lng: 77.8520 }
+  ];
+  const LOC_DISMISS_KEY = 'rebesta_loc_dismissed_v1';
+  const NO_SHEET_PATHS = ['/checkout', '/login', '/account', '/order-success', '/track', '/admin'];
+
+  const svgPin = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21c5-3.6 8-7.7 8-11.6C20 5.9 16.4 3 12 3S4 5.9 4 9.4C4 13.3 7 17.4 12 21Z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="9.6" r="2.3" stroke="currentColor" stroke-width="2"/></svg>';
+  const svgChevron = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  function locationLabel(loc) {
+    if (!loc) return null;
+    const label = String(loc.label || '').trim();
+    return label || (loc.source === 'area' ? 'Selected area' : 'Selected pin');
+  }
+
+  let locSheetEl = null;
+  function buildLocationSheet() {
+    if (locSheetEl) return;
+    const back = document.createElement('div');
+    back.className = 'sheet-backdrop'; back.dataset.locBackdrop = ''; back.hidden = true;
+    const sheet = document.createElement('div');
+    sheet.className = 'bottom-sheet'; sheet.dataset.locSheet = '';
+    sheet.hidden = true; sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-modal', 'true');
+    sheet.setAttribute('aria-label', 'Choose delivery location');
+    sheet.innerHTML = `
+      <div class="sheet-grab" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <span class="sheet-badge" aria-hidden="true">${svgPin}</span>
+        <h3>Where should we deliver?</h3>
+        <p>Farm-fresh vegetables at your door, Hosur — every morning.</p>
+      </div>
+      <button type="button" class="loc-gps" data-loc-gps>
+        <span class="loc-gps-ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2.4" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+        <span class="loc-gps-tx"><strong>Use my current location</strong><span>Most exact — one tap</span></span>
+      </button>
+      <p class="loc-status" data-loc-status hidden role="status"></p>
+      <div class="loc-areas">
+        <p class="loc-areas-title">Popular areas in Hosur</p>
+        <div class="loc-chips">${LOC_AREAS.map(a =>
+          `<button type="button" class="loc-chip" data-lat="${a.lat}" data-lng="${a.lng}">${a.name}</button>`).join('')}</div>
+      </div>
+      <button type="button" class="loc-skip" data-loc-skip>Just browsing — I’ll set it later</button>`;
+    document.body.append(back, sheet);
+    locSheetEl = { back, sheet };
+
+    back.addEventListener('click', closeLocationSheet);
+    sheet.querySelector('[data-loc-skip]').addEventListener('click', () => {
+      try { localStorage.setItem(LOC_DISMISS_KEY, '1'); } catch {}
+      closeLocationSheet();
+    });
+
+    const status = sheet.querySelector('[data-loc-status]');
+    const say = (message, type) => { status.hidden = false; status.textContent = message; status.className = `loc-status ${type || ''}`.trim(); };
+
+    function choose(location) {
+      saveLocation({ ...location, savedAt: new Date().toISOString() });
+      window.dispatchEvent(new CustomEvent('rebesta:location-changed', { detail: location }));
+      closeLocationSheet();
+      toast(`Delivering to ${locationLabel(location)}`, 'success');
+    }
+
+    sheet.querySelectorAll('.loc-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        choose({ lat: Number(chip.dataset.lat), lng: Number(chip.dataset.lng), label: chip.textContent.trim(), source: 'area' });
+      });
+    });
+
+    sheet.querySelector('[data-loc-gps]').addEventListener('click', () => {
+      if (!navigator.geolocation) return say('This browser does not support GPS — pick your area below instead.', 'error');
+      say('Finding your location…');
+      navigator.geolocation.getCurrentPosition(async position => {
+        let label = 'Your location';
+        try {
+          const data = await api(`/api/location/reverse?lat=${encodeURIComponent(position.coords.latitude)}&lng=${encodeURIComponent(position.coords.longitude)}`);
+          label = data.location?.label || label;
+        } catch {}
+        choose({ lat: position.coords.latitude, lng: position.coords.longitude, label, source: 'gps' });
+      }, error => {
+        say(error.code === 1
+          ? 'Location permission denied — pick your area below instead.'
+          : 'Could not get GPS — pick your area below instead.', 'error');
+      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
+    });
+  }
+
+  function openLocationSheet() {
+    buildLocationSheet();
+    if (!locSheetEl) return;
+    locSheetEl.back.hidden = false;
+    locSheetEl.sheet.hidden = false;
+    document.body.classList.add('sheet-open');
+    requestAnimationFrame(() => locSheetEl.sheet.classList.add('open'));
+  }
+  function closeLocationSheet() {
+    if (!locSheetEl) return;
+    locSheetEl.sheet.classList.remove('open');
+    locSheetEl.back.hidden = true;
+    document.body.classList.remove('sheet-open');
+    setTimeout(() => { if (locSheetEl && !locSheetEl.sheet.classList.contains('open')) locSheetEl.sheet.hidden = true; }, 340);
+  }
+
+  function updateHeaderLocation() {
+    document.querySelectorAll('.header-location').forEach(el => {
+      if (el.dataset.locWired) {
+        const label = el.querySelector('[data-loc-label]');
+        if (label) label.textContent = locationLabel(getSavedLocation()) || 'Set location';
+        return;
+      }
+      el.dataset.locWired = '1';
+      el.classList.add('loc-chip-btn');
+      el.title = 'Change delivery location';
+      el.innerHTML = `${svgPin}<strong data-loc-label>${locationLabel(getSavedLocation()) || 'Set location'}</strong>${svgChevron}`;
+      el.addEventListener('click', () => openLocationSheet());
+    });
+  }
+
+  function initLocationExperience() {
+    updateHeaderLocation();
+    window.addEventListener('rebesta:location-changed', updateHeaderLocation);
+    const path = location.pathname.replace(/\/+$/, '') || '/';
+    if (NO_SHEET_PATHS.includes(path)) return;
+    let dismissed = false;
+    try { dismissed = localStorage.getItem(LOC_DISMISS_KEY) === '1'; } catch {}
+    if (!getSavedLocation() && !dismissed) setTimeout(openLocationSheet, 900);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initLocationExperience);
+  else initLocationExperience();
+
   window.RFS = {
     CART_KEY,
     LOCATION_KEY,
@@ -230,6 +366,8 @@
     removeItem,
     getSavedLocation,
     saveLocation,
+    openLocationSheet,
+    closeLocationSheet,
     api,
     syncCartUI,
     toast,

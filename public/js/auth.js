@@ -414,4 +414,131 @@
       </div>`;
     return el;
   }
+
+  /* ============================================================
+     RFSAuth.bindFlow(root, {onSuccess}) — mount the number → code → (new? name)
+     flow into any container (used by the checkout login sheet). The root must
+     contain the three .auth-step blocks with data-flow-* hooks, mirroring /login.
+     ============================================================ */
+  window.RFSAuth = {
+    bindFlow(root, { onSuccess } = {}) {
+      if (!root || root.dataset.flowBound) return { reset() {} };
+      root.dataset.flowBound = '1';
+      const steps = {
+        number: root.querySelector('[data-step="number"]'),
+        code: root.querySelector('[data-step="code"]'),
+        name: root.querySelector('[data-step="name"]')
+      };
+      const phoneInput = root.querySelector('[data-flow-phone]');
+      const nameInput = root.querySelector('[data-flow-name]');
+      const sendBtn = root.querySelector('[data-flow-send]');
+      const verifyBtn = root.querySelector('[data-flow-verify]');
+      const createBtn = root.querySelector('[data-flow-create]');
+      const sentNote = root.querySelector('[data-flow-sentto]');
+      const newNote = root.querySelector('[data-flow-newto]');
+      const resendLink = root.querySelector('[data-flow-resend]');
+      const changeLink = root.querySelector('[data-flow-change]');
+      const restartLink = root.querySelector('[data-flow-restart]');
+      const errBox = root.querySelector('[data-flow-error]');
+      const boxes = otpBoxes(root.querySelector('[data-flow-boxes]'));
+      let widgetPhone = null;
+      let verifiedSignupToken = null;
+      let currentStep = 'number';
+
+      const showError = message => {
+        if (!errBox) return;
+        errBox.textContent = message; errBox.hidden = false;
+        errBox.classList.remove('shake'); void errBox.offsetWidth; errBox.classList.add('shake');
+      };
+      const clearError = () => { if (errBox) errBox.hidden = true; };
+      const busy = (btn, on) => { if (btn) { btn.classList.toggle('is-loading', !!on); btn.disabled = !!on; } };
+
+      function showStep(name) {
+        currentStep = name;
+        for (const [k, el] of Object.entries(steps)) if (el) el.hidden = k !== name;
+        const el = steps[name];
+        if (el) { el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); }
+      }
+      function restart() {
+        if (resendLink && resendLink._timer) { clearInterval(resendLink._timer); resendLink.style.pointerEvents = ''; resendLink.textContent = 'Resend code'; }
+        widgetPhone = null; verifiedSignupToken = null;
+        boxes.fill(''); if (nameInput) nameInput.value = '';
+        clearError(); showStep('number'); if (phoneInput) phoneInput.focus();
+      }
+
+      function sendCode() {
+        clearError();
+        const phone = (phoneInput?.value || '').replace(/\D/g, '');
+        if (phone.length !== 10 || !/^[6-9]/.test(phone)) return showError('Enter a valid 10-digit Indian mobile number.');
+        if (typeof window.sendOtp !== 'function') return showError('OTP system is still loading — wait a few seconds and try again.');
+        if (typeof window.isCaptchaVerified === 'function' && !window.isCaptchaVerified()) return showError('Please complete the security check first.');
+        busy(sendBtn, true);
+        window.sendOtp('91' + phone,
+          () => {
+            widgetPhone = phone; busy(sendBtn, false);
+            if (sentNote) sentNote.textContent = `Code sent to ${prettyPhone(phone)}`;
+            showStep('code'); boxes.fill(''); boxes.focus();
+            resendCountdown(resendLink);
+          },
+          e => { showError(widgetError(e)); busy(sendBtn, false); }
+        );
+      }
+      sendBtn?.addEventListener('click', sendCode);
+      resendLink?.addEventListener('click', event => {
+        event.preventDefault();
+        if (resendLink.style.pointerEvents === 'none') return;
+        clearError();
+        if (typeof window.retryOtp !== 'function' || !widgetPhone) return showError('Please request a code first.');
+        window.retryOtp(null, () => resendCountdown(resendLink), e2 => showError(widgetError(e2)));
+      });
+      changeLink?.addEventListener('click', event => { event.preventDefault(); restart(); });
+      restartLink?.addEventListener('click', event => { event.preventDefault(); restart(); });
+
+      async function verifyCode() {
+        clearError();
+        const code = boxes.value();
+        if (code.length < 4 || code.length > 8) return showError('Enter the code from the SMS.');
+        if (!widgetPhone) return showError('Please request a code first.');
+        busy(verifyBtn, true);
+        try {
+          const token = await widgetVerifyCode(code);
+          const data = await post('/api/auth/otp/widget', { phone: widgetPhone, token });
+          if (data.isNew) {
+            verifiedSignupToken = data.verifiedToken;
+            if (newNote) newNote.textContent = `${prettyPhone(widgetPhone)} verified`;
+            busy(verifyBtn, false);
+            showStep('name'); nameInput?.focus();
+          } else if (typeof onSuccess === 'function') {
+            onSuccess(data.customer || null);
+          }
+        } catch (error) {
+          showError(error.message); busy(verifyBtn, false);
+        }
+      }
+
+      async function createAccount() {
+        clearError();
+        const name = (nameInput?.value || '').trim();
+        if (name.length < 2) return showError('Please tell us your name.');
+        if (!verifiedSignupToken) return showError('Please verify your number first.');
+        busy(createBtn, true);
+        try {
+          const data = await post('/api/auth/otp/complete-signup', { name, verifiedToken: verifiedSignupToken });
+          if (typeof onSuccess === 'function') onSuccess(data.customer || null);
+        } catch (error) {
+          showError(error.message); busy(createBtn, false);
+          if (/already has an account/i.test(error.message)) setTimeout(restart, 1800);
+        }
+      }
+
+      root.addEventListener('submit', event => {
+        event.preventDefault();
+        if (currentStep === 'number') return sendCode();
+        if (currentStep === 'code') return verifyCode();
+        if (currentStep === 'name') return createAccount();
+      });
+
+      return { reset: restart };
+    }
+  };
 })();

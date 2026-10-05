@@ -11,24 +11,24 @@
     subCheck.addEventListener('change', () => subCard.classList.toggle('active', subCheck.checked));
     syncPills();
   }
-  const state = { products: [], byHandle: new Map(), settings: null, quote: null, coords: null, map: null, marker: null, coupon: null };
+  const state = { products: [], byHandle: new Map(), settings: null, quote: null, coords: null, coupon: null, me: null, authSheetBound: false };
   const $ = selector => document.querySelector(selector);
 
   const nodes = {
     miniList: $('[data-order-mini-list]'),
     summary: $('[data-checkout-summary]'),
-    pinStatus: $('[data-pin-status]'),
     quoteBox: $('[data-quote-result]'),
     slots: $('[data-slots]'),
     placeOrder: $('[data-place-order]'),
     paymentList: $('[data-payment-list]'),
-    gps: $('[data-use-gps]'),
-    manualPin: $('[data-manual-pin]'),
-    mapShell: $('[data-map-shell]'),
-    lat: $('[name="latitude"]'),
-    lng: $('[name="longitude"]'),
-    applyCoords: $('[data-apply-coords]'),
-    calculate: $('[data-calculate-route]')
+    deliverTo: $('[data-deliver-to]'),
+    deliverLabel: $('[data-deliver-label]'),
+    deliverSub: $('[data-deliver-sub]'),
+    deliverChange: $('[data-deliver-change]'),
+    loginNote: $('[data-login-note]'),
+    authSheet: $('[data-auth-sheet]'),
+    authBackdrop: $('[data-auth-backdrop]'),
+    authRoot: $('[data-auth-flow-root]')
   };
 
   function formData() {
@@ -59,72 +59,28 @@
   }
 
   function setPinStatus(message, type = '') {
-    nodes.pinStatus.className = `pin-status ${type}`.trim();
-    nodes.pinStatus.textContent = message;
+    if (!nodes.deliverSub) return;
+    nodes.deliverSub.textContent = message;
+    nodes.deliverSub.className = `deliver-sub ${type}`.trim();
   }
 
   function coordinatesReady() {
     return state.coords && Number.isFinite(Number(state.coords.lat)) && Number.isFinite(Number(state.coords.lng));
   }
 
-  function setCoordinates(lat, lng, label = 'Selected map pin', source = 'map') {
-    const latitude = Number(lat);
-    const longitude = Number(lng);
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) {
-      setPinStatus('Enter valid latitude and longitude values.', 'error');
-      return false;
+  function renderDeliverTo() {
+    if (!nodes.deliverLabel) return;
+    if (coordinatesReady()) {
+      nodes.deliverLabel.textContent = state.coords.label || 'Your delivery pin';
+      nodes.deliverSub.textContent = state.quote?.eligible
+        ? `${state.quote.distanceKm.toFixed(1)} road km · fee ${RFS.money(Number(state.quote.deliveryFeeInr || 0))}${state.quote.freeApplied ? ' (free!)' : ''}`
+        : 'Calculating your road route…';
+    } else {
+      nodes.deliverLabel.textContent = 'Set your delivery location';
+      nodes.deliverSub.textContent = 'Tap Change — GPS or pick your area';
     }
-    state.coords = { lat: latitude, lng: longitude, label, source };
-    state.quote = null;
-    nodes.lat.value = latitude.toFixed(6);
-    nodes.lng.value = longitude.toFixed(6);
-    RFS.saveLocation({ ...state.coords, savedAt: new Date().toISOString() });
-    setPinStatus(`Exact pin locked: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} · ${label}`, 'success');
-    updateMarker();
-    quoteDelivery(true);
-    return true;
   }
-
-  function updateMarker() {
-    if (!state.map || !window.L || !coordinatesReady()) return;
-    const point = [state.coords.lat, state.coords.lng];
-    if (!state.marker) {
-      state.marker = L.marker(point, { draggable: true }).addTo(state.map);
-      state.marker.on('dragend', () => {
-        const p = state.marker.getLatLng();
-        setCoordinates(p.lat, p.lng, 'Dragged map pin', 'map');
-      });
-    } else state.marker.setLatLng(point);
-    state.map.setView(point, Math.max(state.map.getZoom(), 16));
-  }
-
-  function initMap() {
-    nodes.mapShell.classList.add('active');
-    if (!window.L) {
-      setPinStatus('Map library did not load in this preview. GPS and manual latitude/longitude still work.', 'error');
-      return;
-    }
-    if (state.map) return;
-    const hub = state.settings?.delivery || { hubLat: 12.728582, hubLng: 77.824784 };
-    const start = coordinatesReady() ? [state.coords.lat, state.coords.lng] : [hub.hubLat, hub.hubLng];
-    state.map = L.map('pinMap').setView(start, 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(state.map);
-    state.map.on('click', event => {
-      setCoordinates(event.latlng.lat, event.latlng.lng, 'Manual map pin', 'map');
-      quoteDelivery(true);
-    });
-    if (coordinatesReady()) updateMarker();
-  }
-
-  async function reverseLocate(lat, lng) {
-    try {
-      const data = await RFS.api(`/api/location/reverse?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`);
-      return data.location?.label || 'Current GPS pin';
-    } catch { return 'Current GPS pin'; }
-  }
+  nodes.deliverChange?.addEventListener('click', () => RFS.openLocationSheet());
 
   function renderBasket() {
     const rows = lines();
@@ -159,7 +115,7 @@
 
     const stages = [
       { label: 'Basket', done: items().length > 0, number: 1 },
-      { label: 'Pin', done: coordinatesReady(), number: 2 },
+      { label: 'Location', done: coordinatesReady(), number: 2 },
       { label: 'Route', done: Boolean(state.quote?.eligible), number: 3 },
       { label: 'Slot', done: Boolean(selectedSlot()), number: 4 }
     ];
@@ -295,6 +251,7 @@
         subscribeDay.dispatchEvent(new Event('change'));
       }
     }
+    renderDeliverTo();
     renderSummary();
   }
 
@@ -343,39 +300,70 @@
 
   async function applySavedLocation() {
     const saved = RFS.getSavedLocation();
-    if (!saved) return;
+    if (!saved) return false;
     state.coords = { lat: Number(saved.lat), lng: Number(saved.lng), label: saved.label || 'Saved map pin', source: saved.source || 'saved' };
-    nodes.lat.value = state.coords.lat.toFixed(6);
-    nodes.lng.value = state.coords.lng.toFixed(6);
-    setPinStatus(`Saved pin loaded: ${state.coords.lat.toFixed(6)}, ${state.coords.lng.toFixed(6)}. Re-check route below.`, 'success');
+    renderDeliverTo();
+    return true;
   }
 
-  nodes.gps.addEventListener('click', () => {
-    if (!navigator.geolocation) return setPinStatus('This device/browser does not support GPS location. Use manual pin selection.', 'error');
-    RFS.setBusy(nodes.gps, true, 'Finding you…');
-    setPinStatus('Requesting your current GPS location…');
-    navigator.geolocation.getCurrentPosition(async position => {
-      RFS.setBusy(nodes.gps, false);
-      const label = await reverseLocate(position.coords.latitude, position.coords.longitude);
-      setCoordinates(position.coords.latitude, position.coords.longitude, label, 'gps');
-    }, error => {
-      RFS.setBusy(nodes.gps, false);
-      const message = error.code === 1
-        ? 'Location permission was denied. Please use manual map-pin selection.'
-        : 'Could not get GPS location. Please use manual map-pin selection.';
-      setPinStatus(message, 'error');
-      RFS.toast(message, 'error');
-    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
-  });
+  /* ---------- login gate (bottom sheet, quick-commerce style) ---------- */
+  function renderLoginNote() {
+    if (!nodes.loginNote) return;
+    if (state.me) {
+      nodes.loginNote.classList.add('ok');
+      nodes.loginNote.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.4-7 9.9C8 19.4 5 15.5 5 11V6l7-3Z" stroke="currentColor" stroke-width="2"/><path d="m9 11.5 2.2 2.2L15.5 9.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        + `<span>Signed in as <strong>${state.me.name}</strong> · ${state.me.phone}</span>`;
+    } else {
+      nodes.loginNote.classList.remove('ok');
+      nodes.loginNote.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2"/></svg>'
+        + '<span>You’ll confirm your number with a quick SMS code to place the order.</span>';
+    }
+  }
 
-  nodes.manualPin.addEventListener('click', initMap);
-  nodes.applyCoords.addEventListener('click', () => setCoordinates(nodes.lat.value, nodes.lng.value, 'Manual coordinate pin', 'manual'));
-  nodes.calculate.addEventListener('click', () => quoteDelivery(true));
+  function closeAuthSheet() {
+    nodes.authSheet?.classList.remove('open');
+    if (nodes.authBackdrop) nodes.authBackdrop.hidden = true;
+    document.body.classList.remove('sheet-open');
+    setTimeout(() => { if (nodes.authSheet && !nodes.authSheet.classList.contains('open')) nodes.authSheet.hidden = true; }, 340);
+  }
+
+  function openAuthSheet(afterLogin) {
+    if (!nodes.authSheet) { if (typeof afterLogin === 'function') afterLogin(); return; }
+    nodes.authSheet.hidden = false;
+    if (nodes.authBackdrop) nodes.authBackdrop.hidden = false;
+    document.body.classList.add('sheet-open');
+    requestAnimationFrame(() => nodes.authSheet.classList.add('open'));
+    if (!state.authSheetBound && window.RFSAuth && nodes.authRoot) {
+      state.authSheetBound = true;
+      window.RFSAuth.bindFlow(nodes.authRoot, {
+        onSuccess: customer => {
+          state.me = customer || state.me;
+          if (state.me) {
+            const nameEl = $('#name'); const phoneEl = $('#phone');
+            if (nameEl && !nameEl.value.trim()) nameEl.value = state.me.name || '';
+            if (phoneEl && !phoneEl.value.trim()) phoneEl.value = state.me.phone || '';
+          }
+          renderLoginNote();
+          closeAuthSheet();
+          RFS.toast(`Welcome, ${(state.me?.name || 'friend').split(' ')[0]}!`, 'success');
+          if (typeof afterLogin === 'function') afterLogin();
+        }
+      });
+    }
+  }
+  nodes.authSheet?.querySelector('[data-auth-close]')?.addEventListener('click', closeAuthSheet);
+  nodes.authBackdrop?.addEventListener('click', closeAuthSheet);
 
   $('[data-checkout-form]').addEventListener('submit', async event => {
     event.preventDefault();
     if (window.__RFS_MAINTENANCE) return RFS.toast(window.__RFS_SETTINGS?.maintenance?.message || 'We are briefly paused — please try again soon.', 'error');
     if (!items().length) return RFS.toast('Your basket is empty', 'error');
+    /* login gate: verify the number with one SMS code before the order is placed */
+    if (!state.me) {
+      RFS.toast('Login to proceed — one quick SMS code 🔐', 'info');
+      openAuthSheet(() => $('[data-checkout-form]').requestSubmit());
+      return;
+    }
     if (!state.quote?.eligible) {
       await quoteDelivery(true);
       if (!state.quote?.eligible) return;
@@ -430,16 +418,26 @@
 
   async function init() {
     try {
-      const [products, settings] = await Promise.all([RFS.api('/api/products'), RFS.api('/api/settings')]);
+      const [products, settings, me] = await Promise.all([
+        RFS.api('/api/products'), RFS.api('/api/settings'), RFS.api('/api/auth/me').catch(() => null)
+      ]);
       state.products = products.products;
       state.byHandle = new Map(products.products.map(p => [p.handle, p]));
       state.settings = settings;
-      await applySavedLocation();
+      state.me = me?.customer || null;
+      if (state.me) {
+        const nameEl = $('#name'); const phoneEl = $('#phone');
+        if (nameEl && !nameEl.value.trim()) nameEl.value = state.me.name || '';
+        if (phoneEl && !phoneEl.value.trim()) phoneEl.value = state.me.phone || '';
+      }
+      renderLoginNote();
+      const havePin = await applySavedLocation();
       renderBasket();
       renderPayments();
       renderSummary();
       RFS.syncCartUI(products.products);
-      if (coordinatesReady()) await quoteDelivery(false);
+      if (!havePin) setTimeout(() => RFS.openLocationSheet(), 700);
+      else await quoteDelivery(false);
     } catch (error) {
       RFS.toast(error.message, 'error');
       nodes.quoteBox.innerHTML = `<div class="alert error">${error.message}</div>`;
@@ -447,5 +445,11 @@
   }
 
   window.addEventListener('rebesta:cart-changed', () => { renderBasket(); renderSummary(); });
+  window.addEventListener('rebesta:location-changed', async () => {
+    state.quote = null;
+    await applySavedLocation();
+    renderSummary();
+    if (coordinatesReady()) await quoteDelivery(true);
+  });
   init();
 })();

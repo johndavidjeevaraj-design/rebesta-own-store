@@ -1792,3 +1792,58 @@ body{font-size:16px}
 /* OTP boxes never wrap: a trailing grow-box must not reflow the page mid-tap */
 .otp-boxes{flex-wrap:nowrap}
 .otp-box{width:auto;flex:1 1 40px;max-width:48px;min-width:0}
+
+/* PASS 31 — quick-commerce flow: location sheet at entry, deliver-to card + login sheet at checkout — 2026-10-06 */
+body.sheet-open{overflow:hidden}
+.sheet-backdrop{position:fixed;inset:0;z-index:80;background:rgba(4,24,10,.55);opacity:0;transition:opacity .26s ease}
+.bottom-sheet{position:fixed;left:0;right:0;bottom:0;z-index:90;max-width:600px;margin:0 auto;background:#fff;border-radius:26px 26px 0 0;box-shadow:0 -20px 70px rgba(3,44,19,.3);padding:8px 20px calc(20px + env(safe-area-inset-bottom,0px));max-height:88vh;overflow-y:auto;transform:translateY(103%);transition:transform .36s var(--ease-out);overscroll-behavior:contain}
+.bottom-sheet.open{transform:none}
+.bottom-sheet[hidden]{display:none}
+.sheet-grab{width:46px;height:5px;border-radius:3px;background:#dfe6da;margin:6px auto 12px}
+.sheet-close{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;border:0;background:#f1f4ea;color:var(--ink-2);font-size:15px;font-weight:900;cursor:pointer;display:grid;place-items:center}
+.sheet-close:hover{background:#e6ecda}
+.sheet-head{display:grid;gap:5px;margin:4px 0 16px;padding-right:34px}
+.sheet-head.compact{margin-top:6px}
+.sheet-head h3{margin:0;font-family:'Poppins Local',Nunito,sans-serif;font-size:21px;color:var(--forest)}
+.sheet-head p{margin:0;color:var(--muted);font-size:.88rem;font-weight:600}
+.sheet-badge{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:13px;background:var(--green-soft);color:var(--green);margin-bottom:2px}
+.loc-gps{display:flex;align-items:center;gap:13px;width:100%;border:1.5px solid #bfe5c6;background:linear-gradient(180deg,#f3fbef,#fff);border-radius:16px;padding:13px 15px;cursor:pointer;text-align:left;transition:border-color .15s,transform .15s}
+.loc-gps:hover{border-color:var(--green-2);transform:translateY(-1px)}
+.loc-gps-ic{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff}
+.loc-gps-tx{display:grid;gap:1px}
+.loc-gps-tx strong{font-size:.95rem;color:var(--forest)}
+.loc-gps-tx span{font-size:.78rem;color:var(--muted);font-weight:600}
+.loc-status{font-size:.8rem;font-weight:700;margin:10px 2px 0;color:var(--muted)}
+.loc-status.error{color:var(--danger)}
+.loc-areas{margin-top:16px}
+.loc-areas-title{font-size:.7rem;font-weight:1000;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 9px}
+.loc-chips{display:flex;flex-wrap:wrap;gap:9px}
+.loc-chip{padding:10px 15px;border-radius:999px;border:1.5px solid var(--line-2);background:#fff;font:inherit;font-size:.85rem;font-weight:800;color:var(--ink-2);cursor:pointer;transition:border-color .15s,background .15s,transform .15s}
+.loc-chip:hover{border-color:var(--green-2);background:#f6fbf4;transform:translateY(-1px)}
+.loc-skip{display:block;margin:18px auto 0;border:0;background:none;color:var(--muted);font:inherit;font-size:.82rem;font-weight:700;text-decoration:underline;cursor:pointer}
+.loc-skip:hover{color:var(--ink-2)}
+/* header location chip (replaces .header-location text on every page) */
+.header-location.loc-chip-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;border:1.5px solid var(--line-2);background:#fff;color:var(--green);cursor:pointer;font-size:.8rem;font-weight:800;max-width:210px;transition:border-color .15s,background .15s}
+.header-location.loc-chip-btn:hover{border-color:var(--green-2);background:#f6fbf4}
+.header-location.loc-chip-btn strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--forest);font-size:.8rem;font-weight:900}
+.header-location.loc-chip-btn svg{flex:none}
+/* checkout deliver-to card */
+.deliver-to{display:flex;align-items:center;gap:12px;border:1.5px solid var(--line-2);border-radius:16px;padding:13px 14px;background:linear-gradient(180deg,#f9fcf5,#fff)}
+.deliver-to-ic{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:var(--green-soft);color:var(--green)}
+.deliver-to-tx{flex:1;min-width:0;display:grid;gap:2px}
+.deliver-to-tx strong{font-size:.93rem;color:var(--forest);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deliver-to-tx span{font-size:.76rem;color:var(--muted);font-weight:600}
+.deliver-change{flex:none;width:auto;padding:9px 14px;height:40px}
+/* login note at checkout */
+.login-note{display:flex;align-items:flex-start;gap:9px;background:var(--orange-soft);border:1px solid #ffd2b8;border-radius:14px;padding:11px 13px;font-size:.82rem;font-weight:700;color:#8a3c12;margin:14px 0 0;line-height:1.4}
+.login-note svg{flex:none;margin-top:1px}
+.login-note.ok{background:var(--green-soft);border-color:#bfe5c6;color:var(--forest)}
+.login-note strong{font-weight:1000}
+/* auth sheet specifics */
+.auth-sheet .auth-step .fx-field:first-child{margin-top:2px}
+.auth-sheet .captcha-slot{margin-top:2px}
+@media (prefers-reduced-motion:reduce){.bottom-sheet,.sheet-backdrop{transition:none}}
+/* sheets must sit above the bottom-nav (900) and mobile cart bar; toasts stay topmost */
+.sheet-backdrop{z-index:950}
+.bottom-sheet{z-index:960}
+.toast-region{z-index:990}

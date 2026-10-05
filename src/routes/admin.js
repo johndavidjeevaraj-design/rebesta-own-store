@@ -594,17 +594,15 @@ router.post('/sms/test', async (req, res) => {
   }
   clearMcToken();
   if (cfg.provider === 'msg91') {
-    // Their send API never rejects a bad key — check the wallet for a real signal.
-    const bal = await msg91Balance(cfg.authKey);
-    const sent = await sendOtpSms(phone, String(Math.floor(100000 + Math.random() * 900000)), cfg);
-    if (!bal.ok || bal.balance <= 0) {
-      return res.json({ ok: false, sent: true, balance: null,
-        error: 'MSG91 accepted the request but the wallet check returned ' + (bal.ok ? 'zero' : 'an error') +
-               '. The SMS will probably NOT arrive — authkey wrong or wallet empty. ' +
-               (bal.ok ? '' : 'Check: ' + bal.error) });
-    }
-    return res.json({ ok: sent.ok, sent: true, balance: bal.balance,
-      note: sent.ok ? 'SMS fired — balance ₹' + bal.balance + '. CONFIRM the code arrives on the phone; MSG91 reports success even for bad keys.' : 'Send failed: ' + sent.error });
+    // Their send API never rejects a bad key, and balance.php can read 0 even when
+    // the dashboard shows trial credits — so balance is advisory only. The REAL
+    // proof is the code from the SMS arriving on the phone (returned here for comparison).
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const [bal, sent] = await Promise.all([msg91Balance(cfg.authKey), sendOtpSms(phone, code, cfg)]);
+    return res.json(sent.ok
+      ? { ok: true, sent: true, code, balanceApi: bal.ok ? bal.balance : null,
+          note: 'SMS fired to ' + phone + ' with code ' + code + ' — ask the recipient to read it back. If no SMS arrives, key is wrong or wallet empty (dashboard wallet is the truth).' }
+      : { ok: false, sent: false, error: sent.error });
   }
   const sent = await sendManagedOtp(phone, cfg);
   res.json(sent.ok

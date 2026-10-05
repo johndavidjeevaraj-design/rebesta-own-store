@@ -61,7 +61,9 @@ ${productUrls}
 
   app.get('/', (req, res) => res.sendFile('index.html', { root: config.publicDir }));
   app.get(['/shop', '/offers', '/greens'], (req, res) => res.sendFile('shop.html', { root: config.publicDir }));
-  app.get(['/login', '/signup', '/account'], (req, res) => res.sendFile(`${req.path.slice(1)}.html`, { root: config.publicDir }));
+  /* one auth page: number + OTP decides sign-in vs new account — /signup is legacy */
+  app.get('/signup', (req, res) => res.redirect(302, '/login' + (req.query.phone ? `?phone=${encodeURIComponent(String(req.query.phone))}` : '')));
+  app.get(['/login', '/account'], (req, res) => res.sendFile(`${req.path.slice(1)}.html`, { root: config.publicDir }));
   app.get(['/cart', '/checkout', '/order-success', '/track', '/about', '/faq', '/terms', '/privacy', '/refund', '/partner', '/subscriptions'], (req, res) => {
     res.sendFile(`${req.path.slice(1)}.html`, { root: config.publicDir });
   });

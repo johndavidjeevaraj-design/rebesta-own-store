@@ -1783,3 +1783,12 @@ body{font-size:16px}
   .auth-card,.auth-step.in,.as-inner,.sent-chip{animation:none}
   .auth-tab-pill,.auth-success{transition:none}
 }
+
+/* PASS 30 — unified single-card auth (banner removed, signup merged into login) — 2026-10-05 */
+.auth-container-solo{max-width:480px}
+.auth-toggle{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px}
+.auth-toggle a[hidden]{display:none}
+.auth-card .auth-step .fx-field:first-child{margin-top:18px}
+/* OTP boxes never wrap: a trailing grow-box must not reflow the page mid-tap */
+.otp-boxes{flex-wrap:nowrap}
+.otp-box{width:auto;flex:1 1 40px;max-width:48px;min-width:0}

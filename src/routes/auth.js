@@ -174,7 +174,7 @@ router.post('/login', rateLimit({ windowMs: 15 * 60 * 1000, max: 12, message: 'T
   const password = String(req.body?.password || '');
   if (!phone || !password) return res.status(400).json({ ok: false, error: 'Enter your mobile number and password.' });
   const customer = loadCustomers().find(c => c.phone === phone);
-  if (!customer || !verifyPassword(password, customer.pass)) {
+  if (!customer || !customer.pass || !verifyPassword(password, customer.pass)) {
     return res.status(401).json({ ok: false, error: 'Wrong mobile number or password.' });
   }
   setSession(res, req, customer);
@@ -283,27 +283,66 @@ router.post('/otp/widget', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, messag
   if (!phone || !token) return res.status(400).json({ ok: false, error: 'Missing phone or verification token.' });
 
   const customer = loadCustomers().find(c => c.phone === phone);
-  if (!customer) return res.status(404).json({ ok: false, error: 'No account with this number yet — please create an account first.' });
 
   const checked = await verifyWidgetToken(token);
-  console.log(JSON.stringify({ event: 'otp.widgetVerify', context: 'login', ok: checked.ok, verifiedPhone: checked.phone || null }));
+  console.log(JSON.stringify({ event: 'otp.widgetVerify', context: customer ? 'signin' : 'signup', ok: checked.ok, verifiedPhone: checked.phone || null }));
   if (!checked.ok) return res.status(401).json({ ok: false, error: 'Verification failed — please try the code again.' });
   if (checked.phone && checked.phone !== phone) {
-    console.error(JSON.stringify({ event: 'otp.widgetMismatch', context: 'login', claimed: phone, verified: checked.phone }));
+    console.error(JSON.stringify({ event: 'otp.widgetMismatch', context: customer ? 'signin' : 'signup', claimed: phone, verified: checked.phone }));
     return res.status(401).json({ ok: false, error: 'Verification failed — please try again.' });
   }
-  /* a successful OTP sign-in proves number ownership — backfill the flag for older accounts */
-  if (!customer.phoneVerified) {
-    const all = loadCustomers();
-    const fresh = all.find(c => c.phone === phone);
-    if (fresh && !fresh.phoneVerified) {
-      fresh.phoneVerified = true;
-      fresh.phoneVerifiedAt = new Date().toISOString();
-      saveCustomers(all);
+
+  /* existing number → straight in */
+  if (customer) {
+    /* a successful OTP sign-in proves number ownership — backfill the flag for older accounts */
+    if (!customer.phoneVerified) {
+      const all = loadCustomers();
+      const fresh = all.find(c => c.phone === phone);
+      if (fresh && !fresh.phoneVerified) {
+        fresh.phoneVerified = true;
+        fresh.phoneVerifiedAt = new Date().toISOString();
+        saveCustomers(all);
+      }
     }
+    setSession(res, req, customer);
+    return res.json({ ok: true, isNew: false, customer: publicCustomer(customer) });
   }
+
+  /* unknown number → the code proved ownership; hand back a short-lived signed
+     token that lets the client complete account creation (name step) — the
+     account itself is only created in /otp/complete-signup, server-side. */
+  const verifiedToken = signToken({ purpose: 'otp-signup', phone, exp: Date.now() + 15 * 60 * 1000 });
+  res.json({ ok: true, isNew: true, verifiedToken });
+});
+
+/* finish an OTP-verified signup: create the account for a number whose code was
+   just verified (verifiedToken is HMAC-signed by us, 15-minute lifetime). */
+router.post('/otp/complete-signup', rateLimit({ windowMs: 60 * 60 * 1000, max: 10, message: 'Too many attempts. Please try again in an hour.' }), (req, res) => {
+  const name = String(req.body?.name || '').trim();
+  if (name.length < 2 || name.length > 60) return res.status(400).json({ ok: false, error: 'Please tell us your name (2–60 characters).' });
+  const vt = readToken(String(req.body?.verifiedToken || ''));
+  if (!vt || vt.purpose !== 'otp-signup' || !cleanPhone(vt.phone)) {
+    return res.status(401).json({ ok: false, error: 'Verification expired — please request a new code.' });
+  }
+  const phone = cleanPhone(vt.phone);
+  const customers = loadCustomers();
+  if (customers.some(c => c.phone === phone)) {
+    return res.status(409).json({ ok: false, error: 'This mobile number already has an account — sign in with your code instead.' });
+  }
+  const now = new Date().toISOString();
+  const customer = {
+    id: `RC-${Date.now().toString(36).toUpperCase()}${crypto.randomBytes(2).toString('hex').toUpperCase()}`,
+    name, phone,
+    pass: null,                    /* OTP-only account — password login simply unavailable */
+    phoneVerified: true,
+    phoneVerifiedAt: now,
+    createdAt: now
+  };
+  customers.push(customer);
+  saveCustomers(customers);
   setSession(res, req, customer);
-  res.json({ ok: true, customer: publicCustomer(customer) });
+  console.log(JSON.stringify({ event: 'auth.signupVerified', phone }));
+  res.json({ ok: true, isNew: true, customer: publicCustomer(customer) });
 });
 
 router.post('/logout', (req, res) => {

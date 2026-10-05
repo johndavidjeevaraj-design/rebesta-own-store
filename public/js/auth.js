@@ -1,6 +1,5 @@
-/* Rebesta Fresh — login / signup / account pages (optional accounts, shop never requires them) */
+/* Rebesta Fresh — one-page auth (number → SMS code → sign in or create account), account page */
 (() => {
-  const path = location.pathname.replace(/\/+$/, '') || '/';
   const errBox = document.querySelector('[data-auth-error]');
 
   function showError(message) {
@@ -26,7 +25,6 @@
 
   function busy(btn, on) { if (!btn) return; btn.classList.toggle('is-loading', !!on); btn.disabled = !!on; }
 
-  function maskPhone(p) { return p ? `${p.slice(0, 2)}xxxxx${p.slice(-2)}` : ''; }
   function prettyPhone(p) { return p ? `+91 ${p.slice(0, 5)} ${p.slice(5)}` : ''; }
 
   /* ---------- success overlay (animated check + confetti) ---------- */
@@ -140,7 +138,7 @@
     return { value, fill, focus };
   }
 
-  /* ---------- widget helpers (MSG91 SDK on the page) ---------- */
+  /* ---------- MSG91 widget helpers ---------- */
   function extractToken(data, depth) {
     depth = depth || 0;
     if (data == null || depth > 4) return null;
@@ -179,257 +177,97 @@
   }
 
   /* ============================================================
-     /login
+     /login — ONE flow: number → code → (new number? name) → account
      ============================================================ */
-  const loginForm = document.querySelector('[data-login-form]');
   const otpForm = document.querySelector('[data-otp-form]');
+  const pwForm = document.querySelector('[data-login-form]');
 
-  if (loginForm) {
+  if (otpForm || pwForm) {
     // already signed in? straight to the account
     fetch('/api/auth/me').then(r => r.json()).then(d => { if (d.customer) location.replace('/account'); }).catch(() => {});
-    // arriving from signup with a known number? prefill both forms
-    const prefill = new URLSearchParams(location.search).get('phone');
-    if (prefill && /^\d{10}$/.test(prefill)) {
-      loginForm.querySelector('#loginPhone').value = prefill;
-      const otpP = document.querySelector('#otpPhone'); if (otpP) otpP.value = prefill;
-    }
 
-    loginForm.addEventListener('submit', async event => {
-      event.preventDefault();
-      clearError();
-      const btn = loginForm.querySelector('[data-login-submit]');
-      busy(btn, true);
-      try {
-        await post('/api/auth/login', {
-          phone: loginForm.phone.value.replace(/\D/g, ''),
-          password: loginForm.password.value
-        });
-        await showSuccess('Welcome back!', 'Signed in — taking you to your account…');
-        location.href = '/account';
-      } catch (error) {
-        showError(error.message);
-        busy(btn, false);
-      }
-    });
-  }
-
-  /* ---------- /login — Mobile OTP tab ---------- */
-  if (otpForm && loginForm) {
-    const tabs = document.querySelector('[data-auth-tabs]');
-    const pwBtn = document.querySelector('[data-tab-btn="password"]');
-    const otpBtn = document.querySelector('[data-tab-btn="otp"]');
-    const pill = tabs ? tabs.querySelector('.auth-tab-pill') : null;
-    const step1 = otpForm.querySelector('[data-otp-step1]');
-    const step2 = otpForm.querySelector('[data-otp-step2]');
-    const phoneInput = otpForm.querySelector('#otpPhone');
-    const sendBtn = otpForm.querySelector('[data-otp-send]');
-    const verifyBtn = otpForm.querySelector('[data-otp-verify]');
-    const sentNote = otpForm.querySelector('[data-otp-sentto]');
-    const resendLink = otpForm.querySelector('[data-otp-resend]');
-    const changeLink = otpForm.querySelector('[data-otp-change]');
-    const boxes = otpBoxes(otpForm.querySelector('[data-otp-boxes]'));
-    let mode = null;          // 'widget' (MSG91 SDK) | 'api' (server-side send)
-    let widgetPhone = null;   // phone currently being verified via widget
-
-    function positionPill() {
-      if (!pill || !tabs || tabs.hidden) return;
-      const active = tabs.querySelector('.auth-tab.active');
-      if (active) { pill.style.width = `${active.offsetWidth}px`; pill.style.transform = `translateX(${active.offsetLeft - 4}px)`; }
-    }
-    function switchTab(which) {
-      clearError();
-      pwBtn.classList.toggle('active', which === 'password');
-      otpBtn.classList.toggle('active', which === 'otp');
-      loginForm.hidden = which !== 'password';
-      otpForm.hidden = which !== 'otp';
-      requestAnimationFrame(positionPill);
-    }
-    if (pwBtn) pwBtn.addEventListener('click', () => switchTab('password'));
-
-    fetch('/api/auth/otp/available').then(r => r.json()).then(d => {
-      if (d && d.enabled) {
-        mode = d.mode === 'widget' ? 'widget' : 'api';
-        tabs.hidden = false;
-        otpBtn.addEventListener('click', () => switchTab('otp'));
-        requestAnimationFrame(positionPill);
-      }
-    }).catch(() => {});
-    window.addEventListener('resize', positionPill);
-
-    function showStep(which) {
-      const el = which === 2 ? step2 : step1;
-      (which === 2 ? step1 : step2).hidden = true;
-      el.hidden = false;
-      el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
-    }
-
-    function sendCode() {
-      clearError();
-      const phone = phoneInput.value.replace(/\D/g, '');
-      if (phone.length !== 10 || !/^[6-9]/.test(phone)) return showError('Enter a valid 10-digit Indian mobile number.');
-      if (mode === 'widget') {
-        if (typeof window.sendOtp !== 'function') return showError('OTP system is still loading — wait a few seconds and try again.');
-        if (typeof window.isCaptchaVerified === 'function' && !window.isCaptchaVerified()) return showError('Please complete the security check first.');
-        busy(sendBtn, true);
-        window.sendOtp('91' + phone,
-          () => {
-            widgetPhone = phone;
-            busy(sendBtn, false);
-            sentNote.textContent = `Code sent to ${prettyPhone(phone)}`;
-            showStep(2);
-            boxes.fill(''); boxes.focus();
-            resendCountdown(resendLink);
-          },
-          e => { showError(widgetError(e)); busy(sendBtn, false); }
-        );
-        return;
-      }
-      // api mode (dev / server-side send)
-      busy(sendBtn, true);
-      post('/api/auth/otp/request', { phone }).then(data => {
-        otpForm.dataset.phone = phone;
-        busy(sendBtn, false);
-        sentNote.textContent = `Code sent to ${prettyPhone(phone)}`;
-        showStep(2);
-        boxes.fill(data.devCode || ''); boxes.focus();
-        resendCountdown(resendLink);
-      }).catch(error => {
-        showError(error.message);
-        busy(sendBtn, false);
-        if (/no account with this number/i.test(error.message)) setTimeout(() => { location.href = `/signup?phone=${phone}`; }, 1500);
-      });
-    }
-    sendBtn.addEventListener('click', sendCode);
-    resendLink.addEventListener('click', event => {
-      event.preventDefault();
-      if (resendLink.style.pointerEvents === 'none') return;
-      clearError();
-      if (mode === 'widget') {
-        if (typeof window.retryOtp !== 'function' || !widgetPhone) return showError('Please request a code first.');
-        window.retryOtp(null, () => resendCountdown(resendLink), e => showError(widgetError(e)));
-      } else sendCode();
-    });
-    const changeNumber = event => {
-      event.preventDefault();
-      if (resendLink._timer) clearInterval(resendLink._timer);
-      resendLink.style.pointerEvents = ''; resendLink.textContent = 'Resend code';
-      showStep(1);
-      boxes.fill(''); widgetPhone = null; clearError(); phoneInput.focus();
-    };
-    changeLink.addEventListener('click', changeNumber);
-
-    otpForm.addEventListener('submit', async event => {
-      event.preventDefault();
-      clearError();
-      const code = boxes.value();
-      if (code.length < 4 || code.length > 8) return showError('Enter the code from the SMS.');
-      busy(verifyBtn, true);
-      try {
-        if (mode === 'widget') {
-          const token = await widgetVerifyCode(code);
-          const phone = widgetPhone;
-          if (!phone) throw new Error('Please request a code first.');
-          await post('/api/auth/otp/widget', { phone, token });
-        } else {
-          await post('/api/auth/otp/verify', { phone: otpForm.dataset.phone || '', code });
-        }
-        await showSuccess('Number verified!', 'Signed in — taking you to your account…');
-        location.href = '/account';
-      } catch (error) {
-        showError(error.message);
-        busy(verifyBtn, false);
-        if (/no account with this number/i.test(error.message) && widgetPhone) {
-          setTimeout(() => { location.href = `/signup?phone=${widgetPhone}`; }, 1600);
-        }
-      }
-    });
-  }
-
-  /* ============================================================
-     /signup — two-step: details → verify your number by SMS
-     ============================================================ */
-  const signupForm = document.querySelector('[data-signup-form]');
-  if (signupForm) {
-    fetch('/api/auth/me').then(r => r.json()).then(d => { if (d.customer) location.replace('/account'); }).catch(() => {});
-
-    const nameInput = signupForm.querySelector('#suName');
-    const phoneInput = signupForm.querySelector('#suPhone');
-    const passwordInput = signupForm.querySelector('#suPassword');
-    const submitBtn = signupForm.querySelector('[data-signup-submit]');
-    const dots = document.querySelector('[data-auth-dots]');
     const steps = {
-      details: signupForm.querySelector('[data-su-details]'),
-      verify: signupForm.querySelector('[data-su-verify]'),
-      code: signupForm.querySelector('[data-su-code]')
+      number: otpForm?.querySelector('[data-step="number"]'),
+      code: otpForm?.querySelector('[data-step="code"]'),
+      name: otpForm?.querySelector('[data-step="name"]')
     };
-    const sendBtn = signupForm.querySelector('[data-su-send]');
-    const verifyBtn = signupForm.querySelector('[data-su-verify-btn]');
-    const numberLabel = signupForm.querySelector('[data-su-number]');
-    const sentLabel = signupForm.querySelector('[data-su-sentto]');
-    const resendLink = signupForm.querySelector('[data-su-resend]');
-    const changeLinks = [signupForm.querySelector('[data-su-change]'), signupForm.querySelector('[data-su-change2]')];
-    const boxes = otpBoxes(signupForm.querySelector('[data-su-boxes]'));
-    let suMode = null;            // 'widget' (verified signup) | 'classic' (direct create)
-    let widgetPhone = null;
-    let pendingDetails = null;    // { name, phone, password } while verifying
+    const phoneInput = otpForm?.querySelector('#otpPhone');
+    const sendBtn = otpForm?.querySelector('[data-otp-send]');
+    const verifyBtn = otpForm?.querySelector('[data-otp-verify]');
+    const createBtn = otpForm?.querySelector('[data-otp-create]');
+    const sentNote = otpForm?.querySelector('[data-otp-sentto]');
+    const newNote = otpForm?.querySelector('[data-otp-newto]');
+    const resendLink = otpForm?.querySelector('[data-otp-resend]');
+    const changeLink = otpForm?.querySelector('[data-otp-change]');
+    const restartLink = otpForm?.querySelector('[data-otp-restart]');
+    const nameInput = otpForm?.querySelector('#newName');
+    const boxes = otpForm ? otpBoxes(otpForm.querySelector('[data-otp-boxes]')) : null;
+    const pwToggle = document.querySelector('[data-pw-toggle]');
+    const otpToggle = document.querySelector('[data-otp-toggle]');
 
-    // arriving from OTP login with an unknown number? phone is prefilled
+    let widgetPhone = null;      // number currently being verified
+    let verifiedSignupToken = null; // server-signed proof for the name step
+    let otpReady = false;
+    let currentStep = 'number';
+
+    // arriving with ?phone= (e.g. legacy /signup redirect)? prefill
     const prefill = new URLSearchParams(location.search).get('phone');
-    if (prefill && /^\d{10}$/.test(prefill)) {
-      phoneInput.value = prefill;
-      const note = document.createElement('p');
-      note.className = 'otp-note';
-      note.textContent = `No account exists for ${maskPhone(prefill)} yet — create one below.`;
-      signupForm.prepend(note);
-    }
-
-    const suModeReady = fetch('/api/auth/otp/available').then(r => r.json()).then(d => {
-      if (d && d.enabled && d.mode === 'widget') {
-        suMode = 'widget';
-        submitBtn.querySelector('.btn-label').textContent = 'Continue';
-      } else {
-        suMode = 'classic';
-        if (dots) dots.hidden = true;
-        submitBtn.querySelector('.btn-label').textContent = 'Create account';
-      }
-    }).catch(() => { suMode = 'classic'; if (dots) dots.hidden = true; submitBtn.querySelector('.btn-label').textContent = 'Create account'; });
+    if (prefill && /^\d{10}$/.test(prefill) && phoneInput) phoneInput.value = prefill;
 
     function showStep(name) {
-      for (const [k, el] of Object.entries(steps)) el.hidden = k !== name;
+      currentStep = name;
+      if (!otpForm) return;
+      for (const [k, el] of Object.entries(steps)) if (el) el.hidden = k !== name;
       const el = steps[name];
       el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
-      if (dots) {
-        const d1 = dots.querySelector('[data-dot="1"]');
-        const d2 = dots.querySelector('[data-dot="2"]');
-        const l1 = dots.querySelector('[data-dotlabel="1"]');
-        d1.classList.toggle('on', name === 'details');
-        d1.classList.toggle('done', name !== 'details');
-        d2.classList.toggle('on', name !== 'details');
-        d2.classList.toggle('done', false);
-        l1.classList.toggle('on', name === 'details');
-      }
     }
 
-    function readDetails() {
-      const name = nameInput.value.trim();
-      const phone = phoneInput.value.replace(/\D/g, '');
-      const password = passwordInput.value;
-      if (name.length < 2) return { error: 'Please enter your name.' };
-      if (phone.length !== 10 || !/^[6-9]/.test(phone)) return { error: 'Enter a valid 10-digit Indian mobile number.' };
-      if (password.length < 6) return { error: 'Password must be at least 6 characters.' };
-      return { data: { name, phone, password } };
+    function usePasswordMode(on) {
+      clearError();
+      if (!otpForm || !pwForm) return;
+      otpForm.hidden = on;
+      pwForm.hidden = !on;
+      if (pwToggle) pwToggle.hidden = on || !otpReady;
+      if (otpToggle) otpToggle.hidden = !on;
     }
+    pwToggle?.addEventListener('click', e => { e.preventDefault(); usePasswordMode(true); });
+    otpToggle?.addEventListener('click', e => { e.preventDefault(); usePasswordMode(false); });
+
+    fetch('/api/auth/otp/available').then(r => r.json()).then(d => {
+      otpReady = !!(d && d.enabled && d.mode === 'widget');
+      if (!otpReady) {
+        // no SMS configured — password is the primary (only) path
+        usePasswordMode(true);
+        if (pwToggle) pwToggle.hidden = true;
+      }
+    }).catch(() => { otpReady = false; usePasswordMode(true); if (pwToggle) pwToggle.hidden = true; });
+
+    function restart(keepPhone) {
+      if (resendLink._timer) { clearInterval(resendLink._timer); resendLink.style.pointerEvents = ''; resendLink.textContent = 'Resend code'; }
+      widgetPhone = null;
+      verifiedSignupToken = null;
+      if (boxes) boxes.fill('');
+      if (nameInput) nameInput.value = '';
+      clearError();
+      showStep('number');
+      if (!keepPhone && phoneInput) { phoneInput.value = ''; phoneInput.focus(); }
+      else if (phoneInput) phoneInput.focus();
+    }
+    changeLink?.addEventListener('click', e => { e.preventDefault(); restart(false); });
+    restartLink?.addEventListener('click', e => { e.preventDefault(); restart(false); });
 
     function sendCode() {
       clearError();
+      const phone = (phoneInput?.value || '').replace(/\D/g, '');
+      if (phone.length !== 10 || !/^[6-9]/.test(phone)) return showError('Enter a valid 10-digit Indian mobile number.');
       if (typeof window.sendOtp !== 'function') return showError('OTP system is still loading — wait a few seconds and try again.');
       if (typeof window.isCaptchaVerified === 'function' && !window.isCaptchaVerified()) return showError('Please complete the security check first.');
       busy(sendBtn, true);
-      window.sendOtp('91' + pendingDetails.phone,
+      window.sendOtp('91' + phone,
         () => {
-          widgetPhone = pendingDetails.phone;
+          widgetPhone = phone;
           busy(sendBtn, false);
-          sentLabel.textContent = `Code sent to ${prettyPhone(widgetPhone)}`;
+          sentNote.textContent = `Code sent to ${prettyPhone(phone)}`;
           showStep('code');
           boxes.fill(''); boxes.focus();
           resendCountdown(resendLink);
@@ -437,72 +275,80 @@
         e => { showError(widgetError(e)); busy(sendBtn, false); }
       );
     }
-    sendBtn.addEventListener('click', sendCode);
-
-    resendLink.addEventListener('click', event => {
-      event.preventDefault();
+    resendLink?.addEventListener('click', e => {
+      e.preventDefault();
       if (resendLink.style.pointerEvents === 'none') return;
       clearError();
       if (typeof window.retryOtp !== 'function' || !widgetPhone) return showError('Please request a code first.');
-      window.retryOtp(null, () => resendCountdown(resendLink), e => showError(widgetError(e)));
+      window.retryOtp(null, () => resendCountdown(resendLink), e2 => showError(widgetError(e2)));
     });
-    changeLinks.forEach(l => l && l.addEventListener('click', event => {
-      event.preventDefault();
-      if (resendLink._timer) clearInterval(resendLink._timer);
-      resendLink.style.pointerEvents = ''; resendLink.textContent = 'Resend code';
-      widgetPhone = null; clearError();
-      showStep('details');
-      phoneInput.focus();
-    }));
 
-    async function classicSignup() {
-      const r = readDetails();
-      if (r.error) return showError(r.error);
-      busy(submitBtn, true);
-      try {
-        await post('/api/auth/signup', r.data);
-        await showSuccess('Account created!', 'Welcome to Rebesta Fresh.');
-        location.href = '/account';
-      } catch (error) {
-        showError(error.message);
-        busy(submitBtn, false);
-      }
-    }
-
-    async function widgetVerify() {
+    async function verifyCode() {
       clearError();
       const code = boxes.value();
       if (code.length < 4 || code.length > 8) return showError('Enter the code from the SMS.');
+      if (!widgetPhone) return showError('Please request a code first.');
       busy(verifyBtn, true);
       try {
         const token = await widgetVerifyCode(code);
-        await post('/api/auth/signup/verify', { ...pendingDetails, token });
-        await showSuccess('Account created!', 'Number verified — welcome to Rebesta Fresh.');
-        location.href = '/account';
+        const data = await post('/api/auth/otp/widget', { phone: widgetPhone, token });
+        if (data.isNew) {
+          verifiedSignupToken = data.verifiedToken;
+          newNote.textContent = `${prettyPhone(widgetPhone)} verified`;
+          busy(verifyBtn, false);
+          showStep('name');
+          nameInput.focus();
+        } else {
+          await showSuccess('Welcome back!', 'Signed in — taking you to your account…');
+          location.href = '/account';
+        }
       } catch (error) {
         showError(error.message);
         busy(verifyBtn, false);
-        if (/already has an account/i.test(error.message) && pendingDetails) {
-          setTimeout(() => { location.href = `/login?phone=${pendingDetails.phone}`; }, 1700);
-        }
       }
     }
 
-    signupForm.addEventListener('submit', async event => {
+    async function createAccount() {
+      clearError();
+      const name = (nameInput?.value || '').trim();
+      if (name.length < 2) return showError('Please tell us your name.');
+      if (!verifiedSignupToken) return showError('Please verify your number first.');
+      busy(createBtn, true);
+      try {
+        await post('/api/auth/otp/complete-signup', { name, verifiedToken: verifiedSignupToken });
+        await showSuccess('Account created!', `Welcome to Rebesta Fresh, ${name.split(' ')[0]} 🌿`);
+        location.href = '/account';
+      } catch (error) {
+        showError(error.message);
+        busy(createBtn, false);
+        if (/already has an account/i.test(error.message)) setTimeout(() => restart(true), 1800);
+      }
+    }
+
+    otpForm?.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (currentStep === 'number') return sendCode();
+      if (currentStep === 'code') return verifyCode();
+      if (currentStep === 'name') return createAccount();
+    });
+
+    /* password fallback (legacy accounts / OTP outage) */
+    pwForm?.addEventListener('submit', async event => {
       event.preventDefault();
       clearError();
-      if (suMode === null) await suModeReady.catch(() => {});
-      if (suMode !== 'widget') return classicSignup();
-      if (!steps.code.hidden) return widgetVerify();       // step 3: verify code
-      if (!steps.details.hidden) {                          // step 1 → step 2
-        const r = readDetails();
-        if (r.error) return showError(r.error);
-        pendingDetails = r.data;
-        numberLabel.textContent = prettyPhone(pendingDetails.phone);
-        showStep('verify');
-        return;
+      const btn = pwForm.querySelector('[data-login-submit]');
+      busy(btn, true);
+      try {
+        await post('/api/auth/login', {
+          phone: pwForm.querySelector('#loginPhone').value.replace(/\D/g, ''),
+          password: pwForm.querySelector('#loginPassword').value
+        });
+        await showSuccess('Welcome back!', 'Signed in — taking you to your account…');
+        location.href = '/account';
+      } catch (error) {
+        showError(error.message);
+        busy(btn, false);
       }
-      if (!steps.verify.hidden) return sendCode();          // Enter on step 2 sends the code
     });
   }
 

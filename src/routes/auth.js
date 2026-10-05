@@ -93,7 +93,7 @@ function cleanPhone(raw) {
   return /^[6-9]\d{9}$/.test(digits) ? digits : null;
 }
 function publicCustomer(c) {
-  return { id: c.id, name: c.name, phone: c.phone, createdAt: c.createdAt };
+  return { id: c.id, name: c.name, phone: c.phone, createdAt: c.createdAt, phoneVerified: !!c.phoneVerified };
 }
 
 /* ---------- routes ---------- */
@@ -123,6 +123,49 @@ router.post('/signup', rateLimit({ windowMs: 60 * 60 * 1000, max: 8, message: 'T
   customers.push(customer);
   saveCustomers(customers);
   setSession(res, req, customer);
+  res.json({ ok: true, customer: publicCustomer(customer) });
+});
+
+/* Phone-VERIFIED signup (MSG91 widget): the account is only created after the
+   customer proves ownership of the number with an SMS code. Same validation as
+   /signup, plus the widget token is verified against MSG91 server-side and the
+   verified phone (when MSG91 returns it) must match the requested number. */
+router.post('/signup/verify', rateLimit({ windowMs: 60 * 60 * 1000, max: 10, message: 'Too many signup attempts from this device. Please try again in an hour.' }), async (req, res) => {
+  const name = String(req.body?.name || '').trim();
+  const phone = cleanPhone(req.body?.phone);
+  const password = String(req.body?.password || '');
+  const token = String(req.body?.token || '');
+  if (name.length < 2 || name.length > 60) return res.status(400).json({ ok: false, error: 'Please enter your name (2–60 characters).' });
+  if (!phone) return res.status(400).json({ ok: false, error: 'Enter a valid 10-digit Indian mobile number.' });
+  if (password.length < 6 || password.length > 72) return res.status(400).json({ ok: false, error: 'Password must be at least 6 characters.' });
+  if (!token) return res.status(400).json({ ok: false, error: 'Missing verification token — please request a new code.' });
+
+  const customers = loadCustomers();
+  if (customers.some(c => c.phone === phone)) {
+    return res.status(409).json({ ok: false, error: 'This mobile number already has an account — try signing in instead.' });
+  }
+
+  const checked = await verifyWidgetToken(token);
+  console.log(JSON.stringify({ event: 'otp.widgetVerify', context: 'signup', ok: checked.ok, verifiedPhone: checked.phone || null }));
+  if (!checked.ok) return res.status(401).json({ ok: false, error: 'Verification failed — please try the code again.' });
+  if (checked.phone && checked.phone !== phone) {
+    console.error(JSON.stringify({ event: 'otp.widgetMismatch', context: 'signup', claimed: phone, verified: checked.phone }));
+    return res.status(401).json({ ok: false, error: 'Verification failed — please try again.' });
+  }
+
+  const now = new Date().toISOString();
+  const customer = {
+    id: `RC-${Date.now().toString(36).toUpperCase()}${crypto.randomBytes(2).toString('hex').toUpperCase()}`,
+    name, phone,
+    pass: hashPassword(password),
+    phoneVerified: true,
+    phoneVerifiedAt: now,
+    createdAt: now
+  };
+  customers.push(customer);
+  saveCustomers(customers);
+  setSession(res, req, customer);
+  console.log(JSON.stringify({ event: 'auth.signupVerified', phone }));
   res.json({ ok: true, customer: publicCustomer(customer) });
 });
 
@@ -243,10 +286,21 @@ router.post('/otp/widget', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, messag
   if (!customer) return res.status(404).json({ ok: false, error: 'No account with this number yet — please create an account first.' });
 
   const checked = await verifyWidgetToken(token);
+  console.log(JSON.stringify({ event: 'otp.widgetVerify', context: 'login', ok: checked.ok, verifiedPhone: checked.phone || null }));
   if (!checked.ok) return res.status(401).json({ ok: false, error: 'Verification failed — please try the code again.' });
   if (checked.phone && checked.phone !== phone) {
-    console.error(JSON.stringify({ event: 'otp.widgetMismatch', claimed: phone, verified: checked.phone }));
+    console.error(JSON.stringify({ event: 'otp.widgetMismatch', context: 'login', claimed: phone, verified: checked.phone }));
     return res.status(401).json({ ok: false, error: 'Verification failed — please try again.' });
+  }
+  /* a successful OTP sign-in proves number ownership — backfill the flag for older accounts */
+  if (!customer.phoneVerified) {
+    const all = loadCustomers();
+    const fresh = all.find(c => c.phone === phone);
+    if (fresh && !fresh.phoneVerified) {
+      fresh.phoneVerified = true;
+      fresh.phoneVerifiedAt = new Date().toISOString();
+      saveCustomers(all);
+    }
   }
   setSession(res, req, customer);
   res.json({ ok: true, customer: publicCustomer(customer) });

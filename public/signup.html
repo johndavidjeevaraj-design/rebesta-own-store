@@ -3,24 +3,79 @@
 <head>
   <meta charset="utf-8"><meta name="robots" content="noindex"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Create account – Rebesta Fresh</title>
-  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><meta name="description" content="Create a Rebesta Fresh account — see every order, reorder favourites. Optional: you can always shop without an account.">
-  <link rel="stylesheet" href="/css/styles.css?v=20260929f37">
+  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><meta name="description" content="Create a Rebesta Fresh account — verify your number with one SMS code, see every order, reorder favourites.">
+  <link rel="stylesheet" href="/css/styles.css?v=20261005a">
 </head>
 <body>
   <header class="site-header"><div class="container header-inner"><a class="logo" href="/"><img src="/assets/brand/logo.png" alt="Rebesta Fresh" width="191" height="24"></a><span class="header-location">Your account</span><span></span><div class="header-actions"><a class="whatsapp-link" href="https://wa.me/918438765119">Help</a><a class="cart-link" href="/shop">Shop fresh</a></div></div></header>
-  <main><section class="section"><div class="container" style="max-width:560px">
-    <div class="shop-panel" style="padding:32px">
-      <span class="eyebrow">Join Rebesta</span>
-      <h1 class="section-title">Create your account</h1>
-      <p class="section-subtitle" style="margin-bottom:22px">Just name, mobile and a password. Shopping never requires an account — this is only for your convenience.</p>
-      <form data-signup-form class="form-grid" novalidate>
-        <div class="field wide"><label for="suName">Your name</label><input id="suName" name="name" autocomplete="name" required placeholder="e.g. Priya R"></div>
-        <div class="field wide"><label for="suPhone">Mobile number</label><input id="suPhone" name="phone" inputmode="tel" autocomplete="tel" required placeholder="10-digit mobile number"></div>
-        <div class="field wide"><label for="suPassword">Password</label><input id="suPassword" name="password" type="password" autocomplete="new-password" required minlength="6" placeholder="At least 6 characters"></div>
-        <button class="button orange full" type="submit" data-signup-submit>Create account</button>
-      </form>
-      <div data-auth-error class="alert error" hidden style="margin-top:14px"></div>
-      <p class="auth-alt">Already have an account? <a href="/login">Sign in</a>.</p>
+  <main><section class="section auth-section"><div class="container auth-container">
+    <div class="auth-shell">
+      <aside class="auth-visual" aria-hidden="true">
+        <div class="av-glow av-glow-1"></div><div class="av-glow av-glow-2"></div>
+        <span class="av-chip av-c1" style="--d:6.8s"><svg viewBox="0 0 48 48"><path d="M9 39C9 21 25 7 41 9c1.6 16-11 32-29 30z" fill="#0faa46"/><path d="M11 37C17 27 27 17 39 11" stroke="#e7f6e9" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></span>
+        <span class="av-chip av-c2" style="--d:7.6s"><svg viewBox="0 0 48 48"><circle cx="24" cy="27" r="16.5" fill="#ff4f30"/><circle cx="18" cy="22" r="5.5" fill="#ff8b3d" opacity=".6"/><path d="M24 11c-2 3.4-6.4 3.2-8.4 2 1.8 3.4 5.2 4.4 8.4 3.2 3.2 1.2 6.6.2 8.4-3.2-2 1.2-6.4 1.4-8.4-2z" fill="#0d8736"/><path d="M24 11V7.5" stroke="#0d8736" stroke-width="2.6" stroke-linecap="round"/></svg></span>
+        <span class="av-chip av-c3" style="--d:5.9s"><svg viewBox="0 0 48 48"><path d="M12 16c1.4 15 10.6 22.6 24 21 3.6-.6 4.6-3.8 1.8-4.6-10.4 1.8-18.6-4.6-22.4-16z" fill="#e23a2e"/><path d="M12 16c-1.6-3 .2-6.8 4-5.8" stroke="#0d8736" stroke-width="3" fill="none" stroke-linecap="round"/></svg></span>
+        <span class="av-chip av-c4" style="--d:8.2s"><svg viewBox="0 0 48 48"><path d="M28.5 15 15 40c-1.8 3 .8 5.4 3.4 3.2L42 21.5z" fill="#ff8b3d"/><path d="M29 14.5c7.5-1.5 11.5-7 9.8-11.3-4.8-.3-9.8 2.8-11.6 8z" fill="#0d8736"/></svg></span>
+        <div class="av-copy">
+          <span class="av-badge"><svg viewBox="0 0 24 24" fill="none"><path d="M12 22c5-3.5 8-7.5 8-11.5C20 6 16.5 3 12 3S4 6 4 10.5C4 14.5 7 18.5 12 22Z" stroke="currentColor" stroke-width="2"/><path d="M12 22V9M12 12l3-2M12 15l-2.6-1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Join the fresh side</span>
+          <h2>Eat fresher. Shop faster.</h2>
+          <p>One quick SMS code verifies your number — then your orders, addresses and reorders stay with you forever.</p>
+          <ul class="av-points"><li>One-tap reorder</li><li>Updates on WhatsApp</li><li>No spam, ever</li></ul>
+        </div>
+      </aside>
+      <div class="auth-card" data-auth-card>
+        <span class="auth-eyebrow">Join Rebesta</span>
+        <h1>Create your account</h1>
+        <p class="auth-card-sub">30 seconds — name, number, password, one SMS code.</p>
+        <div class="auth-dots" data-auth-dots>
+          <span class="ad-dot on" data-dot="1"><span class="ad-num">1</span><svg class="ad-tick" viewBox="0 0 24 24" fill="none"><path d="m5 12.5 4.5 4.5L19 7.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="ad-line"></span><span class="ad-label on" data-dotlabel="1">Your details</span>
+          <span class="ad-line"></span>
+          <span class="ad-dot" data-dot="2"><span class="ad-num">2</span><svg class="ad-tick" viewBox="0 0 24 24" fill="none"><path d="m5 12.5 4.5 4.5L19 7.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="ad-label" data-dotlabel="2">Verify number</span>
+        </div>
+        <form data-signup-form class="auth-form" novalidate>
+          <div class="auth-step" data-su-details>
+            <div class="fx-field"><input id="suName" name="name" autocomplete="name" required placeholder=" "><label for="suName">Your name</label></div>
+            <div class="fx-field fx-phone"><input id="suPhone" name="phone" inputmode="tel" autocomplete="tel" required placeholder=" "><label for="suPhone">Mobile number</label><span class="fx-prefix"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 6h3l2 4-2 2a12 12 0 0 0 5 5l2-2 4 2v3a2 2 0 0 1-2 2A16 16 0 0 1 2 8a2 2 0 0 1 2-2Z" fill="currentColor"/></svg>+91</span></div>
+            <div class="fx-field"><input id="suPassword" name="password" type="password" autocomplete="new-password" required minlength="6" placeholder=" " style="padding-right:52px"><label for="suPassword">Password (min 6 characters)</label>
+              <button type="button" class="fx-eye" data-eye="suPassword" aria-label="Show password"><svg class="eye-on" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="2"/></svg><svg class="eye-off" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-6.5 10-6.5c2 0 3.7.6 5.1 1.4M22 12s-3.5 6.5-10 6.5c-2 0-3.7-.6-5.1-1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="m4 20 16-16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+            </div>
+            <button class="btn-main" type="submit" data-signup-submit><span class="btn-label">Continue</span></button>
+          </div>
+          <div class="auth-step" data-su-verify hidden>
+            <div class="sent-chip">
+              <svg viewBox="0 0 48 48" fill="none"><rect x="17" y="8" width="14" height="32" rx="4.5" fill="#073f1b"/><rect x="19" y="12" width="10" height="22" rx="2.5" fill="#e7f6e9"/><path d="M22 20h5M22 25h5M22 30h3" stroke="#0d8736" stroke-width="2" stroke-linecap="round"/><path d="M31 16c6 1 8 6 8 6M35 13c7.6 1.6 10 8.4 10 8.4" stroke="#0d8736" stroke-width="2.4" stroke-linecap="round" opacity=".8"/></svg>
+              <div><b data-su-number></b><span>We’ll text a code to this number to verify it’s yours</span></div>
+            </div>
+            <div class="captcha-slot"><p class="cs-label"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.4-7 9.9C8 19.4 5 15.5 5 11V6l7-3Z" stroke="currentColor" stroke-width="2"/><path d="m9 11.5 2.2 2.2L15.5 9.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Quick security check — keeps SMS free of bots</p><div id="su-captcha" class="otp-captcha"></div></div>
+            <button class="btn-main" type="button" data-su-send><span class="btn-label">Send code by SMS</span></button>
+            <p class="otp-resend"><a href="#" data-su-change">← Wrong number? Go back</a></p>
+          </div>
+          <div class="auth-step" data-su-code hidden>
+            <div class="sent-chip">
+              <svg class="otp-phone-art" viewBox="0 0 48 48" fill="none"><path class="wave w1" d="M6 30c0-5 2.6-9.4 6.4-11.8" stroke="#0d8736" stroke-width="2.4" stroke-linecap="round"/><path class="wave w2" d="M9.6 34.4C9.6 29 12.8 24.6 17 22" stroke="#0d8736" stroke-width="2.4" stroke-linecap="round" opacity=".7"/><rect x="17" y="8" width="14" height="32" rx="4.5" fill="#073f1b"/><rect x="19" y="12" width="10" height="22" rx="2.5" fill="#e7f6e9"/><path d="M22 20h5M22 25h5M22 30h3" stroke="#0d8736" stroke-width="2" stroke-linecap="round"/><path class="wave w3" d="M42 30c0-5-2.6-9.4-6.4-11.8" stroke="#0d8736" stroke-width="2.4" stroke-linecap="round"/><path class="wave w2" d="M38.4 34.4C38.4 29 35.2 24.6 31 22" stroke="#0d8736" stroke-width="2.4" stroke-linecap="round" opacity=".7"/></svg>
+              <div><b data-su-sentto></b><span>Code sent · valid 15 minutes</span></div>
+            </div>
+            <div class="otp-boxes" data-su-boxes></div>
+            <p class="otp-hint">Enter the code from the SMS</p>
+            <button class="btn-main" type="submit" data-su-verify-btn><span class="btn-label">Verify &amp; create account</span></button>
+            <p class="otp-resend">Didn’t get it? <a href="#" data-su-resend>Resend code</a> · <a href="#" data-su-change2>Wrong number?</a></p>
+          </div>
+        </form>
+        <div data-auth-error class="alert error" hidden style="margin-top:14px"></div>
+        <p class="auth-alt">Already have an account? <a href="/login">Sign in</a>.</p>
+        <div class="auth-success" data-auth-success aria-live="polite">
+          <div class="as-inner">
+            <div class="as-mark-wrap">
+              <svg class="as-mark" viewBox="0 0 72 72" aria-hidden="true"><circle class="as-ring" cx="36" cy="36" r="30"/><path class="as-check" d="M23 37.5l9.5 9.5L49 27"/></svg>
+              <span class="as-confetti" aria-hidden="true"></span>
+            </div>
+            <h3 data-success-title>Done!</h3>
+            <p data-success-sub></p>
+          </div>
+        </div>
+      </div>
     </div>
   </div></section></main>
   <nav class="bottom-nav" aria-label="Quick navigation">
@@ -32,6 +87,33 @@
   <footer class="minimal-footer">
   <div class="container minimal-footer-inner"><span>© 2026 Rebesta Fresh · Fresh from farms, Hosur</span></div>
 </footer>
-  <script src="/js/store.js?v=20260924p8" defer></script><script src="/js/auth.js?v=20260929a2" defer></script>
+  <script src="/js/store.js?v=20260924p8" defer></script>
+  <script type="text/javascript">
+    /* MSG91 OTP widget (custom UI mode) — used to verify the phone number at signup. */
+    var otpWidgetConfig = {
+      widgetId: "366a65687644323637363131",
+      tokenAuth: "571380TgZrH8gvzsiK6aa8dedbP1",
+      exposeMethods: true,
+      captchaRenderId: "su-captcha",
+      success: function (data) { window.__otpWidgetSuccess = data; },
+      failure: function (error) { window.__otpWidgetFailure = error; }
+    };
+    (function loadOtpScript(urls) {
+      var i = 0;
+      function attempt() {
+        var s = document.createElement('script');
+        s.src = urls[i]; s.async = true;
+        s.onload = function () {
+          if (typeof window.initSendOTP === 'function') {
+            try { window.initSendOTP(otpWidgetConfig); } catch (e) { window.__otpWidgetFailure = e; }
+          }
+        };
+        s.onerror = function () { i++; if (i < urls.length) attempt(); };
+        document.head.appendChild(s);
+      }
+      attempt();
+    })(['https://verify.msg91.com/otp-provider.js', 'https://verify.phone91.com/otp-provider.js']);
+  </script>
+  <script src="/js/auth.js?v=20261005b" defer></script>
 </body>
 </html>

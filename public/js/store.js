@@ -84,6 +84,7 @@
     const count = cartCount();
     document.querySelectorAll('[data-cart-count]').forEach(el => {
       el.textContent = count;
+      el.classList.toggle('zero', count === 0);
       el.classList.remove('pop');
       void el.offsetWidth;
       el.classList.add('pop');
@@ -336,7 +337,7 @@
       el.dataset.locWired = '1';
       el.classList.add('loc-chip-btn');
       el.title = 'Change delivery location';
-      el.innerHTML = `${svgPin}<strong data-loc-label>${locationLabel(getSavedLocation()) || 'Set location'}</strong>${svgChevron}`;
+      el.innerHTML = `<span class="loc-chip-tx"><span class="loc-chip-lb">Delivering to</span><strong><span data-loc-label>${locationLabel(getSavedLocation()) || 'Set location'}</span>${svgChevron}</strong></span>`;
       el.addEventListener('click', () => openLocationSheet());
     });
   }

@@ -1876,3 +1876,20 @@ body.sheet-open{overflow:hidden}
   .hdr-icon{width:38px;height:38px;border-radius:12px}
   .header-location.loc-chip-btn{padding:5px 12px 6px}
 }
+/* PASS 34 — Blinkit-clean header: plain-text location, borderless icon buttons */
+.header-location.loc-chip-btn{background:transparent;border:0;box-shadow:none;padding:5px 10px 5px 2px;border-radius:12px;max-width:280px;color:#fff}
+.header-location.loc-chip-btn:hover{background:rgba(255,255,255,.09);border:0}
+.loc-chip-lb{color:rgba(255,255,255,.6);font-size:.6rem;letter-spacing:.14em}
+.header-location.loc-chip-btn strong{color:#fff;font-size:.94rem;font-weight:900}
+.header-location.loc-chip-btn strong svg{color:rgba(255,255,255,.85)}
+.hdr-icon{width:42px;height:42px;background:transparent;border:0;box-shadow:none;border-radius:12px;color:#fff}
+.hdr-icon:hover{background:rgba(255,255,255,.1);transform:none}
+.hdr-icon svg{width:22px;height:22px}
+.hdr-icon.cart-link{background:transparent;box-shadow:none}
+.hdr-icon.cart-link:hover{background:rgba(255,255,255,.1);transform:none;box-shadow:none}
+.hdr-icon .cart-count{top:2px;right:2px;border:0;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.header-actions{gap:8px}
+@media(max-width:840px){
+  .header-location.loc-chip-btn{padding:4px 6px 4px 2px}
+  .hdr-icon{width:40px;height:40px}
+}

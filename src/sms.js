@@ -14,15 +14,15 @@
    They generate + verify the code themselves (managed OTP) over pre-registered
    DLT-free templates; the SMS shows a generic sender, not "REBEST".
 
-   ── Option 2: MSG91 (needs your own DLT registration, ~₹5,900) ──
+   ── Option 2 (CHOSEN): MSG91 SendOTP v5 ──
+   Their DEFAULT OTP template + sender need NO DLT registration of your own.
    {
      "provider": "msg91",
-     "authKey":  "your MSG91 auth key (dashboard → Settings → API)",
-     "sender":   "6-char DLT-approved sender ID, e.g. REBEST",
-     "route":    "dlt_transactional",
-     "templateId": "MSG91 template/flow id for the OTP template",
-     "otpVariable": "OTP"
+     "authKey":    "your MSG91 auth key (dashboard → Settings → API)",
+     "templateId": "optional — MSG91 dashboard OTP template id (default template used if omitted)"
    }
+   We generate + verify the code ourselves; MSG91 only delivers the SMS.
+   (A branded 'REBEST' sender would need your own DLT, ~₹5,900 — not doing that.)
 
    For local dev only: { "provider": "dev" } — we generate the code, log it to
    the server console (and return it to the page so the flow can be tested).
@@ -43,7 +43,7 @@ export function otpAvailable() {
   if (!c) return false;
   if (c.provider === 'dev') return true;
   if (c.provider === 'messagecentral') return !!(c.customerId && c.email && c.password);
-  return c.provider === 'msg91' && !!c.authKey && !!c.sender;
+  return c.provider === 'msg91' && !!c.authKey;
 }
 
 /* 'own'    → we generate + verify the code (dev, msg91)
@@ -56,8 +56,8 @@ export function otpMode() {
 }
 
 /* Send the OTP. Returns { ok, devCode? } — throws nothing (errors as {ok:false,error}). */
-export async function sendOtpSms(phone, code) {
-  const c = loadSmsConfig() || {};
+export async function sendOtpSms(phone, code, cfgOverride) {
+  const c = cfgOverride || loadSmsConfig() || {};
   if (c.provider === 'dev') {
     console.log(JSON.stringify({ event: 'otp.devcode', phone, code }));
     return { ok: true, devCode: code };
@@ -123,19 +123,31 @@ export async function verifyManagedOtp(verificationId, code) {
   }
 }
 
-/* ---------- MSG91 v5 SMS API (own code, DLT transactional route) ---------- */
+/* Wallet balance for an MSG91 authkey (their send API accepts ANY key without
+   validating — failures happen silently at delivery. This gives a real signal:
+   a number > 0 means the key works AND has credits; 0 means key wrong or wallet empty.) */
+export async function msg91Balance(authKey) {
+  try {
+    const res = await fetch(`https://control.msg91.com/api/balance.php?authkey=${encodeURIComponent(String(authKey))}&type=1`, { signal: AbortSignal.timeout(10000) });
+    const text = (await res.text()).trim();
+    const n = Number(text);
+    return Number.isFinite(n) ? { ok: true, balance: n } : { ok: false, error: text.slice(0, 120) };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
+
+/* ---------- MSG91 SendOTP v5 (their default OTP template — no DLT of our own) ----------
+   We pass OUR generated code as the otp param; MSG91's template delivers it.
+   Verification stays local (hash compare) — no API call needed at verify time. */
 async function sendMsg91(c, phone, code) {
   try {
-    const body = {
-      route: c.route || 'dlt_transactional',
-      sender: c.sender,
-      numbers: [{ mobiles: `91${phone}`, [c.otpVariable || 'OTP']: String(code) }]
-    };
-    if (c.templateId) body.template_id = String(c.templateId);
-    const res = await fetch('https://api.msg91.com/api/v5/sms/', {
+    const qs = new URLSearchParams({ mobile: `91${phone}`, otp: String(code), otp_expiry: '10' });
+    if (c.templateId) qs.set('template_id', String(c.templateId));
+    const res = await fetch('https://api.msg91.com/api/v5/otp?' + qs, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', authkey: String(c.authKey) },
-      body: JSON.stringify(body)
+      headers: { authkey: String(c.authKey) },
+      signal: AbortSignal.timeout(12000)
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok && String(data.type || '').toLowerCase() !== 'error') return { ok: true };

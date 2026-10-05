@@ -544,7 +544,7 @@ router.get('/version', (req, res) => {
    GET  /api/admin/sms        → current provider status
    POST /api/admin/sms        → save/replace config {provider, ...} or {provider:'none'} to disable
    POST /api/admin/sms/test   → dry-run send with UNSAVED credentials {phone, config:{...}} */
-import { loadSmsConfig, otpAvailable, sendManagedOtp, clearMcToken } from '../sms.js';
+import { loadSmsConfig, otpAvailable, sendManagedOtp, sendOtpSms, msg91Balance, clearMcToken } from '../sms.js';
 
 const SMS_FILE = () => path.join(config.dataDir, 'sms-config.json');
 
@@ -569,11 +569,9 @@ router.post('/sms', (req, res) => {
     if (!b.customerId || !b.email || !b.password) return res.status(400).json({ ok: false, error: 'messagecentral needs customerId, email and password.' });
     out = { provider, customerId: String(b.customerId), email: String(b.email), password: String(b.password) };
   } else if (provider === 'msg91') {
-    if (!b.authKey || !b.sender) return res.status(400).json({ ok: false, error: 'msg91 needs authKey and sender.' });
-    out = { provider, authKey: String(b.authKey), sender: String(b.sender) };
-    if (b.route) out.route = String(b.route);
+    if (!b.authKey) return res.status(400).json({ ok: false, error: 'msg91 needs authKey.' });
+    out = { provider, authKey: String(b.authKey) };
     if (b.templateId) out.templateId = String(b.templateId);
-    if (b.otpVariable) out.otpVariable = String(b.otpVariable);
   } else {
     return res.status(400).json({ ok: false, error: 'provider must be messagecentral, msg91, dev or none.' });
   }
@@ -591,8 +589,23 @@ router.post('/sms/test', async (req, res) => {
   const phone = String(b.phone || '').replace(/\D/g, '');
   if (!/^[6-9]\d{9}$/.test(phone)) return res.status(400).json({ ok: false, error: 'Enter a valid 10-digit Indian mobile number.' });
   const cfg = b.config && b.config.provider ? b.config : loadSmsConfig();
-  if (!cfg || cfg.provider !== 'messagecentral') return res.status(400).json({ ok: false, error: 'Test send supports the messagecentral provider (set config.provider).' });
+  if (!cfg || !['messagecentral', 'msg91'].includes(cfg.provider)) {
+    return res.status(400).json({ ok: false, error: 'Test send supports the messagecentral and msg91 providers (set config.provider).' });
+  }
   clearMcToken();
+  if (cfg.provider === 'msg91') {
+    // Their send API never rejects a bad key — check the wallet for a real signal.
+    const bal = await msg91Balance(cfg.authKey);
+    const sent = await sendOtpSms(phone, String(Math.floor(100000 + Math.random() * 900000)), cfg);
+    if (!bal.ok || bal.balance <= 0) {
+      return res.json({ ok: false, sent: true, balance: null,
+        error: 'MSG91 accepted the request but the wallet check returned ' + (bal.ok ? 'zero' : 'an error') +
+               '. The SMS will probably NOT arrive — authkey wrong or wallet empty. ' +
+               (bal.ok ? '' : 'Check: ' + bal.error) });
+    }
+    return res.json({ ok: sent.ok, sent: true, balance: bal.balance,
+      note: sent.ok ? 'SMS fired — balance ₹' + bal.balance + '. CONFIRM the code arrives on the phone; MSG91 reports success even for bad keys.' : 'Send failed: ' + sent.error });
+  }
   const sent = await sendManagedOtp(phone, cfg);
   res.json(sent.ok
     ? { ok: true, sent: true, note: 'SMS sent — check the phone for the code.' }

@@ -26,6 +26,7 @@
         <div class="field wide" data-otp-step1>
           <label for="otpPhone">Mobile number</label>
           <input id="otpPhone" inputmode="tel" autocomplete="tel" placeholder="10-digit mobile number">
+          <div id="otp-captcha" class="otp-captcha"></div>
           <button class="button orange full" type="button" data-otp-send style="margin-top:14px">Send code by SMS</button>
         </div>
         <div class="field wide" data-otp-step2 hidden>
@@ -49,6 +50,33 @@
   <footer class="minimal-footer">
   <div class="container minimal-footer-inner"><span>© 2026 Rebesta Fresh · Fresh from farms, Hosur</span></div>
 </footer>
-  <script src="/js/store.js?v=20260924p8" defer></script><script src="/js/auth.js?v=20260929a2" defer></script>
+  <script src="/js/store.js?v=20260924p8" defer></script>
+  <script type="text/javascript">
+    /* MSG91 OTP widget (custom UI mode) — DLT-free delivery via their default template. */
+    var otpWidgetConfig = {
+      widgetId: "366a65687644323637363131",
+      tokenAuth: "571380TgZrH8gvzsiK6aa8dedbP1",
+      exposeMethods: true,
+      captchaRenderId: "otp-captcha",
+      success: function (data) { window.__otpWidgetSuccess = data; },
+      failure: function (error) { window.__otpWidgetFailure = error; }
+    };
+    (function loadOtpScript(urls) {
+      var i = 0;
+      function attempt() {
+        var s = document.createElement('script');
+        s.src = urls[i]; s.async = true;
+        s.onload = function () {
+          if (typeof window.initSendOTP === 'function') {
+            try { window.initSendOTP(otpWidgetConfig); } catch (e) { window.__otpWidgetFailure = e; }
+          }
+        };
+        s.onerror = function () { i++; if (i < urls.length) attempt(); };
+        document.head.appendChild(s);
+      }
+      attempt();
+    })(['https://verify.msg91.com/otp-provider.js', 'https://verify.phone91.com/otp-provider.js']);
+  </script>
+  <script src="/js/auth.js?v=20260929a3" defer></script>
 </body>
 </html>

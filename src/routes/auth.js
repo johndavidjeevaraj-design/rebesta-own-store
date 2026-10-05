@@ -8,7 +8,7 @@ import path from 'node:path';
 import { config } from '../config.js';
 import { ordersByPhone } from '../lib/store.js';
 import { rateLimit } from '../lib/rateLimit.js';
-import { otpAvailable, otpMode, sendOtpSms, sendManagedOtp, verifyManagedOtp } from '../sms.js';
+import { otpAvailable, otpMode, sendOtpSms, sendManagedOtp, verifyManagedOtp, verifyWidgetToken } from '../sms.js';
 
 const router = express.Router();
 
@@ -150,13 +150,14 @@ function otpHash(phone, code) {
 
 /* ---------- OTP sign-in (offered only when an SMS sender is configured) ---------- */
 router.get('/otp/available', (req, res) => {
-  res.json({ ok: true, enabled: otpAvailable() });
+  res.json({ ok: true, enabled: otpAvailable(), mode: otpMode() || null });
 });
 
 router.post('/otp/request', rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: 'Too many code requests. Please wait 15 minutes.' }), async (req, res) => {
   const phone = cleanPhone(req.body?.phone);
   if (!phone) return res.status(400).json({ ok: false, error: 'Enter a valid 10-digit Indian mobile number.' });
   if (!otpAvailable()) return res.status(503).json({ ok: false, error: 'OTP sign-in is not set up yet — please use your password.' });
+  if (otpMode() === 'widget') return res.status(503).json({ ok: false, error: 'OTP is sent from the page widget — refresh and use the Mobile OTP tab.' });
 
   // Unknown number → refuse BEFORE spending an SMS (probing numbers costs real money).
   const customer = loadCustomers().find(c => c.phone === phone);
@@ -226,6 +227,27 @@ router.post('/otp/verify', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, messag
 
   const customer = loadCustomers().find(c => c.phone === phone);
   if (!customer) return res.status(404).json({ ok: false, error: 'No account with this number yet — please create an account first.' });
+  setSession(res, req, customer);
+  res.json({ ok: true, customer: publicCustomer(customer) });
+});
+
+/* Widget login: the page's MSG91 SDK already verified the code and produced an
+   access token. We verify that token SERVER-SIDE with MSG91, bind it to the
+   phone (when MSG91 returns the number), then issue our session. */
+router.post('/otp/widget', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, message: 'Too many attempts. Please wait 15 minutes.' }), async (req, res) => {
+  const phone = cleanPhone(req.body?.phone);
+  const token = String(req.body?.token || '');
+  if (!phone || !token) return res.status(400).json({ ok: false, error: 'Missing phone or verification token.' });
+
+  const customer = loadCustomers().find(c => c.phone === phone);
+  if (!customer) return res.status(404).json({ ok: false, error: 'No account with this number yet — please create an account first.' });
+
+  const checked = await verifyWidgetToken(token);
+  if (!checked.ok) return res.status(401).json({ ok: false, error: 'Verification failed — please try the code again.' });
+  if (checked.phone && checked.phone !== phone) {
+    console.error(JSON.stringify({ event: 'otp.widgetMismatch', claimed: phone, verified: checked.phone }));
+    return res.status(401).json({ ok: false, error: 'Verification failed — please try again.' });
+  }
   setSession(res, req, customer);
   res.json({ ok: true, customer: publicCustomer(customer) });
 });

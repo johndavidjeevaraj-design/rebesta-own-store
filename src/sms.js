@@ -3,7 +3,19 @@
    gateway credentials onto the server and OTP sign-in goes live instantly —
    no restart, no redeploy.
 
-   ── Option 1: Message Central VerifyNow (recommended — NO DLT needed) ──
+   ── Option 0 (LIVE): MSG91 OTP Widget (DLT-free, generic template) ──
+   MSG91's own docs: "A default SMS template is being provided by MSG91 to
+   use till your template is not approved on DLT." The widget SDK (client
+   side) does the sending via their default template; our server only
+   verifies the resulting access token. Captcha is built into the widget.
+   {
+     "provider": "msg91-widget",
+     "authKey":   "account authkey (server-side token verification)",
+     "widgetId":  "widget id (public by design — shown in the page)",
+     "tokenAuth": "widget token (public by design — used by the page SDK)"
+   }
+
+   ── Option 1: Message Central VerifyNow (NO DLT, but enterprise USD pricing) ──
    data/sms-config.json (gitignored):
    {
      "provider": "messagecentral",
@@ -43,6 +55,7 @@ export function otpAvailable() {
   if (!c) return false;
   if (c.provider === 'dev') return true;
   if (c.provider === 'messagecentral') return !!(c.customerId && c.email && c.password);
+  if (c.provider === 'msg91-widget') return !!(c.authKey && c.widgetId);
   return c.provider === 'msg91' && !!c.authKey;
 }
 
@@ -52,7 +65,32 @@ export function otpMode() {
   const c = loadSmsConfig() || {};
   if (c.provider === 'dev' || c.provider === 'msg91') return 'own';
   if (c.provider === 'messagecentral') return 'managed';
+  if (c.provider === 'msg91-widget') return 'widget';
   return null;
+}
+
+/* Verify a widget access token (JWT from the client SDK) against MSG91.
+   Returns { ok, phone? } — phone extracted when MSG91's response includes it,
+   so the caller can enforce that the token matches the claimed number. */
+export async function verifyWidgetToken(token) {
+  const c = loadSmsConfig() || {};
+  try {
+    const res = await fetch('https://control.msg91.com/api/v5/widget/verifyAccessToken', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ authkey: String(c.authKey), 'access-token': String(token) }),
+      signal: AbortSignal.timeout(10000)
+    });
+    const data = await res.json().catch(() => ({}));
+    const raw = JSON.stringify(data);
+    console.log(JSON.stringify({ event: 'otp.widgetVerify', status: res.status, body: raw.slice(0, 400) }));
+    const ok = res.ok && String(data.type || '').toLowerCase() === 'success';
+    const phone = data.mobile || data.phone || data.identifier || data.data?.mobile || data.data?.phone || null;
+    const digits = phone ? String(phone).replace(/\D/g, '').slice(-10) : null;
+    return { ok, phone: /^[6-9]\d{9}$/.test(digits || '') ? digits : null, error: ok ? null : (data.message || `HTTP ${res.status}`) };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
 }
 
 /* Send the OTP. Returns { ok, devCode? } — throws nothing (errors as {ok:false,error}). */

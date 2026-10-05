@@ -44,7 +44,7 @@
     });
   }
 
-  /* ---------- /login — OTP tab (shown only when SMS delivery is configured) ---------- */
+  /* ---------- /login — OTP tab (shown when SMS delivery is configured) ---------- */
   const otpForm = document.querySelector('[data-otp-form]');
   if (otpForm && loginForm) {
     const tabs = document.querySelector('[data-auth-tabs]');
@@ -60,6 +60,8 @@
     const resendLink = otpForm.querySelector('[data-otp-resend]');
     const changeLink = otpForm.querySelector('[data-otp-change]');
     let resendTimer = null;
+    let mode = null;          // 'widget' (MSG91 SDK) | 'api' (server-side send)
+    let widgetPhone = null;   // phone currently verified via widget
 
     function switchTab(which) {
       clearError();
@@ -71,7 +73,11 @@
     if (pwBtn) pwBtn.addEventListener('click', () => switchTab('password'));
 
     fetch('/api/auth/otp/available').then(r => r.json()).then(d => {
-      if (d && d.enabled) { tabs.hidden = false; otpBtn.addEventListener('click', () => switchTab('otp')); }
+      if (d && d.enabled) {
+        mode = d.mode === 'widget' ? 'widget' : 'api';
+        tabs.hidden = false;
+        otpBtn.addEventListener('click', () => switchTab('otp'));
+      }
     }).catch(() => {});
 
     function maskPhone(p) { return p ? `${p.slice(0, 2)}xxxxxx${p.slice(-2)}` : ''; }
@@ -87,46 +93,95 @@
       }, 1000);
     }
 
-    async function sendCode() {
+    /* find a JWT-looking string anywhere in the widget response */
+    function extractToken(data, depth) {
+      depth = depth || 0;
+      if (data == null || depth > 4) return null;
+      if (typeof data === 'string') return data.startsWith('eyJ') && data.includes('.') ? data : null;
+      if (typeof data !== 'object') return null;
+      for (const k of ['token', 'accessToken', 'access_token', 'jwt', 'access-token']) {
+        if (typeof data[k] === 'string' && data[k].startsWith('eyJ')) return data[k];
+      }
+      for (const v of Object.values(data)) {
+        const found = extractToken(v, depth + 1);
+        if (found) return found;
+      }
+      return null;
+    }
+    const widgetError = e => (e && (e.message || e.error || e.msg)) || (typeof e === 'string' ? e : null) || 'Something went wrong. Please try again.';
+
+    function sendCode() {
       clearError();
       const phone = phoneInput.value.replace(/\D/g, '');
       if (phone.length !== 10 || !/^[6-9]/.test(phone)) return showError('Enter a valid 10-digit Indian mobile number.');
+      if (mode === 'widget') {
+        if (typeof window.sendOtp !== 'function') return showError('OTP system is still loading — wait a few seconds and try again.');
+        if (typeof window.isCaptchaVerified === 'function' && !window.isCaptchaVerified()) return showError('Please complete the security check first.');
+        sendBtn.disabled = true; sendBtn.textContent = 'Sending…';
+        window.sendOtp('91' + phone,
+          () => {
+            widgetPhone = phone;
+            step1.hidden = true; step2.hidden = false;
+            sentNote.textContent = `Code sent to ${maskPhone(phone)} · valid 15 minutes`;
+            codeInput.value = ''; codeInput.focus();
+            startResendCountdown();
+            sendBtn.disabled = false; sendBtn.textContent = 'Send code by SMS';
+          },
+          e => { showError(widgetError(e)); sendBtn.disabled = false; sendBtn.textContent = 'Send code by SMS'; }
+        );
+        return;
+      }
+      // api mode (dev / server-side send)
       sendBtn.disabled = true; sendBtn.textContent = 'Sending…';
-      try {
-        const data = await post('/api/auth/otp/request', { phone });
+      post('/api/auth/otp/request', { phone }).then(data => {
         otpForm.dataset.phone = phone;
         step1.hidden = true; step2.hidden = false;
         sentNote.textContent = `Code sent to ${maskPhone(phone)} · valid 10 minutes`;
-        codeInput.value = data.devCode || '';   // devCode only exists on the dev sender
+        codeInput.value = data.devCode || '';
         codeInput.focus();
         startResendCountdown();
-      } catch (error) {
+      }).catch(error => {
         showError(error.message);
-        if (/no account with this number/i.test(error.message)) {
-          setTimeout(() => { location.href = `/signup?phone=${phone}`; }, 1500);
-        }
-      } finally {
-        sendBtn.disabled = false; sendBtn.textContent = 'Send code by SMS';
-      }
+        if (/no account with this number/i.test(error.message)) setTimeout(() => { location.href = `/signup?phone=${phone}`; }, 1500);
+      }).finally(() => { sendBtn.disabled = false; sendBtn.textContent = 'Send code by SMS'; });
     }
     sendBtn.addEventListener('click', sendCode);
-    resendLink.addEventListener('click', event => { event.preventDefault(); if (resendLink.style.pointerEvents !== 'none') sendCode(); });
+    resendLink.addEventListener('click', event => {
+      event.preventDefault();
+      if (resendLink.style.pointerEvents === 'none') return;
+      clearError();
+      if (mode === 'widget') {
+        if (typeof window.retryOtp !== 'function' || !widgetPhone) return showError('Please request a code first.');
+        window.retryOtp(null, () => startResendCountdown(), e => showError(widgetError(e)));
+      } else sendCode();
+    });
     changeLink.addEventListener('click', event => {
       event.preventDefault();
       if (resendTimer) clearInterval(resendTimer);
       resendLink.style.pointerEvents = ''; resendLink.textContent = 'Resend code';
-      step2.hidden = true; step1.hidden = false; codeInput.value = ''; clearError(); phoneInput.focus();
+      step2.hidden = true; step1.hidden = false; codeInput.value = ''; widgetPhone = null; clearError(); phoneInput.focus();
     });
 
     otpForm.addEventListener('submit', async event => {
       event.preventDefault();
       clearError();
-      const phone = otpForm.dataset.phone || '';
       const code = codeInput.value.replace(/\D/g, '');
-      if (code.length !== 6) return showError('Enter the 6-digit code from the SMS.');
+      if (code.length < 4 || code.length > 8) return showError('Enter the code from the SMS.');
       verifyBtn.disabled = true; verifyBtn.textContent = 'Checking…';
       try {
-        await post('/api/auth/otp/verify', { phone, code });
+        if (mode === 'widget') {
+          const token = await new Promise((resolve, reject) => {
+            window.verifyOtp(code,
+              data => { const t = extractToken(data); t ? resolve(t) : reject(new Error('Verification response was incomplete — please try again.')); },
+              e => reject(new Error(widgetError(e)))
+            );
+          });
+          const phone = widgetPhone;
+          if (!phone) throw new Error('Please request a code first.');
+          await post('/api/auth/otp/widget', { phone, token });
+        } else {
+          await post('/api/auth/otp/verify', { phone: otpForm.dataset.phone || '', code });
+        }
         location.href = '/account';
       } catch (error) {
         showError(error.message);

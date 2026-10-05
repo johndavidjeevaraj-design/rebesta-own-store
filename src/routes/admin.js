@@ -544,7 +544,7 @@ router.get('/version', (req, res) => {
    GET  /api/admin/sms        → current provider status
    POST /api/admin/sms        → save/replace config {provider, ...} or {provider:'none'} to disable
    POST /api/admin/sms/test   → dry-run send with UNSAVED credentials {phone, config:{...}} */
-import { loadSmsConfig, otpAvailable, sendManagedOtp, sendOtpSms, msg91Balance, clearMcToken } from '../sms.js';
+import { loadSmsConfig, otpAvailable, sendManagedOtp, sendOtpSms, msg91Balance, verifyWidgetToken, clearMcToken } from '../sms.js';
 
 const SMS_FILE = () => path.join(config.dataDir, 'sms-config.json');
 
@@ -572,8 +572,11 @@ router.post('/sms', (req, res) => {
     if (!b.authKey) return res.status(400).json({ ok: false, error: 'msg91 needs authKey.' });
     out = { provider, authKey: String(b.authKey) };
     if (b.templateId) out.templateId = String(b.templateId);
+  } else if (provider === 'msg91-widget') {
+    if (!b.authKey || !b.widgetId || !b.tokenAuth) return res.status(400).json({ ok: false, error: 'msg91-widget needs authKey, widgetId and tokenAuth.' });
+    out = { provider, authKey: String(b.authKey), widgetId: String(b.widgetId), tokenAuth: String(b.tokenAuth) };
   } else {
-    return res.status(400).json({ ok: false, error: 'provider must be messagecentral, msg91, dev or none.' });
+    return res.status(400).json({ ok: false, error: 'provider must be msg91-widget, msg91, messagecentral, dev or none.' });
   }
   if (out) {
     fs.mkdirSync(config.dataDir, { recursive: true });
@@ -589,8 +592,15 @@ router.post('/sms/test', async (req, res) => {
   const phone = String(b.phone || '').replace(/\D/g, '');
   if (!/^[6-9]\d{9}$/.test(phone)) return res.status(400).json({ ok: false, error: 'Enter a valid 10-digit Indian mobile number.' });
   const cfg = b.config && b.config.provider ? b.config : loadSmsConfig();
+  if (cfg && cfg.provider === 'msg91-widget') {
+    // widget sends happen in the browser via their SDK — server side we can only
+    // confirm the verify endpoint accepts the account authkey.
+    const probe = await verifyWidgetToken('probe-token-not-real');
+    return res.json({ ok: !/AuthenticationFailure|201/i.test(String(probe.error || '')),
+      note: probe.error === 'invalid access-token' ? 'Widget verify endpoint reachable and authkey accepted (dummy token correctly rejected).' : 'Verify endpoint says: ' + probe.error });
+  }
   if (!cfg || !['messagecentral', 'msg91'].includes(cfg.provider)) {
-    return res.status(400).json({ ok: false, error: 'Test send supports the messagecentral and msg91 providers (set config.provider).' });
+    return res.status(400).json({ ok: false, error: 'Test supports msg91-widget, messagecentral and msg91 providers (set config.provider).' });
   }
   clearMcToken();
   if (cfg.provider === 'msg91') {

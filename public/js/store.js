@@ -253,15 +253,14 @@
     sheet.innerHTML = `
       <div class="sheet-grab" aria-hidden="true"></div>
       <div class="sheet-head">
-        <span class="sheet-badge" aria-hidden="true">${svgPin}</span>
-        <h3>Where should we deliver?</h3>
-        <p>Farm-fresh vegetables at your door, Hosur — every morning.</p>
+        <h3>What’s your location?</h3>
       </div>
       <button type="button" class="loc-gps" data-loc-gps>
         <span class="loc-gps-ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2.4" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
-        <span class="loc-gps-tx"><strong>Use my current location</strong><span>Most exact — one tap</span></span>
+        <span class="loc-gps-tx"><strong>Use my current location</strong></span>
       </button>
       <p class="loc-status" data-loc-status hidden role="status"></p>
+      <div class="loc-or" aria-hidden="true"><span>OR</span></div>
       <div class="loc-areas">
         <p class="loc-areas-title">Popular areas in Hosur</p>
         <div class="loc-chips">${LOC_AREAS.map(a =>

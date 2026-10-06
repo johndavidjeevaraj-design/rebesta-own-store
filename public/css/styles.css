@@ -1960,3 +1960,17 @@ body::before{display:none}
 .bottom-sheet[data-loc-sheet].expanded .loc-more-hint{display:none}
 [data-loc-sheet] .sheet-grab{cursor:pointer;padding:7px 0 3px}
 [data-loc-sheet] .sheet-head{cursor:pointer}
+/* PASS 41 — compact address chip, header breathing room, shorter offer bar, 3-tab nav */
+.loc-chip-lb{font-size:.54rem;letter-spacing:.12em}
+.header-location.loc-chip-btn strong{font-size:.82rem}
+.header-location.loc-chip-btn{gap:0}
+@media(max-width:840px){
+  .header-inner{row-gap:6px;padding-top:7px}
+  .header-location.loc-chip-btn{padding:2px 8px 2px 2px}
+  .hdr-icon{width:38px;height:38px}
+  .site-header{padding-bottom:20px}
+}
+.offers-banner-inner{min-height:40px;padding:5px 0}
+.offers-tag{padding:5px 11px}
+@media(max-width:640px){.offers-tag{padding:4px 9px;font-size:.56rem}}
+.bottom-nav{grid-template-columns:repeat(3,1fr)}

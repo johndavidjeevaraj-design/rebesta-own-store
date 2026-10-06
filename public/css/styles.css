@@ -2640,3 +2640,8 @@ body::before{display:none}
 .sw-del.on .sw-radio{border-color:#f26b4a;box-shadow:inset 0 0 0 4.5px #f26b4a}
 .sw-del.off{border:1.5px solid #e3e2e8;opacity:.5;margin-bottom:0}
 .sw-soon{color:#f26b4a;border:1.5px solid #f26b4a;background:#fff}
+
+/* PASS 57 (2026-10-06) — orange GRADIENT fills (site style) + fully CIRCULAR corners on delivery row buttons */
+.sw-seg-btn.on{background:linear-gradient(135deg,#f26b4a,#d8431f);color:#fff;border-radius:999px}
+.sw-tip-chip.on{background:linear-gradient(135deg,#f26b4a,#d8431f);border-color:transparent;color:#fff}
+.sw-del{border-radius:999px;padding:12px 18px}

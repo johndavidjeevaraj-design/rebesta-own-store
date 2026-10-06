@@ -1,209 +1,324 @@
+/* Rebesta Fresh — basket PAGE (Swiggy-style, colorful). Order flows: basket → PAY → (guest? SMS OTP sheet) → /checkout payment page. */
 (() => {
-  const state = { products: [], byHandle: new Map(), settings: null };
-  const itemsNode = document.querySelector('[data-cart-items]');
-  const emptyNode = document.querySelector('[data-cart-empty]');
-  const layoutNode = document.querySelector('[data-cart-layout]');
-  const summaryNode = document.querySelector('[data-cart-summary]');
-  const recommendedNode = document.querySelector('[data-recommended-grid]');
+  const $ = sel => document.querySelector(sel);
+  const ADDR_KEY = 'rebesta_checkout_addr_v1';
+  const TIP_KEY = 'rebesta_checkout_tip_v1';
+  const COUPON_KEY = 'rebesta_checkout_coupon_v1';
+  const NOTES_KEY = 'rebesta_checkout_notes_v1';
+  const TIP_CHOICES = [0, 10, 20, 30];
+  const ADDON_RE = /coriander|curry|chilli|garlic|ginger|lemon|coconut|mint|amaranth|keerai|keera/i;
+  const ADD_TABS = [
+    { id: 'popular', label: '⭐ Popular', pick: list => list.filter(p => p.featured) },
+    { id: 'greens', label: '🥬 Greens', pick: list => list.filter(p => p.category === 'Leafy Greens') },
+    { id: 'combos', label: '📦 Combos', pick: list => list.filter(p => p.category === 'Combos & Kits') },
+    { id: 'addons', label: '🌿 Add-ons', pick: list => list.filter(p => ADDON_RE.test(p.title) && p.category !== 'Combos & Kits') }
+  ];
 
-  function lines() {
-    return RFS.readCart()
-      .map(item => ({ ...item, product: state.byHandle.get(item.handle) }))
-      .filter(item => item.product);
+  const state = {
+    products: [], byHandle: new Map(), me: null, quote: null, slotId: '',
+    tip: 0, coupon: null, coupons: null, addTab: 'popular', quoteTimer: null, notesTimer: null
+  };
+
+  const money = v => RFS.money(v);
+  const items = () => RFS.readCart();
+  const subtotal = () => {
+    let sum = 0;
+    for (const item of items()) { const p = state.byHandle.get(item.handle); if (p) sum += p.priceInr * item.qty; }
+    return sum;
+  };
+  function readPref(key, fallback) {
+    try { const v = JSON.parse(localStorage.getItem(key) || 'null'); return (v === null || v === undefined) ? fallback : v; } catch { return fallback; }
+  }
+  function writePref(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
+
+  /* ---------- renderers ---------- */
+  function renderHero() {
+    const count = RFS.cartCount();
+    $('[data-bp-count]').textContent = `${count} item${count === 1 ? '' : 's'}`;
+    const loc = RFS.getSavedLocation();
+    const area = (loc && (loc.label || loc.area)) || '';
+    $('[data-bp-subtitle]').textContent = count
+      ? (area ? `Delivering to ${area} · tomorrow morning` : 'Fresh from the farm, every morning')
+      : 'Fresh from the farm, every morning';
   }
 
-  function renderItem(item) {
-    const { product, qty } = item;
-    const row = document.createElement('article');
-    row.className = 'cart-item';
-
-    const image = document.createElement('div');
-    image.className = 'cart-item-image';
-    const img = document.createElement('img');
-    img.src = product.image;
-    img.alt = product.title; img.decoding = 'async';
-    image.appendChild(img);
-
-    const main = document.createElement('div');
-    main.className = 'cart-item-main';
-    const title = document.createElement('h3');
-    title.textContent = product.title;
-    const meta = document.createElement('div');
-    meta.className = 'meta';
-    meta.textContent = `${product.category} · ${product.unitLabel} · ${RFS.money(product.priceInr)}`;
-    const actions = document.createElement('div');
-    actions.className = 'cart-item-actions';
-    const stepper = document.createElement('span');
-    stepper.className = 'qty-stepper';
-    const minus = document.createElement('button');
-    minus.type = 'button'; minus.textContent = '−';
-    minus.addEventListener('click', () => { RFS.setQty(product.handle, qty - 1); render(); RFS.syncCartUI(state.products); });
-    const count = document.createElement('span'); count.textContent = qty;
-    const plus = document.createElement('button');
-    plus.type = 'button'; plus.textContent = '+'; plus.disabled = qty >= product.stock || qty >= 50;
-    plus.addEventListener('click', () => { RFS.setQty(product.handle, Math.min(50, qty + 1)); render(); RFS.syncCartUI(state.products); });
-    stepper.append(minus, count, plus);
-    const remove = document.createElement('button');
-    remove.type = 'button'; remove.className = 'remove-link'; remove.textContent = 'Remove';
-    remove.addEventListener('click', () => { RFS.removeItem(product.handle); render(); RFS.syncCartUI(state.products); });
-    const mobileTotal = document.createElement('span');
-    mobileTotal.className = 'cart-line-total mobile-line-total';
-    mobileTotal.textContent = RFS.money(product.priceInr * qty);
-    actions.append(stepper, remove, mobileTotal);
-    main.append(title, meta, actions);
-
-    const total = document.createElement('div');
-    total.className = 'cart-line-total';
-    total.textContent = RFS.money(product.priceInr * qty);
-
-    row.append(image, main, total);
-    return row;
+  function renderEmpty(hasItems) {
+    $('[data-bp-empty]').hidden = hasItems;
+    $('[data-bp-main]').hidden = !hasItems;
+    $('[data-bp-paybar]').hidden = !hasItems;
+    if (!hasItems) { renderRepeatOrder(); renderEmptyPicks(); }
   }
 
-  function renderSummary(subtotal, count) {
-    const remaining = Math.max(0, 500 - subtotal);
-    summaryNode.innerHTML = '';
-    const title = document.createElement('h2');
-    title.textContent = 'Basket summary';
-    const rows = [
-      ['Products', `${count} item${count === 1 ? '' : 's'}`],
-      ['Subtotal', RFS.money(subtotal)],
-      ['Delivery', 'By road distance at checkout']
-    ];
-    const frag = document.createDocumentFragment();
-    frag.appendChild(title);
-    rows.forEach(([label, value]) => {
-      const row = document.createElement('div');
-      row.className = 'summary-row';
-      row.innerHTML = `<span></span><strong></strong>`;
-      row.querySelector('span').textContent = label;
-      row.querySelector('strong').textContent = value;
-      frag.appendChild(row);
-    });
-    const meter = document.createElement('div');
-    const progress = Math.min(100, Math.max(4, (subtotal / 500) * 100));
-    meter.className = `delivery-meter ${subtotal >= 500 ? 'complete' : ''}`;
-    meter.innerHTML = `
-      <div class="delivery-meter-copy"><span>Free delivery progress</span><strong>${subtotal >= 500 ? 'Unlocked' : `${RFS.money(500)} target`}</strong></div>
-      <div class="delivery-meter-track"><span class="delivery-meter-fill" style="--progress:${progress}%"></span></div>`;
-    /* One-tap add-ons: cheapest in-stock picks to cross the free-delivery line */
-    let addonChips = null;
-    if (remaining > 0) {
-      const inCartHandles = new Set(lines().map(item => item.product.handle));
-      const picks = state.products
-        .filter(p => p.stock > 0 && !inCartHandles.has(p.handle) && Number(p.priceInr) <= 60)
-        .sort((a, b) => Number(a.priceInr) - Number(b.priceInr))
-        .slice(0, 4);
-      if (picks.length) {
-        addonChips = document.createElement('div');
-        addonChips.className = 'addon-chips';
-        addonChips.innerHTML = '<span class="addon-label">Quick add to cross ₹500</span>';
-        for (const p of picks) {
-          const chip = document.createElement('button');
-          chip.type = 'button';
-          chip.className = 'addon-chip';
-          chip.innerHTML = '<span></span><strong></strong>';
-          chip.querySelector('span').textContent = p.title;
-          chip.querySelector('strong').textContent = RFS.money(p.priceInr);
-          chip.addEventListener('click', () => { RFS.addItem(p.handle, 1); render(); RFS.syncCartUI(state.products); });
-          addonChips.appendChild(chip);
-        }
-      }
-    }
-    const notice = document.createElement('div');
-    notice.className = `alert ${subtotal >= 500 ? 'success' : 'info'}`;
-    notice.textContent = subtotal >= 500
-      ? 'Free delivery unlocked. Final road-distance check happens safely at checkout.'
-      : `Add ${RFS.money(remaining)} more to unlock free delivery above ₹500.`;
-    const total = document.createElement('div');
-    total.className = 'summary-total';
-    total.innerHTML = `<span>Items total</span><strong></strong>`;
-    total.querySelector('strong').textContent = RFS.money(subtotal);
-    const waNumber = String(state.settings?.business?.whatsapp || '918438765119').replace(/\D/g, '');
-    const waText = `Hi Rebesta Fresh! \u{1F966} I'd like to order:\n\n${lines().map(item => `\u2022 ${item.product.title} (${item.product.unitLabel}) \u00D7 ${item.qty} \u2014 ${RFS.money(item.product.priceInr * item.qty)}`).join('\n')}\n\nItems total: ${RFS.money(subtotal)}\n\n(I will confirm the delivery pin and slot with you.)`;
-    const whatsapp = document.createElement('a');
-    whatsapp.className = 'button whatsapp full';
-    whatsapp.style.marginTop = '9px';
-    whatsapp.target = '_blank';
-    whatsapp.rel = 'noopener';
-    whatsapp.href = `https://api.whatsapp.com/send/?phone=${waNumber}&text=${encodeURIComponent(waText)}`;
-    whatsapp.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Zm0 2a8 8 0 1 1-4.2 14.8l-.4-.3-3 .8.8-2.9-.3-.4A8 8 0 0 1 12 4Zm-2.9 4c-.2 0-.5 0-.7.3-.3.3-.9.9-.9 2.1s.9 2.4 1 2.6c.2.2 1.8 2.9 4.5 3.9 2.2.8 2.7.7 3.2.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2-.1-.1-.3-.2-.6-.3l-2-1c-.3-.1-.5-.2-.7.1l-1 1.2c-.2.2-.4.2-.6.1a6.7 6.7 0 0 1-3.3-2.8c-.2-.4 0-.6.1-.7l.5-.6c.2-.2.2-.3.3-.5.1-.3 0-.4 0-.6L9.4 8.6c-.2-.4-.2-.6-.3-.6Z"/></svg> Order on WhatsApp';
-    const checkout = document.createElement('a');
-    checkout.href = '/checkout';
-    checkout.className = 'button orange full';
-    checkout.style.marginTop = '18px';
-    checkout.textContent = 'Select pin and continue';
-    const note = document.createElement('p');
-    note.className = 'summary-note';
-    note.textContent = 'Delivery charges: ₹20–₹100 for 0–9 road km. Locations beyond 9 road km do not receive the standard local delivery rate.';
-    frag.append(meter, ...(addonChips ? [addonChips] : []), notice, total, checkout, whatsapp, note);
-    summaryNode.appendChild(frag);
+  function renderItems() {
+    const box = $('[data-bp-items]');
+    const cart = items();
+    renderHero();
+    renderEmpty(cart.length > 0);
+    if (!cart.length) return;
+    box.innerHTML = cart.map(item => {
+      const p = state.byHandle.get(item.handle);
+      if (!p) return '';
+      return `<div class="bp-row">
+        <img src="${p.image}" alt="" loading="lazy">
+        <div class="bp-row-info"><div class="bp-row-name">${p.title}</div><div class="bp-row-unit">${p.unitLabel || ''} · ${money(p.priceInr)}</div></div>
+        <div class="qty-stepper bp-qty"><button type="button" data-cs="minus" data-handle="${item.handle}" data-qty="${item.qty}">−</button><span>${item.qty}</span><button type="button" data-cs="plus" data-handle="${item.handle}" data-qty="${item.qty}">+</button></div>
+        <div class="bp-row-price">${money(p.priceInr * item.qty)}</div>
+      </div>`;
+    }).join('');
   }
 
-  function renderRecommendations(target) {
-    const node = target || recommendedNode;
-    if (!node) return;
-    const inCart = new Set(RFS.readCart().map(item => item.handle));
-    const pool = target
-      ? state.products.filter(p => p.stock > 0).sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)))
-      : state.products.filter(p => !inCart.has(p.handle) && p.stock > 0);
-    const picks = pool.slice(0, 4);
-    node.innerHTML = '';
-    for (const product of picks) {
-      const card = document.createElement('article');
-      card.className = 'product-card';
-      card.innerHTML = `
-        <div class="product-image"><img alt=""></div>
-        <div class="product-body">
-          <div class="product-category"></div>
-          <h3 class="product-title"></h3>
-          <div class="price-row"><span class="price"></span><span class="unit"></span></div>
-          <button class="button primary small full" type="button">Add to basket</button>
+  function renderAddr() {
+    const addr1 = $('[data-bp-addr1]')?.value.trim() || readPref(ADDR_KEY, {}).line1 || '';
+    const pin = $('[data-bp-pin]')?.value.trim() || readPref(ADDR_KEY, {}).pincode || '';
+    const loc = RFS.getSavedLocation();
+    const area = (loc && (loc.label || loc.area)) || 'Hosur';
+    const line = $('[data-bp-addr-line]');
+    line.textContent = addr1 || 'Add delivery address';
+    line.classList.toggle('is-empty', !addr1);
+    $('[data-bp-addr-sub]').textContent = `${area}${pin ? ' · ' + pin : ''}`;
+  }
+
+  function renderRail() {
+    const wrap = $('[data-bp-complete]');
+    if (!state.products.length) { wrap.hidden = true; return; }
+    wrap.hidden = false;
+    $('[data-bp-tabs]').innerHTML = ADD_TABS.map(t =>
+      `<button type="button" class="bp-tab${t.id === state.addTab ? ' on' : ''}" data-bp-tab="${t.id}">${t.label}</button>`).join('');
+    const inCart = new Map(items().map(i => [i.handle, i.qty]));
+    const pool = state.products.filter(p => p.active !== false && Number(p.stock) > 0);
+    const seen = new Set();
+    const tab = ADD_TABS.find(t => t.id === state.addTab) || ADD_TABS[0];
+    const picks = tab.pick(pool).filter(p => (seen.has(p.handle) ? false : seen.add(p.handle))).slice(0, 8);
+    $('[data-bp-rail]').innerHTML = picks.map(p => {
+      const qty = inCart.get(p.handle) || 0;
+      return `<div class="bp-pcard">
+        <img src="${p.image}" alt="" loading="lazy">
+        <div class="bp-pname">${p.title}</div>
+        <div class="bp-pprice">${money(p.priceInr)} <small>· ${p.unitLabel || ''}</small></div>
+        ${qty
+          ? `<div class="qty-stepper bp-qty bp-mini-step"><button type="button" data-cs="minus" data-handle="${p.handle}" data-qty="${qty}">−</button><span>${qty}</span><button type="button" data-cs="plus" data-handle="${p.handle}" data-qty="${qty}">+</button></div>`
+          : `<button type="button" class="bp-add" data-cs-action="add" data-handle="${p.handle}">ADD</button>`}
+      </div>`;
+    }).join('') || '<p class="bp-rail-empty">Nothing here right now — check the other tabs!</p>';
+  }
+
+  const couponDesc = c => {
+    const off = c.type === 'percent' ? `${Number(c.value)}% off` : `${money(Number(c.value))} off`;
+    return c.minOrderInr ? `${off} on orders above ${money(Number(c.minOrderInr))}` : `${off} on any order`;
+  };
+  const CARD_COLORS = ['green', 'orange', 'purple', 'blue'];
+
+  function renderSavings() {
+    const wrap = $('[data-bp-savings]');
+    if (!state.coupons || !state.coupons.length) { wrap.hidden = true; }
+    else {
+      wrap.hidden = false;
+      $('[data-bp-coupon-cards]').innerHTML = state.coupons.map((c, i) => {
+        const applied = state.coupon && state.coupon.code === c.code;
+        return `<div class="bp-ccard bp-cc-${CARD_COLORS[i % CARD_COLORS.length]}${applied ? ' on' : ''}">
+          <div class="bp-ccode">${c.code}</div>
+          <div class="bp-cdesc">${couponDesc(c)}</div>
+          ${applied ? '<span class="bp-capplied">✓ APPLIED</span>' : `<button type="button" class="bp-cbtn" data-bp-apply-code="${c.code}">APPLY</button>`}
         </div>`;
-      card.querySelector('img').src = product.image;
-      card.querySelector('img').alt = product.title;
-      card.querySelector('.product-category').textContent = product.unitLabel;
-      card.querySelector('.product-title').textContent = product.title;
-      card.querySelector('.price').textContent = RFS.money(product.priceInr);
-      card.querySelector('.unit').textContent = `/ ${product.unitLabel}`;
-      card.querySelector('button').addEventListener('click', () => { RFS.flyToBasket(card.querySelector('.product-image')); RFS.addItem(product.handle); render(); RFS.syncCartUI(state.products); });
-      node.appendChild(card);
+      }).join('');
     }
-  }
-
-  function render() {
-    const cartLines = lines();
-    const count = cartLines.reduce((s, item) => s + item.qty, 0);
-    const subtotal = cartLines.reduce((s, item) => s + item.product.priceInr * item.qty, 0);
-    layoutNode.hidden = !cartLines.length;
-    emptyNode.hidden = cartLines.length > 0;
-    if (emptyNode.hidden) { const ro = document.querySelector('[data-repeat-order]'); if (ro) ro.hidden = true; }
-    else renderRepeatOrder();
-    itemsNode.innerHTML = '';
-    cartLines.forEach(item => itemsNode.appendChild(renderItem(item)));
-    if (cartLines.length) {
-      renderSummary(subtotal, count);
-      renderRecommendations();
+    const on = $('[data-bp-coupon-on]');
+    const form = $('[data-bp-coupon-form]');
+    if (state.coupon) {
+      on.hidden = false; form.hidden = true;
+      on.innerHTML = `<span>🎟 <b>${state.coupon.code}</b> · −${money(Number(state.coupon.discountInr) || 0)}</span><button type="button" class="bp-coupon-x" data-bp-coupon-x aria-label="Remove coupon">✕</button>`;
     } else {
-      renderRecommendations(document.querySelector('[data-empty-picks-grid]'));
+      on.hidden = true; form.hidden = false;
     }
-    RFS.syncCartUI(state.products);
   }
 
-  async function init() {
-    try {
-      const [data, settingsData] = await Promise.all([RFS.api('/api/products'), RFS.api('/api/settings')]);
-      state.products = data.products;
-      state.settings = settingsData;
-      state.byHandle = new Map(data.products.map(p => [p.handle, p]));
-      render();
-    } catch (error) {
-      itemsNode.innerHTML = `<div class="alert error">${error.message}</div>`;
-    }
+  function renderTips() {
+    $('[data-bp-tips]').innerHTML = TIP_CHOICES.map(v =>
+      `<button type="button" class="bp-tip-chip${state.tip === v ? ' on' : ''}" data-tip="${v}">${v ? money(v) : 'No tip'}</button>`).join('');
   }
-  /* One-tap repeat: refill the basket with the previous order (kept locally, no login) */
+
+  function renderBill() {
+    const billEl = $('[data-bp-bill]');
+    if (!items().length) { billEl.hidden = true; return; }
+    billEl.hidden = false;
+    const sub = subtotal();
+    const discount = state.coupon ? Number(state.coupon.discountInr || 0) : 0;
+    const eligible = Boolean(state.quote?.eligible);
+    const fee = eligible ? Number(state.quote.deliveryFeeInr || 0) : null;
+    const total = Math.max(0, Math.round(sub + (fee || 0) + state.tip - discount));
+    $('[data-bp-bill-rows]').innerHTML = `
+      <div class="bp-bill-row"><span>Item total</span><span>${money(sub)}</span></div>
+      <div class="bp-bill-row"><span>Delivery fee</span><span>${fee === null ? '—' : (fee === 0 ? 'FREE' : money(fee))}</span></div>
+      <div class="bp-bill-row"><span>Delivery tip</span><span>${money(state.tip)}</span></div>
+      ${discount ? `<div class="bp-bill-row bp-bill-green"><span>Coupon ${state.coupon.code}</span><span>−${money(discount)}</span></div>` : ''}
+      <div class="bp-bill-total"><span>To pay</span><span>${money(total)}</span></div>`;
+    const saved = $('[data-bp-saved]');
+    const savings = discount + (state.quote?.freeApplied ? Number(state.quote.deliveryFeeInr || 0) : 0);
+    saved.hidden = !(savings > 0);
+    if (savings > 0) saved.innerHTML = `🎉 You saved <b>${money(savings)}</b> on this order!`;
+    $('[data-bp-pay-total]').textContent = money(total);
+    $('[data-bp-pay]').disabled = !eligible || !state.slotId;
+  }
+
+  function renderQuote() {
+    const feeEl = $('[data-bp-fee]');
+    const slotsEl = $('[data-bp-slots]');
+    const eligible = Boolean(state.quote?.eligible);
+    feeEl.hidden = false;
+    if (state.quote && !eligible) feeEl.textContent = state.quote.message || 'We cannot deliver to this area yet.';
+    else if (eligible) feeEl.textContent = state.quote.freeApplied
+      ? `Free delivery applied (basket over ${money(500)}) · ${state.quote.distanceKm ? state.quote.distanceKm + ' road km' : 'Hosur'}`
+      : `Delivery ${money(Number(state.quote.deliveryFeeInr || 0))} · ${state.quote.distanceKm ? state.quote.distanceKm + ' road km from the hub' : 'local morning delivery'}`;
+    else feeEl.textContent = 'Set your delivery location to check availability.';
+    const slots = eligible ? (state.quote.slots || []) : [];
+    slotsEl.hidden = !slots.length;
+    if (slots.length) {
+      slotsEl.innerHTML = slots.map(slot => {
+        const full = Boolean(slot.full);
+        const left = Number(slot.remaining ?? slot.capacity ?? NaN);
+        return `<button type="button" class="bp-slot${slot.id === state.slotId ? ' on' : ''}" data-slot-id="${slot.id}" ${full ? 'disabled' : ''}>
+          <span>${slot.label}</span><span class="bp-slot-left">${full ? 'Full' : (Number.isFinite(left) && left <= 8 ? left + ' left' : (slot.dateLabel || ''))}</span>
+        </button>`;
+      }).join('');
+      if (!slots.some(s => s.id === state.slotId)) {
+        const first = slots.find(s => !s.full);
+        if (first) { state.slotId = first.id; slotsEl.querySelector(`[data-slot-id="${first.id}"]`)?.classList.add('on'); }
+      }
+    } else { state.slotId = ''; }
+    renderBill();
+  }
+
+  function renderAll() { renderItems(); renderAddr(); renderRail(); renderSavings(); renderTips(); renderQuote(); }
+
+  /* ---------- quote ---------- */
+  function scheduleQuote() {
+    clearTimeout(state.quoteTimer);
+    state.quoteTimer = setTimeout(refreshQuote, 280);
+  }
+  async function refreshQuote() {
+    if (!items().length) { state.quote = null; return; }
+    const loc = RFS.getSavedLocation() || {};
+    const pin = $('[data-bp-pin]').value.trim();
+    try {
+      state.quote = (await RFS.api('/api/quote', { method: 'POST', body: JSON.stringify({
+        items: items(),
+        location: Number.isFinite(loc.lat) ? { lat: loc.lat, lng: loc.lng } : {},
+        address: { pincode: /^\d{6}$/.test(pin) ? pin : '' }
+      }) })).quote || null;
+    } catch { state.quote = null; }
+    if (state.coupon && subtotal() < Number(state.coupon.minOrderInr || 0)) {
+      RFS.toast(`Coupon ${state.coupon.code} removed — basket is below ${money(Number(state.coupon.minOrderInr || 0))}`, 'error');
+      removeCoupon();
+      return;
+    }
+    renderQuote();
+  }
+
+  /* ---------- coupons ---------- */
+  async function applyCoupon(code, quiet = false) {
+    code = String(code || '').trim().toUpperCase();
+    if (!code) return;
+    const msg = $('[data-bp-coupon-msg]');
+    if (msg && !quiet) { msg.hidden = false; msg.textContent = 'Checking…'; msg.className = 'bp-coupon-msg'; }
+    try {
+      const data = await RFS.api('/api/coupon/check', { method: 'POST', body: JSON.stringify({ code, subtotalInr: subtotal() }) });
+      state.coupon = data.coupon;
+      writePref(COUPON_KEY, { code: state.coupon.code });
+      if (!quiet) RFS.toast(`Coupon ${state.coupon.code} applied — you save ${money(state.coupon.discountInr)} 🎉`);
+      if (msg) msg.hidden = true;
+    } catch (error) {
+      if (!quiet && msg) { msg.hidden = false; msg.textContent = error.message || 'That coupon is not valid'; msg.className = 'bp-coupon-msg error'; }
+      if (quiet) { state.coupon = null; try { localStorage.removeItem(COUPON_KEY); } catch {} }
+    }
+    renderSavings();
+    renderQuote();
+  }
+  function removeCoupon() {
+    state.coupon = null;
+    try { localStorage.removeItem(COUPON_KEY); } catch {}
+    renderSavings();
+    renderQuote();
+  }
+
+  /* ---------- login sheet (the only sheet — phone number OTP) ---------- */
+  function loadOtpSdk() {
+    if (document.querySelector('script[data-otp-sdk]') || typeof window.initSendOTP === 'function') return;
+    const config = {
+      widgetId: '366a65687644323637363131',
+      tokenAuth: '571380TgZrH8gvzsiK6aa8dedbP1',
+      exposeMethods: true,
+      captchaRenderId: 'bp-captcha',
+      success: data => { window.__otpWidgetSuccess = data; },
+      failure: error => { window.__otpWidgetFailure = error; }
+    };
+    const urls = ['https://verify.msg91.com/otp-provider.js', 'https://verify.phone91.com/otp-provider.js'];
+    let i = 0;
+    (function attempt() {
+      const s = document.createElement('script');
+      s.src = urls[i]; s.async = true; s.dataset.otpSdk = '1';
+      s.onload = () => { if (typeof window.initSendOTP === 'function') { try { window.initSendOTP(config); } catch (e) { window.__otpWidgetFailure = e; } } };
+      s.onerror = () => { i += 1; if (i < urls.length) attempt(); };
+      document.head.appendChild(s);
+    })();
+  }
+  function openAuthSheet(afterLogin) {
+    const sheet = $('[data-bp-auth-sheet]');
+    const back = $('[data-bp-auth-backdrop]');
+    sheet.hidden = false; back.hidden = false;
+    document.body.classList.add('sheet-open');
+    requestAnimationFrame(() => sheet.classList.add('open'));
+    loadOtpSdk();
+    const s = document.createElement('script');
+    s.src = '/js/auth.js?v=20261005d'; s.async = true;
+    s.onload = () => {
+      if (!window.RFSAuth || sheet.dataset.wired) return;
+      sheet.dataset.wired = '1';
+      window.RFSAuth.bindFlow(sheet.querySelector('[data-bp-flow]'), {
+        onSuccess: async () => {
+          try { state.me = (await RFS.api('/api/auth/me')).customer || null; } catch { state.me = null; }
+          closeAuthSheet();
+          RFS.toast(`Welcome, ${(state.me?.name || 'friend').split(' ')[0]}! 🌿`);
+          if (typeof afterLogin === 'function') afterLogin();
+        }
+      });
+    };
+    document.head.appendChild(s);
+  }
+  function closeAuthSheet() {
+    const sheet = $('[data-bp-auth-sheet]');
+    sheet.classList.remove('open');
+    $('[data-bp-auth-backdrop]').hidden = true;
+    document.body.classList.remove('sheet-open');
+    setTimeout(() => { if (!sheet.classList.contains('open')) sheet.hidden = true; }, 340);
+  }
+
+  /* ---------- pay ---------- */
+  async function proceedToPayment() {
+    const addr1El = $('[data-bp-addr1]');
+    const pinEl = $('[data-bp-pin]');
+    const edit = $('[data-bp-addr-edit]');
+    const addr1 = addr1El.value.trim();
+    const pin = pinEl.value.trim();
+    if (addr1.length < 5) { edit.hidden = false; RFS.toast('Enter your house / flat / street address', 'error'); addr1El.focus(); return; }
+    if (!/^\d{6}$/.test(pin)) { edit.hidden = false; RFS.toast('Enter a 6-digit pincode', 'error'); pinEl.focus(); return; }
+    if (!RFS.getSavedLocation()) { RFS.toast('Pick your delivery area first', 'error'); RFS.openLocationSheet(); return; }
+    if (!state.quote) await refreshQuote();
+    if (!state.quote?.eligible) { RFS.toast(state.quote?.message || 'We cannot deliver to this area yet', 'error'); return; }
+    if (!state.slotId) { RFS.toast('Choose a delivery slot', 'error'); return; }
+    if (!state.me) { openAuthSheet(() => { proceedToPayment(); }); return; }
+    writePref(ADDR_KEY, { line1: addr1, pincode: pin });
+    writePref(NOTES_KEY, $('[data-bp-notes-input]').value.trim());
+    if (state.coupon) writePref(COUPON_KEY, { code: state.coupon.code });
+    else { try { localStorage.removeItem(COUPON_KEY); } catch {} }
+    writePref(TIP_KEY, state.tip);
+    const pay = $('[data-bp-pay]');
+    RFS.setBusy(pay, true, 'Opening payment…');
+    window.location.href = '/checkout';
+  }
+
+  /* ---------- empty-state helpers ---------- */
   function renderRepeatOrder() {
-    const host = document.querySelector('[data-repeat-order]');
+    const host = $('[data-repeat-order]');
     if (!host) return;
     let last = null;
     try { last = JSON.parse(localStorage.getItem('rebesta_last_order') || 'null'); } catch {}
@@ -212,14 +327,107 @@
     const known = last.items.filter(i => state.byHandle.has(i.handle));
     if (!known.length) { host.hidden = true; return; }
     host.hidden = false;
-    const btn = host.querySelector('button');
-    btn.onclick = () => {
+    host.querySelector('button').onclick = () => {
       for (const item of known) RFS.addItem(item.handle, item.qty);
       RFS.toast(`${known.length} products from your last order added`, 'success');
-      render(); RFS.syncCartUI(state.products);
+      renderAll(); scheduleQuote();
     };
   }
+  function renderEmptyPicks() {
+    const grid = $('[data-empty-picks-grid]');
+    if (!grid || !state.products.length) return;
+    const picks = state.products.filter(p => p.featured && p.active !== false && p.stock > 0).slice(0, 4);
+    grid.innerHTML = picks.map(p => `<a class="bp-pick" href="/product/${p.handle}">
+      <img src="${p.image}" alt="${p.title}" loading="lazy">
+      <b>${p.title}</b><span>${money(p.priceInr)}</span></a>`).join('');
+  }
 
-  window.addEventListener('rebesta:cart-changed', () => { render(); RFS.syncCartUI(state.products); });
-  init();
+  /* ---------- events ---------- */
+  document.addEventListener('click', event => {
+    const step = event.target.closest('button[data-cs], button[data-cs-action]');
+    if (step) {
+      if (step.dataset.csAction === 'add') RFS.addItem(step.dataset.handle, 1);
+      else { const qty = Number(step.dataset.qty || '1'); RFS.setQty(step.dataset.handle, step.dataset.cs === 'plus' ? qty + 1 : qty - 1); }
+      return;
+    }
+    const tab = event.target.closest('button[data-bp-tab]');
+    if (tab) { state.addTab = tab.dataset.bpTab; renderRail(); return; }
+    const applyBtn = event.target.closest('button[data-bp-apply-code]');
+    if (applyBtn) { applyCoupon(applyBtn.dataset.bpApplyCode); return; }
+    if (event.target.closest('[data-bp-coupon-x]')) { removeCoupon(); return; }
+    const slot = event.target.closest('button[data-slot-id]');
+    if (slot && !slot.disabled) {
+      state.slotId = slot.dataset.slotId;
+      document.querySelectorAll('[data-slot-id]').forEach(el => el.classList.toggle('on', el === slot));
+      renderBill();
+      return;
+    }
+    const tip = event.target.closest('button[data-tip]');
+    if (tip) { state.tip = Number(tip.dataset.tip) || 0; writePref(TIP_KEY, state.tip); renderTips(); renderBill(); return; }
+  });
+
+  $('[data-bp-addr-row]').addEventListener('click', () => {
+    const edit = $('[data-bp-addr-edit]');
+    edit.hidden = !edit.hidden;
+    if (!edit.hidden && !$('[data-bp-addr1]').value.trim()) $('[data-bp-addr1]').focus();
+  });
+  $('[data-bp-area]').addEventListener('click', () => RFS.openLocationSheet());
+  $('[data-bp-addmore]').addEventListener('click', () => { window.location.href = '/shop'; });
+  $('[data-bp-notes-toggle]').addEventListener('click', () => {
+    const box = $('[data-bp-notes]');
+    box.hidden = !box.hidden;
+    if (!box.hidden) box.querySelector('[data-bp-notes-input]').focus();
+  });
+  $('[data-bp-notes-input]').addEventListener('input', event => {
+    clearTimeout(state.notesTimer);
+    const value = event.target.value;
+    state.notesTimer = setTimeout(() => {
+      writePref(NOTES_KEY, value);
+      const hint = $('[data-bp-notes-hint]');
+      if (hint) hint.textContent = value ? `“${value.slice(0, 18)}${value.length > 18 ? '…' : ''}”` : '';
+    }, 350);
+  });
+  $('[data-bp-coupon-apply-btn]').addEventListener('click', () => applyCoupon($('[data-bp-coupon-input]').value));
+  $('[data-bp-coupon-input]').addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); applyCoupon(event.target.value); } });
+  $('[data-bp-pay]').addEventListener('click', proceedToPayment);
+  $('[data-bp-upi]').addEventListener('click', proceedToPayment);
+  $('[data-bp-pin]').addEventListener('change', () => { scheduleQuote(); });
+  $('[data-bp-addr1]').addEventListener('input', renderAddr);
+  $('[data-bp-pin]').addEventListener('input', renderAddr);
+  $('[data-bp-auth-close]').addEventListener('click', closeAuthSheet);
+  $('[data-bp-auth-backdrop]').addEventListener('click', closeAuthSheet);
+  $('[data-bp-auth-cancel]').addEventListener('click', closeAuthSheet);
+
+  window.addEventListener('rebesta:cart-changed', () => { renderAll(); scheduleQuote(); });
+  window.addEventListener('rebesta:location-changed', () => { renderAddr(); scheduleQuote(); });
+
+  /* ---------- init ---------- */
+  (async function init() {
+    try {
+      const [products, me] = await Promise.all([
+        RFS.api('/api/products'),
+        RFS.api('/api/auth/me').catch(() => null)
+      ]);
+      state.products = products.products || [];
+      state.byHandle = new Map(state.products.map(p => [p.handle, p]));
+      state.me = me?.customer || null;
+      try { state.coupons = (await RFS.api('/api/coupon/list')).coupons || []; } catch { state.coupons = []; }
+      const savedAddr = readPref(ADDR_KEY, null);
+      if (savedAddr?.line1) $('[data-bp-addr1]').value = String(savedAddr.line1).slice(0, 120);
+      if (savedAddr?.pincode) $('[data-bp-pin]').value = String(savedAddr.pincode).slice(0, 6);
+      state.tip = Math.min(100, Math.max(0, Number(readPref(TIP_KEY, 0)) || 0));
+      const notes = String(readPref(NOTES_KEY, '') || '');
+      if (notes) $('[data-bp-notes-input]').value = notes.slice(0, 250);
+      const hint = $('[data-bp-notes-hint]');
+      if (hint && notes) hint.textContent = `“${notes.slice(0, 18)}${notes.length > 18 ? '…' : ''}”`;
+      const savedCoupon = readPref(COUPON_KEY, null);
+      renderAll();
+      RFS.syncCartUI(state.products);
+      if (savedCoupon?.code) await applyCoupon(savedCoupon.code, true);
+      scheduleQuote();
+      if (!RFS.getSavedLocation()) setTimeout(() => RFS.openLocationSheet(), 900);
+    } catch (error) {
+      RFS.toast(error.message || 'Could not load your basket', 'error');
+    }
+  })();
 })();

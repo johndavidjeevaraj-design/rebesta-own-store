@@ -1974,3 +1974,5 @@ body::before{display:none}
 .offers-tag{padding:5px 11px}
 @media(max-width:640px){.offers-tag{padding:4px 9px;font-size:.56rem}}
 .bottom-nav{grid-template-columns:repeat(3,1fr)}
+/* PASS 42 — trim the space below the search bar */
+@media(max-width:840px){.site-header{padding-bottom:14px}}

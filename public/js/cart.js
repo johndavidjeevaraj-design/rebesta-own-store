@@ -65,11 +65,13 @@
     box.innerHTML = cart.map(item => {
       const p = state.byHandle.get(item.handle);
       if (!p) return '';
+      const compare = Number(p.compareAtInr || 0) > Number(p.priceInr || 0) ? Number(p.compareAtInr) : 0;
       return `<div class="sw-item">
         <img src="${p.image}" alt="" loading="lazy">
-        <div class="sw-item-l"><b>${p.title}</b><small>${p.unitLabel || ''}</small></div>
+        <div class="sw-item-l"><b>${p.title}</b><small>${p.unitLabel || ''}</small>
+          <div class="sw-item-price-l">${money(p.priceInr)}${compare ? ` <s>${money(compare)}</s>` : ''}</div>
+        </div>
         <div class="qty-stepper sw-step"><button type="button" data-cs="minus" data-handle="${item.handle}" data-qty="${item.qty}">−</button><span>${item.qty}</span><button type="button" data-cs="plus" data-handle="${item.handle}" data-qty="${item.qty}">+</button></div>
-        <div class="sw-item-price">${money(p.priceInr * item.qty)}</div>
       </div>`;
     }).join('');
   }
@@ -98,13 +100,15 @@
     const picks = tab.pick(pool).filter(p => (seen.has(p.handle) ? false : seen.add(p.handle))).slice(0, 8);
     $('[data-bp-rail]').innerHTML = picks.map(p => {
       const qty = inCart.get(p.handle) || 0;
+      const compare = Number(p.compareAtInr || 0) > Number(p.priceInr || 0) ? Number(p.compareAtInr) : 0;
       return `<div class="sw-pcard">
-        <img src="${p.image}" alt="" loading="lazy">
-        <div class="sw-pname">${p.title}</div>
-        <div class="sw-pprice">${money(p.priceInr)} <small>· ${p.unitLabel || ''}</small></div>
+        <div class="sw-pimg"><img src="${p.image}" alt="" loading="lazy">
         ${qty
-          ? `<div class="qty-stepper sw-step sw-mini-step"><button type="button" data-cs="minus" data-handle="${p.handle}" data-qty="${qty}">−</button><span>${qty}</span><button type="button" data-cs="plus" data-handle="${p.handle}" data-qty="${qty}">+</button></div>`
-          : `<button type="button" class="sw-add" data-cs-action="add" data-handle="${p.handle}">ADD +</button>`}
+          ? `<div class="qty-stepper sw-step sw-float-step"><button type="button" data-cs="minus" data-handle="${p.handle}" data-qty="${qty}">−</button><span>${qty}</span><button type="button" data-cs="plus" data-handle="${p.handle}" data-qty="${qty}">+</button></div>`
+          : `<button type="button" class="sw-add" data-cs-action="add" data-handle="${p.handle}" aria-label="Add ${p.title}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>`}
+        </div>
+        <div class="sw-pname">${p.title}</div>
+        <div class="sw-pprice">${money(p.priceInr)}${compare ? ` <s>${money(compare)}</s>` : ''} <small>· ${p.unitLabel || ''}</small></div>
       </div>`;
     }).join('') || '<p class="sw-rail-empty">Nothing here right now — check the other tabs!</p>';
   }
@@ -389,6 +393,7 @@
   $('[data-bp-addr-row]').addEventListener('click', () => {
     const edit = $('[data-bp-addr-edit]');
     edit.hidden = !edit.hidden;
+    $('[data-bp-addr-row]').classList.toggle('open', !edit.hidden);
     if (!edit.hidden && !$('[data-bp-addr1]').value.trim()) $('[data-bp-addr1]').focus();
   });
   $('[data-bp-area]').addEventListener('click', () => RFS.openLocationSheet());

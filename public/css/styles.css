@@ -2532,3 +2532,30 @@ body::before{display:none}
 [data-bp-main]{display:flex;flex-direction:column;gap:15px}
 [data-bp-main][hidden]{display:none}
 @media (min-width:841px){.sw-page{max-width:640px;margin:0 auto}}
+
+/* PASS 50 (2026-10-06) — lite-grass selections, floating ADD on image corner, pill segments, chevron spin, struck prices */
+/* lite grass (light green) instead of black */
+.sw-tab.on{background:#e3f6e9;border-color:#b9e4c7;color:#177245}
+.sw-seg{border-radius:999px}
+.sw-seg-btn{border-radius:999px}
+.sw-seg-btn.on{background:#e3f6e9;color:#177245;font-weight:800}
+.sw-tip-chip.on{background:#e3f6e9;border-color:#b9e4c7;color:#177245}
+.sw-apply{background:#3da06c}
+/* floating ADD (+) on the product image top-right corner — Swiggy style */
+.sw-pcard{position:relative}
+.sw-pimg{position:relative}
+.sw-pimg img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;background:#fff;display:block}
+.sw-add{position:absolute;top:7px;right:7px;width:32px;height:32px;border-radius:50%;border:1.5px solid #3da06c;background:#fff;color:#1b7a4b;display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 12px rgba(20,40,25,.22);padding:0}
+.sw-add:active{transform:scale(.92)}
+.sw-float-step{position:absolute;top:7px;right:7px;background:#fff;border-radius:999px;box-shadow:0 4px 12px rgba(20,40,25,.22);height:30px;padding:2px 6px}
+.sw-float-step button{background:#e9f7ee;color:#177245;width:22px;height:22px}
+.sw-float-step span{min-width:14px}
+/* home icon exactly as reference: filled house, dark ink */
+.sw-pin{color:#1d1d21}
+/* address chevron rotates down when the editor opens */
+.sw-addr .sw-chev{display:inline-block;transition:transform .3s cubic-bezier(.34,1.4,.44,1)}
+.sw-addr.open .sw-chev{transform:rotate(90deg)}
+/* item price under the name (Swiggy) with struck compare-at */
+.sw-item-price-l{margin-top:4px;font-size:.88rem;font-weight:800;color:#1d1d21}
+.sw-item-price-l s,.sw-pprice s{color:#949599;font-weight:500;opacity:.85}
+.sw-pprice s{font-size:.66rem;margin-left:2px}

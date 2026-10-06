@@ -1925,3 +1925,8 @@ body::before{display:none}
 .product-card::before{display:none}
 .product-card:hover{transform:translateY(-3px);border-color:#d9d9d9;box-shadow:0 12px 26px rgba(3,44,19,.1)}
 .product-card:hover .product-image img{transform:scale(1.04)}
+/* PASS 38 — light-green 'Delivering to', 5-tab bottom nav with active state */
+.loc-chip-lb{color:#6fe89f}
+.header-location.loc-chip-btn strong svg{color:#6fe89f}
+.bottom-nav{grid-template-columns:repeat(5,1fr)}
+.bn-item.bn-active{color:#6fe89f}

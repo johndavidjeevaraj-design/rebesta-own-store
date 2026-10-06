@@ -342,6 +342,13 @@
     });
   }
 
+  function initBottomNav() {
+    const here = location.pathname.replace(/\/+$/, '') || '/';
+    document.querySelectorAll('.bn-item').forEach(a => {
+      try { if (new URL(a.href, location.origin).pathname === here) a.classList.add('bn-active'); } catch {}
+    });
+  }
+
   function initLocationExperience() {
     updateHeaderLocation();
     window.addEventListener('rebesta:location-changed', updateHeaderLocation);
@@ -351,8 +358,8 @@
     try { dismissed = localStorage.getItem(LOC_DISMISS_KEY) === '1'; } catch {}
     if (!getSavedLocation() && !dismissed) setTimeout(openLocationSheet, 900);
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initLocationExperience);
-  else initLocationExperience();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { initLocationExperience(); initBottomNav(); });
+  else { initLocationExperience(); initBottomNav(); }
 
   window.RFS = {
     CART_KEY,

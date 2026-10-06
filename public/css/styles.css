@@ -1976,3 +1976,5 @@ body::before{display:none}
 .bottom-nav{grid-template-columns:repeat(3,1fr)}
 /* PASS 42 — trim the space below the search bar */
 @media(max-width:840px){.site-header{padding-bottom:14px}}
+/* PASS 43 — tighter: minimal space below the search bar */
+@media(max-width:840px){.site-header{padding-bottom:8px}}

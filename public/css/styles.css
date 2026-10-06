@@ -1980,3 +1980,50 @@ body::before{display:none}
 @media(max-width:840px){.site-header{padding-bottom:8px}}
 /* PASS 44 — 10px gap below the search bar */
 @media(max-width:840px){.site-header{padding-bottom:11px}}
+/* PASS 45 — cart sheet: order from any page + floating basket bar */
+.cart-sheet{padding:8px 16px calc(20px + env(safe-area-inset-bottom,0px))}
+.cart-sheet .sheet-head{margin:2px 0 10px;padding:0 34px 0 0;gap:2px}
+.cart-sheet .sheet-head h3{font-size:1.18rem}
+.cart-sheet .sheet-head p{font-size:.74rem;margin:0}
+.cart-items{display:grid;max-height:32vh;overflow-y:auto;margin:0 0 10px;padding:2px 0 6px;border-bottom:1px solid var(--line)}
+.cart-row{display:grid;grid-template-columns:46px minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:7px 0}
+.cart-row img{width:46px;height:46px;object-fit:contain;background:#f6f7f2;border-radius:10px;padding:3px}
+.cr-name{font-size:.84rem;font-weight:900;color:var(--ink);line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr-unit{font-size:.66rem;color:var(--muted);font-weight:800;margin-top:1px}
+.cr-price{font-size:.84rem;font-weight:1000;color:var(--forest)}
+.cart-qty{width:96px;height:32px;padding:2px}
+.cart-qty button{width:26px;height:26px}
+.cart-empty{text-align:center;padding:22px 8px 10px;color:var(--muted);font-weight:800}
+.cart-shop-link{display:inline-block;margin-top:8px;color:var(--green);font-weight:1000;text-decoration:none}
+.cart-loc{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--green-soft);border-radius:12px;padding:9px 12px;font-size:.78rem;font-weight:800;color:var(--ink-2);margin:0 0 10px;cursor:pointer;border:0;width:100%;text-align:left;font-family:inherit}
+.cart-loc b{color:var(--green)}
+.cart-loc-change{color:var(--green);font-weight:1000;text-decoration:underline;flex:none}
+.cart-slots{display:grid;gap:8px;margin:0 0 10px}
+.cart-slot{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1.5px solid var(--line-2);border-radius:12px;padding:9px 12px;font:inherit;font-size:.78rem;font-weight:900;color:var(--ink-2);cursor:pointer;background:#fff;text-align:left;transition:border-color .15s,background .15s}
+.cart-slot.on{border-color:var(--orange);background:var(--orange-soft);color:#a63a10}
+.cart-slot:disabled{opacity:.5;cursor:not-allowed}
+.cart-slot .cs-left{font-size:.62rem;color:var(--muted);font-weight:800}
+.cart-addr{display:grid;grid-template-columns:minmax(0,1fr) 104px;gap:8px;margin:0 0 10px}
+.cart-fee{font-size:.72rem;color:var(--muted);font-weight:800;margin:0 0 10px}
+.cart-bill{display:grid;gap:4px;border-top:1px dashed var(--line-2);padding:9px 0 0;margin:0 0 12px}
+.cart-bill div{display:flex;justify-content:space-between;font-size:.78rem;font-weight:800;color:var(--ink-2)}
+.cart-bill .cb-total{font-size:.95rem;font-weight:1000;color:var(--forest)}
+.cart-place{display:block;width:100%;border:0;background:var(--orange);color:#fff;border-radius:14px;padding:15px 16px;font:inherit;font-size:.95rem;font-weight:1000;cursor:pointer;box-shadow:0 10px 22px rgba(255,91,32,.26);transition:background .15s ease}
+.cart-place:hover{background:#e94712}
+.cart-place:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+.cart-note{text-align:center;font-size:.66rem;color:var(--muted);font-weight:800;margin:10px 0 0}
+.cart-auth .cart-auth-note{font-size:.8rem;font-weight:900;color:var(--ink-2);margin:0 0 10px}
+.cart-auth-back{display:block;margin:12px auto 0;border:0;background:none;color:var(--muted);font:inherit;font-size:.78rem;font-weight:800;cursor:pointer;text-decoration:underline}
+.cart-fx input{background:#fff}
+.mobile-cart-bar{font:inherit;color:#fff;cursor:pointer;text-align:left;border:1px solid rgba(255,255,255,.12)}
+.mcb-info{display:grid;gap:1px;min-width:0}
+.mcb-cta{flex:none;font-size:.72rem;font-weight:1000;background:rgba(255,255,255,.16);padding:9px 13px;border-radius:11px;white-space:nowrap}
+.mobile-cart-bar small{font-size:.64rem;opacity:.75}
+@media(max-width:840px){
+  .mobile-cart-bar{bottom:calc(12px + 64px + env(safe-area-inset-bottom,0px))}
+  .cart-addr{grid-template-columns:1fr}
+  .cart-fx-pin{max-width:180px}
+}
+/* basket bar: visible on mobile again (was force-hidden when it overlapped the old nav) */
+@media(max-width:840px){.mobile-cart-bar.has-cart{display:flex!important}}
+@media(min-width:841px){.mobile-cart-bar{display:none!important}}

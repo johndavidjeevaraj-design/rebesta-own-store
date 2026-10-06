@@ -379,8 +379,355 @@
     try { dismissed = localStorage.getItem(LOC_DISMISS_KEY) === '1'; } catch {}
     if (!getSavedLocation() && !dismissed) setTimeout(openLocationSheet, 900);
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { initLocationExperience(); initBottomNav(); });
-  else { initLocationExperience(); initBottomNav(); }
+
+  /* ================= Cart sheet — place the order from any page (quick-commerce style) ================= */
+  const CART_SHEET_ADDR_KEY = 'rebesta_checkout_addr_v1';
+  const CART_SHEET_EXCLUDE = ['/checkout', '/login', '/account', '/admin'];
+  let cartSheetEl = null;
+  let cartProducts = null;
+  let cartMe = null;
+  let cartQuote = null;
+  let cartSlotId = '';
+  let cartQuoteTimer = null;
+
+  async function ensureCartProducts() {
+    if (cartProducts) return cartProducts;
+    try { cartProducts = (await api('/api/products')).products || []; } catch { cartProducts = []; }
+    return cartProducts;
+  }
+  async function ensureCartMe(force = false) {
+    if (cartMe && !force) return cartMe;
+    try { cartMe = (await api('/api/auth/me')).customer || null; } catch { cartMe = null; }
+    return cartMe;
+  }
+  function savedCartAddr() {
+    try { return JSON.parse(localStorage.getItem(CART_SHEET_ADDR_KEY) || '{}') || {}; } catch { return {}; }
+  }
+
+  const AUTH_FORM_HTML = `
+    <form class="auth-form" data-cart-flow novalidate>
+      <p class="cart-auth-note">Login to proceed — one quick SMS code 🔐</p>
+      <div class="auth-step" data-step="number">
+        <div class="fx-field fx-phone"><input id="cartPhone" data-flow-phone inputmode="tel" autocomplete="tel" placeholder=" "><label for="cartPhone">Mobile number</label><span class="fx-prefix"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 6h3l2 4-2 2a12 12 0 0 0 5 5l2-2 4 2v3a2 2 0 0 1-2 2A16 16 0 0 1 2 8a2 2 0 0 1 2-2Z" fill="currentColor"/></svg>+91</span></div>
+        <div class="captcha-slot"><div id="cart-captcha" class="otp-captcha"></div></div>
+        <button class="btn-main" type="button" data-flow-send><span class="btn-label">Send code by SMS</span></button>
+      </div>
+      <div class="auth-step" data-step="code" hidden>
+        <div class="sent-chip"><div><b data-flow-sentto></b><span>Code sent · valid 15 minutes</span></div></div>
+        <div class="otp-boxes" data-flow-boxes></div>
+        <p class="otp-hint">Enter the code from the SMS</p>
+        <button class="btn-main" type="submit" data-flow-verify><span class="btn-label">Verify &amp; continue</span></button>
+        <p class="otp-resend">Didn't get it? <a href="#" data-flow-resend>Resend code</a> · <a href="#" data-flow-change>Wrong number?</a></p>
+      </div>
+      <div class="auth-step" data-step="name" hidden>
+        <div class="sent-chip"><div><b data-flow-newto></b><span>Number verified! You're new here — one last thing.</span></div></div>
+        <div class="fx-field"><input id="cartName" data-flow-name autocomplete="name" placeholder=" "><label for="cartName">What should we call you?</label></div>
+        <button class="btn-main" type="submit" data-flow-create><span class="btn-label">Create my account</span></button>
+        <p class="otp-resend"><a href="#" data-flow-restart>← Use a different number</a></p>
+      </div>
+      <p class="flow-error" data-flow-error hidden></p>
+      <button type="button" class="cart-auth-back" data-auth-cancel>← Back to basket</button>
+    </form>`;
+
+  function loadCartOtpSdk() {
+    if (document.querySelector('script[data-otp-sdk]') || typeof window.initSendOTP === 'function') return;
+    const s0 = document.createElement('script');
+    s0.dataset.otpSdk = '1';
+    const config = {
+      widgetId: '366a65687644323637363131',
+      tokenAuth: '571380TgZrH8gvzsiK6aa8dedbP1',
+      exposeMethods: true,
+      captchaRenderId: 'cart-captcha',
+      success: data => { window.__otpWidgetSuccess = data; },
+      failure: error => { window.__otpWidgetFailure = error; }
+    };
+    const urls = ['https://verify.msg91.com/otp-provider.js', 'https://verify.phone91.com/otp-provider.js'];
+    let i = 0;
+    (function attempt() {
+      const s = document.createElement('script');
+      s.src = urls[i]; s.async = true; s.dataset.otpSdk = '1';
+      s.onload = () => { if (typeof window.initSendOTP === 'function') { try { window.initSendOTP(config); } catch (e) { window.__otpWidgetFailure = e; } } };
+      s.onerror = () => { i += 1; if (i < urls.length) attempt(); };
+      document.head.appendChild(s);
+    })();
+  }
+
+  function buildCartSheet() {
+    if (cartSheetEl) return;
+    const back = document.createElement('div');
+    back.className = 'sheet-backdrop'; back.dataset.cartBackdrop = ''; back.hidden = true;
+    const sheet = document.createElement('div');
+    sheet.className = 'bottom-sheet cart-sheet'; sheet.dataset.cartSheet = '';
+    sheet.hidden = true; sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-modal', 'true');
+    sheet.setAttribute('aria-label', 'Your basket');
+    sheet.innerHTML = `
+      <div class="sheet-grab" aria-hidden="true"></div>
+      <button type="button" class="sheet-close" data-cart-close aria-label="Close">✕</button>
+      <div class="sheet-head"><h3>Your basket</h3><p data-cart-subtitle></p></div>
+      <div class="cart-items" data-cart-items></div>
+      <div class="cart-loc" data-cart-loc hidden></div>
+      <div class="cart-slots" data-cart-slots hidden></div>
+      <div class="cart-addr">
+        <div class="fx-field cart-fx"><input id="cartAddr1" data-cart-addr1 autocomplete="street-address" placeholder=" "><label for="cartAddr1">House / flat / street</label></div>
+        <div class="fx-field cart-fx cart-fx-pin"><input id="cartPin" data-cart-pin inputmode="numeric" maxlength="6" autocomplete="postal-code" placeholder=" "><label for="cartPin">Pincode</label></div>
+      </div>
+      <p class="cart-fee" data-cart-fee hidden></p>
+      <div class="cart-bill" data-cart-bill hidden></div>
+      <div class="cart-auth" data-cart-auth hidden></div>
+      <button type="button" class="cart-place" data-cart-place>Place order</button>
+      <p class="cart-note">Cash on delivery · fresh from the farm, tomorrow morning 🌿</p>`;
+    document.body.append(back, sheet);
+    cartSheetEl = { back, sheet };
+
+    back.addEventListener('click', closeCartSheet);
+    sheet.querySelector('[data-cart-close]').addEventListener('click', closeCartSheet);
+    sheet.querySelector('[data-cart-loc]').addEventListener('click', () => {
+      closeCartSheet();
+      setTimeout(openLocationSheet, 260);
+    });
+    sheet.querySelector('[data-cart-items]').addEventListener('click', event => {
+      const btn = event.target.closest('button[data-cs]');
+      if (!btn) return;
+      const qty = Number(btn.dataset.qty || '1');
+      RFS.setQty(btn.dataset.handle, btn.dataset.cs === 'plus' ? qty + 1 : qty - 1);
+    });
+    sheet.querySelector('[data-cart-slots]').addEventListener('click', event => {
+      const chip = event.target.closest('button[data-slot-id]');
+      if (!chip || chip.disabled) return;
+      cartSlotId = chip.dataset.slotId;
+      sheet.querySelectorAll('[data-slot-id]').forEach(el => el.classList.toggle('on', el === chip));
+    });
+    sheet.querySelector('[data-cart-place]').addEventListener('click', placeFromCart);
+    sheet.querySelector('[data-cart-pin]').addEventListener('change', () => scheduleCartQuote(true));
+    window.addEventListener('rebesta:cart-changed', () => {
+      if (cartSheetEl && !cartSheetEl.sheet.hidden) { renderCartItems(); scheduleCartQuote(true); }
+    });
+  }
+
+  function openCartSheet() {
+    buildCartSheet();
+    const { back, sheet } = cartSheetEl;
+    sheet.classList.remove('expanded');
+    back.hidden = false; sheet.hidden = false;
+    document.body.classList.add('sheet-open');
+    requestAnimationFrame(() => sheet.classList.add('open'));
+    const saved = savedCartAddr();
+    if (saved.line1) sheet.querySelector('[data-cart-addr1]').value = saved.line1;
+    if (saved.pincode) sheet.querySelector('[data-cart-pin]').value = saved.pincode;
+    renderCartItems();
+    (async () => {
+      await Promise.all([ensureCartMe(), ensureCartProducts()]);
+      renderCartLoc();
+      renderCartItems();
+      scheduleCartQuote(true);
+    })();
+  }
+
+  function closeCartSheet() {
+    if (!cartSheetEl) return;
+    const { back, sheet } = cartSheetEl;
+    sheet.classList.remove('open');
+    back.hidden = true;
+    document.body.classList.remove('sheet-open');
+    setTimeout(() => { if (cartSheetEl && !cartSheetEl.sheet.classList.contains('open')) cartSheetEl.sheet.hidden = true; }, 340);
+  }
+
+  function renderCartItems() {
+    if (!cartSheetEl) return;
+    const { sheet } = cartSheetEl;
+    const box = sheet.querySelector('[data-cart-items]');
+    const cart = readCart();
+    const byHandle = new Map((cartProducts || []).map(p => [p.handle, p]));
+    sheet.querySelector('[data-cart-subtitle]').textContent = cart.length
+      ? `${cartCount()} item${cartCount() === 1 ? '' : 's'} · delivering in Hosur`
+      : 'Fresh from the farm, every morning';
+    if (!cart.length) {
+      box.innerHTML = `<div class="cart-empty"><p>Your basket is empty.</p><a class="cart-shop-link" href="/shop">Browse fresh vegetables →</a></div>`;
+      sheet.querySelector('[data-cart-bill]').hidden = true;
+      sheet.querySelector('[data-cart-place]').hidden = true;
+      sheet.querySelector('[data-cart-slots]').hidden = true;
+      sheet.querySelector('[data-cart-loc]').hidden = true;
+      return;
+    }
+    sheet.querySelector('[data-cart-place]').hidden = false;
+    box.innerHTML = cart.map(item => {
+      const p = byHandle.get(item.handle);
+      if (!p) return '';
+      return `<div class="cart-row">
+        <img src="${p.image}" alt="" loading="lazy">
+        <div class="cr-info"><div class="cr-name">${p.title}</div><div class="cr-unit">${p.unitLabel || ''} · ${money(p.priceInr)}</div></div>
+        <div class="qty-stepper cart-qty"><button type="button" data-cs="minus" data-handle="${item.handle}" data-qty="${item.qty}">−</button><span>${item.qty}</span><button type="button" data-cs="plus" data-handle="${item.handle}" data-qty="${item.qty}">+</button></div>
+        <div class="cr-price">${money(p.priceInr * item.qty)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderCartLoc() {
+    if (!cartSheetEl) return;
+    const row = cartSheetEl.sheet.querySelector('[data-cart-loc]');
+    const loc = getSavedLocation();
+    if (!loc) { row.hidden = true; return; }
+    row.hidden = false;
+    row.innerHTML = `<span>📍 Delivering to <b>${locationLabel(loc) || 'your area'}</b></span><span class="cart-loc-change">Change</span>`;
+  }
+
+  function scheduleCartQuote(force = false) {
+    if (!cartSheetEl || cartSheetEl.sheet.hidden) return;
+    clearTimeout(cartQuoteTimer);
+    cartQuoteTimer = setTimeout(() => refreshCartQuote(force), 260);
+  }
+
+  async function refreshCartQuote() {
+    if (!cartSheetEl) return;
+    const { sheet } = cartSheetEl;
+    const cart = readCart();
+    if (!cart.length) return;
+    const loc = getSavedLocation() || {};
+    const pin = sheet.querySelector('[data-cart-pin]').value.trim();
+    const feeEl = sheet.querySelector('[data-cart-fee]');
+    feeEl.hidden = false; feeEl.textContent = 'Checking delivery to your area…';
+    try {
+      cartQuote = (await api('/api/quote', { method: 'POST', body: JSON.stringify({
+        items: cart,
+        location: Number.isFinite(loc.lat) ? { lat: loc.lat, lng: loc.lng } : {},
+        address: { pincode: /^\d{6}$/.test(pin) ? pin : '' }
+      }) })).quote || null;
+    } catch { cartQuote = null; }
+    renderCartQuote();
+  }
+
+  function renderCartQuote() {
+    if (!cartSheetEl) return;
+    const { sheet } = cartSheetEl;
+    const feeEl = sheet.querySelector('[data-cart-fee]');
+    const slotsEl = sheet.querySelector('[data-cart-slots]');
+    const billEl = sheet.querySelector('[data-cart-bill]');
+    const place = sheet.querySelector('[data-cart-place]');
+    const subtotal = cartSubtotal(cartProducts || []);
+    if (!cartQuote || !cartQuote.eligible) {
+      feeEl.hidden = false;
+      feeEl.textContent = (cartQuote && cartQuote.message) || 'Set your delivery location to check availability.';
+      slotsEl.hidden = true; billEl.hidden = true;
+      place.disabled = true;
+      return;
+    }
+    const fee = Number(cartQuote.deliveryFeeInr || 0);
+    feeEl.hidden = false;
+    feeEl.textContent = cartQuote.freeApplied
+      ? `Free delivery applied (basket over ${money(500)}) · ${cartQuote.distanceKm ? cartQuote.distanceKm + ' road km' : 'Hosur'}`
+      : `Delivery ${money(fee)} · ${cartQuote.distanceKm ? cartQuote.distanceKm + ' road km from the hub' : 'local morning delivery'}`;
+    const slots = cartQuote.slots || [];
+    slotsEl.hidden = !slots.length;
+    if (slots.length) {
+      slotsEl.innerHTML = slots.map(slot => {
+        const full = Boolean(slot.full);
+        const left = Number(slot.remaining ?? slot.capacity ?? NaN);
+        return `<button type="button" class="cart-slot${slot.id === cartSlotId ? ' on' : ''}" data-slot-id="${slot.id}" ${full ? 'disabled' : ''}>
+          <span>${slot.label}</span><span class="cs-left">${full ? 'Full' : (Number.isFinite(left) && left <= 8 ? left + ' left' : (slot.dateLabel || ''))}</span>
+        </button>`;
+      }).join('');
+      if (!slots.some(s => s.id === cartSlotId)) {
+        const first = slots.find(s => !s.full);
+        if (first) { cartSlotId = first.id; slotsEl.querySelector(`[data-slot-id="${first.id}"]`)?.classList.add('on'); }
+      }
+    }
+    const total = Math.max(0, Math.round(subtotal + fee));
+    billEl.hidden = false;
+    billEl.innerHTML = `<div><span>Item total</span><span>${money(subtotal)}</span></div>
+      <div><span>Delivery</span><span>${fee === 0 ? 'FREE' : money(fee)}</span></div>
+      <div class="cb-total"><span>Total to pay</span><span>${money(total)}</span></div>`;
+    place.disabled = false;
+    place.textContent = `Place order · ${money(total)}`;
+  }
+
+  function showCartAuth() {
+    const { sheet } = cartSheetEl;
+    const box = sheet.querySelector('[data-cart-auth]');
+    const place = sheet.querySelector('[data-cart-place]');
+    box.hidden = false;
+    place.hidden = true;
+    if (box.dataset.wired) return;
+    box.dataset.wired = '1';
+    box.innerHTML = AUTH_FORM_HTML;
+    box.querySelector('[data-auth-cancel]').addEventListener('click', () => { box.hidden = true; place.hidden = false; });
+    loadCartOtpSdk();
+    const s = document.createElement('script');
+    s.src = '/js/auth.js?v=20261005d'; s.async = true;
+    s.onload = () => {
+      if (!window.RFSAuth) return;
+      window.RFSAuth.bindFlow(box.querySelector('[data-cart-flow]'), {
+        onSuccess: async () => {
+          cartMe = await ensureCartMe(true);
+          box.hidden = true;
+          place.hidden = false;
+          toast(`Welcome, ${(cartMe?.name || 'friend').split(' ')[0]}! 🌿`);
+          placeFromCart();
+        }
+      });
+    };
+    document.head.appendChild(s);
+  }
+
+  async function placeFromCart() {
+    const { sheet } = cartSheetEl;
+    const cart = readCart();
+    if (!cart.length) return toast('Your basket is empty', 'error');
+    const addr1 = sheet.querySelector('[data-cart-addr1]').value.trim();
+    const pin = sheet.querySelector('[data-cart-pin]').value.trim();
+    if (addr1.length < 5) { toast('Enter your house / flat / street address', 'error'); sheet.querySelector('[data-cart-addr1]').focus(); return; }
+    if (!/^\d{6}$/.test(pin)) { toast('Enter a 6-digit pincode', 'error'); sheet.querySelector('[data-cart-pin]').focus(); return; }
+    if (!cartQuote?.eligible) { toast('We cannot deliver to this area yet', 'error'); return; }
+    if (!cartSlotId) { toast('Choose a delivery slot', 'error'); return; }
+    const me = cartMe || await ensureCartMe();
+    if (!me) return showCartAuth();
+    try { localStorage.setItem(CART_SHEET_ADDR_KEY, JSON.stringify({ line1: addr1, pincode: pin })); } catch {}
+    const loc = getSavedLocation() || {};
+    const payload = {
+      customer: { name: me.name, phone: me.phone },
+      address: { line1: addr1, line2: '', area: locationLabel(loc) || 'Hosur', city: 'Hosur', pincode: pin },
+      notes: '',
+      items: cart,
+      slotId: cartSlotId,
+      paymentMethod: 'cod',
+      location: Number.isFinite(loc.lat) ? { lat: loc.lat, lng: loc.lng } : {}
+    };
+    const place = sheet.querySelector('[data-cart-place]');
+    setBusy(place, true, 'Securing your order…');
+    try {
+      const order = await api('/api/orders', { method: 'POST', body: JSON.stringify(payload) });
+      saveCart([]);
+      window.location.href = `/order-success?id=${encodeURIComponent(order.orderId)}&phone=${encodeURIComponent(me.phone)}&whatsapp=${encodeURIComponent(order.whatsappUrl || '')}`;
+    } catch (error) {
+      toast(error.message || 'Could not place the order — please try again', 'error');
+      setBusy(place, false);
+    }
+  }
+
+  function initCartSheetTriggers() {
+    const path = location.pathname.replace(/\/+$/, '') || '/';
+    if (CART_SHEET_EXCLUDE.includes(path)) return;
+    document.addEventListener('click', event => {
+      const link = event.target.closest?.('a.cart-link');
+      if (!link) return;
+      event.preventDefault();
+      openCartSheet();
+    });
+    if (!document.querySelector('[data-mobile-cart]')) {
+      const bar = document.createElement('button');
+      bar.type = 'button';
+      bar.className = 'mobile-cart-bar';
+      bar.dataset.mobileCart = '';
+      bar.innerHTML = `<span class="mcb-info"><strong data-mobile-cart-text>0 items</strong><small data-mobile-cart-sub>Ready for tomorrow morning</small></span><span class="mcb-cta">View basket →</span>`;
+      bar.addEventListener('click', openCartSheet);
+      document.body.appendChild(bar);
+      if (readCart().length) {
+        ensureCartProducts().then(products => syncCartUI(products));
+      }
+    }
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { initLocationExperience(); initBottomNav(); initCartSheetTriggers(); syncCartUI(); });
+  else { initLocationExperience(); initBottomNav(); initCartSheetTriggers(); syncCartUI(); }
 
   window.RFS = {
     CART_KEY,
@@ -397,6 +744,8 @@
     saveLocation,
     openLocationSheet,
     closeLocationSheet,
+    openCartSheet,
+    closeCartSheet,
     api,
     syncCartUI,
     toast,

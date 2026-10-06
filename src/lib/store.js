@@ -546,7 +546,9 @@ export function listPublicCoupons() {
   const now = new Date();
   return (settings.promotions?.coupons || [])
     .filter(c => c.active !== false)
-    .filter(c => !(c.maxUses && Number(c.maxUses) <= 1)) // single-use personal reward codes stay private
+    .filter(c => !/^(LOY|REF)-/i.test(String(c.code || ''))) // personal loyalty/referral reward codes stay private
+    .filter(c => !c.note) // anything created for a specific order or person is not a public offer
+    .filter(c => !(c.maxUses && Number(c.maxUses) <= 1)) // single-use codes stay private
     .filter(c => !c.expiresAt || new Date(c.expiresAt) > now)
     .filter(c => !c.maxUses || Number(c.usedCount || 0) < Number(c.maxUses))
     .slice(0, 6)

@@ -260,13 +260,16 @@
         <span class="loc-gps-tx"><strong>Use my current location</strong></span>
       </button>
       <p class="loc-status" data-loc-status hidden role="status"></p>
-      <div class="loc-or" aria-hidden="true"><span>OR</span></div>
-      <div class="loc-areas">
-        <p class="loc-areas-title">Popular areas in Hosur</p>
-        <div class="loc-chips">${LOC_AREAS.map(a =>
-          `<button type="button" class="loc-chip" data-lat="${a.lat}" data-lng="${a.lng}">${a.name}</button>`).join('')}</div>
-      </div>
-      <button type="button" class="loc-skip" data-loc-skip>Just browsing — I’ll set it later</button>`;
+      <button type="button" class="loc-more-hint" data-loc-expand><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 15 6-6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>More options</button>
+      <div class="loc-more" data-loc-more><div class="loc-more-in">
+        <div class="loc-or" aria-hidden="true"><span>OR</span></div>
+        <div class="loc-areas">
+          <p class="loc-areas-title">Popular areas in Hosur</p>
+          <div class="loc-chips">${LOC_AREAS.map(a =>
+            `<button type="button" class="loc-chip" data-lat="${a.lat}" data-lng="${a.lng}">${a.name}</button>`).join('')}</div>
+        </div>
+        <button type="button" class="loc-skip" data-loc-skip>Just browsing — I’ll set it later</button>
+      </div></div>`;
     document.body.append(back, sheet);
     locSheetEl = { back, sheet };
 
@@ -274,6 +277,24 @@
     sheet.querySelector('[data-loc-skip]').addEventListener('click', () => {
       try { localStorage.setItem(LOC_DISMISS_KEY, '1'); } catch {}
       closeLocationSheet();
+    });
+
+    const setExpanded = on => sheet.classList.toggle('expanded', on);
+    sheet.querySelectorAll('[data-loc-expand]').forEach(el => el.addEventListener('click', () => setExpanded(!sheet.classList.contains('expanded'))));
+    let dragY = null;
+    const dragStart = e => { dragY = (e.touches && e.touches[0] ? e.touches[0] : e).clientY; };
+    const dragMove = e => {
+      if (dragY == null) return;
+      const y = (e.touches && e.touches[0] ? e.touches[0] : e).clientY;
+      if (y - dragY < -26) { setExpanded(true); dragY = null; }
+      else if (y - dragY > 34) { setExpanded(false); dragY = null; }
+    };
+    const dragEnd = () => { dragY = null; };
+    [sheet.querySelector('.sheet-grab'), sheet.querySelector('.sheet-head')].forEach(zone => {
+      if (!zone) return;
+      zone.addEventListener('touchstart', dragStart, { passive: true });
+      zone.addEventListener('touchmove', dragMove, { passive: true });
+      zone.addEventListener('touchend', dragEnd);
     });
 
     const status = sheet.querySelector('[data-loc-status]');
@@ -313,6 +334,7 @@
   function openLocationSheet() {
     buildLocationSheet();
     if (!locSheetEl) return;
+    locSheetEl.sheet.classList.remove('expanded');
     locSheetEl.back.hidden = false;
     locSheetEl.sheet.hidden = false;
     document.body.classList.add('sheet-open');

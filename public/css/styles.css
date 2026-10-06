@@ -1948,3 +1948,15 @@ body::before{display:none}
 .loc-chip:hover{background:#e9efe7;border-color:transparent;transform:none}
 [data-loc-sheet] .loc-status{margin:12px 2px 0;text-align:center}
 [data-loc-sheet] .loc-skip{margin-top:16px}
+/* PASS 40 — collapsible location sheet (GPS-first) + orange CTA */
+.loc-gps{background:var(--orange);box-shadow:0 10px 22px rgba(255,91,32,.26)}
+.loc-gps:hover{background:#e94712}
+.loc-more{display:grid;grid-template-rows:0fr;opacity:0;pointer-events:none;transition:grid-template-rows .34s var(--ease-out),opacity .22s ease}
+.loc-more-in{min-height:0;overflow:hidden}
+.bottom-sheet[data-loc-sheet].expanded .loc-more{grid-template-rows:1fr;opacity:1;pointer-events:auto}
+.loc-more-hint{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-top:14px;border:0;background:none;color:var(--muted);font:inherit;font-size:.76rem;font-weight:900;cursor:pointer;padding:7px 4px}
+.loc-more-hint:hover{color:var(--ink-2)}
+.loc-more-hint svg{width:14px;height:14px}
+.bottom-sheet[data-loc-sheet].expanded .loc-more-hint{display:none}
+[data-loc-sheet] .sheet-grab{cursor:pointer;padding:7px 0 3px}
+[data-loc-sheet] .sheet-head{cursor:pointer}

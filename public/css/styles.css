@@ -2461,3 +2461,74 @@ body::before{display:none}
 .sw-pick img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;background:#fff}
 .sw-pick b{font-size:.76rem;font-weight:800;color:#0d0d0f;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .sw-pick span{font-size:.8rem;font-weight:900;color:#3da06c}
+
+/* PASS 49 (2026-10-06) — /cart spacing + font hierarchy per Swiggy measurements (15px section gaps) + rectangle chips + line icons */
+/* spacing */
+.sw-page{gap:15px;padding:12px 14px 8px}
+.sw-card{padding:16px 18px}
+.sw-title-row{margin-bottom:4px}
+.sw-title{font-size:1.38rem}
+.sw-addr{padding:12px 0 8px}
+.sw-saved-banner{margin:12px 0 6px;padding:11px 14px}
+.sw-item{padding:14px 0}
+.sw-item img{width:58px;height:58px}
+.sw-items{margin-top:6px}
+.sw-sec{margin:0 0 14px;font-size:.8rem}
+.sw-tabs{margin-bottom:8px}
+.sw-tab{padding:8px 17px}
+.sw-rail{padding:10px 2px 6px;gap:12px}
+.sw-pcard{width:118px;gap:6px}
+.sw-coupon-row{padding:2px 0 12px}
+.sw-coupon-more{padding-top:12px}
+.sw-crow{padding:13px 0}
+.sw-coupon-manual{padding:12px 0 4px}
+.sw-seg{margin-bottom:16px;padding:4px}
+.sw-seg-btn{padding:10px 4px}
+.sw-del{padding:14px 12px;gap:12px}
+.sw-slots{padding:4px 12px 14px 44px}
+.sw-fee{margin:8px 0 0}
+.sw-tip-note{margin:0 0 12px}
+.sw-bill-row{padding:10px 0}
+.sw-bill-final{margin-top:8px;padding-top:13px}
+.sw-bill-top{margin-bottom:2px}
+.sw-bill-saved{margin:4px 0 6px}
+.sw-free-note{margin:3px 0 2px}
+.sw-paybar{padding:12px 12px 12px 18px}
+.sw-paybtn{padding:14px 26px}
+/* rectangle chips — Add Items + Delivery instructions (inside the items card, side by side) */
+.sw-chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;padding-top:4px}
+.sw-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid #dcdbe1;background:#fff;border-radius:10px;padding:10px 16px;font-family:inherit;font-size:.82rem;font-weight:700;color:#1d1d21;cursor:pointer}
+.sw-chip:active{background:#f7f6fa}
+.sw-chip-ic{display:grid;place-items:center;color:#3da06c}
+/* font hierarchy — bold names, light descriptions */
+.sw-item-l b{font-weight:700;font-size:.94rem;color:#1d1d21}
+.sw-item-l small{font-weight:400;font-size:.74rem;color:#949599}
+.sw-item-price{font-weight:700;font-size:.92rem}
+.sw-addr-txt{font-weight:500;font-size:.84rem;color:#46464a}
+.sw-del-l b{font-weight:700;font-size:.9rem}
+.sw-del-l small{font-weight:400;font-size:.73rem}
+.sw-bill-row{font-weight:400;color:#6d6d72;font-size:.84rem}
+.sw-bill-row span:last-child{font-weight:700;color:#1d1d21}
+.sw-bill-final span{font-weight:800}
+.sw-crow-l b{font-weight:800;font-size:.86rem}
+.sw-crow-l small{font-weight:400;font-size:.72rem}
+.sw-pname{font-weight:700;font-size:.76rem}
+.sw-pprice{font-weight:500;font-size:.72rem}
+.sw-free-note{font-weight:400;font-size:.72rem}
+.sw-tip-note{font-weight:400;font-size:.74rem}
+.sw-applied{font-weight:600}
+.sw-tab{font-weight:700}
+.sw-coupon-row{font-weight:700}
+.sw-method{font-weight:700}
+.sw-paybtn{font-weight:800}
+.sw-pct{font-size:16px}
+/* line icons */
+.sw-del-ic{color:#3da06c;display:grid;place-items:center}
+.sw-bolt{display:inline-grid;place-items:center;color:#f5930b}
+.sw-del.off .sw-del-ic{font-size:16px}
+/* PASS 49b — chips fit on one row */
+.sw-chip{padding:10px 13px;font-size:.8rem;white-space:nowrap}
+/* PASS 49c — card gaps apply inside [data-bp-main]; drop .container indent for full-bleed Swiggy cards */
+[data-bp-main]{display:flex;flex-direction:column;gap:15px}
+[data-bp-main][hidden]{display:none}
+@media (min-width:841px){.sw-page{max-width:640px;margin:0 auto}}

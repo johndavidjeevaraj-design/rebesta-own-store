@@ -1978,3 +1978,5 @@ body::before{display:none}
 @media(max-width:840px){.site-header{padding-bottom:14px}}
 /* PASS 43 — tighter: minimal space below the search bar */
 @media(max-width:840px){.site-header{padding-bottom:8px}}
+/* PASS 44 — 10px gap below the search bar */
+@media(max-width:840px){.site-header{padding-bottom:11px}}

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="robots" content="noindex"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Basket – Rebesta Fresh</title>
-  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><meta name="description" content="Review your basket and order farm-fresh vegetables from Rebesta Fresh, Hosur."><meta property="og:title" content="Your basket"><meta property="og:description" content="Review your basket and order farm-fresh vegetables from Rebesta Fresh, Hosur."><meta property="og:type" content="website"><meta property="og:image" content="https://rebestafresh.in/assets/brand/logo.png"><meta name="twitter:card" content="summary"><link rel="stylesheet" href="/css/styles.css?v=20261006v">
+  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><meta name="description" content="Review your basket and order farm-fresh vegetables from Rebesta Fresh, Hosur."><meta property="og:title" content="Your basket"><meta property="og:description" content="Review your basket and order farm-fresh vegetables from Rebesta Fresh, Hosur."><meta property="og:type" content="website"><meta property="og:image" content="https://rebestafresh.in/assets/brand/logo.png"><meta name="twitter:card" content="summary"><link rel="stylesheet" href="/css/styles.css?v=20261006w">
 </head>
 <body class="shop-page basket-body">
   <header class="site-header"><div class="container header-inner">
@@ -73,20 +73,28 @@
           <div class="sw-applied" data-bp-coupon-on hidden></div>
         </div>
 
+        <div class="sw-seg" role="tablist">
+          <button type="button" class="sw-seg-btn on" data-bp-seg="delivery">Delivery Type</button>
+          <button type="button" class="sw-seg-btn" data-bp-seg="tip">Tip</button>
+          <button type="button" class="sw-seg-btn" data-bp-seg="instructions">Instructions</button>
+        </div>
         <div class="sw-card sw-segcard">
-          <div class="sw-seg" role="tablist">
-            <button type="button" class="sw-seg-btn on" data-bp-seg="delivery">Delivery Type</button>
-            <button type="button" class="sw-seg-btn" data-bp-seg="tip">Tip</button>
-            <button type="button" class="sw-seg-btn" data-bp-seg="instructions">Instructions</button>
-          </div>
           <div class="sw-panel" data-bp-panel="delivery">
-            <div class="sw-del on">
+            <div class="sw-del on" data-del="express">
               <span class="sw-del-ic" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
-              <div class="sw-del-l"><b>Standard</b><small>Local morning delivery, minimal grouping</small></div>
-              <span class="sw-eta" data-bp-eta>7–9 AM</span>
-              <span class="sw-radio on" aria-hidden="true"></span>
+              <div class="sw-del-l"><b>Express</b><small>Fastest delivery, directly to you!</small></div>
+              <span class="sw-del-time">15-25 mins</span>
             </div>
-            <div class="sw-slots" data-bp-slots hidden></div>
+            <div class="sw-del" data-del="standard">
+              <span class="sw-del-ic" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <div class="sw-del-l"><b>Standard</b><small>Minimal order grouping</small></div>
+              <span class="sw-del-time">20-25 mins</span>
+            </div>
+            <div class="sw-del" data-del="eco">
+              <span class="sw-del-ic" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 20C5 11 10.5 5.5 20 5c-.5 9.5-6 15-15 15Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M5 20c2.5-6 6-9.5 10-11.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+              <div class="sw-del-l"><b>Eco Saver</b><small>Lesser CO₂ by order grouping</small></div>
+              <span class="sw-del-time">25-35 mins</span>
+            </div>
             <div class="sw-del off">
               <span class="sw-del-ic" aria-hidden="true">🛸</span>
               <div class="sw-del-l"><b>Drone delivery</b><small>Hover-drop in 15 minutes</small></div>
@@ -186,6 +194,6 @@
   </div>
   <div class="container minimal-footer-inner"><span>© 2026 Rebesta Fresh · Fresh from farms, Hosur</span></div>
 </footer>
-  <script src="/js/store.js?v=20261006s16" defer></script><script src="/js/cart.js?v=20261006e" defer></script>
+  <script src="/js/store.js?v=20261006s16" defer></script><script src="/js/cart.js?v=20261006f" defer></script>
 </body>
 </html>

@@ -16,7 +16,7 @@
   ];
 
   const state = {
-    products: [], byHandle: new Map(), me: null, quote: null, slotId: '',
+    products: [], byHandle: new Map(), me: null, quote: null, delType: 'express',
     tip: 0, coupon: null, coupons: null, addTab: 'popular', seg: 'delivery', quoteTimer: null, notesTimer: null
   };
 
@@ -172,13 +172,11 @@
       <div class="sw-bill-row sw-bill-final"><span>To Pay</span><span>${money(total)}</span></div>`;
     const pay = $('[data-bp-pay]');
     pay.textContent = `Pay ${money(total)}`;
-    pay.disabled = !eligible || !state.slotId;
+    pay.disabled = !eligible;
   }
 
   function renderQuote() {
     const feeEl = $('[data-bp-fee]');
-    const slotsEl = $('[data-bp-slots]');
-    const etaEl = $('[data-bp-eta]');
     const eligible = Boolean(state.quote?.eligible);
     feeEl.hidden = false;
     if (state.quote && !eligible) feeEl.textContent = state.quote.message || 'We cannot deliver to this area yet.';
@@ -186,23 +184,6 @@
       ? `Free delivery applied · ${state.quote.distanceKm ? state.quote.distanceKm + ' road km' : 'Hosur'}`
       : `Delivery ${money(Number(state.quote.deliveryFeeInr || 0))} · ${state.quote.distanceKm ? state.quote.distanceKm + ' road km from the hub' : 'local morning delivery'}`;
     else feeEl.textContent = 'Set your delivery location to check availability.';
-    const slots = eligible ? (state.quote.slots || []) : [];
-    slotsEl.hidden = !slots.length;
-    if (slots.length) {
-      slotsEl.innerHTML = slots.map(slot => {
-        const full = Boolean(slot.full);
-        const left = Number(slot.remaining ?? slot.capacity ?? NaN);
-        return `<button type="button" class="sw-slot${slot.id === state.slotId ? ' on' : ''}" data-slot-id="${slot.id}" ${full ? 'disabled' : ''}>
-          <span>${slot.label}</span><span class="sw-slot-left">${full ? 'Full' : (Number.isFinite(left) && left <= 8 ? left + ' left' : (slot.dateLabel || ''))}</span>
-        </button>`;
-      }).join('');
-      if (!slots.some(s => s.id === state.slotId)) {
-        const first = slots.find(s => !s.full);
-        if (first) { state.slotId = first.id; slotsEl.querySelector(`[data-slot-id="${first.id}"]`)?.classList.add('on'); }
-      }
-      const chosen = slots.find(s => s.id === state.slotId);
-      if (chosen && etaEl) etaEl.textContent = chosen.label.replace(/:00/g, '').replace(' – ', '–');
-    } else { state.slotId = ''; }
     renderBill();
   }
 
@@ -325,7 +306,6 @@
     if (!RFS.getSavedLocation()) { RFS.toast('Pick your delivery area first', 'error'); RFS.openLocationSheet(); return; }
     if (!state.quote) await refreshQuote();
     if (!state.quote?.eligible) { RFS.toast(state.quote?.message || 'We cannot deliver to this area yet', 'error'); return; }
-    if (!state.slotId) { RFS.toast('Choose a delivery slot', 'error'); setSeg('delivery'); return; }
     if (!state.me) { openAuthSheet(() => { proceedToPayment(); }); return; }
     writePref(ADDR_KEY, { line1: addr1, pincode: pin });
     writePref(NOTES_KEY, $('[data-bp-notes-input]').value.trim());
@@ -376,11 +356,10 @@
     const applyBtn = event.target.closest('button[data-bp-apply-code]');
     if (applyBtn) { applyCoupon(applyBtn.dataset.bpApplyCode); return; }
     if (event.target.closest('[data-bp-coupon-x]')) { removeCoupon(); return; }
-    const slot = event.target.closest('button[data-slot-id]');
-    if (slot && !slot.disabled) {
-      state.slotId = slot.dataset.slotId;
-      document.querySelectorAll('[data-slot-id]').forEach(el => el.classList.toggle('on', el === slot));
-      renderBill();
+    const delRow = event.target.closest('.sw-del[data-del]');
+    if (delRow) {
+      state.delType = delRow.dataset.del;
+      document.querySelectorAll('.sw-del[data-del]').forEach(r => r.classList.toggle('on', r === delRow));
       return;
     }
     const tip = event.target.closest('button[data-tip]');

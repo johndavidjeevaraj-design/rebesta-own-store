@@ -1893,3 +1893,24 @@ body.sheet-open{overflow:hidden}
   .header-location.loc-chip-btn{padding:4px 6px 4px 2px}
   .hdr-icon{width:40px;height:40px}
 }
+/* PASS 35 — pure-white background, compact search bar, no touch hover-flash, no mobile scrollbar */
+:root{--paper:#fff}
+body{background:#fff}
+body::before{display:none}
+.market-search{height:42px;background:#fff;border:0;box-shadow:0 6px 18px rgba(3,44,19,.16)}
+.market-search input{font-size:.82rem}
+@media(max-width:840px){
+  .market-search{height:34px}
+  .market-search input{padding:0 40px 0 33px;font-size:.75rem}
+  .market-search>svg{left:10px;width:14px;height:14px}
+  .voice-btn{width:26px;height:26px}
+}
+@media(hover:none){
+  .hdr-icon:hover,.hdr-icon.cart-link:hover{background:transparent;transform:none;box-shadow:none}
+  .header-location.loc-chip-btn:hover{background:transparent;border:0}
+}
+.hdr-icon:active,.header-location.loc-chip-btn:active{background:rgba(255,255,255,.16)}
+@media(max-width:840px){
+  html{scrollbar-width:none;-ms-overflow-style:none}
+  html::-webkit-scrollbar{display:none}
+}

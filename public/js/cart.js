@@ -197,7 +197,7 @@
         if (first) { state.slotId = first.id; slotsEl.querySelector(`[data-slot-id="${first.id}"]`)?.classList.add('on'); }
       }
       const chosen = slots.find(s => s.id === state.slotId);
-      if (chosen && etaEl) etaEl.textContent = chosen.label.replace(':00', '').replace(' – ', '–');
+      if (chosen && etaEl) etaEl.textContent = chosen.label.replace(/:00/g, '').replace(' – ', '–');
     } else { state.slotId = ''; }
     renderBill();
   }

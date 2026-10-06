@@ -2596,3 +2596,16 @@ body::before{display:none}
 .sw-chip{color:#6d6d72;border-color:#e3e2e8}
 .sw-pname{font-weight:600;color:#1d1d21}
 .sw-pprice{font-weight:600;color:#1d1d21}
+
+/* PASS 54 (2026-10-06) — delivery options as small rounded BUTTONS (like photo-2 pill, recolored orange): no dividers, no time text */
+.sw-del{display:flex;align-items:center;gap:11px;padding:11px 14px;border-radius:14px;border:1.5px solid #e3e2e8;background:#fff;margin:0 0 10px}
+.sw-del.off{opacity:.6}
+.sw-del.on{background:#f26b4a;border-color:#f26b4a}
+.sw-del-ic{color:#46464a}
+.sw-del.on .sw-del-ic{color:#fff}
+.sw-del-l b{font-size:.88rem;font-weight:700;color:#1d1d21}
+.sw-del.on .sw-del-l b{color:#fff}
+.sw-del-l small{font-weight:500}
+.sw-del.on .sw-del-l small{color:rgba(255,255,255,.9)}
+.sw-del-time{display:none}
+.sw-del:active{transform:scale(.985)}

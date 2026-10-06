@@ -2567,7 +2567,3 @@ body::before{display:none}
 .sw-float-step button{background:#fff0e9;color:#e04b28}
 .sw-float-step span{color:#e04b28;font-weight:800}
 .sw-off{display:inline-block;background:#fff0e9;color:#e04b28;font-size:.56rem;font-weight:900;letter-spacing:.05em;border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:1px;font-style:normal}
-
-/* PASS 53 (2026-10-06) — revert v4.4 structure; ONLY color change: Delivery Type/Tip/Instructions buttons orange (tabs stay lite-grass) */
-.sw-seg-btn.on{background:#f26b4a;color:#fff}
-.sw-tip-chip.on{background:#f26b4a;border-color:#f26b4a;color:#fff}

@@ -69,7 +69,7 @@
       return `<div class="sw-item">
         <img src="${p.image}" alt="" loading="lazy">
         <div class="sw-item-l"><b>${p.title}</b><small>${p.unitLabel || ''}</small>
-          <div class="sw-item-price-l">${money(p.priceInr)}${compare ? ` <s>${money(compare)}</s>` : ''}</div>
+          <div class="sw-item-price-l">${money(p.priceInr)}${compare ? ` <s>${money(compare)}</s><span class="sw-off">${Math.round((compare - p.priceInr) * 100 / compare)}% OFF</span>` : ''}</div>
         </div>
         <div class="qty-stepper sw-step"><button type="button" data-cs="minus" data-handle="${item.handle}" data-qty="${item.qty}">−</button><span>${item.qty}</span><button type="button" data-cs="plus" data-handle="${item.handle}" data-qty="${item.qty}">+</button></div>
       </div>`;
@@ -108,7 +108,7 @@
           : `<button type="button" class="sw-add" data-cs-action="add" data-handle="${p.handle}" aria-label="Add ${p.title}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>`}
         </div>
         <div class="sw-pname">${p.title}</div>
-        <div class="sw-pprice">${money(p.priceInr)}${compare ? ` <s>${money(compare)}</s>` : ''} <small>· ${p.unitLabel || ''}</small></div>
+        <div class="sw-pprice">${money(p.priceInr)}${compare ? ` <s>${money(compare)}</s><span class="sw-off">${Math.round((compare - p.priceInr) * 100 / compare)}% OFF</span>` : ''} <small>· ${p.unitLabel || ''}</small></div>
       </div>`;
     }).join('') || '<p class="sw-rail-empty">Nothing here right now — check the other tabs!</p>';
   }

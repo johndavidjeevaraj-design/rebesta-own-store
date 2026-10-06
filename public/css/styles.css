@@ -2559,3 +2559,11 @@ body::before{display:none}
 .sw-item-price-l{margin-top:4px;font-size:.88rem;font-weight:800;color:#1d1d21}
 .sw-item-price-l s,.sw-pprice s{color:#949599;font-weight:500;opacity:.85}
 .sw-pprice s{font-size:.66rem;margin-left:2px}
+
+/* PASS 51 (2026-10-06) — orange accents: APPLY CTAs, floating +, stepper, % OFF chips */
+.sw-apply{background:#f26b4a}
+.sw-crow-apply{color:#e04b28;background:#fff0e9;border-radius:999px;padding:6px 12px}
+.sw-add{border-color:#f26b4a;color:#e04b28}
+.sw-float-step button{background:#fff0e9;color:#e04b28}
+.sw-float-step span{color:#e04b28;font-weight:800}
+.sw-off{display:inline-block;background:#fff0e9;color:#e04b28;font-size:.56rem;font-weight:900;letter-spacing:.05em;border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:1px;font-style:normal}

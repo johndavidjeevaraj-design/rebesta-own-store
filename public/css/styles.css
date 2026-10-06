@@ -1914,3 +1914,9 @@ body::before{display:none}
   html{scrollbar-width:none;-ms-overflow-style:none}
   html::-webkit-scrollbar{display:none}
 }
+/* PASS 36 — product photos on pure white: no tinted boxes, no outlines, no washes */
+.product-card{border:1px solid #ededed}
+.product-image{background:#fff;border-bottom:0}
+.product-image::after{display:none}
+.product-detail-media{background:#fff;border-color:#ededed}
+.product-detail-media::after{display:none}

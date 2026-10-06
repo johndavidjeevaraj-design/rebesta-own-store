@@ -2567,3 +2567,32 @@ body::before{display:none}
 .sw-float-step button{background:#fff0e9;color:#e04b28}
 .sw-float-step span{color:#e04b28;font-weight:800}
 .sw-off{display:inline-block;background:#fff0e9;color:#e04b28;font-size:.56rem;font-weight:900;letter-spacing:.05em;border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:1px;font-style:normal}
+
+/* PASS 52 (2026-10-06) — Swiggy-exact delivery section: standalone orange seg pills, option rows with dividers, glass ADD, gray-border stepper, font hierarchy */
+.sw-seg{background:transparent;border-radius:0;padding:0;gap:8px;margin:0}
+.sw-seg-btn{flex:none;border-radius:999px;padding:10px 17px;font-size:.78rem;font-weight:700;color:#46464a;background:transparent}
+.sw-seg-btn.on{background:#f26b4a;color:#fff}
+.sw-tip-chip.on{background:#f26b4a;border-color:#f26b4a;color:#fff}
+.sw-del{padding:13px 4px;border-radius:0;background:transparent;border-bottom:1px solid #ececf1}
+.sw-del.off{border-bottom:none}
+.sw-del.on{background:transparent}
+.sw-del-ic{color:#46464a}
+.sw-del-l b{font-size:.9rem;font-weight:700;color:#e04b28}
+.sw-del.on .sw-del-l b{color:#1d1d21}
+.sw-del-l small{font-weight:500}
+.sw-del-time{flex:none;font-size:.74rem;font-weight:600;color:#46464a;border:none;background:transparent;padding:0}
+.sw-radio{display:none}
+.sw-eta{display:none}
+.sw-step{border:1px solid #dcdbdf;border-radius:10px;background:#fff}
+.sw-step button{color:#4da376;background:#fff}
+.sw-step span{color:#1d1d21;font-weight:700}
+.sw-add{background:rgba(255,255,255,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.65);color:#4da376;box-shadow:0 6px 16px rgba(23,25,28,.28),0 2px 5px rgba(23,25,28,.16)}
+.sw-float-step{background:rgba(255,255,255,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid #e3e2e8}
+.sw-float-step button{background:#fff;color:#4da376}
+.sw-float-step span{color:#1d1d21;font-weight:700}
+.sw-item-l b{font-weight:600}
+.sw-item-price-l{font-weight:600}
+.sw-item-price-l s{font-weight:500}
+.sw-chip{color:#6d6d72;border-color:#e3e2e8}
+.sw-pname{font-weight:600;color:#1d1d21}
+.sw-pprice{font-weight:600;color:#1d1d21}

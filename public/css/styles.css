@@ -2609,3 +2609,26 @@ body::before{display:none}
 .sw-del.on .sw-del-l small{color:rgba(255,255,255,.9)}
 .sw-del-time{display:none}
 .sw-del:active{transform:scale(.985)}
+
+/* PASS 55 (2026-10-06) — delivery section per spec: grey pill seg container, radio rows with dividers, orange #e5734f accents, collapsible bill card */
+.sw-seg{background:#eceaf1;border-radius:16px;padding:4px;gap:4px}
+.sw-seg-btn{flex:1;border-radius:12px;padding:10px 4px;font-size:.74rem;font-weight:800;color:#6d6d72;background:transparent}
+.sw-seg-btn.on{background:#e5734f;color:#fff}
+.sw-segcard{border-radius:20px;box-shadow:0 4px 18px rgba(20,20,40,.07)}
+.sw-del{display:flex;align-items:center;gap:12px;padding:13px 2px;border-radius:0;background:transparent;border:none;border-bottom:1px solid #ececf1;margin:0}
+.sw-del.off{border-bottom:none;opacity:.5}
+.sw-del.on{background:transparent}
+.sw-del-ic{display:none}
+.sw-del-l b{font-size:.9rem;font-weight:700;color:#1d1d21}
+.sw-del.on .sw-del-l b{color:#1d1d21}
+.sw-del-l small{font-weight:500;color:#949599}
+.sw-radio{display:block;flex:none;width:19px;height:19px;border-radius:50%;border:2px solid #d9d8de;background:#fff}
+.sw-del.on .sw-radio{border-color:#e5734f;box-shadow:inset 0 0 0 4.5px #e5734f}
+.sw-soon{flex:none;font-size:.58rem;font-weight:900;letter-spacing:.08em;color:#e5734f;border:1.5px solid #e5734f;background:#fff;border-radius:999px;padding:4px 9px}
+.sw-bill-top{display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;padding:0;cursor:pointer;font-family:inherit;text-align:left}
+.sw-bill-ic{flex:none;color:#3da06c;display:grid;place-items:center}
+.sw-bill-top strong{margin-left:auto}
+.sw-bill .sw-chev{flex:none;display:inline-grid;place-items:center;color:#6d6d72;transition:transform .3s cubic-bezier(.34,1.4,.44,1)}
+.sw-bill.open .sw-chev{transform:rotate(90deg)}
+.sw-bill:not(.open) [data-bp-bill-body]{display:none}
+.sw-del.on{background:transparent;border:none;border-bottom:1px solid #ececf1}

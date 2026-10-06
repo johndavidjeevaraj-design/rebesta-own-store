@@ -16,7 +16,7 @@
   ];
 
   const state = {
-    products: [], byHandle: new Map(), me: null, quote: null, delType: 'express',
+    products: [], byHandle: new Map(), me: null, quote: null,
     tip: 0, coupon: null, coupons: null, addTab: 'popular', seg: 'delivery', quoteTimer: null, notesTimer: null
   };
 
@@ -356,12 +356,6 @@
     const applyBtn = event.target.closest('button[data-bp-apply-code]');
     if (applyBtn) { applyCoupon(applyBtn.dataset.bpApplyCode); return; }
     if (event.target.closest('[data-bp-coupon-x]')) { removeCoupon(); return; }
-    const delRow = event.target.closest('.sw-del[data-del]');
-    if (delRow) {
-      state.delType = delRow.dataset.del;
-      document.querySelectorAll('.sw-del[data-del]').forEach(r => r.classList.toggle('on', r === delRow));
-      return;
-    }
     const tip = event.target.closest('button[data-tip]');
     if (tip) { state.tip = Number(tip.dataset.tip) || 0; writePref(TIP_KEY, state.tip); renderTips(); renderBill(); return; }
     if (event.target.closest('[data-bp-gotip]')) { setSeg('tip'); return; }
@@ -377,6 +371,12 @@
   });
   $('[data-bp-area]').addEventListener('click', () => RFS.openLocationSheet());
   $('[data-bp-addmore]').addEventListener('click', () => { window.location.href = '/shop'; });
+  $('[data-bp-bill-toggle]')?.addEventListener('click', () => {
+    const bill = $('[data-bp-bill]');
+    if (!bill) return;
+    bill.classList.toggle('open');
+    $('[data-bp-bill-toggle]')?.setAttribute('aria-expanded', String(bill.classList.contains('open')));
+  });
   $('[data-bp-notes-toggle]').addEventListener('click', () => { setSeg('instructions'); $('[data-bp-notes-input]')?.focus(); });
   $('[data-bp-notes-input]').addEventListener('input', event => {
     clearTimeout(state.notesTimer);

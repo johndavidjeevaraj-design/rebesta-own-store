@@ -1,4 +1,5 @@
-/* Rebesta Fresh — basket PAGE (Swiggy-style, colorful). Order flows: basket → PAY → (guest? SMS OTP sheet) → /checkout payment page. */
+/* Rebesta Fresh — basket PAGE, exact Swiggy cart layout. White cards on soft gray, mint savings banner,
+   segmented Delivery Type | Tip | Instructions, bill with struck total, PAY USING + Pay bar. */
 (() => {
   const $ = sel => document.querySelector(sel);
   const ADDR_KEY = 'rebesta_checkout_addr_v1';
@@ -8,15 +9,15 @@
   const TIP_CHOICES = [0, 10, 20, 30];
   const ADDON_RE = /coriander|curry|chilli|garlic|ginger|lemon|coconut|mint|amaranth|keerai|keera/i;
   const ADD_TABS = [
-    { id: 'popular', label: '⭐ Popular', pick: list => list.filter(p => p.featured) },
-    { id: 'greens', label: '🥬 Greens', pick: list => list.filter(p => p.category === 'Leafy Greens') },
-    { id: 'combos', label: '📦 Combos', pick: list => list.filter(p => p.category === 'Combos & Kits') },
-    { id: 'addons', label: '🌿 Add-ons', pick: list => list.filter(p => ADDON_RE.test(p.title) && p.category !== 'Combos & Kits') }
+    { id: 'popular', label: 'Popular', pick: list => list.filter(p => p.featured) },
+    { id: 'greens', label: 'Greens', pick: list => list.filter(p => p.category === 'Leafy Greens') },
+    { id: 'combos', label: 'Combos', pick: list => list.filter(p => p.category === 'Combos & Kits') },
+    { id: 'addons', label: 'Add-ons', pick: list => list.filter(p => ADDON_RE.test(p.title) && p.category !== 'Combos & Kits') }
   ];
 
   const state = {
     products: [], byHandle: new Map(), me: null, quote: null, slotId: '',
-    tip: 0, coupon: null, coupons: null, addTab: 'popular', quoteTimer: null, notesTimer: null
+    tip: 0, coupon: null, coupons: null, addTab: 'popular', seg: 'delivery', quoteTimer: null, notesTimer: null
   };
 
   const money = v => RFS.money(v);
@@ -26,20 +27,26 @@
     for (const item of items()) { const p = state.byHandle.get(item.handle); if (p) sum += p.priceInr * item.qty; }
     return sum;
   };
+  const savingsNow = () => (state.coupon ? Number(state.coupon.discountInr || 0) : 0) + (state.quote?.freeApplied ? Number(state.quote.deliveryFeeInr || 0) : 0);
   function readPref(key, fallback) {
     try { const v = JSON.parse(localStorage.getItem(key) || 'null'); return (v === null || v === undefined) ? fallback : v; } catch { return fallback; }
   }
   function writePref(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
 
+  /* ---------- segmented control ---------- */
+  function setSeg(id) {
+    state.seg = id;
+    document.querySelectorAll('[data-bp-seg]').forEach(b => b.classList.toggle('on', b.dataset.bpSeg === id));
+    document.querySelectorAll('.sw-panel').forEach(p => { p.hidden = p.dataset.bpPanel !== id; });
+  }
+
   /* ---------- renderers ---------- */
   function renderHero() {
     const count = RFS.cartCount();
     $('[data-bp-count]').textContent = `${count} item${count === 1 ? '' : 's'}`;
-    const loc = RFS.getSavedLocation();
-    const area = (loc && (loc.label || loc.area)) || '';
-    $('[data-bp-subtitle]').textContent = count
-      ? (area ? `Delivering to ${area} · tomorrow morning` : 'Fresh from the farm, every morning')
-      : 'Fresh from the farm, every morning';
+    const saved = savingsNow();
+    $('[data-bp-saved-banner]').hidden = !(saved > 0);
+    if (saved > 0) $('[data-bp-saved-banner-amt]').textContent = `${money(saved)} saved!`;
   }
 
   function renderEmpty(hasItems) {
@@ -58,11 +65,11 @@
     box.innerHTML = cart.map(item => {
       const p = state.byHandle.get(item.handle);
       if (!p) return '';
-      return `<div class="bp-row">
+      return `<div class="sw-item">
         <img src="${p.image}" alt="" loading="lazy">
-        <div class="bp-row-info"><div class="bp-row-name">${p.title}</div><div class="bp-row-unit">${p.unitLabel || ''} · ${money(p.priceInr)}</div></div>
-        <div class="qty-stepper bp-qty"><button type="button" data-cs="minus" data-handle="${item.handle}" data-qty="${item.qty}">−</button><span>${item.qty}</span><button type="button" data-cs="plus" data-handle="${item.handle}" data-qty="${item.qty}">+</button></div>
-        <div class="bp-row-price">${money(p.priceInr * item.qty)}</div>
+        <div class="sw-item-l"><b>${p.title}</b><small>${p.unitLabel || ''}</small></div>
+        <div class="qty-stepper sw-step"><button type="button" data-cs="minus" data-handle="${item.handle}" data-qty="${item.qty}">−</button><span>${item.qty}</span><button type="button" data-cs="plus" data-handle="${item.handle}" data-qty="${item.qty}">+</button></div>
+        <div class="sw-item-price">${money(p.priceInr * item.qty)}</div>
       </div>`;
     }).join('');
   }
@@ -73,9 +80,9 @@
     const loc = RFS.getSavedLocation();
     const area = (loc && (loc.label || loc.area)) || 'Hosur';
     const line = $('[data-bp-addr-line]');
-    line.textContent = addr1 || 'Add delivery address';
-    line.classList.toggle('is-empty', !addr1);
-    $('[data-bp-addr-sub]').textContent = `${area}${pin ? ' · ' + pin : ''}`;
+    if (addr1) line.textContent = `Home | ${addr1}, ${area}${pin ? ' ' + pin : ''}`;
+    else { line.textContent = 'Home | Add delivery address'; line.classList.add('is-empty'); }
+    if (addr1) line.classList.remove('is-empty');
   }
 
   function renderRail() {
@@ -83,7 +90,7 @@
     if (!state.products.length) { wrap.hidden = true; return; }
     wrap.hidden = false;
     $('[data-bp-tabs]').innerHTML = ADD_TABS.map(t =>
-      `<button type="button" class="bp-tab${t.id === state.addTab ? ' on' : ''}" data-bp-tab="${t.id}">${t.label}</button>`).join('');
+      `<button type="button" class="sw-tab${t.id === state.addTab ? ' on' : ''}" data-bp-tab="${t.id}">${t.label}</button>`).join('');
     const inCart = new Map(items().map(i => [i.handle, i.qty]));
     const pool = state.products.filter(p => p.active !== false && Number(p.stock) > 0);
     const seen = new Set();
@@ -91,50 +98,49 @@
     const picks = tab.pick(pool).filter(p => (seen.has(p.handle) ? false : seen.add(p.handle))).slice(0, 8);
     $('[data-bp-rail]').innerHTML = picks.map(p => {
       const qty = inCart.get(p.handle) || 0;
-      return `<div class="bp-pcard">
+      return `<div class="sw-pcard">
         <img src="${p.image}" alt="" loading="lazy">
-        <div class="bp-pname">${p.title}</div>
-        <div class="bp-pprice">${money(p.priceInr)} <small>· ${p.unitLabel || ''}</small></div>
+        <div class="sw-pname">${p.title}</div>
+        <div class="sw-pprice">${money(p.priceInr)} <small>· ${p.unitLabel || ''}</small></div>
         ${qty
-          ? `<div class="qty-stepper bp-qty bp-mini-step"><button type="button" data-cs="minus" data-handle="${p.handle}" data-qty="${qty}">−</button><span>${qty}</span><button type="button" data-cs="plus" data-handle="${p.handle}" data-qty="${qty}">+</button></div>`
-          : `<button type="button" class="bp-add" data-cs-action="add" data-handle="${p.handle}">ADD</button>`}
+          ? `<div class="qty-stepper sw-step sw-mini-step"><button type="button" data-cs="minus" data-handle="${p.handle}" data-qty="${qty}">−</button><span>${qty}</span><button type="button" data-cs="plus" data-handle="${p.handle}" data-qty="${qty}">+</button></div>`
+          : `<button type="button" class="sw-add" data-cs-action="add" data-handle="${p.handle}">ADD +</button>`}
       </div>`;
-    }).join('') || '<p class="bp-rail-empty">Nothing here right now — check the other tabs!</p>';
+    }).join('') || '<p class="sw-rail-empty">Nothing here right now — check the other tabs!</p>';
   }
 
   const couponDesc = c => {
     const off = c.type === 'percent' ? `${Number(c.value)}% off` : `${money(Number(c.value))} off`;
     return c.minOrderInr ? `${off} on orders above ${money(Number(c.minOrderInr))}` : `${off} on any order`;
   };
-  const CARD_COLORS = ['green', 'orange', 'purple', 'blue'];
 
   function renderSavings() {
     const wrap = $('[data-bp-savings]');
     if (!state.coupons || !state.coupons.length) { wrap.hidden = true; }
     else {
       wrap.hidden = false;
-      $('[data-bp-coupon-cards]').innerHTML = state.coupons.map((c, i) => {
+      $('[data-bp-coupon-cards]').innerHTML = state.coupons.map(c => {
         const applied = state.coupon && state.coupon.code === c.code;
-        return `<div class="bp-ccard bp-cc-${CARD_COLORS[i % CARD_COLORS.length]}${applied ? ' on' : ''}">
-          <div class="bp-ccode">${c.code}</div>
-          <div class="bp-cdesc">${couponDesc(c)}</div>
-          ${applied ? '<span class="bp-capplied">✓ APPLIED</span>' : `<button type="button" class="bp-cbtn" data-bp-apply-code="${c.code}">APPLY</button>`}
+        return `<div class="sw-crow${applied ? ' on' : ''}">
+          <span class="sw-pct" aria-hidden="true">%</span>
+          <div class="sw-crow-l"><b>${c.code}</b><small>${couponDesc(c)}</small></div>
+          ${applied ? '<span class="sw-capplied">✓ Applied</span>' : `<button type="button" class="sw-crow-apply" data-bp-apply-code="${c.code}">APPLY</button>`}
         </div>`;
       }).join('');
     }
     const on = $('[data-bp-coupon-on]');
-    const form = $('[data-bp-coupon-form]');
+    const toggleRow = $('[data-bp-coupon-toggle]');
     if (state.coupon) {
-      on.hidden = false; form.hidden = true;
-      on.innerHTML = `<span>🎟 <b>${state.coupon.code}</b> · −${money(Number(state.coupon.discountInr) || 0)}</span><button type="button" class="bp-coupon-x" data-bp-coupon-x aria-label="Remove coupon">✕</button>`;
+      on.hidden = false; toggleRow.hidden = true;
+      on.innerHTML = `<span>🎟 <b>${money(Number(state.coupon.discountInr) || 0)} saved</b> with '${state.coupon.code}' <span class="sw-capplied">✓ Applied</span></span><button type="button" class="sw-coupon-x" data-bp-coupon-x aria-label="Remove coupon">✕</button>`;
     } else {
-      on.hidden = true; form.hidden = false;
+      on.hidden = true; toggleRow.hidden = false;
     }
   }
 
   function renderTips() {
     $('[data-bp-tips]').innerHTML = TIP_CHOICES.map(v =>
-      `<button type="button" class="bp-tip-chip${state.tip === v ? ' on' : ''}" data-tip="${v}">${v ? money(v) : 'No tip'}</button>`).join('');
+      `<button type="button" class="sw-tip-chip${state.tip === v ? ' on' : ''}" data-tip="${v}">${v ? money(v) : 'No tip'}</button>`).join('');
   }
 
   function renderBill() {
@@ -146,28 +152,34 @@
     const eligible = Boolean(state.quote?.eligible);
     const fee = eligible ? Number(state.quote.deliveryFeeInr || 0) : null;
     const total = Math.max(0, Math.round(sub + (fee || 0) + state.tip - discount));
-    $('[data-bp-bill-rows]').innerHTML = `
-      <div class="bp-bill-row"><span>Item total</span><span>${money(sub)}</span></div>
-      <div class="bp-bill-row"><span>Delivery fee</span><span>${fee === null ? '—' : (fee === 0 ? 'FREE' : money(fee))}</span></div>
-      <div class="bp-bill-row"><span>Delivery tip</span><span>${money(state.tip)}</span></div>
-      ${discount ? `<div class="bp-bill-row bp-bill-green"><span>Coupon ${state.coupon.code}</span><span>−${money(discount)}</span></div>` : ''}
-      <div class="bp-bill-total"><span>To pay</span><span>${money(total)}</span></div>`;
-    const saved = $('[data-bp-saved]');
-    const savings = discount + (state.quote?.freeApplied ? Number(state.quote.deliveryFeeInr || 0) : 0);
-    saved.hidden = !(savings > 0);
-    if (savings > 0) saved.innerHTML = `🎉 You saved <b>${money(savings)}</b> on this order!`;
+    const saved = savingsNow();
+    $('[data-bp-strike]').hidden = !(saved > 0);
+    if (saved > 0) $('[data-bp-strike]').textContent = money(total + saved);
     $('[data-bp-pay-total]').textContent = money(total);
-    $('[data-bp-pay]').disabled = !eligible || !state.slotId;
+    const savedLine = $('[data-bp-saved]');
+    savedLine.hidden = !(saved > 0);
+    if (saved > 0) savedLine.textContent = `${money(saved)} saved on the total!`;
+    const kms = eligible && state.quote?.distanceKm ? `${Number(state.quote.distanceKm).toFixed(1)} kms` : '';
+    $('[data-bp-bill-rows]').innerHTML = `
+      <div class="sw-bill-row"><span>Item Total</span><span>${money(sub)}</span></div>
+      <div class="sw-bill-row"><span>Delivery Fee${kms ? ` <small class="sw-km">| ${kms}</small>` : ''}</span><span>${fee === null ? '—' : (fee === 0 ? 'FREE' : money(fee))}</span></div>
+      <p class="sw-free-note">Free delivery applicable on orders above ${money(500)}</p>
+      <div class="sw-bill-row"><span>Delivery Tip</span>${state.tip ? `<span>${money(state.tip)}</span>` : '<button type="button" class="sw-addtip" data-bp-gotip>Add tip</button>'}</div>
+      <div class="sw-bill-row sw-bill-final"><span>To Pay</span><span>${money(total)}</span></div>`;
+    const pay = $('[data-bp-pay]');
+    pay.textContent = `Pay ${money(total)}`;
+    pay.disabled = !eligible || !state.slotId;
   }
 
   function renderQuote() {
     const feeEl = $('[data-bp-fee]');
     const slotsEl = $('[data-bp-slots]');
+    const etaEl = $('[data-bp-eta]');
     const eligible = Boolean(state.quote?.eligible);
     feeEl.hidden = false;
     if (state.quote && !eligible) feeEl.textContent = state.quote.message || 'We cannot deliver to this area yet.';
     else if (eligible) feeEl.textContent = state.quote.freeApplied
-      ? `Free delivery applied (basket over ${money(500)}) · ${state.quote.distanceKm ? state.quote.distanceKm + ' road km' : 'Hosur'}`
+      ? `Free delivery applied · ${state.quote.distanceKm ? state.quote.distanceKm + ' road km' : 'Hosur'}`
       : `Delivery ${money(Number(state.quote.deliveryFeeInr || 0))} · ${state.quote.distanceKm ? state.quote.distanceKm + ' road km from the hub' : 'local morning delivery'}`;
     else feeEl.textContent = 'Set your delivery location to check availability.';
     const slots = eligible ? (state.quote.slots || []) : [];
@@ -176,14 +188,16 @@
       slotsEl.innerHTML = slots.map(slot => {
         const full = Boolean(slot.full);
         const left = Number(slot.remaining ?? slot.capacity ?? NaN);
-        return `<button type="button" class="bp-slot${slot.id === state.slotId ? ' on' : ''}" data-slot-id="${slot.id}" ${full ? 'disabled' : ''}>
-          <span>${slot.label}</span><span class="bp-slot-left">${full ? 'Full' : (Number.isFinite(left) && left <= 8 ? left + ' left' : (slot.dateLabel || ''))}</span>
+        return `<button type="button" class="sw-slot${slot.id === state.slotId ? ' on' : ''}" data-slot-id="${slot.id}" ${full ? 'disabled' : ''}>
+          <span>${slot.label}</span><span class="sw-slot-left">${full ? 'Full' : (Number.isFinite(left) && left <= 8 ? left + ' left' : (slot.dateLabel || ''))}</span>
         </button>`;
       }).join('');
       if (!slots.some(s => s.id === state.slotId)) {
         const first = slots.find(s => !s.full);
         if (first) { state.slotId = first.id; slotsEl.querySelector(`[data-slot-id="${first.id}"]`)?.classList.add('on'); }
       }
+      const chosen = slots.find(s => s.id === state.slotId);
+      if (chosen && etaEl) etaEl.textContent = chosen.label.replace(':00', '').replace(' – ', '–');
     } else { state.slotId = ''; }
     renderBill();
   }
@@ -212,6 +226,7 @@
       return;
     }
     renderQuote();
+    renderHero();
   }
 
   /* ---------- coupons ---------- */
@@ -219,7 +234,7 @@
     code = String(code || '').trim().toUpperCase();
     if (!code) return;
     const msg = $('[data-bp-coupon-msg]');
-    if (msg && !quiet) { msg.hidden = false; msg.textContent = 'Checking…'; msg.className = 'bp-coupon-msg'; }
+    if (msg && !quiet) { msg.hidden = false; msg.textContent = 'Checking…'; msg.className = 'sw-coupon-msg'; }
     try {
       const data = await RFS.api('/api/coupon/check', { method: 'POST', body: JSON.stringify({ code, subtotalInr: subtotal() }) });
       state.coupon = data.coupon;
@@ -227,20 +242,22 @@
       if (!quiet) RFS.toast(`Coupon ${state.coupon.code} applied — you save ${money(state.coupon.discountInr)} 🎉`);
       if (msg) msg.hidden = true;
     } catch (error) {
-      if (!quiet && msg) { msg.hidden = false; msg.textContent = error.message || 'That coupon is not valid'; msg.className = 'bp-coupon-msg error'; }
+      if (!quiet && msg) { msg.hidden = false; msg.textContent = error.message || 'That coupon is not valid'; msg.className = 'sw-coupon-msg error'; }
       if (quiet) { state.coupon = null; try { localStorage.removeItem(COUPON_KEY); } catch {} }
     }
     renderSavings();
     renderQuote();
+    renderHero();
   }
   function removeCoupon() {
     state.coupon = null;
     try { localStorage.removeItem(COUPON_KEY); } catch {}
     renderSavings();
     renderQuote();
+    renderHero();
   }
 
-  /* ---------- login sheet (the only sheet — phone number OTP) ---------- */
+  /* ---------- login sheet (phone-number OTP) ---------- */
   function loadOtpSdk() {
     if (document.querySelector('script[data-otp-sdk]') || typeof window.initSendOTP === 'function') return;
     const config = {
@@ -304,7 +321,7 @@
     if (!RFS.getSavedLocation()) { RFS.toast('Pick your delivery area first', 'error'); RFS.openLocationSheet(); return; }
     if (!state.quote) await refreshQuote();
     if (!state.quote?.eligible) { RFS.toast(state.quote?.message || 'We cannot deliver to this area yet', 'error'); return; }
-    if (!state.slotId) { RFS.toast('Choose a delivery slot', 'error'); return; }
+    if (!state.slotId) { RFS.toast('Choose a delivery slot', 'error'); setSeg('delivery'); return; }
     if (!state.me) { openAuthSheet(() => { proceedToPayment(); }); return; }
     writePref(ADDR_KEY, { line1: addr1, pincode: pin });
     writePref(NOTES_KEY, $('[data-bp-notes-input]').value.trim());
@@ -337,7 +354,7 @@
     const grid = $('[data-empty-picks-grid]');
     if (!grid || !state.products.length) return;
     const picks = state.products.filter(p => p.featured && p.active !== false && p.stock > 0).slice(0, 4);
-    grid.innerHTML = picks.map(p => `<a class="bp-pick" href="/product/${p.handle}">
+    grid.innerHTML = picks.map(p => `<a class="sw-pick" href="/product/${p.handle}">
       <img src="${p.image}" alt="${p.title}" loading="lazy">
       <b>${p.title}</b><span>${money(p.priceInr)}</span></a>`).join('');
   }
@@ -364,6 +381,9 @@
     }
     const tip = event.target.closest('button[data-tip]');
     if (tip) { state.tip = Number(tip.dataset.tip) || 0; writePref(TIP_KEY, state.tip); renderTips(); renderBill(); return; }
+    if (event.target.closest('[data-bp-gotip]')) { setSeg('tip'); return; }
+    const seg = event.target.closest('button[data-bp-seg]');
+    if (seg) { setSeg(seg.dataset.bpSeg); return; }
   });
 
   $('[data-bp-addr-row]').addEventListener('click', () => {
@@ -373,11 +393,7 @@
   });
   $('[data-bp-area]').addEventListener('click', () => RFS.openLocationSheet());
   $('[data-bp-addmore]').addEventListener('click', () => { window.location.href = '/shop'; });
-  $('[data-bp-notes-toggle]').addEventListener('click', () => {
-    const box = $('[data-bp-notes]');
-    box.hidden = !box.hidden;
-    if (!box.hidden) box.querySelector('[data-bp-notes-input]').focus();
-  });
+  $('[data-bp-notes-toggle]').addEventListener('click', () => { setSeg('instructions'); $('[data-bp-notes-input]')?.focus(); });
   $('[data-bp-notes-input]').addEventListener('input', event => {
     clearTimeout(state.notesTimer);
     const value = event.target.value;
@@ -386,6 +402,10 @@
       const hint = $('[data-bp-notes-hint]');
       if (hint) hint.textContent = value ? `“${value.slice(0, 18)}${value.length > 18 ? '…' : ''}”` : '';
     }, 350);
+  });
+  $('[data-bp-coupon-toggle]').addEventListener('click', () => {
+    const more = $('[data-bp-coupon-more]');
+    more.hidden = !more.hidden;
   });
   $('[data-bp-coupon-apply-btn]').addEventListener('click', () => applyCoupon($('[data-bp-coupon-input]').value));
   $('[data-bp-coupon-input]').addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); applyCoupon(event.target.value); } });
@@ -422,6 +442,7 @@
       if (hint && notes) hint.textContent = `“${notes.slice(0, 18)}${notes.length > 18 ? '…' : ''}”`;
       const savedCoupon = readPref(COUPON_KEY, null);
       renderAll();
+      setSeg('delivery');
       RFS.syncCartUI(state.products);
       if (savedCoupon?.code) await applyCoupon(savedCoupon.code, true);
       scheduleQuote();

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="robots" content="noindex"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Basket – Rebesta Fresh</title>
-  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><meta name="description" content="Review your basket and order farm-fresh vegetables from Rebesta Fresh, Hosur."><meta property="og:title" content="Your basket"><meta property="og:description" content="Review your basket and order farm-fresh vegetables from Rebesta Fresh, Hosur."><meta property="og:type" content="website"><meta property="og:image" content="https://rebestafresh.in/assets/brand/logo.png"><meta name="twitter:card" content="summary"><link rel="stylesheet" href="/css/styles.css?v=20261006q">
+  <link rel="icon" type="image/png" href="/assets/brand/icon-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-192.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><meta name="description" content="Review your basket and order farm-fresh vegetables from Rebesta Fresh, Hosur."><meta property="og:title" content="Your basket"><meta property="og:description" content="Review your basket and order farm-fresh vegetables from Rebesta Fresh, Hosur."><meta property="og:type" content="website"><meta property="og:image" content="https://rebestafresh.in/assets/brand/logo.png"><meta name="twitter:card" content="summary"><link rel="stylesheet" href="/css/styles.css?v=20261006r">
 </head>
 <body class="shop-page basket-body">
   <header class="site-header"><div class="container header-inner">
@@ -14,114 +14,106 @@
         <a class="cart-link hdr-icon" href="/cart" aria-label="Your basket"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.5 3h2.2l2.9 12.2a1.7 1.7 0 0 0 1.7 1.3h8.9a1.7 1.7 0 0 0 1.6-1.3L22 8H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.6" cy="20.2" r="1.7" fill="currentColor"/><circle cx="17.8" cy="20.2" r="1.7" fill="currentColor"/></svg><span class="cart-count zero" data-cart-count>0</span></a>      </div>
   </div></header>
   <main class="basket-main">
-    <!-- 🎨 colorful hero band -->
-    <section class="bp-hero"><div class="container">
-      <div class="bp-hero-row">
-        <div class="bp-hero-txt">
-          <h1>🧺 Your basket</h1>
-          <p data-bp-subtitle>Fresh from the farm, every morning</p>
-        </div>
-        <span class="bp-hero-badge" data-bp-count>0 items</span>
-      </div>
-      <div class="bp-hero-chips">
-        <span class="bp-hchip bp-hchip-green">🌅 Morning delivery</span>
-        <span class="bp-hchip bp-hchip-orange">💸 COD available</span>
-        <span class="bp-hchip bp-hchip-purple">🚚 Free over ₹500</span>
-      </div>
-    </div></section>
-
-    <section class="container bp-body">
+    <section class="sw-page container">
       <!-- empty state -->
-      <div class="bp-empty" data-bp-empty hidden>
-        <div class="bp-empty-art">🥕</div>
+      <div class="sw-card sw-empty" data-bp-empty hidden>
+        <div class="sw-empty-art">🥕</div>
         <h2>Your basket is empty</h2>
         <p>Add fresh vegetables and they'll show up right here.</p>
-        <div data-repeat-order hidden class="bp-repeat"><button class="bp-btn bp-btn-orange" type="button">🔁 Repeat last order</button><p>Adds every product from your previous order in one tap.</p></div>
-        <a class="bp-btn bp-btn-green" href="/shop">Start shopping →</a>
-        <div class="bp-empty-picks">
-          <h3>⭐ Top picks right now</h3>
-          <div class="bp-pick-grid" data-empty-picks-grid></div>
+        <div data-repeat-order hidden class="sw-repeat"><button class="sw-paybtn sw-paybtn-line" type="button">🔁 Repeat last order</button><p>Adds every product from your previous order in one tap.</p></div>
+        <a class="sw-paybtn" href="/shop">Start shopping →</a>
+        <div class="sw-empty-picks">
+          <h3>Top picks right now</h3>
+          <div class="sw-pick-grid" data-empty-picks-grid></div>
         </div>
       </div>
 
-      <!-- full basket experience -->
+      <!-- full basket -->
       <div data-bp-main hidden>
-        <!-- deliver-to address -->
-        <button type="button" class="bp-card bp-addr" data-bp-addr-row>
-          <span class="bp-ic bp-ic-green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-5.1-7-11a7 7 0 0 1 14 0c0 5.9-7 11-7 11Z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.6" stroke="currentColor" stroke-width="2"/></svg></span>
-          <span class="bp-addr-txt"><small>Deliver to</small><b data-bp-addr-line>Add delivery address</b><span class="bp-addr-sub" data-bp-addr-sub>Hosur</span></span>
-          <span class="bp-arrow" aria-hidden="true">›</span>
-        </button>
-        <div class="bp-card bp-addr-edit" data-bp-addr-edit hidden>
-          <div class="fx-field bp-fx"><input id="bpAddr1" data-bp-addr1 autocomplete="street-address" placeholder=" "><label for="bpAddr1">House / flat / street</label></div>
-          <div class="fx-field bp-fx bp-fx-pin"><input id="bpPin" data-bp-pin inputmode="numeric" maxlength="6" autocomplete="postal-code" placeholder=" "><label for="bpPin">Pincode</label></div>
-          <button type="button" class="bp-area-link" data-bp-area>📍 Change area — pick your locality</button>
+        <div class="sw-card">
+          <div class="sw-title-row"><h1 class="sw-title">Your basket</h1><span class="sw-count" data-bp-count>0 items</span></div>
+          <button type="button" class="sw-addr" data-bp-addr-row>
+            <span class="sw-pin" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-5.1-7-11a7 7 0 0 1 14 0c0 5.9-7 11-7 11Z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.6" stroke="currentColor" stroke-width="2"/></svg></span>
+            <span class="sw-addr-txt" data-bp-addr-line>Home | Add delivery address</span>
+            <span class="sw-chev" aria-hidden="true">›</span>
+          </button>
+          <div class="sw-addr-edit" data-bp-addr-edit hidden>
+            <div class="fx-field bp-fx"><input id="bpAddr1" data-bp-addr1 autocomplete="street-address" placeholder=" "><label for="bpAddr1">House / flat / street</label></div>
+            <div class="fx-field bp-fx bp-fx-pin"><input id="bpPin" data-bp-pin inputmode="numeric" maxlength="6" autocomplete="postal-code" placeholder=" "><label for="bpPin">Pincode</label></div>
+            <button type="button" class="sw-area-link" data-bp-area>📍 Change area — pick your locality</button>
+          </div>
+          <div class="sw-saved-banner" data-bp-saved-banner hidden>🎉 <b data-bp-saved-banner-amt>₹0 saved!</b> On this order</div>
+          <div class="sw-items" data-bp-items></div>
         </div>
 
-        <!-- items -->
-        <div class="bp-card bp-items" data-bp-items></div>
-
-        <!-- add more + instructions (no cutlery) -->
-        <div class="bp-card bp-misc">
-          <button type="button" class="bp-misc-row" data-bp-addmore><span class="bp-ic bp-ic-orange">➕</span><span class="bp-misc-txt">Add more items</span><span class="bp-arrow" aria-hidden="true">›</span></button>
-          <button type="button" class="bp-misc-row" data-bp-notes-toggle><span class="bp-ic bp-ic-blue">✍️</span><span class="bp-misc-txt">Delivery instructions</span><span class="bp-notes-hint" data-bp-notes-hint></span></button>
-          <div class="bp-notes" data-bp-notes hidden><textarea data-bp-notes-input maxlength="250" rows="2" placeholder="Gate code, nearby shop, call on arrival…"></textarea></div>
+        <div class="sw-card sw-opts">
+          <button type="button" class="sw-opt" data-bp-addmore><span class="sw-opt-ic">➕</span><span class="sw-opt-txt">Add Items</span><span class="sw-chev" aria-hidden="true">›</span></button>
+          <button type="button" class="sw-opt" data-bp-notes-toggle><span class="sw-opt-ic">✍️</span><span class="sw-opt-txt">Delivery instructions</span><span class="sw-notes-hint" data-bp-notes-hint></span><span class="sw-chev" aria-hidden="true">›</span></button>
         </div>
 
-        <!-- complete your basket -->
-        <div class="bp-complete" data-bp-complete hidden>
-          <div class="bp-sec-head"><span class="bp-ic bp-ic-purple">✨</span><h4>Complete your basket</h4></div>
-          <div class="bp-tabs" data-bp-tabs></div>
-          <div class="bp-rail" data-bp-rail></div>
+        <div class="sw-card" data-bp-complete hidden>
+          <h4 class="sw-sec">COMPLETE YOUR BASKET</h4>
+          <div class="sw-tabs" data-bp-tabs></div>
+          <div class="sw-rail" data-bp-rail></div>
         </div>
 
-        <!-- savings corner -->
-        <div class="bp-savings" data-bp-savings hidden>
-          <div class="bp-sec-head"><span class="bp-ic bp-ic-gold">🎁</span><h4>Savings corner</h4></div>
-          <div class="bp-coupon-cards" data-bp-coupon-cards></div>
+        <div class="sw-card" data-bp-savings hidden>
+          <h4 class="sw-sec">SAVINGS CORNER</h4>
+          <button type="button" class="sw-coupon-row" data-bp-coupon-toggle><span class="sw-pct" aria-hidden="true">%</span><span class="sw-opt-txt">Apply Coupon</span><span class="sw-chev" aria-hidden="true">›</span></button>
+          <div class="sw-coupon-more" data-bp-coupon-more hidden>
+            <div class="sw-coupon-cards" data-bp-coupon-cards></div>
+            <div class="sw-coupon-manual"><input id="bpCouponInput" data-bp-coupon-input placeholder="Enter coupon code" maxlength="24" autocomplete="off"><button type="button" class="sw-apply" data-bp-coupon-apply-btn>APPLY</button></div>
+            <p class="sw-coupon-msg" data-bp-coupon-msg hidden></p>
+          </div>
+          <div class="sw-applied" data-bp-coupon-on hidden></div>
         </div>
 
-        <!-- apply coupon -->
-        <div class="bp-card bp-coupon">
-          <div class="bp-coupon-on" data-bp-coupon-on hidden></div>
-          <div class="bp-coupon-form" data-bp-coupon-form>
-            <label for="bpCouponInput">🎟️ Apply coupon</label>
-            <div class="bp-coupon-row"><input id="bpCouponInput" data-bp-coupon-input placeholder="Enter coupon code" maxlength="24" autocomplete="off"><button type="button" class="bp-coupon-btn" data-bp-coupon-apply-btn>Apply</button></div>
-            <p class="bp-coupon-msg" data-bp-coupon-msg hidden></p>
+        <div class="sw-card sw-segcard">
+          <div class="sw-seg" role="tablist">
+            <button type="button" class="sw-seg-btn on" data-bp-seg="delivery">Delivery Type</button>
+            <button type="button" class="sw-seg-btn" data-bp-seg="tip">Tip</button>
+            <button type="button" class="sw-seg-btn" data-bp-seg="instructions">Instructions</button>
+          </div>
+          <div class="sw-panel" data-bp-panel="delivery">
+            <div class="sw-del on">
+              <span class="sw-del-ic" aria-hidden="true">⚡</span>
+              <div class="sw-del-l"><b>Standard</b><small>Local morning delivery, minimal grouping</small></div>
+              <span class="sw-eta" data-bp-eta>7–9 AM</span>
+              <span class="sw-radio on" aria-hidden="true"></span>
+            </div>
+            <div class="sw-slots" data-bp-slots hidden></div>
+            <div class="sw-del off">
+              <span class="sw-del-ic" aria-hidden="true">🛸</span>
+              <div class="sw-del-l"><b>Drone delivery</b><small>Hover-drop in 15 minutes</small></div>
+              <span class="sw-soon">COMING SOON</span>
+            </div>
+            <p class="sw-fee" data-bp-fee hidden></p>
+          </div>
+          <div class="sw-panel" data-bp-panel="tip" hidden>
+            <p class="sw-tip-note">100% of your tip goes to the delivery partner 💛</p>
+            <div class="sw-tip-chips" data-bp-tips></div>
+          </div>
+          <div class="sw-panel" data-bp-panel="instructions" hidden>
+            <textarea class="sw-notes" data-bp-notes-input maxlength="250" rows="3" placeholder="Gate code, nearby shop, call on arrival…"></textarea>
           </div>
         </div>
 
-        <!-- delivery -->
-        <div class="bp-card bp-delivery">
-          <div class="bp-sec-head"><span class="bp-ic bp-ic-teal">🚚</span><h4>Delivery</h4></div>
-          <div class="bp-del-row on"><span class="bp-del-dot" aria-hidden="true"></span><div class="bp-del-txt"><b>Standard</b><small>Fresh at your door, tomorrow morning</small></div><span class="bp-del-tag">FREE over ₹500</span></div>
-          <div class="bp-slots" data-bp-slots hidden></div>
-          <div class="bp-del-row off"><span class="bp-del-drone" aria-hidden="true">🛸</span><div class="bp-del-txt"><b>Drone delivery</b><small>Hover-drop in 15 minutes</small></div><span class="bp-soon">COMING SOON</span></div>
-          <p class="bp-fee" data-bp-fee hidden></p>
-        </div>
-
-        <!-- tip -->
-        <div class="bp-card bp-tip">
-          <div class="bp-sec-head"><span class="bp-ic bp-ic-pink">💛</span><h4>Delivery tip</h4></div>
-          <p class="bp-tip-sub">100% of it goes to your delivery partner</p>
-          <div class="bp-tip-chips" data-bp-tips></div>
-        </div>
-
-        <!-- bill -->
-        <div class="bp-card bp-bill" data-bp-bill hidden>
-          <div class="bp-sec-head"><span class="bp-ic bp-ic-green">🧾</span><h4>To pay</h4></div>
+        <div class="sw-card sw-bill" data-bp-bill hidden>
+          <div class="sw-bill-top"><span class="sw-bill-toplabel">To Pay</span><span class="sw-strike" data-bp-strike hidden></span><strong data-bp-pay-total>₹0</strong></div>
+          <p class="sw-bill-saved" data-bp-saved hidden></p>
           <div data-bp-bill-rows></div>
-          <div class="bp-saved" data-bp-saved hidden></div>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- sticky pay bar -->
-  <div class="bp-paybar" data-bp-paybar hidden>
-    <div class="bp-pay-total"><span>To pay</span><strong data-bp-pay-total>₹0</strong></div>
-    <button type="button" class="bp-upi" data-bp-upi><span class="bp-upi-ic">⚡</span>UPI <span class="bp-arrow" aria-hidden="true">›</span></button>
-    <button type="button" class="bp-pay-btn" data-bp-pay>PAY</button>
+  <!-- sticky pay bar (Swiggy style) -->
+  <div class="sw-paybar" data-bp-paybar hidden>
+    <button type="button" class="sw-payusing" data-bp-upi>
+      <small>PAY USING</small>
+      <span class="sw-method">⚡ UPI <span class="sw-chev" aria-hidden="true">▾</span></span>
+    </button>
+    <button type="button" class="sw-paybtn" data-bp-pay>Pay ₹0</button>
   </div>
 
   <!-- phone-number login sheet -->
@@ -189,6 +181,6 @@
   </div>
   <div class="container minimal-footer-inner"><span>© 2026 Rebesta Fresh · Fresh from farms, Hosur</span></div>
 </footer>
-  <script src="/js/store.js?v=20261006s16" defer></script><script src="/js/cart.js?v=20261006a" defer></script>
+  <script src="/js/store.js?v=20261006s16" defer></script><script src="/js/cart.js?v=20261006b" defer></script>
 </body>
 </html>

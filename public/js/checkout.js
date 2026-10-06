@@ -11,7 +11,7 @@
     subCheck.addEventListener('change', () => subCard.classList.toggle('active', subCheck.checked));
     syncPills();
   }
-  const state = { products: [], byHandle: new Map(), settings: null, quote: null, coords: null, coupon: null, me: null, authSheetBound: false };
+  const state = { products: [], byHandle: new Map(), settings: null, quote: null, coords: null, coupon: null, me: null, authSheetBound: false, tip: 0 };
   const $ = selector => document.querySelector(selector);
 
   const nodes = {
@@ -30,6 +30,54 @@
     authBackdrop: $('[data-auth-backdrop]'),
     authRoot: $('[data-auth-flow-root]')
   };
+
+  function readCheckoutPref(key, fallback) {
+    try {
+      const value = JSON.parse(localStorage.getItem(key) || 'null');
+      return (value === null || value === undefined) ? fallback : value;
+    } catch { return fallback; }
+  }
+
+  function prefillFromBasket() {
+    /* carried over from the basket sheet: address, notes */
+    const savedAddr = readCheckoutPref('rebesta_checkout_addr_v1', null);
+    if (savedAddr) {
+      const a1 = $('#address1'); const pin = $('#pincode');
+      if (a1 && !a1.value.trim() && savedAddr.line1) a1.value = String(savedAddr.line1).slice(0, 120);
+      if (pin && !pin.value.trim() && savedAddr.pincode) pin.value = String(savedAddr.pincode).slice(0, 6);
+    }
+    const savedNotes = String(readCheckoutPref('rebesta_checkout_notes_v1', '') || '');
+    const notesEl = $('#notes');
+    if (notesEl && savedNotes && !notesEl.value.trim()) notesEl.value = savedNotes.slice(0, 500);
+    const savedTip = Number(readCheckoutPref('rebesta_checkout_tip_v1', 0));
+    state.tip = Number.isFinite(savedTip) && savedTip >= 0 && savedTip <= 100 ? Math.round(savedTip) : 0;
+  }
+
+  async function restoreBasketCoupon() {
+    const saved = readCheckoutPref('rebesta_checkout_coupon_v1', null);
+    if (!saved?.code) return;
+    try {
+      const data = await RFS.api('/api/coupon/check', { method: 'POST', body: JSON.stringify({ code: saved.code, subtotalInr: subtotal() }) });
+      state.coupon = data.coupon;
+    } catch {
+      try { localStorage.removeItem('rebesta_checkout_coupon_v1'); } catch {}
+    }
+  }
+
+  function renderTipBox() {
+    const box = document.createElement('div');
+    box.className = 'coupon-box tip-box';
+    box.innerHTML = '<label>Delivery tip — 100% goes to your delivery partner</label>'
+      + `<div class="cs-tip-chips" data-tip-chips>${[0, 10, 20, 30].map(v => `<button type="button" class="cs-tip-chip${state.tip === v ? ' on' : ''}" data-tip="${v}">${v ? RFS.money(v) : 'No tip'}</button>`).join('')}</div>`;
+    box.querySelector('[data-tip-chips]').addEventListener('click', event => {
+      const chip = event.target.closest('button[data-tip]');
+      if (!chip) return;
+      state.tip = Number(chip.dataset.tip) || 0;
+      try { localStorage.setItem('rebesta_checkout_tip_v1', JSON.stringify(state.tip)); } catch {}
+      renderSummary();
+    });
+    return box;
+  }
 
   function formData() {
     const fd = new FormData($('[data-checkout-form]'));
@@ -104,11 +152,12 @@
     const products = subtotal();
     if (state.coupon && products < Number(state.coupon.minOrderInr || 0)) {
       state.coupon = null;
+      try { localStorage.removeItem('rebesta_checkout_coupon_v1'); } catch {}
       RFS.toast('Coupon removed — basket is below the minimum order', 'error');
     }
     const fee = state.quote?.eligible ? Number(state.quote.deliveryFeeInr || 0) : null;
     const discount = state.coupon ? Number(state.coupon.discountInr || 0) : 0;
-    const total = Math.max(0, products + (fee || 0) - discount);
+    const total = Math.max(0, products + (fee || 0) + Number(state.tip || 0) - discount);
     nodes.summary.innerHTML = '';
     const h2 = document.createElement('h2'); h2.textContent = 'Order summary';
     nodes.summary.appendChild(h2);
@@ -142,6 +191,12 @@
       div.querySelector('strong').textContent = value;
       nodes.summary.appendChild(div);
     }
+    const tipRow = document.createElement('div');
+    tipRow.className = 'summary-row';
+    tipRow.innerHTML = '<span></span><strong></strong>';
+    tipRow.querySelector('span').textContent = 'Delivery tip';
+    tipRow.querySelector('strong').textContent = RFS.money(Number(state.tip || 0));
+    nodes.summary.appendChild(tipRow);
     if (state.coupon) {
       const couponRow = document.createElement('div');
       couponRow.className = 'summary-row coupon-applied-row';
@@ -157,6 +212,7 @@
       couponBox.querySelector('strong').textContent = state.coupon.code;
       couponBox.querySelector('[data-coupon-remove]').addEventListener('click', () => {
         state.coupon = null;
+        try { localStorage.removeItem('rebesta_checkout_coupon_v1'); } catch {}
         renderSummary();
         RFS.toast('Coupon removed');
       });
@@ -171,6 +227,7 @@
         try {
           const data = await RFS.api('/api/coupon/check', { method: 'POST', body: JSON.stringify({ code, subtotalInr: products }) });
           state.coupon = data.coupon;
+          try { localStorage.setItem('rebesta_checkout_coupon_v1', JSON.stringify({ code: data.coupon.code })); } catch {}
           RFS.toast(`Coupon ${data.coupon.code} applied — you save ${RFS.money(data.coupon.discountInr)}`);
           renderSummary();
         } catch (error) {
@@ -181,6 +238,7 @@
       input.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); apply(); } });
     }
     nodes.summary.appendChild(couponBox);
+    nodes.summary.appendChild(renderTipBox());
     const totalRow = document.createElement('div'); totalRow.className = 'summary-total';
     totalRow.innerHTML = '<span>Total to pay</span><strong></strong>';
     totalRow.querySelector('strong').textContent = RFS.money(total);
@@ -375,6 +433,7 @@
     payload.items = items();
     payload.slotId = slot;
     payload.paymentMethod = payment;
+    payload.tipInr = Number(state.tip || 0);
     if (state.coupon) payload.couponCode = state.coupon.code;
     const referralInput = document.querySelector('[data-referral-input]');
     if (referralInput && referralInput.value.trim()) payload.referredBy = referralInput.value.trim();
@@ -382,6 +441,9 @@
     try {
       const order = await RFS.api('/api/orders', { method: 'POST', body: JSON.stringify(payload) });
       RFS.saveCart([]);
+      for (const key of ['rebesta_checkout_coupon_v1', 'rebesta_checkout_tip_v1', 'rebesta_checkout_notes_v1']) {
+        try { localStorage.removeItem(key); } catch {}
+      }
       // 🔁 optional weekly subscription from this order
       const subscribeBox = document.querySelector('[data-subscribe]');
       if (subscribeBox?.checked) {
@@ -431,6 +493,8 @@
         if (phoneEl && !phoneEl.value.trim()) phoneEl.value = state.me.phone || '';
       }
       renderLoginNote();
+      prefillFromBasket();
+      await restoreBasketCoupon();
       const havePin = await applySavedLocation();
       renderBasket();
       renderPayments();

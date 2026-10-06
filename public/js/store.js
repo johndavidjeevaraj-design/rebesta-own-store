@@ -380,15 +380,31 @@
     if (!getSavedLocation() && !dismissed) setTimeout(openLocationSheet, 900);
   }
 
-  /* ================= Cart sheet — place the order from any page (quick-commerce style) ================= */
+  /* ================= Cart sheet — your basket, order from any page (Swiggy-style) ================= */
   const CART_SHEET_ADDR_KEY = 'rebesta_checkout_addr_v1';
+  const CART_SHEET_TIP_KEY = 'rebesta_checkout_tip_v1';
+  const CART_SHEET_COUPON_KEY = 'rebesta_checkout_coupon_v1';
+  const CART_SHEET_NOTES_KEY = 'rebesta_checkout_notes_v1';
   const CART_SHEET_EXCLUDE = ['/checkout', '/login', '/account', '/admin'];
+  const CART_TIP_CHOICES = [0, 10, 20, 30];
+  const CART_ADDON_RE = /coriander|curry|chilli|garlic|ginger|lemon|coconut|mint|amaranth|keerai|keera/i;
+  const CART_ADD_TABS = [
+    { id: 'popular', label: 'Popular', pick: list => list.filter(p => p.featured) },
+    { id: 'greens', label: 'Greens', pick: list => list.filter(p => p.category === 'Leafy Greens') },
+    { id: 'combos', label: 'Combos', pick: list => list.filter(p => p.category === 'Combos & Kits') },
+    { id: 'addons', label: 'Add-ons', pick: list => list.filter(p => CART_ADDON_RE.test(p.title) && p.category !== 'Combos & Kits') }
+  ];
   let cartSheetEl = null;
   let cartProducts = null;
   let cartMe = null;
   let cartQuote = null;
   let cartSlotId = '';
   let cartQuoteTimer = null;
+  let cartTip = 0;
+  let cartCoupon = null;
+  let cartCoupons = null;
+  let cartAddTab = 'popular';
+  let cartNotesTimer = null;
 
   async function ensureCartProducts() {
     if (cartProducts) return cartProducts;
@@ -402,6 +418,15 @@
   }
   function savedCartAddr() {
     try { return JSON.parse(localStorage.getItem(CART_SHEET_ADDR_KEY) || '{}') || {}; } catch { return {}; }
+  }
+  function readCartPref(key, fallback) {
+    try {
+      const value = JSON.parse(localStorage.getItem(key) || 'null');
+      return (value === null || value === undefined) ? fallback : value;
+    } catch { return fallback; }
+  }
+  function writeCartPref(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
   }
 
   const AUTH_FORM_HTML = `
@@ -431,8 +456,6 @@
 
   function loadCartOtpSdk() {
     if (document.querySelector('script[data-otp-sdk]') || typeof window.initSendOTP === 'function') return;
-    const s0 = document.createElement('script');
-    s0.dataset.otpSdk = '1';
     const config = {
       widgetId: '366a65687644323637363131',
       tokenAuth: '571380TgZrH8gvzsiK6aa8dedbP1',
@@ -463,45 +486,151 @@
     sheet.innerHTML = `
       <div class="sheet-grab" aria-hidden="true"></div>
       <button type="button" class="sheet-close" data-cart-close aria-label="Close">✕</button>
-      <div class="sheet-head"><h3>Your basket</h3><p data-cart-subtitle></p></div>
-      <div class="cart-items" data-cart-items></div>
-      <div class="cart-loc" data-cart-loc hidden></div>
-      <div class="cart-slots" data-cart-slots hidden></div>
-      <div class="cart-addr">
-        <div class="fx-field cart-fx"><input id="cartAddr1" data-cart-addr1 autocomplete="street-address" placeholder=" "><label for="cartAddr1">House / flat / street</label></div>
-        <div class="fx-field cart-fx cart-fx-pin"><input id="cartPin" data-cart-pin inputmode="numeric" maxlength="6" autocomplete="postal-code" placeholder=" "><label for="cartPin">Pincode</label></div>
+      <div class="cs-head"><h3>Your basket</h3><p data-cs-subtitle></p></div>
+      <div class="cs-scroll">
+        <button type="button" class="cs-card cs-addr-row" data-cs-addr-row>
+          <span class="cs-addr-pin" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-5.1-7-11a7 7 0 0 1 14 0c0 5.9-7 11-7 11Z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.6" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span class="cs-addr-text"><b data-cs-addr-line>Add delivery address</b><small data-cs-addr-sub>Hosur</small></span>
+          <span class="cs-arrow" aria-hidden="true">›</span>
+        </button>
+        <div class="cs-card cs-addr-edit" data-cs-addr-edit hidden>
+          <div class="fx-field cart-fx"><input id="cartAddr1" data-cart-addr1 autocomplete="street-address" placeholder=" "><label for="cartAddr1">House / flat / street</label></div>
+          <div class="fx-field cart-fx cart-fx-pin"><input id="cartPin" data-cart-pin inputmode="numeric" maxlength="6" autocomplete="postal-code" placeholder=" "><label for="cartPin">Pincode</label></div>
+          <button type="button" class="cs-area-link" data-cs-area>📍 Change area — pick your locality</button>
+        </div>
+        <div class="cs-card cs-items" data-cart-items></div>
+        <div class="cs-card cs-misc">
+          <button type="button" class="cs-misc-row" data-cs-addmore><span>➕ Add more items</span><span class="cs-arrow" aria-hidden="true">›</span></button>
+          <button type="button" class="cs-misc-row" data-cs-notes-toggle><span>✍️ Delivery instructions</span><span class="cs-notes-hint" data-cs-notes-hint></span></button>
+          <div class="cs-notes" data-cs-notes hidden><textarea data-cs-notes-input maxlength="250" rows="2" placeholder="Gate code, nearby shop, call on arrival…"></textarea></div>
+        </div>
+        <div class="cs-complete" data-cs-complete hidden>
+          <h4>Complete your basket</h4>
+          <div class="cs-tabs" data-cs-tabs></div>
+          <div class="cs-rail" data-cs-rail></div>
+        </div>
+        <div class="cs-savings" data-cs-savings hidden>
+          <h4>🎁 Savings corner</h4>
+          <div class="cs-coupon-cards" data-cs-coupon-cards></div>
+        </div>
+        <div class="cs-card cs-coupon-apply" data-cs-coupon-apply>
+          <div class="cs-coupon-on" data-cs-coupon-on hidden></div>
+          <div class="cs-coupon-form" data-cs-coupon-form>
+            <label for="cartCouponInput">Apply coupon</label>
+            <div class="cs-coupon-row"><input id="cartCouponInput" data-cs-coupon-input placeholder="Enter coupon code" maxlength="24" autocomplete="off"><button type="button" class="cs-coupon-btn" data-cs-coupon-apply-btn>Apply</button></div>
+            <p class="cs-coupon-msg" data-cs-coupon-msg hidden></p>
+          </div>
+        </div>
+        <div class="cs-card cs-delivery" data-cs-delivery>
+          <h4>Delivery</h4>
+          <div class="cs-del-row on"><span class="cs-del-dot" aria-hidden="true"></span><div class="cs-del-txt"><b>Standard</b><small>Fresh at your door, tomorrow morning</small></div></div>
+          <div class="cs-slots" data-cart-slots hidden></div>
+          <div class="cs-del-row off"><span class="cs-del-drone" aria-hidden="true">🛸</span><div class="cs-del-txt"><b>Drone delivery</b><small>Hover-drop in 15 minutes</small></div><span class="cs-soon">COMING SOON</span></div>
+          <p class="cs-fee" data-cart-fee hidden></p>
+        </div>
+        <div class="cs-card cs-tip" data-cs-tip>
+          <h4>Delivery tip</h4>
+          <p class="cs-tip-sub">100% of it goes to your delivery partner</p>
+          <div class="cs-tip-chips" data-cs-tips></div>
+        </div>
+        <div class="cs-card cs-bill" data-cart-bill hidden><h4>To pay</h4><div data-cs-bill-rows></div></div>
       </div>
-      <p class="cart-fee" data-cart-fee hidden></p>
-      <div class="cart-bill" data-cart-bill hidden></div>
       <div class="cart-auth" data-cart-auth hidden></div>
-      <button type="button" class="cart-place" data-cart-place>Place order</button>
-      <p class="cart-note">Cash on delivery · fresh from the farm, tomorrow morning 🌿</p>`;
+      <div class="cs-paybar" data-cs-paybar>
+        <div class="cs-pay-total"><span>To pay</span><strong data-cs-pay-total>₹0</strong></div>
+        <button type="button" class="cs-upi" data-cs-upi>UPI <span class="cs-arrow" aria-hidden="true">›</span></button>
+        <button type="button" class="cs-pay-btn" data-cs-pay>PAY</button>
+      </div>`;
     document.body.append(back, sheet);
     cartSheetEl = { back, sheet };
 
     back.addEventListener('click', closeCartSheet);
     sheet.querySelector('[data-cart-close]').addEventListener('click', closeCartSheet);
-    sheet.querySelector('[data-cart-loc]').addEventListener('click', () => {
+    sheet.querySelector('[data-cs-addr-row]').addEventListener('click', () => {
+      const edit = sheet.querySelector('[data-cs-addr-edit]');
+      edit.hidden = !edit.hidden;
+      if (!edit.hidden && !sheet.querySelector('[data-cart-addr1]').value.trim()) sheet.querySelector('[data-cart-addr1]').focus();
+    });
+    sheet.querySelector('[data-cs-area]').addEventListener('click', () => {
       closeCartSheet();
       setTimeout(openLocationSheet, 260);
     });
-    sheet.querySelector('[data-cart-items]').addEventListener('click', event => {
-      const btn = event.target.closest('button[data-cs]');
-      if (!btn) return;
-      const qty = Number(btn.dataset.qty || '1');
-      RFS.setQty(btn.dataset.handle, btn.dataset.cs === 'plus' ? qty + 1 : qty - 1);
+    sheet.querySelector('[data-cs-addmore]').addEventListener('click', () => {
+      const path = location.pathname.replace(/\/+$/, '') || '/';
+      closeCartSheet();
+      if (!['/', '/shop'].includes(path)) setTimeout(() => { window.location.href = '/shop'; }, 240);
+    });
+    sheet.querySelector('[data-cs-notes-toggle]').addEventListener('click', () => {
+      const box = sheet.querySelector('[data-cs-notes]');
+      box.hidden = !box.hidden;
+      if (!box.hidden) box.querySelector('[data-cs-notes-input]').focus();
+    });
+    sheet.querySelector('[data-cs-notes-input]').addEventListener('input', event => {
+      clearTimeout(cartNotesTimer);
+      const value = event.target.value;
+      cartNotesTimer = setTimeout(() => {
+        writeCartPref(CART_SHEET_NOTES_KEY, value);
+        const hint = sheet.querySelector('[data-cs-notes-hint]');
+        if (hint) hint.textContent = value ? `“${value.slice(0, 18)}${value.length > 18 ? '…' : ''}”` : '';
+      }, 350);
+    });
+    sheet.querySelector('[data-cs-tabs]').addEventListener('click', event => {
+      const tab = event.target.closest('button[data-cs-tab]');
+      if (!tab) return;
+      cartAddTab = tab.dataset.csTab;
+      renderCartRail();
+    });
+    sheet.querySelector('[data-cart-items]').addEventListener('click', handleCartStepperClick);
+    sheet.querySelector('[data-cs-rail]').addEventListener('click', handleCartStepperClick);
+    sheet.querySelector('[data-cs-coupon-cards]').addEventListener('click', event => {
+      const btn = event.target.closest('button[data-cs-apply-code]');
+      if (btn) applyCartCoupon(btn.dataset.csApplyCode);
+    });
+    sheet.querySelector('[data-cs-coupon-apply-btn]').addEventListener('click', () => {
+      applyCartCoupon(sheet.querySelector('[data-cs-coupon-input]').value);
+    });
+    sheet.querySelector('[data-cs-coupon-input]').addEventListener('keydown', event => {
+      if (event.key === 'Enter') { event.preventDefault(); applyCartCoupon(event.target.value); }
+    });
+    sheet.querySelector('[data-cs-coupon-on]').addEventListener('click', event => {
+      if (event.target.closest('[data-cs-coupon-x]')) removeCartCoupon();
     });
     sheet.querySelector('[data-cart-slots]').addEventListener('click', event => {
       const chip = event.target.closest('button[data-slot-id]');
       if (!chip || chip.disabled) return;
       cartSlotId = chip.dataset.slotId;
       sheet.querySelectorAll('[data-slot-id]').forEach(el => el.classList.toggle('on', el === chip));
+      renderCartQuote();
     });
-    sheet.querySelector('[data-cart-place]').addEventListener('click', placeFromCart);
+    sheet.querySelector('[data-cs-tips]').addEventListener('click', event => {
+      const chip = event.target.closest('button[data-tip]');
+      if (!chip) return;
+      cartTip = Number(chip.dataset.tip) || 0;
+      writeCartPref(CART_SHEET_TIP_KEY, cartTip);
+      renderCartTips();
+      renderCartQuote();
+    });
+    sheet.querySelector('[data-cs-pay]').addEventListener('click', proceedFromCart);
+    sheet.querySelector('[data-cs-upi]').addEventListener('click', proceedFromCart);
     sheet.querySelector('[data-cart-pin]').addEventListener('change', () => scheduleCartQuote(true));
+    sheet.querySelector('[data-cart-addr1]').addEventListener('input', renderCartAddrRow);
+    sheet.querySelector('[data-cart-pin]').addEventListener('input', renderCartAddrRow);
     window.addEventListener('rebesta:cart-changed', () => {
-      if (cartSheetEl && !cartSheetEl.sheet.hidden) { renderCartItems(); scheduleCartQuote(true); }
+      if (cartSheetEl && !cartSheetEl.sheet.hidden) {
+        renderCartItems();
+        renderCartRail();
+        renderCartSavings();
+        scheduleCartQuote(true);
+      }
     });
+  }
+
+  function handleCartStepperClick(event) {
+    const btn = event.target.closest('button[data-cs], button[data-cs-action]');
+    if (!btn) return;
+    if (btn.dataset.csAction === 'add') { RFS.addItem(btn.dataset.handle, 1); return; }
+    const qty = Number(btn.dataset.qty || '1');
+    RFS.setQty(btn.dataset.handle, btn.dataset.cs === 'plus' ? qty + 1 : qty - 1);
   }
 
   function openCartSheet() {
@@ -514,11 +643,25 @@
     const saved = savedCartAddr();
     if (saved.line1) sheet.querySelector('[data-cart-addr1]').value = saved.line1;
     if (saved.pincode) sheet.querySelector('[data-cart-pin]').value = saved.pincode;
+    cartTip = Math.min(100, Math.max(0, Number(readCartPref(CART_SHEET_TIP_KEY, 0)) || 0));
+    const notes = String(readCartPref(CART_SHEET_NOTES_KEY, '') || '');
+    const notesInput = sheet.querySelector('[data-cs-notes-input]');
+    if (notesInput) notesInput.value = notes.slice(0, 250);
+    const hint = sheet.querySelector('[data-cs-notes-hint]');
+    if (hint) hint.textContent = notes ? `“${notes.slice(0, 18)}${notes.length > 18 ? '…' : ''}”` : '';
     renderCartItems();
+    renderCartAddrRow();
+    renderCartTips();
+    renderCartSavings();
     (async () => {
       await Promise.all([ensureCartMe(), ensureCartProducts()]);
-      renderCartLoc();
+      try { cartCoupons = (await api('/api/coupon/list')).coupons || []; } catch { cartCoupons = []; }
+      const savedCoupon = readCartPref(CART_SHEET_COUPON_KEY, null);
+      if (savedCoupon?.code && !cartCoupon) await applyCartCoupon(savedCoupon.code, true);
       renderCartItems();
+      renderCartAddrRow();
+      renderCartRail();
+      renderCartSavings();
       scheduleCartQuote(true);
     })();
   }
@@ -532,28 +675,38 @@
     setTimeout(() => { if (cartSheetEl && !cartSheetEl.sheet.classList.contains('open')) cartSheetEl.sheet.hidden = true; }, 340);
   }
 
+  function syncCartSections(hasItems) {
+    const { sheet } = cartSheetEl;
+    for (const sel of ['[data-cs-addr-row]', '[data-cs-delivery]', '[data-cs-tip]', '[data-cart-bill]', '[data-cs-coupon-apply]', '[data-cs-paybar]']) {
+      const el = sheet.querySelector(sel);
+      if (el) el.hidden = !hasItems;
+    }
+    if (!hasItems) {
+      sheet.querySelector('[data-cs-addr-edit]').hidden = true;
+      sheet.querySelector('[data-cs-notes]').hidden = true;
+    }
+  }
+
   function renderCartItems() {
     if (!cartSheetEl) return;
     const { sheet } = cartSheetEl;
     const box = sheet.querySelector('[data-cart-items]');
     const cart = readCart();
     const byHandle = new Map((cartProducts || []).map(p => [p.handle, p]));
-    sheet.querySelector('[data-cart-subtitle]').textContent = cart.length
-      ? `${cartCount()} item${cartCount() === 1 ? '' : 's'} · delivering in Hosur`
+    const loc = getSavedLocation();
+    const area = locationLabel(loc) || 'Hosur';
+    sheet.querySelector('[data-cs-subtitle]').textContent = cart.length
+      ? `${cartCount()} item${cartCount() === 1 ? '' : 's'} · delivering to ${area}`
       : 'Fresh from the farm, every morning';
+    syncCartSections(cart.length > 0);
     if (!cart.length) {
-      box.innerHTML = `<div class="cart-empty"><p>Your basket is empty.</p><a class="cart-shop-link" href="/shop">Browse fresh vegetables →</a></div>`;
-      sheet.querySelector('[data-cart-bill]').hidden = true;
-      sheet.querySelector('[data-cart-place]').hidden = true;
-      sheet.querySelector('[data-cart-slots]').hidden = true;
-      sheet.querySelector('[data-cart-loc]').hidden = true;
+      box.innerHTML = `<div class="cs-empty"><p>Your basket is empty 🧺</p><a class="cs-shop-link" href="/shop">Browse fresh vegetables →</a></div>`;
       return;
     }
-    sheet.querySelector('[data-cart-place]').hidden = false;
     box.innerHTML = cart.map(item => {
       const p = byHandle.get(item.handle);
       if (!p) return '';
-      return `<div class="cart-row">
+      return `<div class="cs-row">
         <img src="${p.image}" alt="" loading="lazy">
         <div class="cr-info"><div class="cr-name">${p.title}</div><div class="cr-unit">${p.unitLabel || ''} · ${money(p.priceInr)}</div></div>
         <div class="qty-stepper cart-qty"><button type="button" data-cs="minus" data-handle="${item.handle}" data-qty="${item.qty}">−</button><span>${item.qty}</span><button type="button" data-cs="plus" data-handle="${item.handle}" data-qty="${item.qty}">+</button></div>
@@ -562,13 +715,113 @@
     }).join('');
   }
 
-  function renderCartLoc() {
+  function renderCartAddrRow() {
     if (!cartSheetEl) return;
-    const row = cartSheetEl.sheet.querySelector('[data-cart-loc]');
+    const { sheet } = cartSheetEl;
+    const line = sheet.querySelector('[data-cs-addr-line]');
+    const sub = sheet.querySelector('[data-cs-addr-sub]');
+    const addr1 = sheet.querySelector('[data-cart-addr1]')?.value.trim() || savedCartAddr().line1 || '';
+    const pin = sheet.querySelector('[data-cart-pin]')?.value.trim() || savedCartAddr().pincode || '';
     const loc = getSavedLocation();
-    if (!loc) { row.hidden = true; return; }
-    row.hidden = false;
-    row.innerHTML = `<span>📍 Delivering to <b>${locationLabel(loc) || 'your area'}</b></span><span class="cart-loc-change">Change</span>`;
+    const area = locationLabel(loc) || 'Hosur';
+    line.textContent = addr1 || 'Add delivery address';
+    line.classList.toggle('is-empty', !addr1);
+    sub.textContent = `${area}${pin ? ' · ' + pin : ''}`;
+  }
+
+  function renderCartRail() {
+    if (!cartSheetEl) return;
+    const { sheet } = cartSheetEl;
+    const complete = sheet.querySelector('[data-cs-complete]');
+    const tabsEl = sheet.querySelector('[data-cs-tabs]');
+    const rail = sheet.querySelector('[data-cs-rail]');
+    if (!cartProducts || !cartProducts.length) { complete.hidden = true; return; }
+    complete.hidden = false;
+    tabsEl.innerHTML = CART_ADD_TABS.map(t =>
+      `<button type="button" class="cs-tab${t.id === cartAddTab ? ' on' : ''}" data-cs-tab="${t.id}">${t.label}</button>`).join('');
+    const cart = readCart();
+    const inCart = new Map(cart.map(item => [item.handle, item.qty]));
+    const pool = cartProducts.filter(p => p.active !== false && Number(p.stock) > 0);
+    const seen = new Set();
+    const tab = CART_ADD_TABS.find(t => t.id === cartAddTab) || CART_ADD_TABS[0];
+    const picks = tab.pick(pool).filter(p => (seen.has(p.handle) ? false : seen.add(p.handle))).slice(0, 8);
+    rail.innerHTML = picks.map(p => {
+      const qty = inCart.get(p.handle) || 0;
+      return `<div class="cs-pcard">
+        <img src="${p.image}" alt="" loading="lazy">
+        <div class="cs-pname">${p.title}</div>
+        <div class="cs-pprice">${money(p.priceInr)} <small>· ${p.unitLabel || ''}</small></div>
+        ${qty
+          ? `<div class="qty-stepper cart-qty cs-mini-step"><button type="button" data-cs="minus" data-handle="${p.handle}" data-qty="${qty}">−</button><span>${qty}</span><button type="button" data-cs="plus" data-handle="${p.handle}" data-qty="${qty}">+</button></div>`
+          : `<button type="button" class="cs-add" data-cs-action="add" data-handle="${p.handle}">ADD</button>`}
+      </div>`;
+    }).join('') || '<p class="cs-rail-empty">Nothing here right now — check the other tabs!</p>';
+  }
+
+  function couponDesc(coupon) {
+    const off = coupon.type === 'percent' ? `${Number(coupon.value)}% off` : `${money(Number(coupon.value))} off`;
+    return coupon.minOrderInr ? `${off} on orders above ${money(Number(coupon.minOrderInr))}` : `${off} on any order`;
+  }
+
+  function renderCartSavings() {
+    if (!cartSheetEl) return;
+    const { sheet } = cartSheetEl;
+    const savings = sheet.querySelector('[data-cs-savings]');
+    if (!cartCoupons || !cartCoupons.length) { savings.hidden = true; }
+    else {
+      savings.hidden = false;
+      sheet.querySelector('[data-cs-coupon-cards]').innerHTML = cartCoupons.map(c => {
+        const applied = cartCoupon && cartCoupon.code === c.code;
+        return `<div class="cs-ccard${applied ? ' on' : ''}">
+          <div class="cs-ccode">${c.code}</div>
+          <div class="cs-cdesc">${couponDesc(c)}</div>
+          ${applied ? '<span class="cs-capplied">✓ APPLIED</span>' : `<button type="button" class="cs-cbtn" data-cs-apply-code="${c.code}">APPLY</button>`}
+        </div>`;
+      }).join('');
+    }
+    const on = sheet.querySelector('[data-cs-coupon-on]');
+    const form = sheet.querySelector('[data-cs-coupon-form]');
+    if (cartCoupon) {
+      on.hidden = false; form.hidden = true;
+      on.innerHTML = `<span>🎟 <b>${cartCoupon.code}</b> · −${money(Number(cartCoupon.discountInr) || 0)}</span><button type="button" class="cs-coupon-x" data-cs-coupon-x aria-label="Remove coupon">✕</button>`;
+    } else {
+      on.hidden = true; form.hidden = false;
+    }
+  }
+
+  async function applyCartCoupon(code, quiet = false) {
+    if (!cartSheetEl) return;
+    const { sheet } = cartSheetEl;
+    code = String(code || '').trim().toUpperCase();
+    if (!code) return;
+    const msg = sheet.querySelector('[data-cs-coupon-msg]');
+    if (msg && !quiet) { msg.hidden = false; msg.textContent = 'Checking…'; msg.className = 'cs-coupon-msg'; }
+    try {
+      const subtotal = cartSubtotal(cartProducts || []);
+      const data = await api('/api/coupon/check', { method: 'POST', body: JSON.stringify({ code, subtotalInr: subtotal }) });
+      cartCoupon = data.coupon;
+      writeCartPref(CART_SHEET_COUPON_KEY, { code: cartCoupon.code });
+      if (!quiet) toast(`Coupon ${cartCoupon.code} applied — you save ${money(cartCoupon.discountInr)} 🎉`);
+      if (msg) msg.hidden = true;
+    } catch (error) {
+      if (!quiet && msg) { msg.hidden = false; msg.textContent = error.message || 'That coupon is not valid'; msg.className = 'cs-coupon-msg error'; }
+      if (quiet) { cartCoupon = null; try { localStorage.removeItem(CART_SHEET_COUPON_KEY); } catch {} }
+    }
+    renderCartSavings();
+    renderCartQuote();
+  }
+
+  function removeCartCoupon() {
+    cartCoupon = null;
+    try { localStorage.removeItem(CART_SHEET_COUPON_KEY); } catch {}
+    renderCartSavings();
+    renderCartQuote();
+  }
+
+  function renderCartTips() {
+    if (!cartSheetEl) return;
+    cartSheetEl.sheet.querySelector('[data-cs-tips]').innerHTML = CART_TIP_CHOICES.map(value =>
+      `<button type="button" class="cs-tip-chip${cartTip === value ? ' on' : ''}" data-tip="${value}">${value ? money(value) : 'No tip'}</button>`).join('');
   }
 
   function scheduleCartQuote(force = false) {
@@ -581,7 +834,7 @@
     if (!cartSheetEl) return;
     const { sheet } = cartSheetEl;
     const cart = readCart();
-    if (!cart.length) return;
+    if (!cart.length) { cartQuote = null; return; }
     const loc = getSavedLocation() || {};
     const pin = sheet.querySelector('[data-cart-pin]').value.trim();
     const feeEl = sheet.querySelector('[data-cart-fee]');
@@ -593,6 +846,11 @@
         address: { pincode: /^\d{6}$/.test(pin) ? pin : '' }
       }) })).quote || null;
     } catch { cartQuote = null; }
+    if (cartCoupon && cartProducts && cartSubtotal(cartProducts) < Number(cartCoupon.minOrderInr || 0)) {
+      toast(`Coupon ${cartCoupon.code} removed — basket is below ${money(Number(cartCoupon.minOrderInr || 0))}`, 'error');
+      removeCartCoupon();
+      return;
+    }
     renderCartQuote();
   }
 
@@ -602,21 +860,29 @@
     const feeEl = sheet.querySelector('[data-cart-fee]');
     const slotsEl = sheet.querySelector('[data-cart-slots]');
     const billEl = sheet.querySelector('[data-cart-bill]');
-    const place = sheet.querySelector('[data-cart-place]');
+    const billRows = sheet.querySelector('[data-cs-bill-rows]');
+    const payTotal = sheet.querySelector('[data-cs-pay-total]');
+    const pay = sheet.querySelector('[data-cs-pay]');
     const subtotal = cartSubtotal(cartProducts || []);
-    if (!cartQuote || !cartQuote.eligible) {
+    const discount = cartCoupon ? Number(cartCoupon.discountInr || 0) : 0;
+    const eligible = Boolean(cartQuote?.eligible);
+    const fee = eligible ? Number(cartQuote.deliveryFeeInr || 0) : null;
+    const total = Math.max(0, Math.round(subtotal + (fee || 0) + cartTip - discount));
+
+    if (cartQuote && !eligible) {
       feeEl.hidden = false;
-      feeEl.textContent = (cartQuote && cartQuote.message) || 'Set your delivery location to check availability.';
-      slotsEl.hidden = true; billEl.hidden = true;
-      place.disabled = true;
-      return;
+      feeEl.textContent = cartQuote.message || 'We cannot deliver to this area yet.';
+    } else if (eligible) {
+      feeEl.hidden = false;
+      feeEl.textContent = cartQuote.freeApplied
+        ? `Free delivery applied (basket over ${money(500)}) · ${cartQuote.distanceKm ? cartQuote.distanceKm + ' road km' : 'Hosur'}`
+        : `Delivery ${money(fee)} · ${cartQuote.distanceKm ? cartQuote.distanceKm + ' road km from the hub' : 'local morning delivery'}`;
+    } else {
+      feeEl.hidden = false;
+      feeEl.textContent = 'Set your delivery location to check availability.';
     }
-    const fee = Number(cartQuote.deliveryFeeInr || 0);
-    feeEl.hidden = false;
-    feeEl.textContent = cartQuote.freeApplied
-      ? `Free delivery applied (basket over ${money(500)}) · ${cartQuote.distanceKm ? cartQuote.distanceKm + ' road km' : 'Hosur'}`
-      : `Delivery ${money(fee)} · ${cartQuote.distanceKm ? cartQuote.distanceKm + ' road km from the hub' : 'local morning delivery'}`;
-    const slots = cartQuote.slots || [];
+
+    const slots = eligible ? (cartQuote.slots || []) : [];
     slotsEl.hidden = !slots.length;
     if (slots.length) {
       slotsEl.innerHTML = slots.map(slot => {
@@ -630,26 +896,35 @@
         const first = slots.find(s => !s.full);
         if (first) { cartSlotId = first.id; slotsEl.querySelector(`[data-slot-id="${first.id}"]`)?.classList.add('on'); }
       }
+    } else {
+      cartSlotId = '';
     }
-    const total = Math.max(0, Math.round(subtotal + fee));
-    billEl.hidden = false;
-    billEl.innerHTML = `<div><span>Item total</span><span>${money(subtotal)}</span></div>
-      <div><span>Delivery</span><span>${fee === 0 ? 'FREE' : money(fee)}</span></div>
-      <div class="cb-total"><span>Total to pay</span><span>${money(total)}</span></div>`;
-    place.disabled = false;
-    place.textContent = `Place order · ${money(total)}`;
+
+    if (readCart().length) {
+      billEl.hidden = false;
+      billRows.innerHTML = `
+        <div class="cs-bill-row"><span>Item total</span><span>${money(subtotal)}</span></div>
+        <div class="cs-bill-row"><span>Delivery fee</span><span>${fee === null ? '—' : (fee === 0 ? 'FREE' : money(fee))}</span></div>
+        <div class="cs-bill-row"><span>Delivery tip</span><span>${money(cartTip)}</span></div>
+        ${discount ? `<div class="cs-bill-row cs-bill-green"><span>Coupon ${cartCoupon.code}</span><span>−${money(discount)}</span></div>` : ''}
+        <div class="cs-bill-total"><span>To pay</span><span>${money(total)}</span></div>`;
+      payTotal.textContent = money(total);
+    } else {
+      billEl.hidden = true;
+    }
+    pay.disabled = !eligible || !cartSlotId;
   }
 
   function showCartAuth() {
     const { sheet } = cartSheetEl;
     const box = sheet.querySelector('[data-cart-auth]');
-    const place = sheet.querySelector('[data-cart-place]');
+    const paybar = sheet.querySelector('[data-cs-paybar]');
     box.hidden = false;
-    place.hidden = true;
+    paybar.hidden = true;
     if (box.dataset.wired) return;
     box.dataset.wired = '1';
     box.innerHTML = AUTH_FORM_HTML;
-    box.querySelector('[data-auth-cancel]').addEventListener('click', () => { box.hidden = true; place.hidden = false; });
+    box.querySelector('[data-auth-cancel]').addEventListener('click', () => { box.hidden = true; paybar.hidden = false; });
     loadCartOtpSdk();
     const s = document.createElement('script');
     s.src = '/js/auth.js?v=20261005d'; s.async = true;
@@ -659,48 +934,40 @@
         onSuccess: async () => {
           cartMe = await ensureCartMe(true);
           box.hidden = true;
-          place.hidden = false;
+          paybar.hidden = false;
           toast(`Welcome, ${(cartMe?.name || 'friend').split(' ')[0]}! 🌿`);
-          placeFromCart();
+          proceedFromCart();
         }
       });
     };
     document.head.appendChild(s);
   }
 
-  async function placeFromCart() {
+  async function proceedFromCart() {
     const { sheet } = cartSheetEl;
     const cart = readCart();
     if (!cart.length) return toast('Your basket is empty', 'error');
-    const addr1 = sheet.querySelector('[data-cart-addr1]').value.trim();
-    const pin = sheet.querySelector('[data-cart-pin]').value.trim();
-    if (addr1.length < 5) { toast('Enter your house / flat / street address', 'error'); sheet.querySelector('[data-cart-addr1]').focus(); return; }
-    if (!/^\d{6}$/.test(pin)) { toast('Enter a 6-digit pincode', 'error'); sheet.querySelector('[data-cart-pin]').focus(); return; }
-    if (!cartQuote?.eligible) { toast('We cannot deliver to this area yet', 'error'); return; }
+    const edit = sheet.querySelector('[data-cs-addr-edit]');
+    const addr1El = sheet.querySelector('[data-cart-addr1]');
+    const pinEl = sheet.querySelector('[data-cart-pin]');
+    const addr1 = addr1El.value.trim();
+    const pin = pinEl.value.trim();
+    if (addr1.length < 5) { edit.hidden = false; toast('Enter your house / flat / street address', 'error'); addr1El.focus(); return; }
+    if (!/^\d{6}$/.test(pin)) { edit.hidden = false; toast('Enter a 6-digit pincode', 'error'); pinEl.focus(); return; }
+    if (!getSavedLocation()) { toast('Pick your delivery area first', 'error'); closeCartSheet(); setTimeout(openLocationSheet, 260); return; }
+    if (!cartQuote) await refreshCartQuote();
+    if (!cartQuote?.eligible) { toast(cartQuote?.message || 'We cannot deliver to this area yet', 'error'); return; }
     if (!cartSlotId) { toast('Choose a delivery slot', 'error'); return; }
     const me = cartMe || await ensureCartMe();
     if (!me) return showCartAuth();
-    try { localStorage.setItem(CART_SHEET_ADDR_KEY, JSON.stringify({ line1: addr1, pincode: pin })); } catch {}
-    const loc = getSavedLocation() || {};
-    const payload = {
-      customer: { name: me.name, phone: me.phone },
-      address: { line1: addr1, line2: '', area: locationLabel(loc) || 'Hosur', city: 'Hosur', pincode: pin },
-      notes: '',
-      items: cart,
-      slotId: cartSlotId,
-      paymentMethod: 'cod',
-      location: Number.isFinite(loc.lat) ? { lat: loc.lat, lng: loc.lng } : {}
-    };
-    const place = sheet.querySelector('[data-cart-place]');
-    setBusy(place, true, 'Securing your order…');
-    try {
-      const order = await api('/api/orders', { method: 'POST', body: JSON.stringify(payload) });
-      saveCart([]);
-      window.location.href = `/order-success?id=${encodeURIComponent(order.orderId)}&phone=${encodeURIComponent(me.phone)}&whatsapp=${encodeURIComponent(order.whatsappUrl || '')}`;
-    } catch (error) {
-      toast(error.message || 'Could not place the order — please try again', 'error');
-      setBusy(place, false);
-    }
+    writeCartPref(CART_SHEET_ADDR_KEY, { line1: addr1, pincode: pin });
+    writeCartPref(CART_SHEET_NOTES_KEY, sheet.querySelector('[data-cs-notes-input]').value.trim());
+    if (cartCoupon) writeCartPref(CART_SHEET_COUPON_KEY, { code: cartCoupon.code });
+    else { try { localStorage.removeItem(CART_SHEET_COUPON_KEY); } catch {} }
+    writeCartPref(CART_SHEET_TIP_KEY, cartTip);
+    const pay = sheet.querySelector('[data-cs-pay]');
+    setBusy(pay, true, 'Opening payment…');
+    window.location.href = '/checkout';
   }
 
   function initCartSheetTriggers() {

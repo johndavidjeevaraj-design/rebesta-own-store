@@ -504,6 +504,7 @@ export function maskCustomer(order) {
     discountInr: o.discountInr || 0,
     couponCode: o.couponCode || '',
     deliveryFeeInr: o.deliveryFeeInr,
+    tipInr: o.tipInr || 0,
     totalInr: o.totalInr,
     distanceKm: o.distanceKm,
     tierLabel: o.deliveryTierLabel,
@@ -538,6 +539,18 @@ export function findCoupon(code) {
   if (coupon.expiresAt && new Date(coupon.expiresAt) <= new Date()) return null;
   if (coupon.maxUses && Number(coupon.usedCount || 0) >= Number(coupon.maxUses)) return null;
   return { ...coupon };
+}
+
+export function listPublicCoupons() {
+  const settings = loadSettings();
+  const now = new Date();
+  return (settings.promotions?.coupons || [])
+    .filter(c => c.active !== false)
+    .filter(c => !(c.maxUses && Number(c.maxUses) <= 1)) // single-use personal reward codes stay private
+    .filter(c => !c.expiresAt || new Date(c.expiresAt) > now)
+    .filter(c => !c.maxUses || Number(c.usedCount || 0) < Number(c.maxUses))
+    .slice(0, 6)
+    .map(c => ({ code: c.code, type: c.type, value: Number(c.value || 0), minOrderInr: Number(c.minOrderInr || 0) }));
 }
 
 export function markCouponUsed(code) {

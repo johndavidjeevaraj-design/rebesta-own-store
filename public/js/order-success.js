@@ -74,6 +74,7 @@
         <div class="summary-row"><span>Product amount</span><strong>${RFS.money(order.subtotalInr)}</strong></div>
         ${Number(order.discountInr) > 0 ? `<div class="summary-row coupon-applied-row"><span>Coupon ${order.couponCode || ''}</span><strong>−${RFS.money(order.discountInr)}</strong></div>` : ''}
         <div class="summary-row"><span>Delivery (${Number(order.distanceKm || 0).toFixed(2)} road km)</span><strong>${RFS.money(order.deliveryFeeInr)}</strong></div>
+        ${Number(order.tipInr) > 0 ? `<div class="summary-row"><span>Delivery tip</span><strong>${RFS.money(order.tipInr)}</strong></div>` : ''}
         <div class="summary-total"><span>Total</span><strong>${RFS.money(order.totalInr)}</strong></div>
         <div class="track-list">${history(order)}</div>
       `;

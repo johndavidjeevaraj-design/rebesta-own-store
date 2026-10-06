@@ -2027,3 +2027,125 @@ body::before{display:none}
 /* basket bar: visible on mobile again (was force-hidden when it overlapped the old nav) */
 @media(max-width:840px){.mobile-cart-bar.has-cart{display:flex!important}}
 @media(min-width:841px){.mobile-cart-bar{display:none!important}}
+
+/* PASS 46 (2026-10-06) — Swiggy-style "Your basket" cart sheet */
+.cart-sheet{display:flex;flex-direction:column;padding:0;overflow:hidden;max-height:92vh;border-radius:22px 22px 0 0}
+.cs-head{flex:none;padding:4px 18px 12px;border-bottom:1px solid var(--line)}
+.cs-head h3{font-size:18px;font-weight:800;color:var(--ink)}
+.cs-head p{font-size:12px;color:var(--muted);margin-top:2px;font-weight:600}
+.cs-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px 12px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px;background:#f5f6f2}
+.cs-card{background:var(--surface);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(10,40,20,.05)}
+/* address row */
+.cs-addr-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;cursor:pointer}
+.cs-addr-pin{flex:none;width:34px;height:34px;border-radius:10px;background:var(--green-soft);color:var(--green);display:grid;place-items:center}
+.cs-addr-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.cs-addr-text b{font-size:13.5px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-addr-text b.is-empty{color:var(--muted);font-weight:700}
+.cs-addr-text small{font-size:11.5px;color:var(--muted);font-weight:600}
+.cs-arrow{flex:none;color:var(--muted);font-size:18px;font-weight:800;line-height:1}
+.cs-addr-edit{margin-top:-2px;border-top:1px dashed var(--line)}
+.cs-area-link{background:none;border:none;padding:10px 0 2px;font-size:12.5px;font-weight:700;color:var(--green);cursor:pointer}
+/* item rows */
+.cs-items{display:flex;flex-direction:column;gap:2px}
+.cs-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f1f4ee}
+.cs-row:last-child{border-bottom:none}
+.cs-row img{width:46px;height:46px;border-radius:10px;object-fit:cover;flex:none;background:var(--green-soft)}
+.cs-row .cr-info{flex:1;min-width:0}
+.cs-row .cr-name{font-size:13.5px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-row .cr-unit{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:2px}
+.cs-row .cr-price{flex:none;font-size:13.5px;font-weight:800;color:var(--ink)}
+.cs-row .cart-qty{flex:none;transform:scale(.92);transform-origin:right center}
+.cart-sheet .qty-stepper{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-2);border-radius:10px;padding:3px 6px}
+.cart-sheet .qty-stepper button{width:24px;height:24px;border-radius:7px;border:none;background:var(--green-soft);color:var(--green);font-size:15px;font-weight:800;line-height:1;cursor:pointer}
+.cart-sheet .qty-stepper span{min-width:16px;text-align:center;font-size:13px;font-weight:800;color:var(--ink)}
+.cs-empty{text-align:center;padding:18px 6px 10px}
+.cs-empty p{font-size:14.5px;font-weight:800;color:var(--ink)}
+.cs-shop-link{display:inline-block;margin-top:8px;font-size:13px;font-weight:800;color:var(--green)}
+/* add more / instructions rows */
+.cs-misc{display:flex;flex-direction:column}
+.cs-misc-row{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:none;border:none;padding:11px 0;font-size:13.5px;font-weight:800;color:var(--ink);cursor:pointer;text-align:left;border-bottom:1px solid #f1f4ee}
+.cs-misc-row:last-of-type{border-bottom:none}
+.cs-notes-hint{font-size:11.5px;color:var(--muted);font-weight:600;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-notes{padding:4px 0 8px}
+.cs-notes textarea{width:100%;border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;font:600 13px/1.45 inherit;color:var(--ink);background:#fff;resize:vertical}
+.cs-notes textarea:focus{outline:2px solid var(--green-soft);border-color:var(--green)}
+/* complete your basket */
+.cs-complete h4,.cs-savings h4,.cs-delivery h4,.cs-tip h4,.cs-bill h4{font-size:14.5px;font-weight:800;color:var(--ink);margin:0 0 8px}
+.cs-tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.cs-tabs::-webkit-scrollbar{display:none}
+.cs-tab{flex:none;padding:7px 14px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);font-size:12px;font-weight:800;cursor:pointer}
+.cs-tab.on{background:var(--forest);border-color:var(--forest);color:#fff}
+.cs-rail{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:10px 2px 4px;scroll-snap-type:x proximity}
+.cs-rail::-webkit-scrollbar{display:none}
+.cs-pcard{flex:none;width:116px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:5px;scroll-snap-align:start}
+.cs-pcard img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;background:var(--green-soft)}
+.cs-pname{font-size:12px;font-weight:800;color:var(--ink);line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:30px}
+.cs-pprice{font-size:11.5px;color:var(--muted);font-weight:700}
+.cs-pprice small{font-weight:600}
+.cs-add{align-self:flex-start;padding:5px 16px;border:1px solid var(--green);border-radius:9px;background:var(--green-soft);color:var(--green);font-size:12px;font-weight:800;letter-spacing:.04em;cursor:pointer}
+.cs-mini-step{align-self:flex-start;transform:scale(.88);transform-origin:left center}
+.cs-rail-empty{font-size:12.5px;color:var(--muted);font-weight:600;padding:6px 0}
+/* savings corner + apply coupon */
+.cs-savings{padding:0 4px}
+.cs-coupon-cards{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:2px}
+.cs-coupon-cards::-webkit-scrollbar{display:none}
+.cs-ccard{flex:none;width:172px;border:1.5px dashed var(--green-2);border-radius:14px;background:var(--green-soft);padding:10px 12px;display:flex;flex-direction:column;gap:3px}
+.cs-ccode{font-size:14px;font-weight:900;letter-spacing:.05em;color:var(--green)}
+.cs-cdesc{font-size:11.5px;color:var(--ink-2);font-weight:700}
+.cs-cbtn{align-self:flex-start;margin-top:5px;padding:4px 14px;border:none;border-radius:8px;background:var(--green);color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.04em;cursor:pointer}
+.cs-capplied{align-self:flex-start;margin-top:5px;font-size:11.5px;font-weight:900;color:var(--green);letter-spacing:.04em}
+.cs-coupon-on{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--green-soft);border:1px solid var(--green-2);border-radius:10px;padding:9px 12px;font-size:13px;font-weight:800;color:var(--green)}
+.cs-coupon-on b{font-weight:900;letter-spacing:.04em}
+.cs-coupon-x{border:none;background:var(--surface);color:var(--danger);width:24px;height:24px;border-radius:7px;font-size:13px;font-weight:800;cursor:pointer}
+.cs-coupon-apply label{display:block;font-size:13px;font-weight:800;color:var(--ink);margin-bottom:7px}
+.cs-coupon-row{display:flex;gap:8px}
+.cs-coupon-row input{flex:1;border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;font:700 13px inherit;color:var(--ink);text-transform:uppercase}
+.cs-coupon-row input:focus{outline:2px solid var(--green-soft);border-color:var(--green)}
+.cs-coupon-btn{flex:none;padding:0 18px;border:none;border-radius:10px;background:var(--forest);color:#fff;font-size:13px;font-weight:800;cursor:pointer}
+.cs-coupon-msg{margin:7px 0 0;font-size:12px;font-weight:700;color:var(--muted)}
+.cs-coupon-msg.error{color:var(--danger)}
+/* delivery options */
+.cs-del-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f4ee}
+.cs-del-row:last-of-type{border-bottom:none}
+.cs-del-dot{flex:none;width:18px;height:18px;border-radius:50%;border:5px solid var(--green);background:#fff}
+.cs-del-row.off{opacity:.55}
+.cs-del-drone{flex:none;font-size:16px;line-height:1}
+.cs-del-txt{flex:1;min-width:0}
+.cs-del-txt b{display:block;font-size:13px;font-weight:800;color:var(--ink)}
+.cs-del-txt small{font-size:11.5px;color:var(--muted);font-weight:600}
+.cs-soon{flex:none;font-size:9.5px;font-weight:900;letter-spacing:.08em;color:var(--orange);border:1px solid var(--orange-2);border-radius:6px;padding:3px 6px;background:var(--orange-soft)}
+.cs-slots{display:flex;gap:8px;flex-wrap:wrap;padding:2px 0 8px 28px}
+.cs-slots .cart-slot{border:1px solid var(--line-2);background:#fff;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:800;color:var(--ink-2);cursor:pointer;display:inline-flex;flex-direction:column;gap:1px;text-align:left}
+.cs-slots .cart-slot.on{border-color:var(--green);background:var(--green-soft);color:var(--green)}
+.cs-slots .cart-slot:disabled{opacity:.5;cursor:not-allowed}
+.cs-slots .cart-slot .cs-left{font-size:10.5px;font-weight:700;color:var(--muted)}
+.cs-slots .cart-slot.on .cs-left{color:var(--green)}
+.cs-fee{margin:6px 0 0;font-size:12px;font-weight:700;color:var(--green)}
+/* tip */
+.cs-tip-sub{font-size:11.5px;color:var(--muted);font-weight:600;margin:-4px 0 8px}
+.cs-tip-chips{display:flex;gap:8px}
+.cs-tip-chip{flex:1;padding:8px 4px;border:1px solid var(--line-2);border-radius:10px;background:#fff;font-size:12.5px;font-weight:800;color:var(--ink-2);cursor:pointer}
+.cs-tip-chip.on{border-color:var(--green);background:var(--green-soft);color:var(--green)}
+/* bill */
+.cs-bill-row{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;font-weight:700;color:var(--ink-2);padding:5px 0}
+.cs-bill-green{color:var(--green)}
+.cs-bill-total{display:flex;justify-content:space-between;gap:10px;font-size:14.5px;font-weight:900;color:var(--ink);border-top:1px dashed var(--line-2);margin-top:6px;padding-top:10px}
+/* auth inside sheet */
+.cart-sheet .cart-auth{flex:none;max-height:62%;overflow-y:auto;background:var(--surface);border-radius:18px 18px 0 0;margin:0;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 -12px 40px rgba(3,44,19,.18)}
+/* pay bar */
+.cs-paybar{flex:none;display:flex;align-items:center;gap:10px;background:var(--surface);border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 28px rgba(3,44,19,.1)}
+.cs-paybar[hidden]{display:none}
+.cs-pay-total{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.15}
+.cs-pay-total span{font-size:10.5px;font-weight:800;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+.cs-pay-total strong{font-size:19px;font-weight:900;color:var(--ink)}
+.cs-upi{flex:none;display:inline-flex;align-items:center;gap:3px;border:1px solid var(--line-2);background:#fff;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:800;color:var(--ink);cursor:pointer}
+.cs-upi .cs-arrow{font-size:15px}
+.cs-pay-btn{flex:none;min-width:104px;border:none;border-radius:12px;background:var(--green);color:#fff;font-size:15px;font-weight:900;letter-spacing:.06em;padding:13px 18px;cursor:pointer}
+.cs-pay-btn:disabled{opacity:.5}
+.cs-pay-btn .btn-label{letter-spacing:.06em}
+@media (min-width:841px){.cart-sheet{max-width:600px;margin:0 auto}}
+/* PASS 46 fixups — button resets inside the cart sheet */
+.cs-addr-row{border:none;font:inherit;appearance:none;-webkit-appearance:none}
+.cs-misc-row{font:inherit;appearance:none;-webkit-appearance:none}
+.cs-pay-btn{font:inherit}
+.cs-tab,.cs-tip-chip,.cs-cbtn,.cs-add,.cs-upi,.cs-coupon-x,.cs-area-link{font:inherit}

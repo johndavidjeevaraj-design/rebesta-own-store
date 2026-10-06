@@ -4,6 +4,7 @@ import { config } from '../config.js';
 import {
   loadSettings,
   findCoupon,
+  listPublicCoupons,
   couponDiscount,
   markCouponUsed,
   publicCatalog,
@@ -180,6 +181,12 @@ router.post('/quote', async (req, res) => {
   } catch (error) { flattenError(res, error, 'Could not calculate delivery'); }
 });
 
+router.get('/coupon/list', (req, res) => {
+  try {
+    res.json({ ok: true, coupons: listPublicCoupons() });
+  } catch (error) { flattenError(res, error, 'Could not load coupons'); }
+});
+
 router.post('/coupon/check', (req, res) => {
   try {
     const coupon = findCoupon(req.body?.code);
@@ -229,6 +236,11 @@ router.post('/orders', async (req, res) => {
       throw Object.assign(new Error(`The ${slot.label} slot just filled up (${capacity} orders). Please choose the other morning slot.`), { status: 409 });
     }
 
+    const tipInr = Math.round(Number(req.body?.tipInr || 0));
+    if (!Number.isInteger(tipInr) || tipInr < 0 || tipInr > 100) {
+      throw Object.assign(new Error('Choose a valid delivery tip'), { status: 400 });
+    }
+
     const paymentMethod = String(req.body?.paymentMethod || 'cod').toLowerCase();
     const onlineEnabled = Boolean(loadSettings().payments?.payuEnabled && config.payu.key && config.payu.salt);
     if (paymentMethod === 'online' && !onlineEnabled) {
@@ -254,7 +266,7 @@ router.post('/orders', async (req, res) => {
       if (!referredBy) throw Object.assign(new Error('Referral phone number looks invalid'), { status: 400 });
       if (referredBy === customer.phone) throw Object.assign(new Error('Referral phone cannot be your own number'), { status: 400 });
     }
-    const total = Math.round((cart.subtotalInr - discountInr + deliveryFee) * 100) / 100;
+    const total = Math.round((cart.subtotalInr - discountInr + deliveryFee + tipInr) * 100) / 100;
     const order = addOrder({
       customer,
       address,
@@ -263,6 +275,7 @@ router.post('/orders', async (req, res) => {
       discountInr,
       couponCode,
       deliveryFeeInr: deliveryFee,
+      tipInr,
       totalInr: total,
       distanceKm: quote.distanceKm,
       deliveryTierLabel: quote.deliveryTier?.label || '',
@@ -281,7 +294,7 @@ router.post('/orders', async (req, res) => {
     const settings = loadSettings();
     const whatsappDigits = String(settings.business?.whatsapp || '918438765119').replace(/\D/g, '');
     const lines = order.items.map(item => `• ${item.title} × ${item.qty} — ₹${item.lineTotalInr}`).join('\n');
-    const message = `Rebesta Fresh order ${order.id}\n\n${lines}\n\nSubtotal: ₹${order.subtotalInr}\nDelivery: ₹${order.deliveryFeeInr}\nTotal: ₹${order.totalInr}\nName: ${order.customer.name}\nPhone: ${order.customer.phone}\nDelivery: ${order.slot.label} (${order.deliveryDate.label})\nAddress: ${address.line1}, ${address.area || ''}, ${address.city} ${address.pincode}\nExact pin: ${quote.location.lat}, ${quote.location.lng}`;
+    const message = `Rebesta Fresh order ${order.id}\n\n${lines}\n\nSubtotal: ₹${order.subtotalInr}${discountInr ? `\nCoupon ${couponCode}: −₹${discountInr}` : ''}\nDelivery: ₹${order.deliveryFeeInr}${tipInr ? `\nDelivery tip: ₹${tipInr}` : ''}\nTotal: ₹${order.totalInr}\nName: ${order.customer.name}\nPhone: ${order.customer.phone}\nDelivery: ${order.slot.label} (${order.deliveryDate.label})\nAddress: ${address.line1}, ${address.area || ''}, ${address.city} ${address.pincode}\nExact pin: ${quote.location.lat}, ${quote.location.lng}`;
     const whatsappUrl = `https://api.whatsapp.com/send/?phone=${whatsappDigits}&text=${encodeURIComponent(message)}`;
     const payu = paymentMethod === 'online' ? createPayuPayment(order) : null;
 

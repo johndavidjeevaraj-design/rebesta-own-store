@@ -34,14 +34,13 @@ export function createStoreApp() {
 
   app.get('/sitemap.xml', (req, res) => {
     const base = config.appUrl;
-    const productUrls = publicCatalog().map(p => `  <url><loc>${base}/products/${encodeURIComponent(p.handle)}</loc></url>`).join('\n');
+    const LASTMOD = '<lastmod>2026-10-07</lastmod>'; // brand/favicon + schema refresh — all pages changed
+    const pageUrls = ['', '/about', '/faq', '/partner', '/subscriptions', '/shop', '/track', '/login']
+      .map(u => `  <url><loc>${base}${u}</loc>${LASTMOD}</url>`).join('\n');
+    const productUrls = publicCatalog().map(p => `  <url><loc>${base}/products/${encodeURIComponent(p.handle)}</loc>${LASTMOD}</url>`).join('\n');
     res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>${base}/</loc></url>
-  <url><loc>${base}/about</loc></url>
-  <url><loc>${base}/faq</loc></url>
-  <url><loc>${base}/partner</loc></url>
-  <url><loc>${base}/subscriptions</loc></url>
+${pageUrls}
 ${productUrls}
 </urlset>`);
   });

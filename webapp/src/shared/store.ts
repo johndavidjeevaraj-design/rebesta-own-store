@@ -14,6 +14,10 @@ export interface Product {
   featured?: boolean;
   description?: string;
   tags?: string[];
+  sku?: string;
+  baseHandle?: string;
+  weightGrams?: number;
+  variantTitle?: string;
 }
 
 export interface CartLine { handle: string; qty: number }
@@ -70,6 +74,19 @@ export function setCartQty(handle: string, qty: number) {
   saveCart(lines);
 }
 export const cartCount = () => readCart().reduce((sum, l) => sum + l.qty, 0);
+
+/* ---- "Your last looks" rail shared with the vanilla pages ---- */
+const RECENT_KEY = 'rebesta_recent';
+export function readRecent(): string[] {
+  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); } catch { return []; }
+}
+export function pushRecent(handle: string) {
+  try {
+    const seen = readRecent().filter(x => x !== handle);
+    seen.unshift(handle);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(seen.slice(0, 12)));
+  } catch { /* private mode etc — silent */ }
+}
 
 /* ---------- location ---------- */
 export function getSavedLocation(): SavedLocation | null {

@@ -28,6 +28,7 @@ import {
 import { orderPlacedEmails } from '../lib/mailer.js';
 import { quoteDelivery, reverseGeocode } from '../lib/delivery.js';
 import { createPayuPayment, validatePayuResponse } from '../lib/payu.js';
+import { cashfreeEnabled, createCashfreePayment, getCashfreeOrder } from '../lib/cashfree.js';
 import { findPartnerById, getPosition, haversineKm, etaMinutesFromKm } from '../lib/partners.js';
 import { createSubscriptionFromOrder, publicSubscription } from '../lib/subscriptions.js';
 
@@ -78,7 +79,7 @@ router.get('/settings', (req, res) => {
     },
     payments: {
       codEnabled: Boolean(settings.payments?.cod),
-      onlineEnabled: Boolean(settings.payments?.payuEnabled && config.payu.key && config.payu.salt)
+      onlineEnabled: Boolean((settings.payments?.onlineEnabled ?? settings.payments?.payuEnabled) && cashfreeEnabled())
     },
     maintenance: {
       enabled: Boolean(settings.maintenance?.enabled),
@@ -242,7 +243,7 @@ router.post('/orders', async (req, res) => {
     }
 
     const paymentMethod = String(req.body?.paymentMethod || 'cod').toLowerCase();
-    const onlineEnabled = Boolean(loadSettings().payments?.payuEnabled && config.payu.key && config.payu.salt);
+    const onlineEnabled = Boolean((loadSettings().payments?.onlineEnabled ?? loadSettings().payments?.payuEnabled) && cashfreeEnabled());
     if (paymentMethod === 'online' && !onlineEnabled) {
       throw Object.assign(new Error('Online payment is not configured yet. Please choose Cash on Delivery.'), { status: 400 });
     }
@@ -296,14 +297,22 @@ router.post('/orders', async (req, res) => {
     const lines = order.items.map(item => `• ${item.title} × ${item.qty} — ₹${item.lineTotalInr}`).join('\n');
     const message = `Rebesta Fresh order ${order.id}\n\n${lines}\n\nSubtotal: ₹${order.subtotalInr}${discountInr ? `\nCoupon ${couponCode}: −₹${discountInr}` : ''}\nDelivery: ₹${order.deliveryFeeInr}${tipInr ? `\nDelivery tip: ₹${tipInr}` : ''}\nTotal: ₹${order.totalInr}\nName: ${order.customer.name}\nPhone: ${order.customer.phone}\nDelivery: ${order.slot.label} (${order.deliveryDate.label})\nAddress: ${address.line1}, ${address.area || ''}, ${address.city} ${address.pincode}\nExact pin: ${quote.location.lat}, ${quote.location.lng}`;
     const whatsappUrl = `https://api.whatsapp.com/send/?phone=${whatsappDigits}&text=${encodeURIComponent(message)}`;
-    const payu = paymentMethod === 'online' ? createPayuPayment(order) : null;
+    let payment = null;
+    if (paymentMethod === 'online') {
+      try {
+        payment = await createCashfreePayment(order);
+      } catch (error) {
+        console.error(JSON.stringify({ event: 'cashfree.createOrder.error', order: order.id, error: String(error?.message || error).slice(0, 400) }));
+        throw Object.assign(new Error('Online payment could not be started right now. Please choose Cash on Delivery.'), { status: 502 });
+      }
+    }
 
     res.status(201).json({
       ok: true,
       order: maskCustomer(order),
       orderId: order.id,
       whatsappUrl,
-      payu: payu ? { action: payu.action, method: payu.method, fields: payu.fields } : null
+      payment
     });
   } catch (error) { flattenError(res, error, 'Could not place this order'); }
 });
@@ -421,6 +430,31 @@ router.post('/orders/:id/cancel', (req, res) => {
 
 router.get('/payments/payu/callback', payuCallback);
 router.post('/payments/payu/callback', payuCallback);
+
+/* Cashfree hosted checkout redirects here with ?order_id=… — verify the real
+   status against the Cashfree API (never trust the query string), then bounce
+   the customer to the order-success page. */
+router.get('/payments/cashfree/callback', async (req, res) => {
+  const orderId = String(req.query?.order_id || '').trim().toUpperCase();
+  try {
+    const order = getOrder(orderId);
+    if (!order) return res.status(404).type('text/plain').send('Order not found — contact Rebesta Fresh with your payment reference.');
+    const cfOrder = await getCashfreeOrder(orderId);
+    const paid = String(cfOrder?.order_status || '').toUpperCase() === 'PAID';
+    const payment = (cfOrder?.payments || []).find(p => String(p.payment_status || '').toUpperCase() === 'SUCCESS');
+    markPayuPayment(order.id, {
+      success: paid,
+      reference: String(payment?.cf_payment_id || cfOrder?.cf_order_id || ''),
+      mode: 'cashfree',
+      provider: 'cashfree',
+      raw: cfOrder
+    });
+    return res.redirect(303, `/order-success?id=${encodeURIComponent(order.id)}&payment=${paid ? 'paid' : 'failed'}`);
+  } catch (error) {
+    console.error(JSON.stringify({ event: 'cashfree.callback.error', order: orderId, error: String(error?.message || error).slice(0, 500) }));
+    return res.status(502).type('text/plain').send('Payment verification failed. Contact Rebesta Fresh with your payment reference.');
+  }
+});
 
 router.get('/orders/:id', (req, res) => {
   const order = getOrder(req.params.id);

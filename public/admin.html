@@ -196,7 +196,11 @@
                     <div class="toggle-row"><label class="switch"><input type="checkbox" name="loyaltyEnabled"><span></span></label><span>Loyalty rewards ON — delivered orders auto-earn a LOY- coupon</span></div>
                     <div class="toggle-row"><label class="switch"><input type="checkbox" name="referralEnabled"><span></span></label><span>Referral programme ON — friend's phone at checkout earns both sides a REF- coupon</span></div>
                     <div class="section-head" style="margin:22px 0 12px"><h3>Store controls</h3></div>
-                    <div class="toggle-row"><label class="switch"><input type="checkbox" name="payuEnabled"><span></span></label><span>Online payments ON — UPI / cards / netbanking via PayU at checkout<br><small data-payu-key-status style="color:var(--muted)"></small></span></div>
+                    <div class="toggle-row"><label class="switch"><input type="checkbox" name="onlineEnabled"><span></span></label><span>Online payments ON — UPI / cards / netbanking via Cashfree at checkout<br><small data-cf-key-status style="color:var(--muted)"></small></span></div>
+                    <div class="field"><label>Cashfree App ID</label><input name="cfAppId" autocomplete="off" placeholder="e.g. 12855655test…"></div>
+                    <div class="field"><label>Cashfree Secret Key</label><input name="cfSecretKey" type="password" placeholder="unchanged — paste key from Cashfree dashboard" autocomplete="new-password"></div>
+                    <div class="field"><label>Cashfree mode</label><select name="cfMode"><option value="test">Test (sandbox)</option><option value="live">Live (real money)</option></select></div>
+                    <div class="field wide" style="display:flex;gap:8px;flex-wrap:wrap"><button class="button small" type="button" data-cf-save>Save Cashfree keys</button> <button class="button ghost small" type="button" data-cf-test>Test keys (creates a ₹1 order)</button> <small data-cf-save-status style="color:var(--muted);align-self:center"></small></div>
                     <div class="toggle-row"><label class="switch"><input type="checkbox" name="maintenanceEnabled"><span></span></label><span>Maintenance mode — pause new orders (shows a friendly banner)</span></div>
                     <div class="field wide"><label>Maintenance message</label><input name="maintenanceMessage" maxlength="200" placeholder="We are briefly paused for restocking — orders resume soon!"></div>
                     <div class="field wide"><label>FSSAI licence number (shown in footer & About)</label><input name="fssai" maxlength="20" placeholder="e.g. 21523005000123"></div>
@@ -226,6 +230,6 @@
       </div>
     </section>
   </main>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script><script src="/js/store.js?v=20261006s16" defer></script><script src="/js/admin.js?v=20260926f7" defer></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script><script src="/js/store.js?v=20261006s16" defer></script><script src="/js/admin.js?v=20261007a" defer></script>
 </body>
 </html>

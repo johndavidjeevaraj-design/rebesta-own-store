@@ -451,13 +451,14 @@ export function updateOrderStatus(id, status, note = '') {
   return order;
 }
 
-export function markPayuPayment(id, { success, reference, mode, raw }) {
+export function markPayuPayment(id, { success, reference, mode, raw, provider }) {
   const orders = readOrders();
   const order = orders.find(o => o.id === id);
   if (!order) return null;
   if (order.paymentStatus === 'PAID_ONLINE') return order;
 
   const products = loadProducts();
+  const label = provider === 'cashfree' ? 'Cashfree' : 'PayU';
   order.updatedAt = new Date().toISOString();
   if (success) {
     order.paymentStatus = 'PAID_ONLINE';
@@ -469,7 +470,7 @@ export function markPayuPayment(id, { success, reference, mode, raw }) {
       order.status = 'PAID_NEEDS_REVIEW';
       order.history.push({ status: 'PAID_NEEDS_REVIEW', at: order.updatedAt, note: 'Paid after an earlier cancellation; reconcile stock/refund manually' });
     } else {
-      order.history.push({ status: 'PLACED', at: new Date().toISOString(), note: 'PayU payment verified' });
+      order.history.push({ status: 'PLACED', at: new Date().toISOString(), note: `${label} payment verified` });
     }
   } else {
     order.paymentStatus = 'FAILED';
@@ -483,7 +484,7 @@ export function markPayuPayment(id, { success, reference, mode, raw }) {
       }
       saveProducts(products);
       order.status = 'PAYMENT_FAILED';
-      order.history.push({ status: 'PAYMENT_FAILED', at: new Date().toISOString(), note: 'PayU payment failed/cancelled; reserved stock released' });
+      order.history.push({ status: 'PAYMENT_FAILED', at: new Date().toISOString(), note: `${label} payment failed/cancelled; reserved stock released` });
     }
   }
   order.paymentGatewayResponse = raw ? JSON.stringify(raw).slice(0, 12000) : '';

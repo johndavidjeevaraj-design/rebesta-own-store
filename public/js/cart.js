@@ -172,13 +172,43 @@
       <div class="sw-bill-row"><span>Delivery Tip</span>${state.tip ? `<span>${money(state.tip)}</span>` : '<button type="button" class="sw-addtip" data-bp-gotip>Add tip</button>'}</div>
       <div class="sw-bill-row sw-bill-final"><span>To Pay</span><span>${money(total)}</span></div>`;
     const pay = $('[data-bp-pay]');
+    pay.textContent = `Pay ${money(total)}`;
     pay.disabled = !eligible;
     renderPaybar();
   }
 
   function renderPaybar() {
-    $('[data-bp-paybar-total]').textContent = $('[data-bp-pay-total]').textContent;
-    $('[data-bp-paybar-method]').textContent = state.payMethod === 'online' ? 'UPI / Cards / Netbanking' : 'Cash on Delivery';
+    $('[data-bp-pm-label]').textContent = state.payMethod === 'online' ? 'UPI' : 'Cash on Delivery';
+    const sub = $('[data-bp-pm-sub]');
+    if (sub) {
+      const units = items().reduce((sum, line) => sum + (Number(line.qty) || 0), 0);
+      sub.textContent = `${units} item${units === 1 ? '' : 's'} · ${$('[data-bp-pay-total]').textContent}`;
+    }
+    document.querySelectorAll('.sw-pm-row[data-pm]').forEach(row => {
+      const on = row.dataset.pm === state.payMethod;
+      row.classList.toggle('on', on);
+    });
+  }
+
+  /* ---------- payment options sheet (Swiggy-style) ---------- */
+  function openPmSheet() {
+    const sheet = $('[data-bp-pm-sheet]');
+    sheet.hidden = false;
+    const backdrop = document.createElement('div');
+    backdrop.className = 'sheet-backdrop';
+    backdrop.setAttribute('data-bp-pm-backdrop', '');
+    document.body.appendChild(backdrop);
+    requestAnimationFrame(() => { backdrop.classList.add('open'); sheet.classList.add('open'); });
+    document.body.classList.add('sheet-open');
+  }
+
+  function closePmSheet() {
+    const sheet = $('[data-bp-pm-sheet]');
+    const backdrop = document.querySelector('[data-bp-pm-backdrop]');
+    sheet.classList.remove('open');
+    if (backdrop) { backdrop.classList.remove('open'); backdrop.remove(); }
+    document.body.classList.remove('sheet-open');
+    setTimeout(() => { if (!sheet.classList.contains('open')) sheet.hidden = true; }, 340);
   }
 
   function renderQuote() {
@@ -300,6 +330,41 @@
     setTimeout(() => { if (!sheet.classList.contains('open')) sheet.hidden = true; }, 340);
   }
 
+  /* ---------- Cashfree hosted checkout (JS SDK, loaded on demand) ---------- */
+  function loadCashfreeSdk() {
+    if (window.Cashfree) return Promise.resolve();
+    const urls = ['https://js.cashfree.com/cashfree-js.js', 'https://js.cashfree.com/v2/cashfree.js'];
+    return new Promise((resolve, reject) => {
+      let i = 0;
+      const tryNext = () => {
+        if (i >= urls.length) return reject(new Error('Could not load the payment page (script blocked). Check your network and try again.'));
+        const script = document.createElement('script');
+        script.src = urls[i++];
+        script.onload = () => window.Cashfree ? resolve() : tryNext();
+        script.onerror = tryNext;
+        document.head.appendChild(script);
+      };
+      tryNext();
+    });
+  }
+
+  async function startCashfreeCheckout(payment) {
+    try {
+      await loadCashfreeSdk();
+      const mode = payment.mode === 'live' ? 'production' : 'sandbox';
+      const cashfree = typeof window.Cashfree === 'function'
+        ? window.Cashfree({ mode })
+        : await window.Cashfree.load({ mode });
+      cashfree.checkout({ paymentSessionId: payment.sessionId, redirectTarget: '_self' });
+      /* if the SDK fails silently, the callback/verify still protects us */
+      setTimeout(() => RFS.setBusy($('[data-bp-pay]'), false), 1500);
+    } catch (error) {
+      RFS.toast(error.message || 'Could not open the payment page', 'error');
+      RFS.setBusy($('[data-bp-pay]'), false);
+      await refreshQuote();
+    }
+  }
+
   /* ---------- place order ---------- */
   async function placeOrder() {
     const addr1El = $('[data-bp-addr1]');
@@ -340,20 +405,8 @@
       RFS.saveCart([]);
       for (const key of [COUPON_KEY, TIP_KEY, NOTES_KEY]) { try { localStorage.removeItem(key); } catch {} }
       try { localStorage.setItem('rebesta_last_order', JSON.stringify({ items: orderItems, at: Date.now() })); } catch {}
-      if (order.payu && order.payu.action) {
-        const form = document.createElement('form');
-        form.method = order.payu.method || 'POST';
-        form.action = order.payu.action;
-        form.style.display = 'none';
-        Object.entries(order.payu.fields || {}).forEach(([name, value]) => {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = name;
-          input.value = value == null ? '' : String(value);
-          form.appendChild(input);
-        });
-        document.body.appendChild(form);
-        form.submit();
+      if (order.payment && order.payment.type === 'cashfree') {
+        await startCashfreeCheckout(order.payment);
         return;
       }
       window.location.href = `/order-success?id=${encodeURIComponent(order.orderId)}&phone=${encodeURIComponent(payload.customer.phone)}&whatsapp=${encodeURIComponent(order.whatsappUrl || '')}`;
@@ -441,13 +494,18 @@
   });
   $('[data-bp-coupon-apply-btn]').addEventListener('click', () => applyCoupon($('[data-bp-coupon-input]').value));
   $('[data-bp-coupon-input]').addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); applyCoupon(event.target.value); } });
-  document.querySelectorAll('.sw-del[data-pay]').forEach(row => {
+  $('[data-bp-pay-method]').addEventListener('click', openPmSheet);
+  $('[data-bp-pm-close]').addEventListener('click', closePmSheet);
+  document.querySelectorAll('.sw-pm-row[data-pm]').forEach(row => {
     row.addEventListener('click', () => {
-      if (row.classList.contains('off')) { RFS.toast('PayU merchant setup is pending', 'error'); return; }
-      state.payMethod = row.dataset.pay === 'online' ? 'online' : 'cod';
-      document.querySelectorAll('.sw-del[data-pay]').forEach(r => r.classList.toggle('on', r === row));
+      if (row.classList.contains('off')) { RFS.toast('Online payment setup is almost ready — please use Cash on Delivery today', 'error'); return; }
+      state.payMethod = row.dataset.pm === 'online' ? 'online' : 'cod';
       renderPaybar();
+      closePmSheet();
     });
+  });
+  document.addEventListener('click', event => {
+    if (event.target.closest('[data-bp-pm-backdrop]')) closePmSheet();
   });
   $('[data-bp-pay]').addEventListener('click', placeOrder);
   $('[data-bp-pin]').addEventListener('change', () => { scheduleQuote(); });
@@ -471,7 +529,8 @@
       state.byHandle = new Map(state.products.map(p => [p.handle, p]));
       state.me = me?.customer || null;
       try { state.onlineEnabled = Boolean((await RFS.api('/api/settings'))?.payments?.onlineEnabled); } catch {}
-      if (!state.onlineEnabled) document.querySelector('.sw-del[data-pay="online"]')?.classList.add('off');
+      if (!state.onlineEnabled) document.querySelector('.sw-pm-row[data-pm="online"]')?.classList.add('off');
+      else state.payMethod = 'online'; // Swiggy-style: prefer UPI when it is available
       try { state.coupons = (await RFS.api('/api/coupon/list')).coupons || []; } catch { state.coupons = []; }
       const savedAddr = readPref(ADDR_KEY, null);
       if (savedAddr?.line1) $('[data-bp-addr1]').value = String(savedAddr.line1).slice(0, 120);

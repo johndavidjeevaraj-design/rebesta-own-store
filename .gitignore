@@ -7,3 +7,4 @@ data/subscriptions.json
 data/customers.json
 data/auth-secret.json
 data/sms-config.json
+data/cashfree-config.json

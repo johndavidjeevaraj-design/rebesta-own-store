@@ -8,6 +8,7 @@ import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
 import { publicSubscription } from '../lib/subscriptions.js';
 import { whatsappLink, sendWhatsAppAuto } from '../lib/whatsapp.js';
 import { payuEnabled } from '../lib/payu.js';
+import { cashfreeEnabled, loadCashfreeConfig, createCashfreePayment } from '../lib/cashfree.js';
 import { mailerReady } from '../lib/mailer.js';
 import { sendMorningDigest } from '../lib/digest.js';
 
@@ -68,7 +69,9 @@ router.patch('/products/:handle', (req, res) => {
 router.get('/settings', (req, res) => {
   const settings = loadSettings();
   const smtpSafe = settings.smtp ? { ...settings.smtp, pass: settings.smtp.pass ? '********' : '' } : undefined;
-  res.json({ ok: true, settings: { ...settings, smtp: smtpSafe }, payuServerKeys: payuEnabled(), mailReady: mailerReady() });
+  const cf = loadCashfreeConfig() || {};
+  res.json({ ok: true, settings: { ...settings, smtp: smtpSafe }, payuServerKeys: payuEnabled(), mailReady: mailerReady(),
+    cashfree: { mode: cf.mode || null, hasAppId: Boolean(cf.appId), hasSecretKey: Boolean(cf.secretKey), enabled: cashfreeEnabled() } });
 });
 
 router.patch('/settings', (req, res) => {
@@ -178,6 +181,7 @@ router.patch('/settings', (req, res) => {
     }
     if (patch.payments) {
       const current = settings.payments || (settings.payments = {});
+      if (patch.payments.onlineEnabled !== undefined) current.onlineEnabled = Boolean(patch.payments.onlineEnabled);
       if (patch.payments.payuEnabled !== undefined) current.payuEnabled = Boolean(patch.payments.payuEnabled);
     }
     if (patch.smtp) {
@@ -618,4 +622,43 @@ router.post('/sms/test', async (req, res) => {
   res.json(sent.ok
     ? { ok: true, sent: true, note: 'SMS sent — check the phone for the code.' }
     : { ok: false, sent: false, error: sent.error });
+});
+
+/* ============ Cashfree payment gateway keys (no SSH needed) ============ */
+const CF_FILE = () => path.join(config.dataDir, 'cashfree-config.json');
+
+router.get('/cashfree', (req, res) => {
+  const cf = loadCashfreeConfig() || {};
+  res.json({ ok: true, mode: cf.mode || null, hasAppId: Boolean(cf.appId), hasSecretKey: Boolean(cf.secretKey), enabled: cashfreeEnabled() });
+});
+
+router.post('/cashfree', (req, res) => {
+  const b = req.body || {};
+  const mode = String(b.mode || '');
+  if (mode === 'none') {
+    try { fs.unlinkSync(CF_FILE()); } catch {}
+    console.log(JSON.stringify({ event: 'admin.cashfreeConfig', mode: null }));
+    return res.json({ ok: true, mode: null, enabled: false });
+  }
+  if (!['test', 'live'].includes(mode)) return res.status(400).json({ ok: false, error: 'mode must be test, live or none.' });
+  if (!b.appId || !b.secretKey) return res.status(400).json({ ok: false, error: 'Cashfree needs both App ID and Secret Key.' });
+  const out = { mode, appId: String(b.appId).trim(), secretKey: String(b.secretKey).trim() };
+  fs.mkdirSync(config.dataDir, { recursive: true });
+  fs.writeFileSync(CF_FILE(), JSON.stringify(out, null, 2));
+  console.log(JSON.stringify({ event: 'admin.cashfreeConfig', mode }));
+  res.json({ ok: true, mode, enabled: true });
+});
+
+router.post('/cashfree/test', async (req, res) => {
+  try {
+    if (!cashfreeEnabled()) return res.status(400).json({ ok: false, error: 'Save the App ID and Secret Key first.' });
+    const probe = await createCashfreePayment({
+      id: `RB-CFTEST-${Date.now()}`,
+      totalInr: 1,
+      customer: { name: 'Cashfree Key Test', phone: '9876543210', email: 'orders@rebestafresh.in' }
+    });
+    res.json({ ok: true, note: `Keys work — ${probe.mode === 'live' ? 'LIVE' : 'TEST'} order ${probe.cfOrderId} created on Cashfree.`, cfOrderId: probe.cfOrderId, mode: probe.mode });
+  } catch (error) {
+    res.status(400).json({ ok: false, error: String(error?.message || error).slice(0, 300) });
+  }
 });

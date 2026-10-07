@@ -201,9 +201,18 @@
     checked('loyaltyEnabled', promotions.loyalty?.enabled);
     checked('referralEnabled', promotions.referral?.enabled);
     checked('maintenanceEnabled', data.settings.maintenance?.enabled);
-    checked('payuEnabled', data.settings.payments?.payuEnabled);
-    const payuStatus = document.querySelector('[data-payu-key-status]');
-    if (payuStatus) payuStatus.textContent = data.payuServerKeys ? '✅ PayU merchant keys configured on the server — customers can pay online.' : '⚠️ PayU merchant keys are NOT on the server yet — add PAYU_KEY and PAYU_SALT to /opt/rebesta-store/.env and restart (guide from Arena). Toggle saves anyway.';
+    checked('onlineEnabled', data.settings.payments?.onlineEnabled ?? data.settings.payments?.payuEnabled);
+    const cf = data.cashfree || {};
+    const cfStatus = document.querySelector('[data-cf-key-status]');
+    if (cfStatus) cfStatus.textContent = cf.enabled
+      ? `✅ Cashfree keys saved (${cf.mode === 'live' ? 'LIVE' : 'TEST'} mode) — customers can pay online.`
+      : '⚠️ Cashfree keys not saved yet — paste the App ID + Secret Key below and press Save.';
+    const cfMode = document.querySelector('[data-settings-form] [name="cfMode"]');
+    if (cfMode && cf.mode) cfMode.value = cf.mode;
+    const cfApp = document.querySelector('[data-settings-form] [name="cfAppId"]');
+    if (cfApp && !cfApp.value) cfApp.value = cf.hasAppId ? '(saved — retype to change)' : '';
+    const cfSecret = document.querySelector('[data-settings-form] [name="cfSecretKey"]');
+    if (cfSecret) cfSecret.value = '';
     setField('maintenanceMessage', data.settings.maintenance?.message || '');
     setField('gaId', data.settings.integrations?.gaId || '');
     setField('smtpUser', data.settings.smtp?.user || '');
@@ -294,7 +303,7 @@
         fssai: value('fssai')
       },
       payments: {
-        payuEnabled: Boolean(document.querySelector('[data-settings-form] [name="payuEnabled"]')?.checked)
+        onlineEnabled: Boolean(document.querySelector('[data-settings-form] [name="onlineEnabled"]')?.checked)
       },
       smtp: {
         user: value('smtpUser'),
@@ -1258,4 +1267,31 @@
       showError(error.message);
     });
   }
+
+  /* ---------- Cashfree payment gateway keys ---------- */
+  document.querySelector('[data-cf-save]')?.addEventListener('click', async () => {
+    const status = document.querySelector('[data-cf-save-status]');
+    const appId = (document.querySelector('[data-settings-form] [name="cfAppId"]')?.value || '').trim();
+    const secretKey = (document.querySelector('[data-settings-form] [name="cfSecretKey"]')?.value || '').trim();
+    const mode = document.querySelector('[data-settings-form] [name="cfMode"]')?.value || 'test';
+    if (!appId || !secretKey) { if (status) status.textContent = '⚠️ Enter both App ID and Secret Key.'; return; }
+    if (appId === '(saved — retype to change)') { if (status) status.textContent = '⚠️ Enter the real App ID.'; return; }
+    if (status) status.textContent = 'Saving…';
+    try {
+      await api('/api/admin/cashfree', { method: 'POST', body: JSON.stringify({ appId, secretKey, mode }) });
+      if (status) status.textContent = '✅ Keys saved.';
+      document.querySelector('[data-settings-form] [name="cfSecretKey"]').value = '';
+      await renderSettings();
+    } catch (error) { if (status) status.textContent = '⚠️ ' + (error.message || 'Could not save'); }
+  });
+
+  document.querySelector('[data-cf-test]')?.addEventListener('click', async () => {
+    const status = document.querySelector('[data-cf-save-status]');
+    if (status) status.textContent = 'Testing keys against Cashfree…';
+    try {
+      const r = await api('/api/admin/cashfree/test', { method: 'POST', body: JSON.stringify({}) });
+      if (status) status.textContent = '✅ ' + r.note;
+    } catch (error) { if (status) status.textContent = '⚠️ ' + (error.message || 'Test failed'); }
+  });
+
 })();

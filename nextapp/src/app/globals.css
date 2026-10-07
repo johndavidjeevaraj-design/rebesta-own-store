@@ -1,0 +1,187 @@
+@import "tailwindcss";
+
+/* ---- Brand fonts (same TTFs the rest of the site already serves) ---- */
+@font-face {
+  font-family: "Manrope";
+  src: url("/assets/fonts/manrope-regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  src: url("/assets/fonts/manrope-semibold.ttf") format("truetype");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  src: url("/assets/fonts/manrope-extrabold.ttf") format("truetype");
+  font-weight: 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("/assets/fonts/bricolage-grotesque-bold.ttf") format("truetype");
+  font-weight: 800;
+  font-display: swap;
+}
+
+/* ---- shadcn tokens on a fresh Hosur-farm palette ---- */
+:root {
+  --background: #f6f5ef;
+  --foreground: #14261a;
+  --card: #ffffff;
+  --card-foreground: #14261a;
+  --popover: #ffffff;
+  --popover-foreground: #14261a;
+  --primary: #074015;
+  --primary-foreground: #f0faf1;
+  --secondary: #e9f2e4;
+  --secondary-foreground: #1c3a24;
+  --muted: #eae8de;
+  --muted-foreground: #5c6b58;
+  --accent: #0faa46;
+  --accent-foreground: #06310f;
+  --destructive: #b33322;
+  --destructive-foreground: #fff5f2;
+  --border: #dee3d4;
+  --input: #dee3d4;
+  --ring: #0faa46;
+  --radius: 1rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* brand extras */
+  --color-forest: #074015;
+  --color-forest-2: #0a4a1a;
+  --color-forest-3: #062e11;
+  --color-leaf: #0faa46;
+  --color-leaf-2: #7ed957;
+  --color-carrot: #ff5b20;
+  --color-mint: #e9f7ea;
+  --color-cream: #f6f5ef;
+  --color-ink: #17281c;
+
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Manrope", ui-sans-serif, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 8px);
+  --radius-2xl: calc(var(--radius) + 14px);
+  --radius-3xl: calc(var(--radius) + 22px);
+
+  --animate-marquee: marquee 30s linear infinite;
+  --animate-spin-slow: spin-slow 18s linear infinite;
+  --animate-floaty: floaty 5.5s ease-in-out infinite;
+  --animate-pulse-dot: pulse-dot 2.4s ease-in-out infinite;
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes spin-slow {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes floaty {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+  @keyframes pulse-dot {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(15, 170, 70, 0.5); }
+    50% { box-shadow: 0 0 0 7px rgba(15, 170, 70, 0); }
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+  ::selection {
+    background: #0faa46;
+    color: #ffffff;
+  }
+}
+
+/* ---- Lenis smooth scroll ---- */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ---- film grain overlay for dark sections ---- */
+.grain {
+  position: relative;
+  isolation: isolate;
+}
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---- horizontal rails ---- */
+.rail {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---- masked word-reveal helpers (GSAP slides .w-in up inside .w-mask) ---- */
+.w-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+.w-in {
+  display: inline-block;
+  will-change: transform;
+}

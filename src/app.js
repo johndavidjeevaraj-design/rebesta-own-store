@@ -60,7 +60,7 @@ ${productUrls}
     maxAge: config.nodeEnv === 'production' ? '10m' : 0
   }));
 
-  app.get('/', (req, res) => res.sendFile('index.html', { root: config.publicDir }));
+  app.get('/', (req, res) => res.sendFile('v2/index.html', { root: config.publicDir }));
   app.get(['/shop', '/offers', '/greens'], (req, res) => res.sendFile('shop.html', { root: config.publicDir }));
   /* one auth page: number + OTP decides sign-in vs new account — /signup is legacy */
   app.get('/signup', (req, res) => res.redirect(302, '/login' + (req.query.phone ? `?phone=${encodeURIComponent(String(req.query.phone))}` : '')));

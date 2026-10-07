@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="robots" content="noindex"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Basket – Rebesta Fresh</title>
-  <link rel="icon" type="image/png" sizes="192x192" href="/assets/brand/icon-r-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-r-180.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><meta name="description" content="Review your basket and order farm-fresh vegetables from Rebesta Fresh, Hosur."><meta property="og:title" content="Your basket"><meta property="og:description" content="Review your basket and order farm-fresh vegetables from Rebesta Fresh, Hosur."><meta property="og:type" content="website"><meta property="og:image" content="https://rebestafresh.in/assets/brand/logo.png"><meta name="twitter:card" content="summary"><link rel="stylesheet" href="/css/styles.css?v=20261006ac">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/brand/icon-r-192.png"><link rel="apple-touch-icon" href="/assets/brand/icon-r-180.png"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#074015"><meta name="description" content="Review your basket and order farm-fresh vegetables from Rebesta Fresh, Hosur."><meta property="og:title" content="Your basket"><meta property="og:description" content="Review your basket and order farm-fresh vegetables from Rebesta Fresh, Hosur."><meta property="og:type" content="website"><meta property="og:image" content="https://rebestafresh.in/assets/brand/logo.png"><meta name="twitter:card" content="summary"><link rel="stylesheet" href="/css/styles.css?v=20261007a">
 </head>
 <body class="shop-page basket-body">
   <header class="site-header"><div class="container header-inner">
@@ -100,6 +100,18 @@
           </div>
         </div>
 
+        <div class="sw-card sw-paycard">
+          <h3 class="sw-sub">PAYMENT</h3>
+          <div class="sw-del on" data-pay="cod">
+            <span class="sw-radio" aria-hidden="true"></span>
+            <div class="sw-del-l"><b>Cash on Delivery</b><small>Pay when the vegetables reach your door</small></div>
+          </div>
+          <div class="sw-del" data-pay="online">
+            <span class="sw-radio" aria-hidden="true"></span>
+            <div class="sw-del-l"><b>UPI / Cards / Netbanking</b><small>Pay securely through PayU</small></div>
+          </div>
+        </div>
+
         <div class="sw-card sw-bill open" data-bp-bill hidden>
           <button type="button" class="sw-bill-top" data-bp-bill-toggle aria-expanded="true">
             <span class="sw-bill-ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 3h12v18l-2.5-1.6L13 21l-2-1.6L9 21l-2.5-1.6L6 21V3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9.5 8h5M9.5 12h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
@@ -119,11 +131,11 @@
 
   <!-- sticky pay bar (Swiggy style) -->
   <div class="sw-paybar" data-bp-paybar hidden>
-    <button type="button" class="sw-payusing" data-bp-upi>
-      <small>PAY USING</small>
-      <span class="sw-method"><span class="sw-bolt" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>UPI <span class="sw-chev" aria-hidden="true">▾</span></span>
-    </button>
-    <button type="button" class="sw-paybtn" data-bp-pay>Pay ₹0</button>
+    <div class="sw-payusing sw-payusing--info">
+      <small data-bp-paybar-total>₹0</small>
+      <span class="sw-method" data-bp-paybar-method>Cash on Delivery</span>
+    </div>
+    <button type="button" class="sw-paybtn" data-bp-pay>PLACE ORDER</button>
   </div>
 
   <!-- phone-number login sheet -->
@@ -191,6 +203,6 @@
   </div>
   <div class="container minimal-footer-inner"><span>© 2026 Rebesta Fresh · Fresh from farms, Hosur</span></div>
 </footer>
-  <script src="/js/store.js?v=20261006s16" defer></script><script src="/js/cart.js?v=20261006g" defer></script>
+  <script src="/js/store.js?v=20261006s16" defer></script><script src="/js/cart.js?v=20261007a" defer></script>
 </body>
 </html>

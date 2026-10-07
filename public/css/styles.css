@@ -2645,3 +2645,11 @@ body::before{display:none}
 .sw-seg-btn.on{background:linear-gradient(135deg,#f26b4a,#d8431f);color:#fff;border-radius:999px}
 .sw-tip-chip.on{background:linear-gradient(135deg,#f26b4a,#d8431f);border-color:transparent;color:#fff}
 .sw-del{border-radius:999px;padding:12px 18px}
+
+/* PASS 58 (2026-10-07) — one-page checkout on /cart: payment card + paybar TOTAL/PLACE ORDER */
+.sw-payusing--info{cursor:default;padding:1px 0}
+.sw-payusing--info small{font-size:1.18rem;font-weight:900;letter-spacing:0;color:#0d0d0f;line-height:1.1}
+.sw-payusing--info .sw-method{font-size:.7rem;font-weight:700;color:#6d6d72;gap:0;display:block}
+.sw-paybtn{white-space:nowrap;letter-spacing:.02em}
+.sw-paycard .sw-del b{font-size:.92rem}
+.sw-paycard .sw-del small{margin-top:2px}

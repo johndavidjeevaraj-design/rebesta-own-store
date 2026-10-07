@@ -52,6 +52,8 @@ ${productUrls}
   app.use('/api', publicRouter);
   app.use('/api/admin', adminRouter);
   app.use('/api/partner', partnerRouter);
+  /* checkout page retired 2026-10-07 — /cart is the one-page checkout now */
+  app.get(['/checkout', '/checkout.html'], (req, res) => res.redirect(302, '/cart'));
   app.use(express.static(config.publicDir, {
     extensions: ['html'],
     index: false,
@@ -63,7 +65,7 @@ ${productUrls}
   /* one auth page: number + OTP decides sign-in vs new account — /signup is legacy */
   app.get('/signup', (req, res) => res.redirect(302, '/login' + (req.query.phone ? `?phone=${encodeURIComponent(String(req.query.phone))}` : '')));
   app.get(['/login', '/account'], (req, res) => res.sendFile(`${req.path.slice(1)}.html`, { root: config.publicDir }));
-  app.get(['/cart', '/checkout', '/order-success', '/track', '/about', '/faq', '/terms', '/privacy', '/refund', '/partner', '/subscriptions'], (req, res) => {
+  app.get(['/cart', '/order-success', '/track', '/about', '/faq', '/terms', '/privacy', '/refund', '/partner', '/subscriptions'], (req, res) => {
     res.sendFile(`${req.path.slice(1)}.html`, { root: config.publicDir });
   });
   app.get('/products/:handle', (req, res) => res.sendFile('product.html', { root: config.publicDir }));

@@ -17,7 +17,8 @@
 
   const state = {
     products: [], byHandle: new Map(), me: null, quote: null,
-    tip: 0, coupon: null, coupons: null, addTab: 'popular', seg: 'delivery', quoteTimer: null, notesTimer: null
+    tip: 0, coupon: null, coupons: null, addTab: 'popular', seg: 'delivery', quoteTimer: null, notesTimer: null,
+    payMethod: 'cod', onlineEnabled: false
   };
 
   const money = v => RFS.money(v);
@@ -171,8 +172,13 @@
       <div class="sw-bill-row"><span>Delivery Tip</span>${state.tip ? `<span>${money(state.tip)}</span>` : '<button type="button" class="sw-addtip" data-bp-gotip>Add tip</button>'}</div>
       <div class="sw-bill-row sw-bill-final"><span>To Pay</span><span>${money(total)}</span></div>`;
     const pay = $('[data-bp-pay]');
-    pay.textContent = `Pay ${money(total)}`;
     pay.disabled = !eligible;
+    renderPaybar();
+  }
+
+  function renderPaybar() {
+    $('[data-bp-paybar-total]').textContent = $('[data-bp-pay-total]').textContent;
+    $('[data-bp-paybar-method]').textContent = state.payMethod === 'online' ? 'UPI / Cards / Netbanking' : 'Cash on Delivery';
   }
 
   function renderQuote() {
@@ -294,8 +300,8 @@
     setTimeout(() => { if (!sheet.classList.contains('open')) sheet.hidden = true; }, 340);
   }
 
-  /* ---------- pay ---------- */
-  async function proceedToPayment() {
+  /* ---------- place order ---------- */
+  async function placeOrder() {
     const addr1El = $('[data-bp-addr1]');
     const pinEl = $('[data-bp-pin]');
     const edit = $('[data-bp-addr-edit]');
@@ -306,15 +312,57 @@
     if (!RFS.getSavedLocation()) { RFS.toast('Pick your delivery area first', 'error'); RFS.openLocationSheet(); return; }
     if (!state.quote) await refreshQuote();
     if (!state.quote?.eligible) { RFS.toast(state.quote?.message || 'We cannot deliver to this area yet', 'error'); return; }
-    if (!state.me) { openAuthSheet(() => { proceedToPayment(); }); return; }
+    if (!state.me) { openAuthSheet(() => { placeOrder(); }); return; }
+    const slot = (state.quote.slots || []).find(s => !s.full);
+    if (!slot) { RFS.toast('No delivery slots available right now — please try again in a few minutes', 'error'); return; }
     writePref(ADDR_KEY, { line1: addr1, pincode: pin });
     writePref(NOTES_KEY, $('[data-bp-notes-input]').value.trim());
     if (state.coupon) writePref(COUPON_KEY, { code: state.coupon.code });
     else { try { localStorage.removeItem(COUPON_KEY); } catch {} }
     writePref(TIP_KEY, state.tip);
+    const saved = RFS.getSavedLocation() || {};
+    const orderItems = items();
+    const payload = {
+      customer: { name: state.me.name || '', phone: state.me.phone || '', email: state.me.email || '' },
+      address: { line1: addr1, area: saved.label || '', city: 'Hosur', pincode: pin },
+      notes: $('[data-bp-notes-input]').value.trim(),
+      items: orderItems,
+      slotId: slot.id,
+      paymentMethod: state.payMethod,
+      tipInr: Number(state.tip || 0)
+    };
+    if (state.coupon) payload.couponCode = state.coupon.code;
+    if (Number.isFinite(saved.lat)) payload.location = { lat: saved.lat, lng: saved.lng };
     const pay = $('[data-bp-pay]');
-    RFS.setBusy(pay, true, 'Opening payment…');
-    window.location.href = '/checkout';
+    RFS.setBusy(pay, true, 'Placing order…');
+    try {
+      const order = await RFS.api('/api/orders', { method: 'POST', body: JSON.stringify(payload) });
+      RFS.saveCart([]);
+      for (const key of [COUPON_KEY, TIP_KEY, NOTES_KEY]) { try { localStorage.removeItem(key); } catch {} }
+      try { localStorage.setItem('rebesta_last_order', JSON.stringify({ items: orderItems, at: Date.now() })); } catch {}
+      if (order.payu && order.payu.action) {
+        const form = document.createElement('form');
+        form.method = order.payu.method || 'POST';
+        form.action = order.payu.action;
+        form.style.display = 'none';
+        Object.entries(order.payu.fields || {}).forEach(([name, value]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          input.value = value == null ? '' : String(value);
+          form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+        return;
+      }
+      window.location.href = `/order-success?id=${encodeURIComponent(order.orderId)}&phone=${encodeURIComponent(payload.customer.phone)}&whatsapp=${encodeURIComponent(order.whatsappUrl || '')}`;
+    } catch (error) {
+      RFS.toast(error.message || 'Could not place this order', 'error');
+      await refreshQuote();
+    } finally {
+      RFS.setBusy(pay, false);
+    }
   }
 
   /* ---------- empty-state helpers ---------- */
@@ -393,8 +441,15 @@
   });
   $('[data-bp-coupon-apply-btn]').addEventListener('click', () => applyCoupon($('[data-bp-coupon-input]').value));
   $('[data-bp-coupon-input]').addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); applyCoupon(event.target.value); } });
-  $('[data-bp-pay]').addEventListener('click', proceedToPayment);
-  $('[data-bp-upi]').addEventListener('click', proceedToPayment);
+  document.querySelectorAll('.sw-del[data-pay]').forEach(row => {
+    row.addEventListener('click', () => {
+      if (row.classList.contains('off')) { RFS.toast('PayU merchant setup is pending', 'error'); return; }
+      state.payMethod = row.dataset.pay === 'online' ? 'online' : 'cod';
+      document.querySelectorAll('.sw-del[data-pay]').forEach(r => r.classList.toggle('on', r === row));
+      renderPaybar();
+    });
+  });
+  $('[data-bp-pay]').addEventListener('click', placeOrder);
   $('[data-bp-pin]').addEventListener('change', () => { scheduleQuote(); });
   $('[data-bp-addr1]').addEventListener('input', renderAddr);
   $('[data-bp-pin]').addEventListener('input', renderAddr);
@@ -415,6 +470,8 @@
       state.products = products.products || [];
       state.byHandle = new Map(state.products.map(p => [p.handle, p]));
       state.me = me?.customer || null;
+      try { state.onlineEnabled = Boolean((await RFS.api('/api/settings'))?.payments?.onlineEnabled); } catch {}
+      if (!state.onlineEnabled) document.querySelector('.sw-del[data-pay="online"]')?.classList.add('off');
       try { state.coupons = (await RFS.api('/api/coupon/list')).coupons || []; } catch { state.coupons = []; }
       const savedAddr = readPref(ADDR_KEY, null);
       if (savedAddr?.line1) $('[data-bp-addr1]').value = String(savedAddr.line1).slice(0, 120);

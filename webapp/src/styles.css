@@ -42,3 +42,9 @@ body { background: var(--color-cream); color: var(--color-ink); font-family: var
 /* thin horizontal product rails */
 .rail-scroll { scrollbar-width: none; }
 .rail-scroll::-webkit-scrollbar { display: none; }
+
+/* Vanilla-exact heading weight: on the vanilla pages these headings rely on the
+   browser default (UA bold); Tailwind preflight resets them to font-weight:inherit. */
+.auth-card h1 { font-weight: 700; }
+.as-inner h3 { font-weight: 700; }
+.empty-state h3 { font-weight: 700; }

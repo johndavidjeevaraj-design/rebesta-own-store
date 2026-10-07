@@ -1,0 +1,25 @@
+{
+  "name": "rebesta-webapp",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "framer-motion": "^12.23.0",
+    "lucide-react": "^0.552.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^5.1.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.9.0",
+    "vite": "^7.3.0"
+  }
+}

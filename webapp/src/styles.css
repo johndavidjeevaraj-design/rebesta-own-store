@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/* Brand fonts (self-hosted, same files the vanilla site uses) */
+@font-face { font-family: "Manrope"; src: url("/assets/fonts/manrope-regular.ttf"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Manrope"; src: url("/assets/fonts/manrope-semibold.ttf"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Manrope"; src: url("/assets/fonts/manrope-extrabold.ttf"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Bricolage Grotesque"; src: url("/assets/fonts/bricolage-grotesque-bold.ttf"); font-weight: 700 800; font-display: swap; }
+
+@theme {
+  /* Rebesta brand — matches the vanilla site tokens exactly */
+  --color-forest: #032c13;
+  --color-forest-2: #073f1b;
+  --color-leaf: #0d8736;
+  --color-leaf-2: #0faa46;
+  --color-mint: #e7f6e9;
+  --color-carrot: #ff5b20;
+  --color-carrot-2: #ff8b3d;
+  --color-cream: #fbfaf3;
+  --color-ink: #121910;
+  --color-ink-2: #2c382b;
+  --color-muted: #6c7868;
+  --color-line: #dfe6da;
+  --color-line-2: #cbd8c7;
+  --color-gold: #ffd582;
+  --shadow-soft: 0 12px 32px rgba(3, 44, 19, 0.08);
+  --shadow-mid: 0 20px 56px rgba(3, 44, 19, 0.14);
+  --font-sans: "Manrope", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Manrope", system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body { background: var(--color-cream); color: var(--color-ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+
+/* hero mesh gradient — same vibe as the vanilla homepage */
+.hero-mesh {
+  background:
+    radial-gradient(1200px 500px at 85% -10%, rgba(15, 170, 70, 0.35), transparent 60%),
+    radial-gradient(900px 420px at -10% 20%, rgba(255, 91, 32, 0.18), transparent 55%),
+    linear-gradient(160deg, #032c13 0%, #073f1b 58%, #0a4a20 100%);
+}
+
+/* thin horizontal product rails */
+.rail-scroll { scrollbar-width: none; }
+.rail-scroll::-webkit-scrollbar { display: none; }

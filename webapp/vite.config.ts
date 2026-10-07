@@ -12,6 +12,6 @@ export default defineConfig({
     outDir: '../public',
     emptyOutDir: false,
     assetsDir: 'react',
-    rollupOptions: { input: { index: 'index.html', shop: 'shop.html', product: 'product.html' } }
+    rollupOptions: { input: { index: 'index.html', shop: 'shop.html', product: 'product.html', cart: 'cart.html' } }
   }
 });

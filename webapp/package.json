@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build && node fix-cart-css-order.cjs"
   },
   "dependencies": {
     "framer-motion": "^12.23.0",

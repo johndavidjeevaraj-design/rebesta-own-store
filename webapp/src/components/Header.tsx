@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { MapPin, Mic, Search, ShoppingCart, User, ChevronDown, X } from 'lucide-react';
-import { CART_EVENT, cartCount, getSavedLocation, LOCATION_EVENT, SavedLocation } from '../shared/store';
+import { cartCount, CART_EVENT, getLocSnapshot, LOCATION_EVENT } from '../shared/store';
 import LocationSheet from './LocationSheet';
 
 const hasSpeech = typeof window !== 'undefined' && Boolean((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
@@ -8,7 +8,7 @@ const hasSpeech = typeof window !== 'undefined' && Boolean((window as any).Speec
 export default function Header({ search = '', onSearch }: { search?: string; onSearch?: (q: string) => void; onVoiceAlts?: (alts: string[]) => void }) {
   const loc = useSyncExternalStore(
     cb => { window.addEventListener(LOCATION_EVENT, cb); window.addEventListener('storage', cb); return () => { window.removeEventListener(LOCATION_EVENT, cb); window.removeEventListener('storage', cb); }; },
-    getSavedLocation
+    getLocSnapshot
   );
   const [sheetOpen, setSheetOpen] = useState(false);
   const [listening, setListening] = useState(false);

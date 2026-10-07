@@ -57,8 +57,8 @@ export async function api<T = any>(path: string, options: RequestInit = {}): Pro
 export function readCart(): CartLine[] {
   try { return JSON.parse(localStorage.getItem(CART_KEY) || '[]'); } catch { return []; }
 }
-export function saveCart(lines: CartLine[]) {
-  try { localStorage.setItem(CART_KEY, JSON.stringify(lines)); } catch {}
+export function saveCart(lines: CartLine[]) {  try { localStorage.setItem(CART_KEY, JSON.stringify(lines)); } catch {}
+  cartSnapshot = lines;              /* snapshot must be fresh BEFORE the event fires */
   window.dispatchEvent(new CustomEvent(CART_EVENT));
 }
 export function addToCart(handle: string, qty = 1) {
@@ -74,6 +74,15 @@ export function setCartQty(handle: string, qty: number) {
   saveCart(lines);
 }
 export const cartCount = () => readCart().reduce((sum, l) => sum + l.qty, 0);
+
+/* ---- cached snapshots for useSyncExternalStore (getSnapshot must be stable) ---- */
+let cartSnapshot: CartLine[] = readCart();
+let locSnapshot: SavedLocation | null = getSavedLocation();
+export function getCartSnapshot(): CartLine[] { return cartSnapshot; }
+export function getLocSnapshot(): SavedLocation | null { return locSnapshot; }
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', () => { cartSnapshot = readCart(); locSnapshot = getSavedLocation(); });
+}
 
 /* ---- "Your last looks" rail shared with the vanilla pages ---- */
 const RECENT_KEY = 'rebesta_recent';
@@ -92,8 +101,8 @@ export function pushRecent(handle: string) {
 export function getSavedLocation(): SavedLocation | null {
   try { const loc = JSON.parse(localStorage.getItem(LOCATION_KEY) || 'null'); return Number.isFinite(loc?.lat) ? loc : null; } catch { return null; }
 }
-export function saveLocation(loc: SavedLocation) {
-  try { localStorage.setItem(LOCATION_KEY, JSON.stringify(loc)); } catch {}
+export function saveLocation(loc: SavedLocation) {  try { localStorage.setItem(LOCATION_KEY, JSON.stringify(loc)); } catch {}
+  locSnapshot = loc;                 /* snapshot must be fresh BEFORE the event fires */
   window.dispatchEvent(new CustomEvent(LOCATION_EVENT));
 }
 

@@ -334,7 +334,7 @@
   /* ---------- Cashfree hosted checkout (JS SDK, loaded on demand) ---------- */
   function loadCashfreeSdk() {
     if (window.Cashfree) return Promise.resolve();
-    const urls = ['https://js.cashfree.com/cashfree-js.js', 'https://js.cashfree.com/v2/cashfree.js'];
+    const urls = ['https://sdk.cashfree.com/js/v3/cashfree.js', 'https://js.cashfree.com/cashfree-js.js', 'https://js.cashfree.com/v2/cashfree.js'];
     return new Promise((resolve, reject) => {
       let i = 0;
       const tryNext = () => {

@@ -18,7 +18,7 @@
   const state = {
     products: [], byHandle: new Map(), me: null, quote: null,
     tip: 0, coupon: null, coupons: null, addTab: 'popular', seg: 'delivery', quoteTimer: null, notesTimer: null,
-    payMethod: 'cod', onlineEnabled: false
+    payApp: 'cod', onlineEnabled: false
   };
 
   const money = v => RFS.money(v);
@@ -177,16 +177,17 @@
     renderPaybar();
   }
 
+  const PM_LABELS = { gpay: 'Google Pay', phonepe: 'PhonePe', paytm: 'Paytm UPI', upi: 'UPI · Card', cod: 'Cash on Delivery' };
+
   function renderPaybar() {
-    $('[data-bp-pm-label]').textContent = state.payMethod === 'online' ? 'UPI' : 'Cash on Delivery';
+    $('[data-bp-pm-label]').textContent = PM_LABELS[state.payApp] || 'Cash on Delivery';
     const sub = $('[data-bp-pm-sub]');
     if (sub) {
       const units = items().reduce((sum, line) => sum + (Number(line.qty) || 0), 0);
       sub.textContent = `${units} item${units === 1 ? '' : 's'} · ${$('[data-bp-pay-total]').textContent}`;
     }
     document.querySelectorAll('.sw-pm-row[data-pm]').forEach(row => {
-      const on = row.dataset.pm === state.payMethod;
-      row.classList.toggle('on', on);
+      row.classList.toggle('on', (row.dataset.app || 'cod') === state.payApp);
     });
   }
 
@@ -393,7 +394,7 @@
       notes: $('[data-bp-notes-input]').value.trim(),
       items: orderItems,
       slotId: slot.id,
-      paymentMethod: state.payMethod,
+      paymentMethod: state.payApp === 'cod' ? 'cod' : 'online',
       tipInr: Number(state.tip || 0)
     };
     if (state.coupon) payload.couponCode = state.coupon.code;
@@ -499,7 +500,7 @@
   document.querySelectorAll('.sw-pm-row[data-pm]').forEach(row => {
     row.addEventListener('click', () => {
       if (row.classList.contains('off')) { RFS.toast('Online payment setup is almost ready — please use Cash on Delivery today', 'error'); return; }
-      state.payMethod = row.dataset.pm === 'online' ? 'online' : 'cod';
+      state.payApp = row.dataset.app || 'cod';
       renderPaybar();
       closePmSheet();
     });
@@ -529,8 +530,8 @@
       state.byHandle = new Map(state.products.map(p => [p.handle, p]));
       state.me = me?.customer || null;
       try { state.onlineEnabled = Boolean((await RFS.api('/api/settings'))?.payments?.onlineEnabled); } catch {}
-      if (!state.onlineEnabled) document.querySelector('.sw-pm-row[data-pm="online"]')?.classList.add('off');
-      else state.payMethod = 'online'; // Swiggy-style: prefer UPI when it is available
+      if (!state.onlineEnabled) document.querySelectorAll('.sw-pm-row[data-pm="online"]').forEach(row => row.classList.add('off'));
+      else state.payApp = 'upi'; // Swiggy-style: prefer UPI when it is available
       try { state.coupons = (await RFS.api('/api/coupon/list')).coupons || []; } catch { state.coupons = []; }
       const savedAddr = readPref(ADDR_KEY, null);
       if (savedAddr?.line1) $('[data-bp-addr1]').value = String(savedAddr.line1).slice(0, 120);

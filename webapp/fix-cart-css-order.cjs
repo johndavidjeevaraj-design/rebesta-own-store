@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const PAGES = ['cart.html', 'order-success.html', 'track.html', 'login.html', 'account.html', 'about.html', 'faq.html', 'terms.html', 'privacy.html', 'refund.html', 'subscriptions.html', '404.html'];
+const PAGES = ['cart.html', 'order-success.html', 'track.html', 'login.html', 'account.html', 'about.html', 'faq.html', 'terms.html', 'privacy.html', 'refund.html', 'subscriptions.html', '404.html', 'partner.html', 'admin.html'];
 
 for (const name of PAGES) {
   const file = path.join(__dirname, '..', 'public', name);

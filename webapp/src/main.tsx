@@ -15,10 +15,12 @@ import Privacy from './pages/Privacy';
 import Refund from './pages/Refund';
 import Subscriptions from './pages/Subscriptions';
 import NotFound from './pages/NotFound';
+import Partner from './partner/Partner';
+import Admin from './admin/Admin';
 import { ToastProvider } from './components/Toaster';
 import './styles.css';
 
-/* One bundle, fifteen HTML entries — picked by pathname.
+/* One bundle, seventeen HTML entries — picked by pathname.
    Unknown paths render NotFound (the server serves 404.html for them). */
 const path = location.pathname.replace(/\/+$/, '') || '/';
 const page =
@@ -36,6 +38,8 @@ const page =
   path === '/privacy' ? <Privacy /> :
   path === '/refund' ? <Refund /> :
   path === '/subscriptions' ? <Subscriptions /> :
+  path === '/partner' || path === '/partner.html' ? <Partner /> :
+  path === '/admin' || path === '/admin.html' ? <Admin /> :
   <NotFound />;
 
 createRoot(document.getElementById('root')!).render(

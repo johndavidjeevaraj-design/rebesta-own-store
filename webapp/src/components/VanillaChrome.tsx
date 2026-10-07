@@ -23,8 +23,9 @@ const locationLabel = (loc: { label?: string; source?: string } | null) =>
   loc ? (String(loc.label || '').trim() || (loc.source === 'area' ? 'Selected area' : 'Selected pin')) : '';
 
 /* ---------------- header (runtime loc-chip state) ---------------- */
+/* help omitted → no whatsapp-link (subscriptions page header has account + cart only) */
 
-export function VanillaHeader({ help = { text: 'Help', href: 'https://wa.me/918438765119' }, showAccount = true }: { help?: { text: string; href: string }; showAccount?: boolean }) {
+export function VanillaHeader({ help, showAccount = true }: { help?: { text: string; href: string }; showAccount?: boolean }) {
   const count = useCartCount();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [loc, setLoc] = useState(getSavedLocation());
@@ -59,7 +60,7 @@ export function VanillaHeader({ help = { text: 'Help', href: 'https://wa.me/9184
           </span>
         </button><span></span>
         <div className="header-actions">
-          <a className="whatsapp-link" href={help.href}>{help.text}</a>
+          {help && <a className="whatsapp-link" href={help.href}>{help.text}</a>}
           {showAccount && <a className="hdr-icon account-link" href="/account" aria-label="Your account">{ICONS.user}</a>}
           <a className="cart-link hdr-icon" href="/cart" aria-label="Your basket">{ICONS.cart}<span ref={badgeRef} className={`cart-count${count ? '' : ' zero'}`} data-cart-count>{count}</span></a>
         </div>
@@ -163,9 +164,17 @@ export function VanillaBottomNav() {
   );
 }
 
-/* ---------------- footer: rich (track / order-success) or minimal (login / account) ---------------- */
+/* ---------------- footer: rich (track / order-success / info pages) or minimal (login / account / subscriptions) ----------------
+   fssai: info pages fill the footer FSSAI line from /api/settings (vanilla inline script) */
 
-export function VanillaFooter({ minimal = false }: { minimal?: boolean }) {
+export function VanillaFooter({ minimal = false, fssai = false }: { minimal?: boolean; fssai?: boolean }) {
+  const [lic, setLic] = useState('');
+  useEffect(() => {
+    if (!fssai) return;
+    let live = true;
+    api('/api/settings').then((d: any) => { if (live && d?.business?.fssai) setLic('FSSAI Lic. No. ' + d.business.fssai); }).catch(() => { });
+    return () => { live = false; };
+  }, [fssai]);
   return (
     <footer className="minimal-footer">
       {!minimal && (
@@ -193,7 +202,7 @@ export function VanillaFooter({ minimal = false }: { minimal?: boolean }) {
             <h4>Contact &amp; delivery</h4>
             <a href="https://wa.me/918438765119" target="_blank" rel="noopener">WhatsApp +91 84387 65119</a>
             <a href="mailto:warehouseretailingmart@gmail.com" data-temp-email>warehouseretailingmart@gmail.com</a>
-            <p>Morning slots: 7–9 AM &amp; 9–11 AM<br />Hosur · up to 9 km road radius<br />Free delivery over ₹500 · COD available<br />📍 Shanthi Nagar, Hosur – 635 109<br /><span data-fssai></span></p>
+            <p>Morning slots: 7–9 AM &amp; 9–11 AM<br />Hosur · up to 9 km road radius<br />Free delivery over ₹500 · COD available<br />📍 Shanthi Nagar, Hosur – 635 109<br /><span data-fssai>{lic}</span></p>
           </div>
         </div>
       )}

@@ -261,7 +261,7 @@ export function TrackView() {
       <main className="pb-20">
         <section className="mx-auto max-w-2xl px-4 pt-14 sm:pt-16">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#c8400f]">Track order</p>
-          <h1 className="mt-3 font-display text-[28px] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-[36px]">Where&rsquo;s my delivery?</h1>
+          <h1 className="mt-3 font-display text-[28px] font-semibold leading-[1.05] tracking-tight text-ink sm:text-[36px]">Where&rsquo;s my delivery?</h1>
           <p className="mt-3 text-[14px] font-medium text-muted-foreground">Enter your Rebesta order ID and the mobile number used at checkout.</p>
 
           <form data-track-form onSubmit={trackOrder} className="mt-8 grid gap-3 sm:grid-cols-[1.2fr_1fr_auto]">
@@ -366,7 +366,7 @@ export function TrackView() {
                       <span className="text-leaf">−{money(result.discountInr)}</span>
                     </div>
                   )}
-                  <div className="flex items-center justify-between text-[15px] font-extrabold text-ink">
+                  <div className="flex items-center justify-between text-[15px] font-bold text-ink">
                     <span>Total</span><span className="tabular-nums">{money(result.totalInr)}</span>
                   </div>
                   <Button
@@ -383,7 +383,7 @@ export function TrackView() {
           {/* order history */}
           <div className="mt-16 rounded-[28px] bg-[#f5f5f7] p-6 sm:p-9">
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Order history</p>
-            <h2 className="mt-2 font-display text-[21px] font-extrabold tracking-tight text-ink">All my orders</h2>
+            <h2 className="mt-2 font-display text-[21px] font-semibold tracking-tight text-ink">All my orders</h2>
             <p className="mt-2 text-[14px] font-medium text-muted-foreground">Enter just your mobile number to see every order, rewards and cancel options.</p>
             <form data-history-form onSubmit={loadHistory} className="mt-5 flex gap-3">
               <Input

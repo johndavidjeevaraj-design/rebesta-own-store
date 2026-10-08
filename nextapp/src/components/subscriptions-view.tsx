@@ -89,7 +89,7 @@ export function SubscriptionsView() {
       <main className="pb-20">
         <section className="mx-auto max-w-xl px-4 pt-14 sm:pt-16">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#c8400f]">Set &amp; forget</p>
-          <h1 className="mt-3 font-display text-[28px] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-[36px]">Your weekly veg basket.</h1>
+          <h1 className="mt-3 font-display text-[28px] font-semibold leading-[1.05] tracking-tight text-ink sm:text-[36px]">Your weekly veg basket.</h1>
           <p className="mt-3 text-[14px] font-medium leading-relaxed text-muted-foreground">
             Same fresh vegetables, same morning slot, every week. Pay on delivery each time. Pause, resume or cancel anytime — no charges, no calls.
           </p>
@@ -129,7 +129,7 @@ export function SubscriptionsView() {
               <motion.div key={sub.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className={`mb-3 ${sub.status === "ACTIVE" ? "" : "opacity-75"}`}>
                 <Card className="gap-0 rounded-2xl border-line p-6 shadow-[0_1px_6px_rgba(0,0,0,0.04)]">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="flex items-center gap-2 text-[15px] font-extrabold tracking-tight text-ink">
+                    <p className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-ink">
                       <span className="grid h-8 w-8 place-items-center rounded-full bg-mint text-leaf"><ShoppingBasket size={15} /></span>
                       Weekly basket
                     </p>

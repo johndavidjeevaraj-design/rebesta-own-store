@@ -70,7 +70,7 @@ export default function Home() {
           <section className="mx-auto max-w-6xl px-4 pt-20" aria-labelledby="cats-h">
             <Reveal>
               <div className="flex items-end justify-between gap-4">
-                <h2 id="cats-h" className="font-display text-[28px] font-extrabold leading-tight tracking-tight text-ink sm:text-[32px]">
+                <h2 id="cats-h" className="font-display text-[28px] font-semibold leading-tight tracking-tight text-ink sm:text-[32px]">
                   Shop by category.
                 </h2>
                 <a href="/shop" className="hidden shrink-0 items-center gap-1 text-[14px] font-semibold text-[#c8400f] transition hover:gap-2 sm:flex">
@@ -105,7 +105,7 @@ export default function Home() {
             <div className="flex items-end justify-between gap-4">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#c8400f]">Harvested today</p>
-                <h2 id="feat-h" className="mt-2 font-display text-[28px] font-extrabold leading-tight tracking-tight text-ink sm:text-[32px]">
+                <h2 id="feat-h" className="mt-2 font-display text-[28px] font-semibold leading-tight tracking-tight text-ink sm:text-[32px]">
                   This morning&rsquo;s picks.
                 </h2>
               </div>
@@ -134,7 +134,7 @@ export default function Home() {
         {/* how it works */}
         <section id="how" className="mx-auto max-w-6xl px-4 pt-24" aria-labelledby="how-h">
           <Reveal className="mx-auto max-w-2xl text-center">
-            <h2 id="how-h" className="font-display text-[28px] font-extrabold leading-tight tracking-tight text-ink sm:text-[32px]">
+            <h2 id="how-h" className="font-display text-[28px] font-semibold leading-tight tracking-tight text-ink sm:text-[32px]">
               From farm to door in three steps.
             </h2>
           </Reveal>
@@ -160,7 +160,7 @@ export default function Home() {
               },
             ].map((s) => (
               <Card key={s.step} className="group relative gap-0 overflow-hidden rounded-[28px] border-transparent bg-[#f5f5f7] p-7 shadow-none transition hover:shadow-[0_12px_36px_rgba(0,0,0,0.08)]">
-                <span className="absolute -right-2 -top-6 select-none font-display text-[72px] font-extrabold leading-none text-black/[0.05]">{s.step}</span>
+                <span className="absolute -right-2 -top-6 select-none font-display text-[72px] font-bold leading-none text-black/[0.05]">{s.step}</span>
                 <span className="grid h-11 w-11 place-items-center rounded-full bg-white text-ink shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
                   <s.icon size={19} strokeWidth={1.9} />
                 </span>
@@ -180,7 +180,7 @@ export default function Home() {
                   <Truck size={24} strokeWidth={1.8} />
                 </span>
                 <div className="flex-1">
-                  <h2 id="del-h" className="font-display text-[21px] font-extrabold leading-tight tracking-tight text-ink sm:text-[28px]">
+                  <h2 id="del-h" className="font-display text-[21px] font-semibold leading-tight tracking-tight text-ink sm:text-[28px]">
                     {content?.deliveryNoteTitle || "Delivery by real road distance"}
                   </h2>
                   <p className="mt-2 max-w-xl text-[14px] font-medium leading-relaxed text-muted-foreground">
@@ -202,7 +202,7 @@ export default function Home() {
         {/* trust */}
         <section className="mx-auto max-w-6xl px-4 pt-24" aria-labelledby="trust-h">
           <Reveal className="mx-auto max-w-2xl text-center">
-            <h2 id="trust-h" className="font-display text-[28px] font-extrabold leading-tight tracking-tight text-ink sm:text-[32px]">
+            <h2 id="trust-h" className="font-display text-[28px] font-semibold leading-tight tracking-tight text-ink sm:text-[32px]">
               Why Hosur shops with us.
             </h2>
           </Reveal>
@@ -248,7 +248,7 @@ export default function Home() {
                 <span className="inline-grid h-12 w-12 place-items-center rounded-full bg-white/20 text-white">
                   <Store size={22} strokeWidth={1.8} />
                 </span>
-                <h2 className="mx-auto mt-7 max-w-3xl font-display text-[32px] font-extrabold leading-[1.05] tracking-tight sm:text-[40px]">
+                <h2 className="mx-auto mt-7 max-w-3xl font-display text-[32px] font-semibold leading-[1.05] tracking-tight sm:text-[40px]">
                   Fresh is a habit.
                   <br />
                   Start yours tomorrow.

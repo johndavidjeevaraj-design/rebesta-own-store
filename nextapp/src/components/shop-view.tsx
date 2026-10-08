@@ -91,17 +91,17 @@ export function ShopView({ mode }: { mode: ShopMode }) {
         <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: "easeOut" }}>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.16em] text-leaf">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-leaf">
                 Shop fresh
               </span>
-              <h1 className="font-display text-xl font-extrabold text-forest md:text-2xl">{conf.heading}</h1>
+              <h1 className="font-display text-xl font-semibold text-forest md:text-2xl">{conf.heading}</h1>
             </div>
             <motion.span
               key={`${filtered.length}-${search}-${activeCategory}-${offersOnly}`}
               initial={{ scale: 1.12, opacity: 0.6 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.18 }}
-              className="rounded-full border border-leaf/20 bg-mint px-3 py-1.5 text-[11px] font-extrabold text-leaf"
+              className="rounded-full border border-leaf/20 bg-mint px-3 py-1.5 text-[11px] font-bold text-leaf"
             >
               {loaded ? `${filtered.length} ${conf.countWord}${filtered.length === 1 ? "" : "s"}` : "Loading…"}
             </motion.span>
@@ -111,7 +111,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
         {error ? (
           <div className="mt-10 grid place-items-center rounded-3xl border border-dashed border-line-2 bg-white/60 py-16 text-center">
             <p className="text-3xl">🥕</p>
-            <p className="mt-3 font-extrabold text-ink">Could not load products</p>
+            <p className="mt-3 font-bold text-ink">Could not load products</p>
             <p className="mt-1 text-sm text-muted-foreground">{error}</p>
           </div>
         ) : (
@@ -125,7 +125,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
                 className="mt-8"
                 aria-label="Your last looks"
               >
-                <h2 className="flex items-center gap-2 text-[15px] font-extrabold text-forest">
+                <h2 className="flex items-center gap-2 text-[15px] font-semibold text-forest">
                   <History size={17} className="text-leaf" /> Your last looks
                 </h2>
                 <div className="rail -mx-4 mt-3 flex gap-4 overflow-x-auto px-4 pb-2">
@@ -154,7 +154,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={categoryImage(cat)} alt="" loading="lazy" className="h-8 w-8 rounded-full border border-white/60 object-cover" />
                   <span className="flex flex-col items-start leading-tight">
-                    <span className="text-[13px] font-extrabold">{cat}</span>
+                    <span className="text-[13px] font-bold">{cat}</span>
                     <span className={`text-[10px] font-bold ${activeCategory === cat ? "text-white/85" : "text-muted-foreground"}`}>{countOf(cat)}</span>
                   </span>
                 </button>
@@ -182,7 +182,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
                     key={key}
                     type="button"
                     onClick={() => setSort(key)}
-                    className={`rounded-full px-3 py-1.5 text-[11px] font-extrabold transition ${
+                    className={`rounded-full px-3 py-1.5 text-[11px] font-bold transition ${
                       sort === key ? "border border-leaf/30 bg-mint text-leaf" : "text-muted-foreground hover:text-ink"
                     }`}
                   >
@@ -202,7 +202,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
             ) : filtered.length === 0 ? (
               <div className="mt-10 grid place-items-center rounded-3xl border border-dashed border-line-2 bg-white/60 py-16 text-center">
                 <p className="text-2xl text-muted-foreground/60"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9h16l-1.5 10.5a2 2 0 0 1-2 1.5H7.5a2 2 0 0 1-2-1.5L4 9Z" stroke="currentColor" strokeWidth="1.4"/><path d="M8 9V7a4 4 0 0 1 8 0v2" stroke="currentColor" strokeWidth="1.4"/></svg></p>
-                <p className="mt-3 font-extrabold text-ink">No products found</p>
+                <p className="mt-3 font-bold text-ink">No products found</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Try another vegetable, leaf, or combo — Tamil works too (<i>keerai</i>, <i>murungakkai</i>…)
                 </p>

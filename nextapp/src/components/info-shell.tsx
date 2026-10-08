@@ -22,10 +22,10 @@ export function InfoShell({
       <main className="mx-auto max-w-3xl px-4 pt-10">
         <Reveal>
           <div className="mb-6">
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.16em] text-leaf">
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-leaf">
               {eyebrow}
             </span>
-            <h1 className="mt-2 font-display text-[28px] font-extrabold leading-tight text-forest sm:text-[32px]">{title}</h1>
+            <h1 className="mt-2 font-display text-[28px] font-semibold leading-tight text-forest sm:text-[32px]">{title}</h1>
             <p className="mt-2 max-w-xl text-[14px] font-medium leading-relaxed text-muted-foreground">{subtitle}</p>
           </div>
           <div className="rounded-3xl border border-line bg-white p-6 shadow-soft sm:p-10">

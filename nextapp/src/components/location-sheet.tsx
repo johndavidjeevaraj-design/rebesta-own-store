@@ -46,7 +46,7 @@ export function LocationSheet({ open, onOpenChange }: { open: boolean; onOpenCha
         data-lenis-prevent
       >
         <SheetHeader className="px-6 pt-6 pb-2 text-left">
-          <SheetTitle className="font-display text-xl font-extrabold text-forest">What&rsquo;s your location?</SheetTitle>
+          <SheetTitle className="font-display text-xl font-bold text-forest">What&rsquo;s your location?</SheetTitle>
           <SheetDescription className="text-sm text-muted-foreground">
             Morning delivery across Hosur — we price by real road distance.
           </SheetDescription>
@@ -62,7 +62,7 @@ export function LocationSheet({ open, onOpenChange }: { open: boolean; onOpenCha
               <Crosshair size={19} />
             </span>
             <span>
-              <span className="block text-[14px] font-extrabold text-forest">Use my current location</span>
+              <span className="block text-[14px] font-bold text-forest">Use my current location</span>
               <span className="block text-[13px] text-muted-foreground">GPS pin — most accurate</span>
             </span>
             <ChevronRight size={16} className="ml-auto text-muted-foreground" />
@@ -75,7 +75,7 @@ export function LocationSheet({ open, onOpenChange }: { open: boolean; onOpenCha
           )}
 
           <div className="pt-1">
-            <p className="mb-2.5 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">
+            <p className="mb-2.5 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
               <span className="h-px flex-1 bg-border" /> or pick your area <span className="h-px flex-1 bg-border" />
             </p>
             <div className="grid grid-cols-2 gap-2">

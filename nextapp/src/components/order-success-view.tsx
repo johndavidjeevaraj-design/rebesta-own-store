@@ -93,7 +93,7 @@ export function OrderSuccessView() {
             {badge.text}
           </span>
 
-          <h1 data-success-title className="mt-4 font-display text-[28px] font-extrabold leading-[1.06] tracking-tight text-ink sm:text-[36px]">
+          <h1 data-success-title className="mt-4 font-display text-[28px] font-semibold leading-[1.06] tracking-tight text-ink sm:text-[36px]">
             {badge.title}
           </h1>
 
@@ -155,7 +155,7 @@ export function OrderSuccessView() {
                       <span>Delivery tip</span><span className="tabular-nums">{money(order.tipInr)}</span>
                     </div>
                   )}
-                  <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-[15px] font-extrabold text-ink">
+                  <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-[15px] font-bold text-ink">
                     <span>Total</span><span className="tabular-nums">{money(order.totalInr)}</span>
                   </div>
                 </Card>

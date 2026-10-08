@@ -48,7 +48,7 @@ export function LoginView() {
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 22c5-3.5 8-7.5 8-11.5C20 6 16.5 3 12 3S4 6 4 10.5C4 14.5 7 18.5 12 22Z" stroke="currentColor" strokeWidth="2.4"/><path d="M12 22V9M12 12l3-2M12 15l-2.6-1.8" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/></svg>
               Welcome
             </span>
-            <h1 className="mt-3 font-display text-[28px] font-extrabold tracking-tight text-ink">Sign in to Rebesta</h1>
+            <h1 className="mt-3 font-display text-[28px] font-semibold tracking-tight text-ink">Sign in to Rebesta</h1>
             <p className="mt-2 text-[14px] font-medium leading-relaxed text-muted-foreground">
               Enter your mobile number — we&rsquo;ll text you a code. Existing number signs you in, new number creates your account. That&rsquo;s it.
             </p>
@@ -89,7 +89,7 @@ export function LoginView() {
                     <path d="M38.4 34.4C38.4 29 35.2 24.6 31 22" stroke="#0d8736" strokeWidth="2.4" strokeLinecap="round" opacity=".7"/>
                   </svg>
                   <div className="min-w-0">
-                    <b data-otp-sentto className="block truncate text-[14px] font-extrabold text-ink"></b>
+                    <b data-otp-sentto className="block truncate text-[14px] font-bold text-ink"></b>
                     <span className="text-[13px] font-medium text-muted-foreground">Code sent · valid 15 minutes</span>
                   </div>
                 </div>
@@ -111,7 +111,7 @@ export function LoginView() {
                     <circle cx="11" cy="16" r="2.6" fill="#ffd582"/>
                   </svg>
                   <div className="min-w-0">
-                    <b data-otp-newto className="block truncate text-[14px] font-extrabold text-ink"></b>
+                    <b data-otp-newto className="block truncate text-[14px] font-bold text-ink"></b>
                     <span className="text-[13px] font-medium text-muted-foreground">Number verified! You&rsquo;re new here — one last thing.</span>
                   </div>
                 </div>
@@ -198,7 +198,7 @@ export function LoginView() {
 
         .otp-boxes { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
         .otp-box { width:50px; height:58px; border-radius:16px; border:1.5px solid #d2d2d7; background:#fff;
-          text-align:center; font-size: 21px; font-weight:800; color:#1d1d1f; outline:none;
+          text-align:center; font-size: 21px; font-weight:600; color:#1d1d1f; outline:none;
           transition:border-color .15s, box-shadow .15s, background .15s; font-family:inherit; }
         .otp-box:focus { border-color:#1d1d1f; box-shadow:0 0 0 3px rgba(29,29,31,0.10); }
         .otp-box.filled { background:#f0f5f0; border-color:#0d8736; color:#0d8736; }
@@ -236,7 +236,7 @@ export function LoginView() {
         .as-confetti i { position:absolute; left:50%; top:50%; width:7px; height:7px; border-radius:2px; opacity:0; }
         .auth-success.show .as-confetti i { animation:confetti .9s ease-out forwards; }
         @keyframes confetti { 0% { transform:translate(0,0) rotate(0); opacity:1; } 100% { transform:translate(var(--dx),var(--dy)) rotate(240deg); opacity:0; } }
-        .auth-success h3 { margin-top:14px; font-size: 21px; font-weight:800; color:#1d1d1f; letter-spacing:-0.02em; }
+        .auth-success h3 { margin-top:14px; font-size: 21px; font-weight:600; color:#1d1d1f; letter-spacing:-0.02em; }
         .auth-success p { margin-top:6px; font-size: 14px; font-weight:500; color:#4a4a4f; }
       `}</style>
       <SiteFooter />

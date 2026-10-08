@@ -16,13 +16,13 @@
 @font-face {
   font-family: "Manrope";
   src: url("/assets/fonts/manrope-extrabold.ttf") format("truetype");
-  font-weight: 800;
+  font-weight: 600;
   font-display: swap;
 }
 @font-face {
   font-family: "Bricolage Grotesque";
   src: url("/assets/fonts/bricolage-grotesque-bold.ttf") format("truetype");
-  font-weight: 800;
+  font-weight: 600;
   font-display: swap;
 }
 
@@ -199,7 +199,7 @@ html.lenis body {
 .prose-page h3 {
   margin: 1.7em 0 0.45em;
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 600;
   color: var(--color-forest);
   font-size: 21px;
   letter-spacing: -0.02em;
@@ -227,7 +227,7 @@ html.lenis body {
 }
 .prose-page a {
   color: var(--color-leaf);
-  font-weight: 800;
+  font-weight: 600;
   text-decoration: underline;
   text-decoration-color: rgba(13, 135, 54, 0.3);
   text-underline-offset: 3px;
@@ -274,7 +274,7 @@ html.lenis body {
   list-style: none;
   color: var(--color-ink);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.35;
   -webkit-tap-highlight-color: transparent;
 }
@@ -291,7 +291,7 @@ html.lenis body {
   border-radius: 999px;
   background: var(--color-mint);
   color: var(--color-leaf);
-  font-weight: 800;
+  font-weight: 600;
   font-size: 14px;
   line-height: 1;
   transition: transform 0.2s var(--ease-out, ease), background 0.2s ease, color 0.2s ease;
@@ -525,7 +525,7 @@ html.lenis body {
 }
 .otp-resend a {
   color: #c2410c;
-  font-weight: 900;
+  font-weight: 600;
   text-decoration: none;
   cursor: pointer;
 }
@@ -540,7 +540,7 @@ html.lenis body {
   border: 1px solid #f5c9b4;
   color: #b3401d;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   text-align: center;
 }
 .flow-error.shake {
@@ -549,7 +549,7 @@ html.lenis body {
 .cart-auth-note {
   margin: 0 0 16px;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--color-muted);
   text-align: center;
 }

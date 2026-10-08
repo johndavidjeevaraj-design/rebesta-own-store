@@ -26,7 +26,7 @@ export function AccountView() {
             <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-white text-ink shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
               <ShoppingBasket size={26} strokeWidth={1.8} />
             </span>
-            <h1 className="mt-5 font-display text-[24px] font-extrabold tracking-tight text-ink">You&rsquo;re not signed in</h1>
+            <h1 className="mt-5 font-display text-[24px] font-semibold tracking-tight text-ink">You&rsquo;re not signed in</h1>
             <p className="mx-auto mt-2 max-w-xs text-[14px] font-medium leading-relaxed text-muted-foreground">
               Sign in to see your orders and profile — or keep shopping, no account needed.
             </p>
@@ -39,9 +39,9 @@ export function AccountView() {
           <div data-account-view hidden>
             <div className="account-panel rounded-[28px] border border-line bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.04)] sm:p-7">
               <div className="flex items-center gap-4">
-                <span className="account-avatar grid h-14 w-14 shrink-0 place-items-center rounded-full bg-mint text-[17px] font-extrabold text-leaf" data-account-avatar aria-hidden="true">R</span>
+                <span className="account-avatar grid h-14 w-14 shrink-0 place-items-center rounded-full bg-mint text-[17px] font-bold text-leaf" data-account-avatar aria-hidden="true">R</span>
                 <div className="min-w-0 flex-1">
-                  <h1 className="truncate text-[21px] font-extrabold tracking-tight text-ink" data-account-name>…</h1>
+                  <h1 className="truncate text-[21px] font-semibold tracking-tight text-ink" data-account-name>…</h1>
                   <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] font-medium text-muted-foreground" data-account-meta></p>
                 </div>
                 <button
@@ -54,8 +54,8 @@ export function AccountView() {
             </div>
 
             <div className="mt-9">
-              <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">History</h2>
-              <h3 className="mt-2 font-display text-[21px] font-extrabold tracking-tight text-ink">Your orders</h3>
+              <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">History</h2>
+              <h3 className="mt-2 font-display text-[21px] font-bold tracking-tight text-ink">Your orders</h3>
               <div data-orders-list className="mt-5"></div>
               <div data-orders-empty className="empty-state rounded-[28px] bg-[#f5f5f7] p-10 text-center" hidden>
                 <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-white text-ink shadow-[0_2px_10px_rgba(0,0,0,0.06)]">

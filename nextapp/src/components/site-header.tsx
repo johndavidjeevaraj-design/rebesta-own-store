@@ -37,7 +37,7 @@ export function SiteHeader({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/assets/brand/logo.png" alt="Rebesta Fresh" className="h-8 w-8 object-contain" />
             </span>
-            <span className="text-[15px] font-extrabold tracking-tight text-ink">
+            <span className="text-[15px] font-bold tracking-tight text-ink">
               Rebesta<span className="text-leaf"> Fresh</span>
             </span>
           </a>

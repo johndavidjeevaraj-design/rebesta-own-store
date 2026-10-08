@@ -22,11 +22,11 @@
 @font-face {
   font-family: "Bricolage Grotesque";
   src: url("/assets/fonts/bricolage-grotesque-bold.ttf") format("truetype");
-  font-weight: 700 800;
+  font-weight: 800;
   font-display: swap;
 }
 
-/* ---- shadcn tokens mapped onto the Rebesta palette (60:30:10) ----
+/* ---- shadcn tokens on the true Rebesta palette (60:30:10) ----
    60% cream/white surfaces · 30% forest/leaf greens · 10% carrot orange */
 :root {
   --background: #fbfaf3;
@@ -72,45 +72,49 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* Rebesta brand — identical to the beloved vite app tokens */
+  /* brand extras — the real Rebesta tokens */
   --color-forest: #032c13;
   --color-forest-2: #073f1b;
+  --color-forest-3: #021f0d;
   --color-leaf: #0d8736;
   --color-leaf-2: #0faa46;
-  --color-mint: #e7f6e9;
   --color-carrot: #ff5b20;
   --color-carrot-2: #ff8b3d;
+  --color-mint: #e7f6e9;
   --color-cream: #fbfaf3;
   --color-ink: #121910;
-  --color-ink-2: #2c382b;
-  --color-muted: #6c7868;
   --color-line: #dfe6da;
-  --color-line-2: #cbd8c7;
   --color-gold: #ffd582;
 
-  --shadow-soft: 0 12px 32px rgba(3, 44, 19, 0.08);
-  --shadow-mid: 0 20px 56px rgba(3, 44, 19, 0.14);
-
-  --font-sans: "Manrope", system-ui, sans-serif;
-  --font-display: "Bricolage Grotesque", "Manrope", system-ui, sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Manrope", ui-sans-serif, sans-serif;
 
   --radius-sm: calc(var(--radius) - 8px);
   --radius-md: calc(var(--radius) - 4px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 8px);
-  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-2xl: calc(var(--radius) + 14px);
   --radius-3xl: calc(var(--radius) + 22px);
 
-  --animate-floaty: floaty 5.7s ease-in-out infinite;
+  --animate-marquee: marquee 30s linear infinite;
+  --animate-spin-slow: spin-slow 18s linear infinite;
+  --animate-floaty: floaty 5.5s ease-in-out infinite;
   --animate-pulse-dot: pulse-dot 2.4s ease-in-out infinite;
 
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes spin-slow {
+    to { transform: rotate(360deg); }
+  }
   @keyframes floaty {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-7px) rotate(-0.6deg); }
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
   }
   @keyframes pulse-dot {
-    0%, 100% { box-shadow: 0 0 0 4px rgba(255, 91, 32, 0.12); }
-    50% { box-shadow: 0 0 0 9px rgba(255, 91, 32, 0.04); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 91, 32, 0.5); }
+    50% { box-shadow: 0 0 0 7px rgba(255, 91, 32, 0); }
   }
 }
 
@@ -122,8 +126,8 @@
     scroll-behavior: smooth;
   }
   body {
-    background: var(--color-cream);
-    color: var(--color-ink);
+    background: var(--color-background);
+    color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     overflow-x: clip;
@@ -132,14 +136,6 @@
     background: #0faa46;
     color: #ffffff;
   }
-}
-
-/* ---- hero mesh gradient — same vibe as the beloved home ---- */
-.hero-mesh {
-  background:
-    radial-gradient(1200px 500px at 85% -10%, rgba(15, 170, 70, 0.35), transparent 60%),
-    radial-gradient(900px 420px at -10% 20%, rgba(255, 91, 32, 0.18), transparent 55%),
-    linear-gradient(160deg, #032c13 0%, #073f1b 58%, #0a4a20 100%);
 }
 
 /* ---- Lenis smooth scroll ---- */
@@ -157,11 +153,27 @@ html.lenis body {
   overflow: hidden;
 }
 
-/* ---- thin horizontal product rails ---- */
-.rail-scroll {
-  scrollbar-width: none;
+/* ---- film grain overlay for dark sections ---- */
+.grain {
+  position: relative;
+  isolation: isolate;
 }
-.rail-scroll::-webkit-scrollbar {
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---- horizontal rails ---- */
+.rail {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.rail::-webkit-scrollbar {
   display: none;
 }
 

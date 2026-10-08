@@ -88,19 +88,19 @@ export default function FarmStory() {
       });
 
       // phase 0 visual settles in slowly while its text is already visible
-      tl.fromTo(imgs[0], { scale: 1.12 }, { scale: 1, duration: 1.2, ease: "power1.out" }, 0);
+      tl.fromTo(imgs[0], { scale: 1.12 }, { scale: 1, duration: 1.5, ease: "power1.out" }, 0);
 
       PHASES.forEach((_, i) => {
         const t = i; // this phase's window starts at t
         if (i > 0) {
-          /* slow dissolves straddling the boundary — both phases blend
-             through the transition, never a hard swap */
-          tl.fromTo(imgs[i], { opacity: 0, scale: 1.12 }, { opacity: 1, scale: 1, duration: 0.5 }, t - 0.25);
-          tl.to(imgs[i - 1], { opacity: 0, duration: 0.5 }, t - 0.25);
+          /* the blend spans 60% of the window — a full swipe's worth of
+             travel — so the transition unfolds gradually, never a whip */
+          tl.fromTo(imgs[i], { opacity: 0, scale: 1.12 }, { opacity: 1, scale: 1, duration: 0.6 }, t - 0.3);
+          tl.to(imgs[i - 1], { opacity: 0, duration: 0.6 }, t - 0.3);
           tl.fromTo(texts[i], { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, t - 0.2);
         }
         if (i < n - 1) tl.to(texts[i], { opacity: 0, y: -14, duration: 0.4, ease: "power1.in" }, t + 0.8);
-        if (fills[i]) tl.to(fills[i], { opacity: 1, duration: 0.3 }, t);
+        if (fills[i]) tl.to(fills[i], { opacity: 1, duration: 0.4 }, t);
       });
 
       if (bar) tl.fromTo(bar, { scaleX: 0 }, { scaleX: 1, duration: n, ease: "none" }, 0);
@@ -152,10 +152,11 @@ export default function FarmStory() {
       id="how"
       ref={root}
       aria-label="How it works — farm to door story"
-      className="relative h-[525vh] bg-[#0b0d0c] md:h-[350vh]"
-      /* a longer, more cinematic runway — momentum glides through it.
-         Mobile: 85vh per phase. Desktop: 50vh per phase. Sticky = +100vh.
-         (5 phases: 525vh mobile / 350vh desktop) */
+      className="relative h-[600vh] bg-[#0b0d0c] md:h-[400vh]"
+      /* a long, cinematic runway — one phone fling ≈ one phase, and the
+         blend occupies most of that travel so transitions unfold slowly.
+         Mobile: 100vh per phase. Desktop: 60vh per phase. Sticky = +100vh.
+         (5 phases: 600vh mobile / 400vh desktop) */
     >
       <div className="sticky top-0 flex h-[100svh] items-center overflow-hidden">
         <div className="mx-auto grid w-full max-w-6xl items-center gap-8 px-4 py-8 md:grid-cols-[1.12fr_1fr] md:gap-14">

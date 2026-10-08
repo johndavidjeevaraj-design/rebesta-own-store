@@ -1,5 +1,5 @@
-:HL["/v2/_next/static/chunks/27dr-6nqhudhe.css","style"]
+:HL["/v2/_next/static/chunks/2f3dblpv1625c.css","style"]
 3:[["children",{"s":"__PAGE__","h":160}]]
 2:[["children",{"s":{"n":"handle","t":"d","k":"root-veg-mix-2-kg","s":[]},"h":65632,"c":"$Q3"}]]
 1:[["children",{"s":"products","h":131168,"c":"$Q2"}]]
-0:{"b":"ZUneUzeUSRfsdIV2JxyHA","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}
+0:{"b":"l0wrmN40xT-eH5xTzjVcL","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}

@@ -131,7 +131,7 @@ export function ProductView({ handle }: { handle: string }) {
             <p className="text-4xl">🥬</p>
             <h1 className="mt-3 font-display text-2xl font-extrabold text-forest">Product not found</h1>
             <p className="mt-1 text-sm text-muted-foreground">{notFound}</p>
-            <a href="/shop" className="carrot-grad mt-6 rounded-full px-5 py-3 text-sm font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]">
+            <a href="/shop" className="fresh-grad mt-6 rounded-full px-5 py-3 text-sm font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]">
               Back to shop
             </a>
           </div>
@@ -179,7 +179,7 @@ export function ProductView({ handle }: { handle: string }) {
                     initial={{ scale: 0, rotate: -12 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: "spring", stiffness: 400, damping: 18, delay: 0.25 }}
-                    className="absolute left-3 top-3 rounded-full bg-carrot px-2.5 py-0.5 text-[0.66rem] font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]"
+                    className="absolute left-3 top-3 rounded-full bg-carrot px-2.5 py-0.5 text-[11px] font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]"
                   >
                     {discount}% off
                   </motion.span>
@@ -188,24 +188,24 @@ export function ProductView({ handle }: { handle: string }) {
 
               {/* Copy */}
               <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.08 }}>
-                <span className="text-[0.62rem] font-extrabold uppercase tracking-[0.16em] text-[#c8400f]">{product.category}</span>
-                <h1 className="mt-1.5 font-display text-2xl font-extrabold leading-tight text-forest md:text-[2rem]">{product.title}</h1>
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#c8400f]">{product.category}</span>
+                <h1 className="mt-1.5 font-display text-2xl font-extrabold leading-tight text-forest md:text-[32px]">{product.title}</h1>
                 {product.description && <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-ink-2/85">{product.description}</p>}
 
                 <div className="mt-4 flex items-end gap-2">
-                  <strong className="text-[1.7rem] font-extrabold text-carrot">{money(product.priceInr)}</strong>
+                  <strong className="text-[28px] font-bold tracking-tight text-ink">{money(product.priceInr)}</strong>
                   {discount > 0 && <span className="text-sm font-semibold text-muted-foreground line-through">{money(Number(product.compareAtInr))}</span>}
                   <span className="text-sm font-semibold text-muted-foreground">/ {product.unitLabel}</span>
                 </div>
 
                 {variants.length > 1 && (
                   <div className="mt-4 flex flex-wrap items-center gap-2">
-                    <span className="text-[0.72rem] font-extrabold uppercase tracking-wide text-muted-foreground">Size</span>
+                    <span className="text-[11px] font-extrabold uppercase tracking-wide text-muted-foreground">Size</span>
                     {variants.map((v) => (
                       <a
                         key={v.handle}
                         href={`/products/${encodeURIComponent(v.handle)}`}
-                        className={`rounded-full border px-3.5 py-1.5 text-[0.78rem] font-extrabold transition ${
+                        className={`rounded-full border px-3.5 py-1.5 text-[13px] font-extrabold transition ${
                           v.handle === product.handle ? "border-leaf bg-mint text-leaf" : "border-line bg-white text-ink hover:border-leaf/50"
                         }`}
                       >
@@ -215,7 +215,7 @@ export function ProductView({ handle }: { handle: string }) {
                   </div>
                 )}
 
-                <div className="mt-4 flex flex-wrap gap-2 text-[0.7rem] font-bold">
+                <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-bold">
                   <span className={`rounded-full px-2.5 py-1 ${product.stock > 10 ? "bg-mint text-leaf" : product.stock > 0 ? "bg-carrot/10 text-[#c8400f]" : "bg-black/[0.06] text-muted-foreground"}`}>
                     {product.stock > 10 ? "In stock today" : product.stock > 0 ? `Only ${product.stock} left` : "Sold out today"}
                   </span>
@@ -229,7 +229,7 @@ export function ProductView({ handle }: { handle: string }) {
                   <motion.p
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mt-3 rounded-xl border border-carrot/25 bg-carrot/10 px-3.5 py-2.5 text-[0.8rem] font-bold text-[#c8400f]"
+                    className="mt-3 rounded-xl border border-carrot/25 bg-carrot/10 px-3.5 py-2.5 text-[13px] font-bold text-[#c8400f]"
                   >
                     Only {product.stock} left today — order now.
                   </motion.p>
@@ -237,7 +237,7 @@ export function ProductView({ handle }: { handle: string }) {
 
                 {/* Purchase panel */}
                 <div ref={panelRef} className="mt-5 rounded-3xl border border-line bg-white p-4 shadow-soft">
-                  <label className="text-[0.72rem] font-extrabold uppercase tracking-wide text-muted-foreground">Quantity</label>
+                  <label className="text-[11px] font-extrabold uppercase tracking-wide text-muted-foreground">Quantity</label>
                   <div className="mt-2.5 flex flex-wrap items-center gap-3">
                     <span className="flex items-center gap-3 rounded-xl border border-line bg-cream px-2 py-1.5">
                       <button
@@ -249,7 +249,7 @@ export function ProductView({ handle }: { handle: string }) {
                       >
                         <Minus size={14} />
                       </button>
-                      <motion.span key={qty} initial={{ scale: 1.25 }} animate={{ scale: 1 }} className="min-w-6 text-center text-[1rem] font-extrabold text-ink">
+                      <motion.span key={qty} initial={{ scale: 1.25 }} animate={{ scale: 1 }} className="min-w-6 text-center text-[15px] font-extrabold text-ink">
                         {qty}
                       </motion.span>
                       <button
@@ -267,14 +267,14 @@ export function ProductView({ handle }: { handle: string }) {
                       onClick={addCurrent}
                       disabled={product.stock <= 0}
                       whileTap={{ scale: 0.97 }}
-                      className="carrot-grad min-w-[180px] flex-1 rounded-full px-5 py-3 text-[0.95rem] font-extrabold text-white shadow-[0_8px_20px_rgba(232,71,12,0.35)] transition hover:brightness-[1.05] active:scale-[0.98] disabled:bg-line-2 disabled:text-muted-foreground disabled:shadow-none disabled:bg-none"
+                      className="fresh-grad min-w-[180px] flex-1 rounded-full px-5 py-3 text-[17px] font-extrabold text-white shadow-[0_8px_20px_rgba(11,124,49,0.35)] transition hover:brightness-[1.05] active:scale-[0.98] disabled:bg-line-2 disabled:text-muted-foreground disabled:shadow-none disabled:bg-none"
                     >
                       {product.stock <= 0 ? "Sold out" : "Add to basket"}
                     </motion.button>
                   </div>
                   <AnimatePresence>
                     {inCart > 0 && (
-                      <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-2.5 text-[0.72rem] font-bold text-leaf">
+                      <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-2.5 text-[11px] font-bold text-leaf">
                         {inCart} already in your basket
                       </motion.p>
                     )}
@@ -287,7 +287,7 @@ export function ProductView({ handle }: { handle: string }) {
                     href={`https://wa.me/?text=${encodeURIComponent(`${product.title} — ${money(product.priceInr)} / ${product.unitLabel} at Rebesta Fresh, Hosur\n${location.href}`)}`}
                     target="_blank"
                     rel="noopener"
-                    className="inline-flex items-center gap-2 rounded-xl border border-leaf/30 bg-mint px-4 py-2.5 text-[0.8rem] font-extrabold text-leaf transition hover:bg-leaf hover:text-white"
+                    className="inline-flex items-center gap-2 rounded-xl border border-leaf/30 bg-mint px-4 py-2.5 text-[13px] font-extrabold text-leaf transition hover:bg-leaf hover:text-white"
                   >
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                       <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Zm0 2a8 8 0 1 1-4.2 14.8l-.4-.3-3 .8.8-2.9-.3-.4A8 8 0 0 1 12 4Zm-2.9 4c-.2 0-.5 0-.7.3-.3.3-.9.9-.9 2.1s.9 2.4 1 2.6c.2.2 1.8 2.9 4.5 3.9 2.2.8 2.7.7 3.2.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2-.1-.1-.3-.2-.6-.3l-2-1c-.3-.1-.5-.2-.7.1l-1 1.2c-.2.2-.4.2-.6.1a6.7 6.7 0 0 1-3.3-2.8c-.2-.4 0-.6.1-.7l.5-.6c.2-.2.2-.3.3-.5.1-.3 0-.4 0-.6L9.4 8.6c-.2-.4-.2-.6-.3-.6Z" />
@@ -297,7 +297,7 @@ export function ProductView({ handle }: { handle: string }) {
                   <button
                     type="button"
                     onClick={copyLink}
-                    className="inline-flex items-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[0.8rem] font-extrabold text-ink-2 transition hover:border-leaf/50"
+                    className="inline-flex items-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-[13px] font-extrabold text-ink-2 transition hover:border-leaf/50"
                   >
                     <Link2 size={14} /> Copy link
                   </button>
@@ -305,10 +305,10 @@ export function ProductView({ handle }: { handle: string }) {
 
                 {/* Delivery proof */}
                 <div className="mt-5 rounded-3xl bg-forest-2 p-5 text-white">
-                  <h3 className="flex items-center gap-2 text-[0.95rem] font-extrabold">
+                  <h3 className="flex items-center gap-2 text-[15px] font-extrabold">
                     <MapPin size={15} className="text-leaf-2" /> Delivery checked by your exact pin
                   </h3>
-                  <p className="mt-1.5 text-[0.82rem] leading-relaxed text-white/70">
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-white/70">
                     Choose current GPS, a manual map pin or coordinates at checkout. We use the actual rider route within 9 road km.
                   </p>
                 </div>
@@ -318,7 +318,7 @@ export function ProductView({ handle }: { handle: string }) {
             {/* Reviews */}
             {reviews.length > 0 && (
               <section className="mt-14" aria-label="Customer reviews">
-                <span className="text-[0.62rem] font-extrabold uppercase tracking-[0.16em] text-[#c8400f]">Customer reviews</span>
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#c8400f]">Customer reviews</span>
                 <h2 className="mt-1 font-display text-xl font-extrabold text-forest md:text-2xl">
                   ⭐ {(Math.round((reviews.reduce((s, r) => s + Number(r.rating || 0), 0) / reviews.length) * 10) / 10).toFixed(1)} / 5
                   <span className="ml-2 text-sm font-bold text-muted-foreground">
@@ -336,14 +336,14 @@ export function ProductView({ handle }: { handle: string }) {
                       className="rounded-2xl border border-line bg-white p-4 shadow-soft"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <strong className="text-[0.88rem] font-extrabold text-ink">{r.name}</strong>
-                        <span className="flex items-center gap-0.5 text-gold text-[0.8rem]" aria-label={`${r.rating} of 5`}>
+                        <strong className="text-[13px] font-extrabold text-ink">{r.name}</strong>
+                        <span className="flex items-center gap-0.5 text-gold text-[13px]" aria-label={`${r.rating} of 5`}>
                           {Array.from({ length: 5 }).map((_, s) => (
                             <Star key={s} size={12} fill={s < Math.round(r.rating) ? "currentColor" : "none"} className={s < Math.round(r.rating) ? "text-gold" : "text-line-2"} />
                           ))}
                         </span>
                       </div>
-                      {r.text && <p className="mt-1.5 text-[0.82rem] leading-relaxed text-ink-2/85">{r.text}</p>}
+                      {r.text && <p className="mt-1.5 text-[13px] leading-relaxed text-ink-2/85">{r.text}</p>}
                     </motion.div>
                   ))}
                 </div>
@@ -353,7 +353,7 @@ export function ProductView({ handle }: { handle: string }) {
             {/* Related */}
             {related.length > 0 && (
               <section className="mt-14" aria-label="More fresh picks">
-                <span className="text-[0.62rem] font-extrabold uppercase tracking-[0.16em] text-[#c8400f]">Related</span>
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#c8400f]">Related</span>
                 <h2 className="mt-1 font-display text-xl font-extrabold text-forest md:text-2xl">More fresh picks</h2>
                 <div className="rail -mx-4 mt-4 flex gap-4 overflow-x-auto px-4 pb-2 md:grid md:grid-cols-5 md:overflow-visible">
                   {related.map((p, i) => (
@@ -381,8 +381,8 @@ export function ProductView({ handle }: { handle: string }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={product.image} alt="" className="h-11 w-11 rounded-xl object-cover" />
             <span className="min-w-0 flex-1">
-              <strong className="block truncate text-[0.82rem] font-extrabold text-ink">{product.title}</strong>
-              <span className="text-[0.72rem] font-bold text-forest">
+              <strong className="block truncate text-[13px] font-extrabold text-ink">{product.title}</strong>
+              <span className="text-[11px] font-bold text-forest">
                 {money(product.priceInr)} / {product.unitLabel}
                 {qty > 1 ? ` · qty ${qty}` : ""}
               </span>
@@ -391,7 +391,7 @@ export function ProductView({ handle }: { handle: string }) {
               type="button"
               onClick={addCurrent}
               whileTap={{ scale: 0.95 }}
-              className="shrink-0 rounded-xl bg-carrot px-4 py-2.5 text-[0.8rem] font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-110"
+              className="shrink-0 rounded-xl bg-carrot px-4 py-2.5 text-[13px] font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-110"
             >
               Add · {money(product.priceInr * qty)}
             </motion.button>

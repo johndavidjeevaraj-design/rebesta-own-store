@@ -88,9 +88,9 @@ export function SubscriptionsView() {
       <SiteHeader />
       <main className="pb-20">
         <section className="mx-auto max-w-xl px-4 pt-14 sm:pt-16">
-          <p className="text-[0.72rem] font-bold uppercase tracking-[0.14em] text-[#c8400f]">Set &amp; forget</p>
-          <h1 className="mt-3 font-display text-[2.2rem] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-[3rem]">Your weekly veg basket.</h1>
-          <p className="mt-3 text-[1rem] font-medium leading-relaxed text-muted-foreground">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#c8400f]">Set &amp; forget</p>
+          <h1 className="mt-3 font-display text-[36px] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-[48px]">Your weekly veg basket.</h1>
+          <p className="mt-3 text-[15px] font-medium leading-relaxed text-muted-foreground">
             Same fresh vegetables, same morning slot, every week. Pay on delivery each time. Pause, resume or cancel anytime — no charges, no calls.
           </p>
 
@@ -99,16 +99,16 @@ export function SubscriptionsView() {
               id="subPhone" inputMode="numeric" maxLength={10} autoComplete="tel" required
               placeholder="10-digit number used on your orders" value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="h-12 flex-1 rounded-xl border-line-2 bg-white text-[0.95rem] font-medium placeholder:text-[#8e8e93] focus-visible:ring-2 focus-visible:ring-ink/20"
+              className="h-12 flex-1 rounded-xl border-line-2 bg-white text-[15px] font-medium placeholder:text-[#8e8e93] focus-visible:ring-2 focus-visible:ring-ink/20"
             />
-            <Button type="submit" data-sub-find className="carrot-grad h-12 rounded-xl px-6 text-[0.9rem] font-bold text-white shadow-[0_6px_16px_rgba(232,71,12,0.3)] hover:brightness-[1.05]">
+            <Button type="submit" data-sub-find className="fresh-grad h-12 rounded-xl px-6 text-[15px] font-bold text-white shadow-[0_6px_16px_rgba(11,124,49,0.3)] hover:brightness-[1.05]">
               Show
             </Button>
           </form>
 
           <div data-sub-list className="mt-6">
             {msg && (
-              <div className={`rounded-2xl px-5 py-4 text-[0.9rem] font-semibold ${msg.kind === "error" ? "bg-carrot/10 text-[#c8400f]" : "bg-[#f5f5f7] text-muted-foreground"}`}>
+              <div className={`rounded-2xl px-5 py-4 text-[15px] font-semibold ${msg.kind === "error" ? "bg-carrot/10 text-[#c8400f]" : "bg-[#f5f5f7] text-muted-foreground"}`}>
                 {msg.text}
               </div>
             )}
@@ -118,8 +118,8 @@ export function SubscriptionsView() {
                 <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-white text-ink shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
                   <ShoppingBasket size={24} strokeWidth={1.8} />
                 </span>
-                <h3 className="mt-4 text-[1.1rem] font-bold text-ink">No subscriptions on this number</h3>
-                <p className="mx-auto mt-2 max-w-xs text-[0.88rem] font-medium leading-relaxed text-muted-foreground">
+                <h3 className="mt-4 text-[17px] font-bold text-ink">No subscriptions on this number</h3>
+                <p className="mx-auto mt-2 max-w-xs text-[13px] font-medium leading-relaxed text-muted-foreground">
                   Tick <strong className="text-ink">“Make it a weekly order”</strong> at checkout next time and your basket repeats automatically every week.
                 </p>
               </Card>
@@ -129,20 +129,20 @@ export function SubscriptionsView() {
               <motion.div key={sub.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className={`mb-3 ${sub.status === "ACTIVE" ? "" : "opacity-75"}`}>
                 <Card className="gap-0 rounded-2xl border-line p-6 shadow-[0_1px_6px_rgba(0,0,0,0.04)]">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="flex items-center gap-2 text-[1.05rem] font-extrabold tracking-tight text-ink">
+                    <p className="flex items-center gap-2 text-[17px] font-extrabold tracking-tight text-ink">
                       <span className="grid h-8 w-8 place-items-center rounded-full bg-mint text-leaf"><ShoppingBasket size={15} /></span>
                       Weekly basket
                     </p>
                     {sub.status === "ACTIVE" ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-mint px-2.5 py-1 text-[0.68rem] font-bold text-leaf"><CheckCircle2 size={12} /> Active</span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-mint px-2.5 py-1 text-[11px] font-bold text-leaf"><CheckCircle2 size={12} /> Active</span>
                     ) : sub.status === "PAUSED" ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-carrot/10 px-2.5 py-1 text-[0.68rem] font-bold text-[#c8400f]"><Pause size={12} /> Paused</span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-carrot/10 px-2.5 py-1 text-[11px] font-bold text-[#c8400f]"><Pause size={12} /> Paused</span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-black/[0.06] px-2.5 py-1 text-[0.68rem] font-bold text-muted-foreground">Cancelled</span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-black/[0.06] px-2.5 py-1 text-[11px] font-bold text-muted-foreground">Cancelled</span>
                     )}
                   </div>
 
-                  <div className="mt-4 space-y-2.5 text-[0.9rem] font-medium text-ink">
+                  <div className="mt-4 space-y-2.5 text-[15px] font-medium text-ink">
                     <p className="flex items-center gap-2.5">
                       <CalendarDays size={15} className="shrink-0 text-muted-foreground" />
                       Every <strong>{sub.weekdayLabel || WEEKDAYS[sub.weekday || 0]}</strong>
@@ -159,12 +159,12 @@ export function SubscriptionsView() {
                   </div>
 
                   {sub.pauseReason && sub.status === "PAUSED" && (
-                    <p className="mt-3 flex items-start gap-2 rounded-xl bg-carrot/10 px-3.5 py-2.5 text-[0.8rem] font-semibold text-[#c8400f]">
+                    <p className="mt-3 flex items-start gap-2 rounded-xl bg-carrot/10 px-3.5 py-2.5 text-[13px] font-semibold text-[#c8400f]">
                       <TriangleAlert size={14} className="mt-0.5 shrink-0" /> {sub.pauseReason}
                     </p>
                   )}
                   {sub.status === "ACTIVE" && (
-                    <p className="mt-3 rounded-xl bg-[#f5f5f7] px-3.5 py-2.5 text-[0.78rem] font-medium leading-relaxed text-muted-foreground">
+                    <p className="mt-3 rounded-xl bg-[#f5f5f7] px-3.5 py-2.5 text-[13px] font-medium leading-relaxed text-muted-foreground">
                       An order is created automatically the day before each delivery — you pay on delivery as usual.
                     </p>
                   )}
@@ -172,19 +172,19 @@ export function SubscriptionsView() {
                   <div className="sub-card-actions mt-5 flex gap-2.5">
                     {sub.status === "ACTIVE" ? (
                       <>
-                        <Button variant="ghost" onClick={() => act("pause", sub.id)} className="h-10 rounded-full border border-line-2 bg-white px-5 text-[0.85rem] font-bold text-ink hover:bg-[#f5f5f7]">
+                        <Button variant="ghost" onClick={() => act("pause", sub.id)} className="h-10 rounded-full border border-line-2 bg-white px-5 text-[13px] font-bold text-ink hover:bg-[#f5f5f7]">
                           <Pause size={14} /> Pause
                         </Button>
-                        <Button variant="ghost" onClick={() => act("cancel", sub.id)} className="h-10 rounded-full px-5 text-[0.85rem] font-bold text-[#c8400f] hover:bg-carrot/10">
+                        <Button variant="ghost" onClick={() => act("cancel", sub.id)} className="h-10 rounded-full px-5 text-[13px] font-bold text-[#c8400f] hover:bg-carrot/10">
                           <X size={14} /> Cancel
                         </Button>
                       </>
                     ) : sub.status === "PAUSED" ? (
                       <>
-                        <Button onClick={() => act("resume", sub.id)} className="h-10 rounded-full bg-leaf px-5 text-[0.85rem] font-bold text-white hover:brightness-110">
+                        <Button onClick={() => act("resume", sub.id)} className="h-10 rounded-full bg-leaf px-5 text-[13px] font-bold text-white hover:brightness-110">
                           <Play size={14} /> Resume
                         </Button>
-                        <Button variant="ghost" onClick={() => act("cancel", sub.id)} className="h-10 rounded-full px-5 text-[0.85rem] font-bold text-[#c8400f] hover:bg-carrot/10">
+                        <Button variant="ghost" onClick={() => act("cancel", sub.id)} className="h-10 rounded-full px-5 text-[13px] font-bold text-[#c8400f] hover:bg-carrot/10">
                           <X size={14} /> Cancel
                         </Button>
                       </>
@@ -195,7 +195,7 @@ export function SubscriptionsView() {
             ))}
           </div>
 
-          <p className="mt-10 text-center text-[0.8rem] font-medium text-muted-foreground">
+          <p className="mt-10 text-center text-[13px] font-medium text-muted-foreground">
             Questions about a subscription? WhatsApp us — we reply in minutes.
           </p>
         </section>
@@ -203,7 +203,7 @@ export function SubscriptionsView() {
 
       <div className={`toast-note fixed inset-x-4 top-20 z-[90] mx-auto max-w-sm transition-all ${toast ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-3 opacity-0"}`} id="toast">
         {toast && (
-          <div className={`rounded-2xl px-5 py-3.5 text-[0.9rem] font-semibold shadow-[0_10px_30px_rgba(0,0,0,0.15)] ${toast.kind === "error" ? "bg-carrot text-white" : "bg-ink text-white"}`}>
+          <div className={`rounded-2xl px-5 py-3.5 text-[15px] font-semibold shadow-[0_10px_30px_rgba(0,0,0,0.15)] ${toast.kind === "error" ? "bg-carrot text-white" : "bg-ink text-white"}`}>
             {toast.text}
           </div>
         )}

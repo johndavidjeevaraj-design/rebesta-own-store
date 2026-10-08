@@ -38,7 +38,7 @@ export function SiteHeader({
               <img src="/assets/brand/logo.png" alt="Rebesta Fresh" className="h-8 w-8 object-contain" />
             </span>
             <span className="text-[17px] font-extrabold tracking-tight text-ink">
-              Rebesta<span className="text-carrot-grad"> Fresh</span>
+              Rebesta<span className="text-leaf"> Fresh</span>
             </span>
           </a>
 
@@ -49,7 +49,7 @@ export function SiteHeader({
               ["Greens", "/greens"],
               ["About", "/about"],
             ].map(([label, href]) => (
-              <a key={href} href={href} className="text-[0.78rem] font-semibold text-ink/80 transition hover:text-ink">
+              <a key={href} href={href} className="text-[13px] font-semibold text-ink/80 transition hover:text-ink">
                 {label}
               </a>
             ))}
@@ -63,7 +63,7 @@ export function SiteHeader({
                 value={search}
                 onChange={(e) => onSearch(e.target.value)}
                 placeholder="Search vegetables…"
-                className="w-full rounded-full border border-transparent bg-black/[0.05] py-2 pl-9 pr-8 text-[0.83rem] font-medium text-ink outline-none transition placeholder:text-muted-foreground focus:border-black/10 focus:bg-white"
+                className="w-full rounded-full border border-transparent bg-black/[0.05] py-2 pl-9 pr-8 text-[13px] font-medium text-ink outline-none transition placeholder:text-muted-foreground focus:border-black/10 focus:bg-white"
               />
               {search && (
                 <button type="button" onClick={() => onSearch("")} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-ink">
@@ -81,8 +81,8 @@ export function SiteHeader({
             >
               <MapPin size={13} className="shrink-0 text-leaf" />
               <span className="min-w-0">
-                <span className="block text-[0.55rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Delivering to</span>
-                <span className="block truncate text-[0.78rem] font-semibold text-ink">{locationLabel(loc) || "Set location"}</span>
+                <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Delivering to</span>
+                <span className="block truncate text-[13px] font-semibold text-ink">{locationLabel(loc) || "Set location"}</span>
               </span>
             </button>
 
@@ -100,7 +100,7 @@ export function SiteHeader({
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.3, opacity: 0 }}
                     transition={{ type: "spring", stiffness: 600, damping: 22 }}
-                    className="carrot-grad absolute -right-2 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[0.6rem] font-bold text-white shadow-[0_2px_8px_rgba(232,71,12,0.4)]"
+                    className="fresh-grad absolute -right-2 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-bold text-white shadow-[0_2px_8px_rgba(11,124,49,0.4)]"
                   >
                     {count}
                   </motion.span>
@@ -120,7 +120,7 @@ export function SiteHeader({
                 value={search}
                 onChange={(e) => onSearch(e.target.value)}
                 placeholder="Search vegetables… (Tamil works too)"
-                className="w-full rounded-full border border-transparent bg-black/[0.05] py-2 pl-9 pr-8 text-[0.83rem] font-medium text-ink outline-none transition placeholder:text-muted-foreground focus:border-black/10 focus:bg-white"
+                className="w-full rounded-full border border-transparent bg-black/[0.05] py-2 pl-9 pr-8 text-[13px] font-medium text-ink outline-none transition placeholder:text-muted-foreground focus:border-black/10 focus:bg-white"
               />
               {search && (
                 <button type="button" onClick={() => onSearch("")} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-ink">
@@ -148,7 +148,7 @@ export function SiteHeader({
             href={item.href}
             target={item.external ? "_blank" : undefined}
             rel={item.external ? "noopener" : undefined}
-            className="flex-1 rounded-2xl py-2 text-center text-[0.66rem] font-semibold text-ink/80 transition active:scale-95 active:text-ink"
+            className="flex-1 rounded-2xl py-2 text-center text-[11px] font-semibold text-ink/80 transition active:scale-95 active:text-ink"
           >
             {item.label}
           </a>

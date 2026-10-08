@@ -201,7 +201,7 @@ html.lenis body {
   font-family: var(--font-display);
   font-weight: 800;
   color: var(--color-forest);
-  font-size: 1.12rem;
+  font-size: 21px;
   letter-spacing: -0.02em;
 }
 .prose-page > p:first-child {
@@ -211,7 +211,7 @@ html.lenis body {
   margin: 0.7em 0;
   color: #3a3a3c;
   line-height: 1.72;
-  font-size: 0.95rem;
+  font-size: 15px;
 }
 .prose-page ul {
   margin: 0.7em 0;
@@ -222,7 +222,7 @@ html.lenis body {
 .prose-page li {
   color: #3a3a3c;
   line-height: 1.65;
-  font-size: 0.95rem;
+  font-size: 15px;
   list-style: disc;
 }
 .prose-page a {
@@ -243,7 +243,7 @@ html.lenis body {
   margin-top: 1.6em;
   border-top: 1px solid var(--color-line);
   padding-top: 1em;
-  font-size: 0.82rem;
+  font-size: 13px;
   color: var(--color-muted-foreground);
 }
 
@@ -273,7 +273,7 @@ html.lenis body {
   cursor: pointer;
   list-style: none;
   color: var(--color-ink);
-  font-size: 0.92rem;
+  font-size: 15px;
   font-weight: 800;
   line-height: 1.35;
   -webkit-tap-highlight-color: transparent;
@@ -292,7 +292,7 @@ html.lenis body {
   background: var(--color-mint);
   color: var(--color-leaf);
   font-weight: 800;
-  font-size: 1rem;
+  font-size: 15px;
   line-height: 1;
   transition: transform 0.2s var(--ease-out, ease), background 0.2s ease, color 0.2s ease;
 }
@@ -306,7 +306,7 @@ html.lenis body {
   margin: 0;
   padding: 0 16px 15px;
   color: #48484c;
-  font-size: 0.88rem;
+  font-size: 13px;
   line-height: 1.68;
 }
 
@@ -358,7 +358,7 @@ html.lenis body {
 .fx-field input:focus + label,
 .fx-field input:not(:placeholder-shown) + label {
   top: 15px;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 1000;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -421,9 +421,9 @@ html.lenis body {
   font-size: 16px;
   letter-spacing: 0.01em;
   color: #ffffff;
-  background: linear-gradient(135deg, var(--color-carrot) 10%, #ff7a30 90%);
+  background: linear-gradient(135deg, #0faa46 10%, #0b7c31 90%);
   cursor: pointer;
-  box-shadow: 0 11px 24px rgba(255, 91, 32, 0.33);
+  box-shadow: 0 11px 24px rgba(11, 124, 49, 0.33);
   transition: transform 0.16s, box-shadow 0.2s, filter 0.2s;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
@@ -467,11 +467,11 @@ html.lenis body {
 }
 .sent-chip b {
   display: block;
-  font-size: 0.92rem;
+  font-size: 15px;
   color: var(--color-forest);
 }
 .sent-chip span {
-  font-size: 0.78rem;
+  font-size: 12px;
   color: #424245;
   font-weight: 600;
 }
@@ -488,7 +488,7 @@ html.lenis body {
   border: 1.5px solid var(--color-line);
   border-radius: 13px;
   text-align: center;
-  font-size: 23px;
+  font-size: 24px;
   font-weight: 1000;
   color: var(--color-forest);
   background: #ffffff;
@@ -508,7 +508,7 @@ html.lenis body {
 }
 .otp-hint {
   text-align: center;
-  font-size: 0.76rem;
+  font-size: 12px;
   color: var(--color-muted);
   margin: 0 0 16px;
   font-weight: 600;
@@ -518,7 +518,7 @@ html.lenis body {
   flex-wrap: wrap;
   gap: 4px 10px;
   justify-content: center;
-  font-size: 0.84rem;
+  font-size: 13px;
   color: var(--color-muted);
   margin: 16px 0 0;
   font-weight: 600;
@@ -539,7 +539,7 @@ html.lenis body {
   background: #fdeee7;
   border: 1px solid #f5c9b4;
   color: #b3401d;
-  font-size: 0.84rem;
+  font-size: 13px;
   font-weight: 800;
   text-align: center;
 }
@@ -548,7 +548,7 @@ html.lenis body {
 }
 .cart-auth-note {
   margin: 0 0 16px;
-  font-size: 0.86rem;
+  font-size: 13px;
   font-weight: 800;
   color: var(--color-muted);
   text-align: center;
@@ -595,6 +595,19 @@ html.lenis body {
 .carrot-grad:hover { background-image: linear-gradient(135deg, #ff8442 0%, #ff5f13 45%, #e8480d 100%); }
 .text-carrot-grad {
   background-image: linear-gradient(120deg, #ff6a1f 0%, #e8470c 60%, #d63e0a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---- signature green gradient (freshness — the primary 60% brand color;
+       orange stays for offers, badges and deal accents) ---- */
+.fresh-grad {
+  background-image: linear-gradient(135deg, #17b34e 0%, #0faa46 45%, #0b7c31 100%);
+}
+.fresh-grad:hover { background-image: linear-gradient(135deg, #22c25f 0%, #14b950 45%, #0d8a36 100%); }
+.text-fresh-grad {
+  background-image: linear-gradient(120deg, #0faa46 0%, #0b7c31 60%, #076327 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

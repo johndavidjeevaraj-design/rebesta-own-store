@@ -88,39 +88,39 @@ export function OrderSuccessView() {
             <Check size={38} strokeWidth={3} />
           </motion.span>
 
-          <span className={`mt-6 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[0.72rem] font-bold ${badge.tone === "leaf" ? "bg-mint text-leaf" : "bg-carrot/10 text-[#c8400f]"}`} data-status-badge>
+          <span className={`mt-6 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${badge.tone === "leaf" ? "bg-mint text-leaf" : "bg-carrot/10 text-[#c8400f]"}`} data-status-badge>
             <span className={`h-1.5 w-1.5 rounded-full ${badge.tone === "leaf" ? "bg-leaf" : "bg-carrot"}`} />
             {badge.text}
           </span>
 
-          <h1 data-success-title className="mt-4 font-display text-[2.1rem] font-extrabold leading-[1.06] tracking-tight text-ink sm:text-[2.9rem]">
+          <h1 data-success-title className="mt-4 font-display text-[36px] font-extrabold leading-[1.06] tracking-tight text-ink sm:text-[48px]">
             {badge.title}
           </h1>
 
           <p className="mt-4">
-            <span data-order-id className="inline-block rounded-full bg-[#f5f5f7] px-4 py-1.5 text-[0.85rem] font-bold tabular-nums text-ink">
+            <span data-order-id className="inline-block rounded-full bg-[#f5f5f7] px-4 py-1.5 text-[13px] font-bold tabular-nums text-ink">
               {order ? order.id : "Loading order ID…"}
             </span>
           </p>
-          <p data-order-copy className="mt-3 text-[0.95rem] font-medium text-muted-foreground">
+          <p data-order-copy className="mt-3 text-[15px] font-medium text-muted-foreground">
             {order ? `${money(order.totalInr)} · ${order.slot?.label || "Morning delivery"} · ${order.deliveryDate?.label || ""}` : "We are preparing the details…"}
           </p>
 
           <div className="success-actions mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-3">
-            <Button asChild size="lg" className="carrot-grad h-12 rounded-full px-7 text-[0.92rem] font-bold text-white shadow-[0_8px_20px_rgba(232,71,12,0.35)] hover:brightness-[1.05]">
+            <Button asChild size="lg" className="fresh-grad h-12 rounded-full px-7 text-[15px] font-bold text-white shadow-[0_8px_20px_rgba(11,124,49,0.35)] hover:brightness-[1.05]">
               <a href={whatsapp || `https://wa.me/918438765119?text=${encodeURIComponent("Hi! Confirming my order " + (order?.id || ""))}`} target="_blank" rel="noopener">
                 <MessageCircle size={17} /> Confirm on WhatsApp
               </a>
             </Button>
-            <a href="/track" className="text-[0.95rem] font-semibold text-[#c8400f] transition hover:underline">Track order</a>
-            <a href="/subscriptions" className="inline-flex items-center gap-1.5 text-[0.95rem] font-semibold text-[#c8400f] transition hover:underline">
+            <a href="/track" className="text-[15px] font-semibold text-[#c8400f] transition hover:underline">Track order</a>
+            <a href="/subscriptions" className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-[#c8400f] transition hover:underline">
               <Repeat2 size={15} /> Make it weekly
             </a>
           </div>
 
           <div data-order-summary className="mt-10 text-left">
-            {error && <div className="rounded-2xl bg-carrot/10 px-5 py-4 text-[0.9rem] font-semibold text-[#c8400f]">{error}</div>}
-            {!error && !order && <div className="rounded-2xl bg-[#f5f5f7] px-5 py-4 text-[0.9rem] font-semibold text-muted-foreground">Loading your order…</div>}
+            {error && <div className="rounded-2xl bg-carrot/10 px-5 py-4 text-[15px] font-semibold text-[#c8400f]">{error}</div>}
+            {!error && !order && <div className="rounded-2xl bg-[#f5f5f7] px-5 py-4 text-[15px] font-semibold text-muted-foreground">Loading your order…</div>}
             {order && (
               <>
                 <Card className="gap-0 rounded-2xl border-line p-2 shadow-[0_1px_6px_rgba(0,0,0,0.04)]">
@@ -129,33 +129,33 @@ export function OrderSuccessView() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={item.image} alt={item.title} className="h-12 w-12 rounded-lg object-cover" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[0.92rem] font-bold text-ink">{item.title}</p>
-                        <p className="text-[0.78rem] font-medium text-muted-foreground">{item.qty} × {item.unitLabel}</p>
+                        <p className="truncate text-[15px] font-bold text-ink">{item.title}</p>
+                        <p className="text-[13px] font-medium text-muted-foreground">{item.qty} × {item.unitLabel}</p>
                       </div>
-                      <p className="text-[0.92rem] font-bold tabular-nums text-ink">{money(item.lineTotalInr)}</p>
+                      <p className="text-[15px] font-bold tabular-nums text-ink">{money(item.lineTotalInr)}</p>
                     </div>
                   ))}
                 </Card>
 
                 <Card className="mt-3 gap-0 rounded-2xl border-line p-5 shadow-[0_1px_6px_rgba(0,0,0,0.04)]">
-                  <div className="flex items-center justify-between py-1 text-[0.88rem] font-medium text-muted-foreground">
+                  <div className="flex items-center justify-between py-1 text-[13px] font-medium text-muted-foreground">
                     <span>Product amount</span><span className="tabular-nums">{money(order.subtotalInr)}</span>
                   </div>
                   {Number(order.discountInr) > 0 && (
-                    <div className="flex items-center justify-between py-1 text-[0.88rem] font-semibold text-leaf">
+                    <div className="flex items-center justify-between py-1 text-[13px] font-semibold text-leaf">
                       <span>Coupon {order.couponCode || ""}</span><span className="tabular-nums">−{money(order.discountInr)}</span>
                     </div>
                   )}
-                  <div className="flex items-center justify-between py-1 text-[0.88rem] font-medium text-muted-foreground">
+                  <div className="flex items-center justify-between py-1 text-[13px] font-medium text-muted-foreground">
                     <span className="flex items-center gap-1.5"><Ruler size={13} /> Delivery · {Number(order.distanceKm || 0).toFixed(2)} road km</span>
                     <span className="tabular-nums">{money(order.deliveryFeeInr)}</span>
                   </div>
                   {Number(order.tipInr) > 0 && (
-                    <div className="flex items-center justify-between py-1 text-[0.88rem] font-medium text-muted-foreground">
+                    <div className="flex items-center justify-between py-1 text-[13px] font-medium text-muted-foreground">
                       <span>Delivery tip</span><span className="tabular-nums">{money(order.tipInr)}</span>
                     </div>
                   )}
-                  <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-[1.05rem] font-extrabold text-ink">
+                  <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-[17px] font-extrabold text-ink">
                     <span>Total</span><span className="tabular-nums">{money(order.totalInr)}</span>
                   </div>
                 </Card>
@@ -168,15 +168,15 @@ export function OrderSuccessView() {
                         <Check size={13} strokeWidth={3} />
                       </span>
                       <div>
-                        <p className="text-[0.88rem] font-bold capitalize text-ink">{row.status.replaceAll("_", " ").toLowerCase()}</p>
-                        <p className="text-[0.75rem] font-medium text-muted-foreground">{new Date(row.at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</p>
+                        <p className="text-[13px] font-bold capitalize text-ink">{row.status.replaceAll("_", " ").toLowerCase()}</p>
+                        <p className="text-[11px] font-medium text-muted-foreground">{new Date(row.at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</p>
                       </div>
                     </div>
                   ))}
                 </div>
 
                 {rewards && (rewards.loyaltyEnabled || rewards.referralEnabled) && (
-                  <div className="mt-3 grid gap-2.5 rounded-2xl bg-[#f5f5f7] p-5 text-[0.86rem] font-medium leading-relaxed text-ink">
+                  <div className="mt-3 grid gap-2.5 rounded-2xl bg-[#f5f5f7] p-5 text-[13px] font-medium leading-relaxed text-ink">
                     {rewards.loyaltyEnabled && (
                       <p className="flex items-start gap-2.5">
                         <Sparkles size={16} className="mt-0.5 shrink-0 text-gold" />
@@ -192,7 +192,7 @@ export function OrderSuccessView() {
                           <span>
                             <strong>Refer a friend:</strong> give them your mobile number to enter at checkout — you both get ₹{rewards.referralBonusInr || 50} after their first delivery
                             {myPhone && (
-                              <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener" className="ml-2 inline-flex items-center gap-1 rounded-full bg-leaf px-3.5 py-1.5 text-[0.78rem] font-bold text-white hover:brightness-110">
+                              <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener" className="ml-2 inline-flex items-center gap-1 rounded-full bg-leaf px-3.5 py-1.5 text-[13px] font-bold text-white hover:brightness-110">
                                 <TrendingUp size={12} /> Share on WhatsApp
                               </a>
                             )}

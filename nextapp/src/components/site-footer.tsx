@@ -22,14 +22,14 @@ export function SiteFooter() {
   return (
     <footer className="mt-24 bg-[#f5f5f7] pb-24 text-ink md:pb-0">
       <div className="mx-auto max-w-6xl px-4 pt-6">
-        <p className="text-[0.72rem] font-medium leading-relaxed text-muted-foreground">
+        <p className="text-[11px] font-medium leading-relaxed text-muted-foreground">
           Handpicked vegetables from local farms, delivered fresh to your doorstep in Hosur every morning.
         </p>
 
         <div className="mt-4 border-t border-black/[0.08] pt-5">
           <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
             <nav aria-label="Quick links">
-              <h4 className="mb-2.5 text-[0.72rem] font-bold text-ink">Shop</h4>
+              <h4 className="mb-2.5 text-[11px] font-bold text-ink">Shop</h4>
               <div className="space-y-1.5">
                 {[
                   ["Fresh stock", "/shop"],
@@ -38,7 +38,7 @@ export function SiteFooter() {
                   ["Your basket", "/cart"],
                   ["Track order", "/track"],
                 ].map(([label, href]) => (
-                  <a key={href} href={href} className="block text-[0.72rem] font-medium text-muted-foreground transition hover:text-ink hover:underline">
+                  <a key={href} href={href} className="block text-[11px] font-medium text-muted-foreground transition hover:text-ink hover:underline">
                     {label}
                   </a>
                 ))}
@@ -46,7 +46,7 @@ export function SiteFooter() {
             </nav>
 
             <nav aria-label="Company">
-              <h4 className="mb-2.5 text-[0.72rem] font-bold text-ink">Company</h4>
+              <h4 className="mb-2.5 text-[11px] font-bold text-ink">Company</h4>
               <div className="space-y-1.5">
                 {[
                   ["About us", "/about"],
@@ -56,7 +56,7 @@ export function SiteFooter() {
                   ["Refund & cancellation", "/refund"],
                   ["Delivery partners", "/partner"],
                 ].map(([label, href]) => (
-                  <a key={href} href={href} className="block text-[0.72rem] font-medium text-muted-foreground transition hover:text-ink hover:underline">
+                  <a key={href} href={href} className="block text-[11px] font-medium text-muted-foreground transition hover:text-ink hover:underline">
                     {label}
                   </a>
                 ))}
@@ -64,25 +64,25 @@ export function SiteFooter() {
             </nav>
 
             <div>
-              <h4 className="mb-2.5 text-[0.72rem] font-bold text-ink">Contact</h4>
+              <h4 className="mb-2.5 text-[11px] font-bold text-ink">Contact</h4>
               <div className="space-y-1.5">
                 <a
                   href="https://wa.me/918438765119"
                   target="_blank"
                   rel="noopener"
-                  className="block text-[0.72rem] font-medium text-muted-foreground transition hover:text-ink hover:underline"
+                  className="block text-[11px] font-medium text-muted-foreground transition hover:text-ink hover:underline"
                 >
                   WhatsApp +91 84387 65119
                 </a>
-                <a href="mailto:warehouseretailingmart@gmail.com" className="block break-all text-[0.72rem] font-medium text-muted-foreground transition hover:text-ink hover:underline">
+                <a href="mailto:warehouseretailingmart@gmail.com" className="block break-all text-[11px] font-medium text-muted-foreground transition hover:text-ink hover:underline">
                   warehouseretailingmart@gmail.com
                 </a>
               </div>
             </div>
 
             <div>
-              <h4 className="mb-2.5 text-[0.72rem] font-bold text-ink">Delivery</h4>
-              <p className="text-[0.72rem] font-medium leading-relaxed text-muted-foreground">
+              <h4 className="mb-2.5 text-[11px] font-bold text-ink">Delivery</h4>
+              <p className="text-[11px] font-medium leading-relaxed text-muted-foreground">
                 Morning slots: 7–9 AM &amp; 9–11 AM
                 <br />
                 Hosur · up to 9 km road radius
@@ -97,14 +97,14 @@ export function SiteFooter() {
                   </>
                 )}
               </p>
-              <p className="mt-3 flex items-center gap-1 text-[0.72rem] font-medium text-muted-foreground">
+              <p className="mt-3 flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
                 <MapPin size={12} /> Exact-pin delivery, every morning
               </p>
             </div>
           </div>
         </div>
 
-        <div className="mt-6 flex flex-col items-start justify-between gap-2 border-t border-black/[0.08] py-5 text-[0.72rem] font-medium text-muted-foreground sm:flex-row sm:items-center">
+        <div className="mt-6 flex flex-col items-start justify-between gap-2 border-t border-black/[0.08] py-5 text-[11px] font-medium text-muted-foreground sm:flex-row sm:items-center">
           <span>© 2026 Rebesta Fresh · Fresh from farms, Hosur</span>
           <span className="flex items-center gap-1.5">
             <Mail size={11} /> Stock updates live every morning

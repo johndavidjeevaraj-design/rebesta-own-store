@@ -41,27 +41,27 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
   return (
     <section ref={root} className="bg-white pb-4 pt-16 sm:pt-20">
       <div className="mx-auto max-w-5xl px-4 text-center">
-        <span className="hero-eyebrow text-[0.72rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">{badge}</span>
+        <span className="hero-eyebrow text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{badge}</span>
 
-        <h1 className="mx-auto mt-4 max-w-4xl font-display text-[clamp(2.6rem,6.5vw,4.9rem)] font-extrabold leading-[1.02] text-ink">
+        <h1 className="mx-auto mt-4 max-w-4xl font-display text-[clamp(2.4rem,6vw,5rem)] font-extrabold leading-[1.02] text-ink">
           {title.split(" ").map((word, i) => (
             <span key={i} className="w-mask">
-              <span className={`w-in${i === 0 ? " text-carrot-grad" : ""}`}>{word}&nbsp;</span>
+              <span className={`w-in${i === 0 ? " text-fresh-grad" : ""}`}>{word}&nbsp;</span>
             </span>
           ))}
         </h1>
 
-        <p className="hero-sub mx-auto mt-5 max-w-xl text-[1.05rem] font-medium leading-relaxed text-muted-foreground sm:text-[1.2rem]">{subtitle}</p>
+        <p className="hero-sub mx-auto mt-5 max-w-xl text-[17px] font-medium leading-relaxed text-muted-foreground sm:text-[19px]">{subtitle}</p>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-x-7 gap-y-4">
-          <Button asChild size="lg" className="hero-cta carrot-grad h-12 rounded-full px-7 text-[0.95rem] font-bold text-white shadow-[0_8px_20px_rgba(232,71,12,0.35)] hover:brightness-[1.05] active:scale-[0.98]">
+          <Button asChild size="lg" className="hero-cta fresh-grad h-12 rounded-full px-7 text-[17px] font-bold text-white shadow-[0_8px_20px_rgba(11,124,49,0.35)] hover:brightness-[1.05] active:scale-[0.98]">
             <a href="/shop">
               Shop fresh stock <ArrowRight size={17} />
             </a>
           </Button>
           <button
             type="button"
-            className="hero-cta inline-flex items-center gap-1.5 text-[0.95rem] font-semibold text-[#c8400f] transition hover:underline"
+            className="hero-cta inline-flex items-center gap-1.5 text-[15px] font-semibold text-leaf transition hover:underline"
             onClick={() => {
               const lenis = (window as any).__lenis;
               if (lenis) lenis.scrollTo("#how", { offset: -70 });
@@ -81,8 +81,8 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
           ].map((s, i) => (
             <div key={i} className="hero-stat">
               <dt className="sr-only">{s.small}</dt>
-              <dd className="text-[1.45rem] font-extrabold tracking-tight text-carrot">{s.big}</dd>
-              <dd className="mt-1 text-[0.72rem] font-medium uppercase tracking-[0.08em] text-muted-foreground">{s.small}</dd>
+              <dd className="text-[21px] font-bold tracking-tight text-leaf">{s.big}</dd>
+              <dd className="mt-1 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{s.small}</dd>
             </div>
           ))}
         </dl>
@@ -99,10 +99,10 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
               </span>
               <span className="flex items-end justify-between gap-4 p-5">
                 <span className="min-w-0 text-left">
-                  <span className="block text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[#c8400f]">Today&rsquo;s bestseller</span>
-                  <span className="mt-1 block truncate text-[1.25rem] font-extrabold tracking-tight text-ink">{hero.title}</span>
+                  <span className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#c8400f]">Today&rsquo;s bestseller</span>
+                  <span className="mt-1 block truncate text-[19px] font-extrabold tracking-tight text-ink">{hero.title}</span>
                 </span>
-                <span className="shrink-0 text-[1.25rem] font-extrabold text-carrot">{money(hero.priceInr)}</span>
+                <span className="shrink-0 text-[19px] font-bold text-ink">{money(hero.priceInr)}</span>
               </span>
             </a>
           )}
@@ -112,9 +112,9 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={p.image} alt={p.title} className="h-24 w-24 shrink-0 rounded-[18px] object-cover transition-transform duration-500 group-hover:scale-[1.05] sm:h-28 sm:w-28" />
                 <div className="min-w-0">
-                  <p className="truncate text-[1.05rem] font-bold tracking-tight text-ink">{p.title}</p>
-                  <p className="mt-0.5 text-[0.8rem] font-medium text-muted-foreground">{p.unitLabel}</p>
-                  <p className="mt-2 text-[1.05rem] font-extrabold text-ink">{money(p.priceInr)}</p>
+                  <p className="truncate text-[17px] font-bold tracking-tight text-ink">{p.title}</p>
+                  <p className="mt-0.5 text-[13px] font-medium text-muted-foreground">{p.unitLabel}</p>
+                  <p className="mt-2 text-[17px] font-extrabold text-ink">{money(p.priceInr)}</p>
                 </div>
               </a>
             ))}

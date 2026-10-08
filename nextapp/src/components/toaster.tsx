@@ -19,21 +19,23 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastCtx.Provider value={push}>
       {children}
-      <div className="pointer-events-none fixed left-1/2 top-4 z-[100] flex w-full max-w-md -translate-x-1/2 flex-col items-center gap-2 px-4">
+      {/* Swiggy-style bottom toast — slides up from the bottom edge, out of the
+          way of the content you're browsing */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[100] flex flex-col items-center gap-2 px-4 pb-[max(0.875rem,env(safe-area-inset-bottom))]">
         <AnimatePresence>
           {toasts.map((t) => (
             <motion.div
               key={t.id}
-              initial={{ opacity: 0, y: -18, scale: 0.92 }}
+              initial={{ opacity: 0, y: 24, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -12, scale: 0.94 }}
-              transition={{ type: "spring", stiffness: 480, damping: 30 }}
-              className={`pointer-events-auto flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-mid ${
-                t.kind === "error" ? "bg-destructive" : "bg-forest-2"
+              exit={{ opacity: 0, y: 16, scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 460, damping: 30 }}
+              className={`pointer-events-auto flex max-w-[calc(100vw-2rem)] items-center gap-2.5 rounded-full px-5 py-3 text-[15px] font-semibold text-white shadow-mid ${
+                t.kind === "error" ? "bg-destructive" : "bg-ink/95 backdrop-blur-md"
               }`}
             >
-              {t.kind === "error" ? <AlertCircle size={16} /> : <CheckCircle2 size={16} className="text-leaf-2" />}
-              {t.text}
+              {t.kind === "error" ? <AlertCircle size={17} className="shrink-0" /> : <CheckCircle2 size={17} className="shrink-0 text-leaf-2" />}
+              <span className="truncate">{t.text}</span>
             </motion.div>
           ))}
         </AnimatePresence>

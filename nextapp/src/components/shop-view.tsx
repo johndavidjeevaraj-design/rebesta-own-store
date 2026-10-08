@@ -91,7 +91,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
         <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: "easeOut" }}>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <span className="inline-flex items-center gap-1.5 text-[0.62rem] font-extrabold uppercase tracking-[0.16em] text-leaf">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.16em] text-leaf">
                 Shop fresh
               </span>
               <h1 className="font-display text-2xl font-extrabold text-forest md:text-3xl">{conf.heading}</h1>
@@ -101,7 +101,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
               initial={{ scale: 1.12, opacity: 0.6 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.18 }}
-              className="rounded-full border border-leaf/20 bg-mint px-3 py-1.5 text-[0.75rem] font-extrabold text-leaf"
+              className="rounded-full border border-leaf/20 bg-mint px-3 py-1.5 text-[11px] font-extrabold text-leaf"
             >
               {loaded ? `${filtered.length} ${conf.countWord}${filtered.length === 1 ? "" : "s"}` : "Loading…"}
             </motion.span>
@@ -125,7 +125,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
                 className="mt-8"
                 aria-label="Your last looks"
               >
-                <h2 className="flex items-center gap-2 text-[1.05rem] font-extrabold text-forest">
+                <h2 className="flex items-center gap-2 text-[17px] font-extrabold text-forest">
                   <History size={17} className="text-leaf" /> Your last looks
                 </h2>
                 <div className="rail -mx-4 mt-3 flex gap-4 overflow-x-auto px-4 pb-2">
@@ -147,15 +147,15 @@ export function ShopView({ mode }: { mode: ShopMode }) {
                   onClick={() => setActiveCategory(cat)}
                   className={`flex shrink-0 items-center gap-2 rounded-full border py-1 pl-1 pr-3.5 transition ${
                     activeCategory === cat
-                      ? "carrot-grad border-transparent text-white shadow-[0_6px_16px_rgba(232,71,12,0.3)]"
+                      ? "fresh-grad border-transparent text-white shadow-[0_6px_16px_rgba(11,124,49,0.3)]"
                       : "border-line bg-white text-ink hover:border-leaf/50"
                   }`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={categoryImage(cat)} alt="" loading="lazy" className="h-8 w-8 rounded-full border border-white/60 object-cover" />
                   <span className="flex flex-col items-start leading-tight">
-                    <span className="text-[0.78rem] font-extrabold">{cat}</span>
-                    <span className={`text-[0.6rem] font-bold ${activeCategory === cat ? "text-white/85" : "text-muted-foreground"}`}>{countOf(cat)}</span>
+                    <span className="text-[13px] font-extrabold">{cat}</span>
+                    <span className={`text-[10px] font-bold ${activeCategory === cat ? "text-white/85" : "text-muted-foreground"}`}>{countOf(cat)}</span>
                   </span>
                 </button>
               ))}
@@ -163,7 +163,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
 
             {/* Filter bar */}
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-              <label className="flex cursor-pointer select-none items-center gap-2 text-[0.78rem] font-bold text-ink-2">
+              <label className="flex cursor-pointer select-none items-center gap-2 text-[13px] font-bold text-ink-2">
                 <input type="checkbox" checked={offersOnly} onChange={(e) => setOffersOnly(e.target.checked)} className="peer sr-only" />
                 <span className="relative h-5.5 w-10 rounded-full bg-line-2 transition after:absolute after:top-0.5 after:left-0.5 after:h-[18px] after:w-[18px] after:rounded-full after:bg-white after:transition peer-checked:bg-leaf peer-checked:after:left-[21px]" />
                 Offers only
@@ -182,7 +182,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
                     key={key}
                     type="button"
                     onClick={() => setSort(key)}
-                    className={`rounded-full px-3 py-1.5 text-[0.72rem] font-extrabold transition ${
+                    className={`rounded-full px-3 py-1.5 text-[11px] font-extrabold transition ${
                       sort === key ? "border border-leaf/30 bg-mint text-leaf" : "text-muted-foreground hover:text-ink"
                     }`}
                   >

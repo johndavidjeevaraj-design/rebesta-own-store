@@ -44,12 +44,12 @@ export function LoginView() {
       <main className="pb-20">
         <section className="mx-auto max-w-md px-4 pt-14 sm:pt-20">
           <div className="auth-card rounded-[28px] border border-line bg-white p-7 shadow-[0_4px_24px_rgba(0,0,0,0.06)] sm:p-9" data-auth-card>
-            <span className="flex items-center gap-2 text-[0.72rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+            <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 22c5-3.5 8-7.5 8-11.5C20 6 16.5 3 12 3S4 6 4 10.5C4 14.5 7 18.5 12 22Z" stroke="currentColor" strokeWidth="2.4"/><path d="M12 22V9M12 12l3-2M12 15l-2.6-1.8" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/></svg>
               Welcome
             </span>
-            <h1 className="mt-3 font-display text-[1.9rem] font-extrabold tracking-tight text-ink">Sign in to Rebesta</h1>
-            <p className="mt-2 text-[0.92rem] font-medium leading-relaxed text-muted-foreground">
+            <h1 className="mt-3 font-display text-[32px] font-extrabold tracking-tight text-ink">Sign in to Rebesta</h1>
+            <p className="mt-2 text-[15px] font-medium leading-relaxed text-muted-foreground">
               Enter your mobile number — we&rsquo;ll text you a code. Existing number signs you in, new number creates your account. That&rsquo;s it.
             </p>
 
@@ -58,16 +58,16 @@ export function LoginView() {
                 <div className="relative">
                   <input
                     id="otpPhone" inputMode="tel" autoComplete="tel" placeholder=" " defaultValue=""
-                    className="peer h-14 w-full rounded-2xl border border-line-2 bg-white pl-14 pr-4 text-[1rem] font-semibold text-ink outline-none transition placeholder:text-transparent focus:border-ink/30 focus:ring-2 focus:ring-ink/10"
+                    className="peer h-14 w-full rounded-2xl border border-line-2 bg-white pl-14 pr-4 text-[15px] font-semibold text-ink outline-none transition placeholder:text-transparent focus:border-ink/30 focus:ring-2 focus:ring-ink/10"
                   />
-                  <span className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-[0.95rem] font-bold text-muted-foreground">+91</span>
-                  <label htmlFor="otpPhone" className="pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 text-[0.95rem] font-medium text-muted-foreground transition-all peer-focus:top-3.5 peer-focus:text-[0.68rem] peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wide peer-focus:text-muted-foreground peer-[:not(:placeholder-shown)]:top-3.5 peer-[:not(:placeholder-shown)]:text-[0.68rem] peer-[:not(:placeholder-shown)]:font-bold peer-[:not(:placeholder-shown)]:uppercase peer-[:not(:placeholder-shown)]:tracking-wide">
+                  <span className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-[15px] font-bold text-muted-foreground">+91</span>
+                  <label htmlFor="otpPhone" className="pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 text-[15px] font-medium text-muted-foreground transition-all peer-focus:top-3.5 peer-focus:text-[11px] peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wide peer-focus:text-muted-foreground peer-[:not(:placeholder-shown)]:top-3.5 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-bold peer-[:not(:placeholder-shown)]:uppercase peer-[:not(:placeholder-shown)]:tracking-wide">
                     Mobile number
                   </label>
                 </div>
 
                 <div className="captcha-slot mt-5">
-                  <p className="flex items-center gap-2 text-[0.78rem] font-medium text-muted-foreground">
+                  <p className="flex items-center gap-2 text-[13px] font-medium text-muted-foreground">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.4-7 9.9C8 19.4 5 15.5 5 11V6l7-3Z" stroke="currentColor" strokeWidth="2"/><path d="m9 11.5 2.2 2.2L15.5 9.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     Quick security check — keeps SMS free of bots
                   </p>
@@ -89,14 +89,14 @@ export function LoginView() {
                     <path d="M38.4 34.4C38.4 29 35.2 24.6 31 22" stroke="#0d8736" strokeWidth="2.4" strokeLinecap="round" opacity=".7"/>
                   </svg>
                   <div className="min-w-0">
-                    <b data-otp-sentto className="block truncate text-[0.95rem] font-extrabold text-ink"></b>
-                    <span className="text-[0.78rem] font-medium text-muted-foreground">Code sent · valid 15 minutes</span>
+                    <b data-otp-sentto className="block truncate text-[15px] font-extrabold text-ink"></b>
+                    <span className="text-[13px] font-medium text-muted-foreground">Code sent · valid 15 minutes</span>
                   </div>
                 </div>
                 <div className="otp-boxes mt-5" data-otp-boxes></div>
-                <p className="otp-hint mt-3 text-[0.82rem] font-medium text-muted-foreground">Enter the code from the SMS</p>
+                <p className="otp-hint mt-3 text-[13px] font-medium text-muted-foreground">Enter the code from the SMS</p>
                 <button className="btn-main mt-4" type="submit" data-otp-verify><span className="btn-label">Verify &amp; continue</span></button>
-                <p className="otp-resend mt-4 text-center text-[0.85rem] font-medium text-muted-foreground">
+                <p className="otp-resend mt-4 text-center text-[13px] font-medium text-muted-foreground">
                   Didn&rsquo;t get it? <a href="#" data-otp-resend className="font-bold text-leaf hover:underline">Resend code</a> · <a href="#" data-otp-change className="font-bold text-leaf hover:underline">Wrong number?</a>
                 </p>
               </div>
@@ -111,21 +111,21 @@ export function LoginView() {
                     <circle cx="11" cy="16" r="2.6" fill="#ffd582"/>
                   </svg>
                   <div className="min-w-0">
-                    <b data-otp-newto className="block truncate text-[0.95rem] font-extrabold text-ink"></b>
-                    <span className="text-[0.78rem] font-medium text-muted-foreground">Number verified! You&rsquo;re new here — one last thing.</span>
+                    <b data-otp-newto className="block truncate text-[15px] font-extrabold text-ink"></b>
+                    <span className="text-[13px] font-medium text-muted-foreground">Number verified! You&rsquo;re new here — one last thing.</span>
                   </div>
                 </div>
                 <div className="relative mt-5">
                   <input
                     id="newName" autoComplete="name" placeholder=" " defaultValue=""
-                    className="peer h-14 w-full rounded-2xl border border-line-2 bg-white px-4 text-[1rem] font-semibold text-ink outline-none transition placeholder:text-transparent focus:border-ink/30 focus:ring-2 focus:ring-ink/10"
+                    className="peer h-14 w-full rounded-2xl border border-line-2 bg-white px-4 text-[15px] font-semibold text-ink outline-none transition placeholder:text-transparent focus:border-ink/30 focus:ring-2 focus:ring-ink/10"
                   />
-                  <label htmlFor="newName" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[0.95rem] font-medium text-muted-foreground transition-all peer-focus:top-3.5 peer-focus:text-[0.68rem] peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wide peer-[:not(:placeholder-shown)]:top-3.5 peer-[:not(:placeholder-shown)]:text-[0.68rem] peer-[:not(:placeholder-shown)]:font-bold peer-[:not(:placeholder-shown)]:uppercase peer-[:not(:placeholder-shown)]:tracking-wide">
+                  <label htmlFor="newName" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[15px] font-medium text-muted-foreground transition-all peer-focus:top-3.5 peer-focus:text-[11px] peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wide peer-[:not(:placeholder-shown)]:top-3.5 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-bold peer-[:not(:placeholder-shown)]:uppercase peer-[:not(:placeholder-shown)]:tracking-wide">
                     What should we call you?
                   </label>
                 </div>
                 <button className="btn-main mt-4" type="submit" data-otp-create><span className="btn-label">Create my account</span></button>
-                <p className="otp-resend mt-4 text-center text-[0.85rem] font-medium text-muted-foreground">
+                <p className="otp-resend mt-4 text-center text-[13px] font-medium text-muted-foreground">
                   <a href="#" data-otp-restart className="font-bold text-leaf hover:underline">← Use a different number</a>
                 </p>
               </div>
@@ -135,19 +135,19 @@ export function LoginView() {
               <div className="relative">
                 <input
                   id="loginPhone" inputMode="tel" autoComplete="tel" placeholder=" " defaultValue=""
-                  className="peer h-14 w-full rounded-2xl border border-line-2 bg-white pl-14 pr-4 text-[1rem] font-semibold text-ink outline-none transition placeholder:text-transparent focus:border-ink/30 focus:ring-2 focus:ring-ink/10"
+                  className="peer h-14 w-full rounded-2xl border border-line-2 bg-white pl-14 pr-4 text-[15px] font-semibold text-ink outline-none transition placeholder:text-transparent focus:border-ink/30 focus:ring-2 focus:ring-ink/10"
                 />
-                <span className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-[0.95rem] font-bold text-muted-foreground">+91</span>
-                <label htmlFor="loginPhone" className="pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 text-[0.95rem] font-medium text-muted-foreground transition-all peer-focus:top-3.5 peer-focus:text-[0.68rem] peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wide peer-[:not(:placeholder-shown)]:top-3.5 peer-[:not(:placeholder-shown)]:text-[0.68rem] peer-[:not(:placeholder-shown)]:font-bold peer-[:not(:placeholder-shown)]:uppercase peer-[:not(:placeholder-shown)]:tracking-wide">
+                <span className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-[15px] font-bold text-muted-foreground">+91</span>
+                <label htmlFor="loginPhone" className="pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 text-[15px] font-medium text-muted-foreground transition-all peer-focus:top-3.5 peer-focus:text-[11px] peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wide peer-[:not(:placeholder-shown)]:top-3.5 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-bold peer-[:not(:placeholder-shown)]:uppercase peer-[:not(:placeholder-shown)]:tracking-wide">
                   Mobile number
                 </label>
               </div>
               <div className="relative mt-3.5">
                 <input
                   id="loginPassword" type="password" autoComplete="current-password" placeholder=" " defaultValue=""
-                  className="peer h-14 w-full rounded-2xl border border-line-2 bg-white px-4 pr-14 text-[1rem] font-semibold text-ink outline-none transition placeholder:text-transparent focus:border-ink/30 focus:ring-2 focus:ring-ink/10"
+                  className="peer h-14 w-full rounded-2xl border border-line-2 bg-white px-4 pr-14 text-[15px] font-semibold text-ink outline-none transition placeholder:text-transparent focus:border-ink/30 focus:ring-2 focus:ring-ink/10"
                 />
-                <label htmlFor="loginPassword" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[0.95rem] font-medium text-muted-foreground transition-all peer-focus:top-3.5 peer-focus:text-[0.68rem] peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wide peer-[:not(:placeholder-shown)]:top-3.5 peer-[:not(:placeholder-shown)]:text-[0.68rem] peer-[:not(:placeholder-shown)]:font-bold peer-[:not(:placeholder-shown)]:uppercase peer-[:not(:placeholder-shown)]:tracking-wide">
+                <label htmlFor="loginPassword" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[15px] font-medium text-muted-foreground transition-all peer-focus:top-3.5 peer-focus:text-[11px] peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wide peer-[:not(:placeholder-shown)]:top-3.5 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-bold peer-[:not(:placeholder-shown)]:uppercase peer-[:not(:placeholder-shown)]:tracking-wide">
                   Password
                 </label>
                 <button type="button" className="fx-eye" data-eye="loginPassword" aria-label="Show password">
@@ -160,11 +160,11 @@ export function LoginView() {
 
             <div data-auth-error className="alert-error mt-4" hidden></div>
 
-            <p className="auth-alt mt-6 text-center text-[0.85rem] font-medium text-muted-foreground">
+            <p className="auth-alt mt-6 text-center text-[13px] font-medium text-muted-foreground">
               <a href="#" data-pw-toggle className="font-bold text-leaf hover:underline">Sign in with password instead</a>
               <a href="#" data-otp-toggle hidden className="font-bold text-leaf hover:underline">Use SMS code instead</a>
             </p>
-            <p className="auth-alt mt-2 text-center text-[0.8rem] font-medium text-muted-foreground">
+            <p className="auth-alt mt-2 text-center text-[13px] font-medium text-muted-foreground">
               You can always shop without an account · Orders stay linked to your number.
             </p>
 
@@ -185,8 +185,8 @@ export function LoginView() {
       {/* scoped styles for everything auth.js generates or toggles */}
       <style>{`
         .btn-main { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; height:52px; border-radius:9999px;
-          background-image:linear-gradient(135deg,#ff7a2f 0%,#f2570d 45%,#d63e0a 100%); color:#fff; font-size:0.95rem; font-weight:700; cursor:pointer; border:none;
-          box-shadow:0 8px 20px rgba(232,71,12,0.35); transition:filter .15s, transform .1s; }
+          background-image:linear-gradient(135deg,#17b34e 0%,#0faa46 45%,#0b7c31 100%); color:#fff; font-size:15px; font-weight:700; cursor:pointer; border:none;
+          box-shadow:0 8px 20px rgba(11,124,49,0.35); transition:filter .15s, transform .1s; }
         .btn-main:hover { filter:brightness(1.04); }
         .btn-main:active { transform:scale(0.98); }
         .btn-main:disabled { opacity:.6; cursor:default; }
@@ -198,7 +198,7 @@ export function LoginView() {
 
         .otp-boxes { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
         .otp-box { width:50px; height:58px; border-radius:16px; border:1.5px solid #d2d2d7; background:#fff;
-          text-align:center; font-size:1.45rem; font-weight:800; color:#1d1d1f; outline:none;
+          text-align:center; font-size:24px; font-weight:800; color:#1d1d1f; outline:none;
           transition:border-color .15s, box-shadow .15s, background .15s; font-family:inherit; }
         .otp-box:focus { border-color:#1d1d1f; box-shadow:0 0 0 3px rgba(29,29,31,0.10); }
         .otp-box.filled { background:#f0f5f0; border-color:#0d8736; color:#0d8736; }
@@ -207,7 +207,7 @@ export function LoginView() {
         .otp-captcha:empty { min-height:0; }
 
         .alert-error { border-radius:16px; background:rgba(255,91,32,0.10); color:#c8400f;
-          padding:14px 18px; font-size:0.88rem; font-weight:600; }
+          padding:14px 18px; font-size:13px; font-weight:600; }
         .alert-error.shake { animation:shake .4s; }
         @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
 
@@ -236,8 +236,8 @@ export function LoginView() {
         .as-confetti i { position:absolute; left:50%; top:50%; width:7px; height:7px; border-radius:2px; opacity:0; }
         .auth-success.show .as-confetti i { animation:confetti .9s ease-out forwards; }
         @keyframes confetti { 0% { transform:translate(0,0) rotate(0); opacity:1; } 100% { transform:translate(var(--dx),var(--dy)) rotate(240deg); opacity:0; } }
-        .auth-success h3 { margin-top:14px; font-size:1.35rem; font-weight:800; color:#1d1d1f; letter-spacing:-0.02em; }
-        .auth-success p { margin-top:6px; font-size:0.9rem; font-weight:500; color:#4a4a4f; }
+        .auth-success h3 { margin-top:14px; font-size:21px; font-weight:800; color:#1d1d1f; letter-spacing:-0.02em; }
+        .auth-success p { margin-top:6px; font-size:15px; font-weight:500; color:#4a4a4f; }
       `}</style>
       <SiteFooter />
     </div>

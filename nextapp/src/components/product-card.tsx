@@ -80,15 +80,15 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
             />
             <div className="absolute left-2 top-2 flex flex-col gap-1">
               {offPct > 0 && !soldOut && (
-                <span className="carrot-grad rounded-full px-2 py-0.5 text-[0.62rem] font-extrabold text-white shadow-[0_2px_8px_rgba(232,71,12,0.4)]">{offPct}% OFF</span>
+                <span className="carrot-grad rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white shadow-[0_2px_8px_rgba(232,71,12,0.4)]">{offPct}% OFF</span>
               )}
               {product.featured && !offPct && !soldOut && (
-                <span className="rounded-full bg-carrot/15 px-2 py-0.5 text-[0.62rem] font-extrabold text-[#c8400f] backdrop-blur-sm">Bestseller</span>
+                <span className="rounded-full bg-carrot/15 px-2 py-0.5 text-[10px] font-extrabold text-[#c8400f] backdrop-blur-sm">Bestseller</span>
               )}
             </div>
             {soldOut && (
               <div className="absolute inset-0 grid place-items-center bg-white/55 backdrop-blur-[2px]">
-                <span className="rounded-full bg-ink px-3 py-1 text-[0.68rem] font-bold uppercase tracking-wide text-white">
+                <span className="rounded-full bg-ink px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
                   Sold out today
                 </span>
               </div>
@@ -98,17 +98,17 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
 
         <div className="flex flex-1 flex-col px-0.5 pt-3">
           <a href={`/products/${product.handle}`} className="block">
-            <h3 className="line-clamp-2 min-h-[2.35em] text-[0.92rem] font-bold leading-snug tracking-tight text-ink">{product.title}</h3>
-            <p className="mt-0.5 text-[0.75rem] font-semibold text-muted-foreground">{product.unitLabel}</p>
+            <h3 className="line-clamp-2 min-h-[2.35em] text-[15px] font-bold leading-snug tracking-tight text-ink">{product.title}</h3>
+            <p className="mt-0.5 text-[11px] font-semibold text-muted-foreground">{product.unitLabel}</p>
           </a>
 
           <div className="mt-auto pt-2.5">
             <div className="flex flex-wrap items-baseline gap-x-1.5">
-              <span className="text-[1.15rem] font-extrabold tracking-tight text-carrot">{money(product.priceInr)}</span>
-              {compareAt && <span className="text-[0.78rem] font-semibold text-muted-foreground line-through">{money(compareAt)}</span>}
+              <span className="text-[17px] font-bold tracking-tight text-ink">{money(product.priceInr)}</span>
+              {compareAt && <span className="text-[13px] font-semibold text-muted-foreground line-through">{money(compareAt)}</span>}
             </div>
             {saveInr > 0 && (
-              <p className="mt-0.5 text-[0.68rem] font-bold text-[#c8400f]">Save {money(saveInr)}</p>
+              <p className="mt-0.5 text-[11px] font-bold text-[#c8400f]">Save {money(saveInr)}</p>
             )}
           </div>
         </div>
@@ -116,7 +116,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
         {/* add / stepper — one shape that morphs, never jumps */}
         <div className="mt-2.5 px-0.5 pb-0.5">
           {soldOut ? (
-            <span className="block w-full cursor-not-allowed rounded-full border border-line bg-[#f5f5f7] py-2.5 text-center text-[0.8rem] font-bold text-muted-foreground">
+            <span className="block w-full cursor-not-allowed rounded-full border border-line bg-[#f5f5f7] py-2.5 text-center text-[13px] font-bold text-muted-foreground">
               Sold out
             </span>
           ) : (
@@ -130,7 +130,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.86 }}
                     transition={{ type: "spring", stiffness: 520, damping: 32 }}
-                    className="carrot-grad absolute inset-0 flex items-center justify-between rounded-full px-1 text-white shadow-[0_6px_16px_rgba(232,71,12,0.35)]"
+                    className="fresh-grad absolute inset-0 flex items-center justify-between rounded-full px-1 text-white shadow-[0_6px_16px_rgba(11,124,49,0.35)]"
                   >
                     <button
                       type="button"
@@ -145,10 +145,10 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
                       initial={{ scale: 1.4 }}
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 600, damping: 20 }}
-                      className="flex items-baseline gap-1 text-[0.95rem] font-extrabold tabular-nums"
+                      className="flex items-baseline gap-1 whitespace-nowrap text-[17px] font-extrabold tabular-nums"
                     >
                       {qty}
-                      <span className="text-[0.58rem] font-bold uppercase tracking-wider text-white/85">in basket</span>
+                      <span className="hidden text-[10px] font-bold uppercase tracking-wider text-white/85 min-[420px]:inline">in basket</span>
                     </motion.span>
                     <button
                       type="button"
@@ -177,7 +177,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
                       e.preventDefault();
                       add();
                     }}
-                    className="carrot-grad absolute inset-0 flex items-center justify-center gap-1 rounded-full text-[0.85rem] font-extrabold uppercase tracking-wide text-white shadow-[0_6px_16px_rgba(232,71,12,0.35)]"
+                    className="fresh-grad absolute inset-0 flex items-center justify-center gap-1 rounded-full text-[13px] font-extrabold uppercase tracking-wide text-white shadow-[0_6px_16px_rgba(11,124,49,0.35)]"
                   >
                     <Plus size={15} strokeWidth={3} /> Add
                   </motion.button>

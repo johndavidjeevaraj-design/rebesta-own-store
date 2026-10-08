@@ -62,20 +62,20 @@ export function LocationSheet({ open, onOpenChange }: { open: boolean; onOpenCha
               <Crosshair size={19} />
             </span>
             <span>
-              <span className="block text-[0.95rem] font-extrabold text-forest">Use my current location</span>
-              <span className="block text-[0.78rem] text-muted-foreground">GPS pin — most accurate</span>
+              <span className="block text-[15px] font-extrabold text-forest">Use my current location</span>
+              <span className="block text-[13px] text-muted-foreground">GPS pin — most accurate</span>
             </span>
             <ChevronRight size={16} className="ml-auto text-muted-foreground" />
           </button>
 
           {status && (
-            <p role="status" className={`rounded-xl px-3 py-2 text-[0.8rem] font-semibold ${status.error ? "bg-destructive/10 text-destructive" : "bg-mint text-forest"}`}>
+            <p role="status" className={`rounded-xl px-3 py-2 text-[13px] font-semibold ${status.error ? "bg-destructive/10 text-destructive" : "bg-mint text-forest"}`}>
               {status.text}
             </p>
           )}
 
           <div className="pt-1">
-            <p className="mb-2.5 flex items-center gap-2 text-[0.7rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">
+            <p className="mb-2.5 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">
               <span className="h-px flex-1 bg-border" /> or pick your area <span className="h-px flex-1 bg-border" />
             </p>
             <div className="grid grid-cols-2 gap-2">
@@ -84,7 +84,7 @@ export function LocationSheet({ open, onOpenChange }: { open: boolean; onOpenCha
                   key={a.name}
                   type="button"
                   onClick={() => choose(a.lat, a.lng, a.name, "area")}
-                  className="flex items-center gap-2 rounded-xl border border-border bg-white px-3 py-2.5 text-left text-[0.82rem] font-bold text-ink transition hover:border-leaf/60 hover:bg-mint"
+                  className="flex items-center gap-2 rounded-xl border border-border bg-white px-3 py-2.5 text-left text-[13px] font-bold text-ink transition hover:border-leaf/60 hover:bg-mint"
                 >
                   <MapPin size={13} className="shrink-0 text-leaf" />
                   <span className="truncate">{a.name}</span>
@@ -96,7 +96,7 @@ export function LocationSheet({ open, onOpenChange }: { open: boolean; onOpenCha
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="w-full pt-1 text-center text-[0.78rem] font-bold text-muted-foreground underline-offset-2 hover:text-forest hover:underline"
+            className="w-full pt-1 text-center text-[13px] font-bold text-muted-foreground underline-offset-2 hover:text-forest hover:underline"
           >
             Just browsing — I&rsquo;ll set it later
           </button>

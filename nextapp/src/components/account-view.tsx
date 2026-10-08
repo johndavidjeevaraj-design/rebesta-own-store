@@ -26,12 +26,12 @@ export function AccountView() {
             <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-white text-ink shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
               <ShoppingBasket size={26} strokeWidth={1.8} />
             </span>
-            <h1 className="mt-5 font-display text-[1.7rem] font-extrabold tracking-tight text-ink">You&rsquo;re not signed in</h1>
-            <p className="mx-auto mt-2 max-w-xs text-[0.92rem] font-medium leading-relaxed text-muted-foreground">
+            <h1 className="mt-5 font-display text-[28px] font-extrabold tracking-tight text-ink">You&rsquo;re not signed in</h1>
+            <p className="mx-auto mt-2 max-w-xs text-[15px] font-medium leading-relaxed text-muted-foreground">
               Sign in to see your orders and profile — or keep shopping, no account needed.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <a className="carrot-grad inline-flex h-11 items-center rounded-full px-7 text-[0.9rem] font-bold text-white shadow-[0_8px_20px_rgba(232,71,12,0.35)] transition hover:brightness-[1.05] active:scale-[0.98]" href="/login">Sign in</a>
+              <a className="fresh-grad inline-flex h-11 items-center rounded-full px-7 text-[15px] font-bold text-white shadow-[0_8px_20px_rgba(11,124,49,0.35)] transition hover:brightness-[1.05] active:scale-[0.98]" href="/login">Sign in</a>
             </div>
           </div>
 
@@ -39,13 +39,13 @@ export function AccountView() {
           <div data-account-view hidden>
             <div className="account-panel rounded-[28px] border border-line bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.04)] sm:p-7">
               <div className="flex items-center gap-4">
-                <span className="account-avatar grid h-14 w-14 shrink-0 place-items-center rounded-full bg-mint text-[1.25rem] font-extrabold text-leaf" data-account-avatar aria-hidden="true">R</span>
+                <span className="account-avatar grid h-14 w-14 shrink-0 place-items-center rounded-full bg-mint text-[19px] font-extrabold text-leaf" data-account-avatar aria-hidden="true">R</span>
                 <div className="min-w-0 flex-1">
-                  <h1 className="truncate text-[1.35rem] font-extrabold tracking-tight text-ink" data-account-name>…</h1>
-                  <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.82rem] font-medium text-muted-foreground" data-account-meta></p>
+                  <h1 className="truncate text-[21px] font-extrabold tracking-tight text-ink" data-account-name>…</h1>
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] font-medium text-muted-foreground" data-account-meta></p>
                 </div>
                 <button
-                  className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-white px-4 text-[0.82rem] font-bold text-ink transition hover:bg-[#f5f5f7]"
+                  className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-white px-4 text-[13px] font-bold text-ink transition hover:bg-[#f5f5f7]"
                   type="button" data-logout
                 >
                   <LogOut size={14} /> Sign out
@@ -54,16 +54,16 @@ export function AccountView() {
             </div>
 
             <div className="mt-9">
-              <h2 className="text-[0.72rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">History</h2>
-              <h3 className="mt-2 font-display text-[1.4rem] font-extrabold tracking-tight text-ink">Your orders</h3>
+              <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">History</h2>
+              <h3 className="mt-2 font-display text-[21px] font-extrabold tracking-tight text-ink">Your orders</h3>
               <div data-orders-list className="mt-5"></div>
               <div data-orders-empty className="empty-state rounded-[28px] bg-[#f5f5f7] p-10 text-center" hidden>
                 <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-white text-ink shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
                   <ShoppingBasket size={22} strokeWidth={1.8} />
                 </span>
-                <h4 className="mt-4 text-[1.1rem] font-bold text-ink">No orders yet</h4>
-                <p className="mt-1.5 text-[0.88rem] font-medium text-muted-foreground">Your first Rebesta order will appear here.</p>
-                <a className="carrot-grad mt-5 inline-flex h-11 items-center rounded-full px-7 text-[0.9rem] font-bold text-white shadow-[0_8px_20px_rgba(232,71,12,0.35)] transition hover:brightness-[1.05]" href="/shop">Start shopping</a>
+                <h4 className="mt-4 text-[17px] font-bold text-ink">No orders yet</h4>
+                <p className="mt-1.5 text-[13px] font-medium text-muted-foreground">Your first Rebesta order will appear here.</p>
+                <a className="carrot-grad mt-5 inline-flex h-11 items-center rounded-full px-7 text-[15px] font-bold text-white shadow-[0_8px_20px_rgba(232,71,12,0.35)] transition hover:brightness-[1.05]" href="/shop">Start shopping</a>
               </div>
             </div>
           </div>

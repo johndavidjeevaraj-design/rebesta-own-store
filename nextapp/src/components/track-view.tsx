@@ -37,7 +37,7 @@ function StatusChip({ status }: { status: string }) {
   const tone = statusTone(status);
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.68rem] font-bold ${
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${
         tone === "leaf" ? "bg-mint text-leaf" : tone === "orange" ? "bg-carrot/10 text-[#c8400f]" : "bg-black/[0.06] text-muted-foreground"
       }`}
     >
@@ -79,7 +79,7 @@ export function TrackView() {
   const toast = useToast();
 
   const initial = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-  const [orderId, setOrderId] = useState((initial?.get("order") || "").replace(/[^A-Za-z0-9-]/g, "").slice(0, 24));
+  const [orderId, setOrderId] = useState((initial?.get("id") || initial?.get("order") || "").replace(/[^A-Za-z0-9-]/g, "").slice(0, 24));
   const [phone, setPhone] = useState((initial?.get("phone") || "").replace(/\D/g, "").slice(-10));
   const [historyPhone, setHistoryPhone] = useState((initial?.get("phone") || "").replace(/\D/g, "").slice(-10));
 
@@ -260,29 +260,29 @@ export function TrackView() {
       <SiteHeader />
       <main className="pb-20">
         <section className="mx-auto max-w-2xl px-4 pt-14 sm:pt-16">
-          <p className="text-[0.72rem] font-bold uppercase tracking-[0.14em] text-[#c8400f]">Track order</p>
-          <h1 className="mt-3 font-display text-[2.2rem] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-[3rem]">Where&rsquo;s my delivery?</h1>
-          <p className="mt-3 text-[1rem] font-medium text-muted-foreground">Enter your Rebesta order ID and the mobile number used at checkout.</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#c8400f]">Track order</p>
+          <h1 className="mt-3 font-display text-[36px] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-[48px]">Where&rsquo;s my delivery?</h1>
+          <p className="mt-3 text-[15px] font-medium text-muted-foreground">Enter your Rebesta order ID and the mobile number used at checkout.</p>
 
           <form data-track-form onSubmit={trackOrder} className="mt-8 grid gap-3 sm:grid-cols-[1.2fr_1fr_auto]">
             <Input
               id="orderId" required placeholder="RB-20260922-ABC123" value={orderId}
               onChange={(e) => setOrderId(e.target.value)}
-              className="h-12 rounded-xl border-line-2 bg-white text-[0.95rem] font-medium placeholder:text-[#8e8e93] focus-visible:ring-2 focus-visible:ring-ink/20"
+              className="h-12 rounded-xl border-line-2 bg-white text-[15px] font-medium placeholder:text-[#8e8e93] focus-visible:ring-2 focus-visible:ring-ink/20"
             />
             <Input
               id="trackPhone" required inputMode="tel" placeholder="10-digit mobile" value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="h-12 rounded-xl border-line-2 bg-white text-[0.95rem] font-medium placeholder:text-[#8e8e93] focus-visible:ring-2 focus-visible:ring-ink/20"
+              className="h-12 rounded-xl border-line-2 bg-white text-[15px] font-medium placeholder:text-[#8e8e93] focus-visible:ring-2 focus-visible:ring-ink/20"
             />
-            <Button type="submit" className="carrot-grad h-12 rounded-xl px-6 text-[0.9rem] font-bold text-white shadow-[0_6px_16px_rgba(232,71,12,0.3)] hover:brightness-[1.05] active:scale-[0.98]">
+            <Button type="submit" className="fresh-grad h-12 rounded-xl px-6 text-[15px] font-bold text-white shadow-[0_6px_16px_rgba(11,124,49,0.3)] hover:brightness-[1.05] active:scale-[0.98]">
               <Search size={16} /> Track
             </Button>
           </form>
 
           <div className="mt-6">
             {trackMsg && (
-              <div className={`flex items-center gap-2.5 rounded-2xl px-4 py-3.5 text-[0.9rem] font-semibold ${trackMsg.kind === "error" ? "bg-carrot/10 text-[#c8400f]" : "bg-[#f5f5f7] text-muted-foreground"}`}>
+              <div className={`flex items-center gap-2.5 rounded-2xl px-4 py-3.5 text-[15px] font-semibold ${trackMsg.kind === "error" ? "bg-carrot/10 text-[#c8400f]" : "bg-[#f5f5f7] text-muted-foreground"}`}>
                 {trackMsg.kind === "error" ? <TriangleAlert size={16} /> : <Clock size={16} />}
                 {trackMsg.text}
               </div>
@@ -292,8 +292,8 @@ export function TrackView() {
               <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mt-4">
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-mint px-5 py-4">
                   <div className="min-w-0">
-                    <p className="truncate text-[0.8rem] font-bold tabular-nums text-leaf">{result.id}</p>
-                    <p className="mt-0.5 text-[0.95rem] font-semibold text-ink">{STATUS_LABEL[result.status] || result.status.replaceAll("_", " ")}</p>
+                    <p className="truncate text-[13px] font-bold tabular-nums text-leaf">{result.id}</p>
+                    <p className="mt-0.5 text-[15px] font-semibold text-ink">{STATUS_LABEL[result.status] || result.status.replaceAll("_", " ")}</p>
                   </div>
                   <StatusChip status={result.status} />
                 </div>
@@ -303,8 +303,8 @@ export function TrackView() {
                   <div className="flex items-center gap-3 border-b border-line bg-white px-5 py-3.5">
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ink text-white"><Bike size={17} /></span>
                     <div className="min-w-0">
-                      <p className="truncate text-[0.9rem] font-bold text-ink">{result.deliveryPartner?.name} is on the way to you</p>
-                      <p data-live-sub className="truncate text-[0.78rem] font-medium text-muted-foreground" />
+                      <p className="truncate text-[15px] font-bold text-ink">{result.deliveryPartner?.name} is on the way to you</p>
+                      <p data-live-sub className="truncate text-[13px] font-medium text-muted-foreground" />
                     </div>
                   </div>
                   <div data-leaflet-map className="h-64 w-full" />
@@ -317,8 +317,8 @@ export function TrackView() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={i.image} alt="" className="h-12 w-12 rounded-lg object-cover" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[0.92rem] font-bold text-ink">{i.title}</p>
-                        <p className="text-[0.78rem] font-medium text-muted-foreground">{i.qty} × {i.unitLabel}</p>
+                        <p className="truncate text-[15px] font-bold text-ink">{i.title}</p>
+                        <p className="text-[13px] font-medium text-muted-foreground">{i.qty} × {i.unitLabel}</p>
                       </div>
                     </div>
                   ))}
@@ -326,7 +326,7 @@ export function TrackView() {
 
                 {result.deliveryPhoto && (
                   <div className="mt-4 overflow-hidden rounded-2xl border border-line">
-                    <p className="flex items-center gap-2 bg-white px-5 py-3 text-[0.82rem] font-bold text-ink"><Camera size={15} className="text-leaf" /> Delivery proof by your delivery partner</p>
+                    <p className="flex items-center gap-2 bg-white px-5 py-3 text-[13px] font-bold text-ink"><Camera size={15} className="text-leaf" /> Delivery proof by your delivery partner</p>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={result.deliveryPhoto} alt="Delivery proof photo" loading="lazy" className="w-full object-cover" />
                   </div>
@@ -334,7 +334,7 @@ export function TrackView() {
 
                 {result.status === "DELIVERED" && !result.reviewed && !reviewSent && (
                   <Card className="mt-4 gap-0 rounded-2xl border-line bg-[#f5f5f7] p-6 shadow-none">
-                    <p className="flex items-center gap-2 text-[1rem] font-bold text-ink"><Star size={17} className="fill-gold text-gold" /> How was your order?</p>
+                    <p className="flex items-center gap-2 text-[15px] font-bold text-ink"><Star size={17} className="fill-gold text-gold" /> How was your order?</p>
                     <div className="mt-4 flex gap-2">
                       {[1, 2, 3, 4, 5].map((n) => (
                         <button
@@ -348,30 +348,30 @@ export function TrackView() {
                     <textarea
                       maxLength={400} value={reviewText} onChange={(e) => setReviewText(e.target.value)}
                       placeholder="Tell others what you think (optional) — freshness, packing, delivery…"
-                      className="mt-4 min-h-24 w-full resize-none rounded-xl border border-transparent bg-white p-4 text-[0.9rem] font-medium text-ink outline-none transition placeholder:text-[#8e8e93] focus:border-black/10"
+                      className="mt-4 min-h-24 w-full resize-none rounded-xl border border-transparent bg-white p-4 text-[15px] font-medium text-ink outline-none transition placeholder:text-[#8e8e93] focus:border-black/10"
                     />
-                    <Button onClick={sendReview} className="mt-3 h-11 w-full rounded-full bg-leaf text-[0.9rem] font-bold text-white hover:brightness-110">Send review</Button>
+                    <Button onClick={sendReview} className="mt-3 h-11 w-full rounded-full bg-leaf text-[15px] font-bold text-white hover:brightness-110">Send review</Button>
                   </Card>
                 )}
                 {result.status === "DELIVERED" && (result.reviewed || reviewSent) && (
-                  <div className="mt-4 flex items-center gap-2.5 rounded-2xl bg-mint px-5 py-4 text-[0.9rem] font-semibold text-leaf">
+                  <div className="mt-4 flex items-center gap-2.5 rounded-2xl bg-mint px-5 py-4 text-[15px] font-semibold text-leaf">
                     <CheckCircle2 size={17} /> {result.reviewed ? "Thanks for reviewing this order!" : "Thank you! Your review will appear on the product page once approved."}
                   </div>
                 )}
 
                 <Card className="mt-4 gap-0 rounded-2xl border-line p-5 shadow-[0_1px_6px_rgba(0,0,0,0.04)]">
                   {Number(result.discountInr) > 0 && (
-                    <div className="flex items-center justify-between pb-2 text-[0.88rem] font-semibold text-muted-foreground">
+                    <div className="flex items-center justify-between pb-2 text-[13px] font-semibold text-muted-foreground">
                       <span>Coupon {result.couponCode || ""}</span>
                       <span className="text-leaf">−{money(result.discountInr)}</span>
                     </div>
                   )}
-                  <div className="flex items-center justify-between text-[1.05rem] font-extrabold text-ink">
+                  <div className="flex items-center justify-between text-[17px] font-extrabold text-ink">
                     <span>Total</span><span className="tabular-nums">{money(result.totalInr)}</span>
                   </div>
                   <Button
                     onClick={reorder} disabled={reordering}
-                    className="mt-4 h-11 w-full rounded-full bg-leaf text-[0.88rem] font-bold text-white hover:brightness-110 disabled:opacity-60"
+                    className="mt-4 h-11 w-full rounded-full bg-leaf text-[13px] font-bold text-white hover:brightness-110 disabled:opacity-60"
                   >
                     <Repeat2 size={16} /> {reordering ? "Adding items…" : "Refill basket with this order"}
                   </Button>
@@ -382,51 +382,51 @@ export function TrackView() {
 
           {/* order history */}
           <div className="mt-16 rounded-[28px] bg-[#f5f5f7] p-6 sm:p-9">
-            <p className="text-[0.72rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">Order history</p>
-            <h2 className="mt-2 font-display text-[1.5rem] font-extrabold tracking-tight text-ink">All my orders</h2>
-            <p className="mt-2 text-[0.92rem] font-medium text-muted-foreground">Enter just your mobile number to see every order, rewards and cancel options.</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Order history</p>
+            <h2 className="mt-2 font-display text-[24px] font-extrabold tracking-tight text-ink">All my orders</h2>
+            <p className="mt-2 text-[15px] font-medium text-muted-foreground">Enter just your mobile number to see every order, rewards and cancel options.</p>
             <form data-history-form onSubmit={loadHistory} className="mt-5 flex gap-3">
               <Input
                 id="historyPhone" inputMode="tel" required placeholder="10-digit mobile" value={historyPhone}
                 onChange={(e) => setHistoryPhone(e.target.value)}
-                className="h-12 flex-1 rounded-xl border-transparent bg-white text-[0.95rem] font-medium placeholder:text-[#8e8e93] focus-visible:border-black/10 focus-visible:ring-0"
+                className="h-12 flex-1 rounded-xl border-transparent bg-white text-[15px] font-medium placeholder:text-[#8e8e93] focus-visible:border-black/10 focus-visible:ring-0"
               />
-              <Button type="submit" className="carrot-grad h-12 rounded-xl px-6 text-[0.9rem] font-bold text-white shadow-[0_6px_16px_rgba(232,71,12,0.3)] hover:brightness-[1.05]">Show</Button>
+              <Button type="submit" className="fresh-grad h-12 rounded-xl px-6 text-[15px] font-bold text-white shadow-[0_6px_16px_rgba(11,124,49,0.3)] hover:brightness-[1.05]">Show</Button>
             </form>
             <div className="mt-5">
               {historyMsg && (
-                <div className={`rounded-2xl px-4 py-3.5 text-[0.88rem] font-semibold ${historyMsg.kind === "error" ? "bg-carrot/10 text-[#c8400f]" : "bg-white text-muted-foreground"}`}>{historyMsg.text}</div>
+                <div className={`rounded-2xl px-4 py-3.5 text-[13px] font-semibold ${historyMsg.kind === "error" ? "bg-carrot/10 text-[#c8400f]" : "bg-white text-muted-foreground"}`}>{historyMsg.text}</div>
               )}
               {history && (
                 <div className="grid gap-3">
                   {history.map((o) => (
                     <motion.div key={o.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-[0.82rem] font-bold tabular-nums text-muted-foreground">{o.id}</p>
+                        <p className="text-[13px] font-bold tabular-nums text-muted-foreground">{o.id}</p>
                         <StatusChip status={o.status} />
                       </div>
-                      <p className="mt-2.5 text-[0.95rem] font-bold text-ink">
+                      <p className="mt-2.5 text-[15px] font-bold text-ink">
                         {money(o.totalInr)} <span className="font-medium text-muted-foreground">· {o.itemCount} items</span>
                       </p>
-                      <p className="mt-1 flex items-center gap-1.5 text-[0.78rem] font-medium text-muted-foreground">
+                      <p className="mt-1 flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
                         <CalendarDays size={13} />
                         {new Date(o.placedAt).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}
                         {o.slot?.label ? ` · ${o.slot.label}` : ""} · {o.paymentMethod === "cod" ? "COD" : "Online"}
                       </p>
                       {o.loyaltyCouponCode && (
-                        <p className="mt-3 flex flex-wrap items-center gap-1.5 rounded-xl bg-mint px-3.5 py-2.5 text-[0.8rem] font-semibold text-leaf">
+                        <p className="mt-3 flex flex-wrap items-center gap-1.5 rounded-xl bg-mint px-3.5 py-2.5 text-[13px] font-semibold text-leaf">
                           <Star size={13} /> Loyalty reward <strong className="tabular-nums">{o.loyaltyCouponCode}</strong> — ₹{o.loyaltyCouponValue} off your next order
                         </p>
                       )}
                       {o.referralCouponCode && (
-                        <p className="mt-2 flex flex-wrap items-center gap-1.5 rounded-xl bg-mint px-3.5 py-2.5 text-[0.8rem] font-semibold text-leaf">
+                        <p className="mt-2 flex flex-wrap items-center gap-1.5 rounded-xl bg-mint px-3.5 py-2.5 text-[13px] font-semibold text-leaf">
                           <Package size={13} /> Referral reward <strong className="tabular-nums">{o.referralCouponCode}</strong>
                         </p>
                       )}
                       <div className="mt-4 flex gap-2">
-                        <Button variant="ghost" onClick={() => trackFromHistory(o.id, historyPhone)} className="h-9 rounded-full border border-line-2 bg-white px-5 text-[0.82rem] font-bold text-ink hover:bg-[#f5f5f7]">Track</Button>
+                        <Button variant="ghost" onClick={() => trackFromHistory(o.id, historyPhone)} className="h-9 rounded-full border border-line-2 bg-white px-5 text-[13px] font-bold text-ink hover:bg-[#f5f5f7]">Track</Button>
                         {o.cancellable && (
-                          <Button variant="ghost" onClick={() => cancelOrder(o.id, historyPhone)} className="h-9 rounded-full px-5 text-[0.82rem] font-bold text-[#c8400f] hover:bg-carrot/10">Cancel order</Button>
+                          <Button variant="ghost" onClick={() => cancelOrder(o.id, historyPhone)} className="h-9 rounded-full px-5 text-[13px] font-bold text-[#c8400f] hover:bg-carrot/10">Cancel order</Button>
                         )}
                       </div>
                     </motion.div>
@@ -436,7 +436,7 @@ export function TrackView() {
             </div>
           </div>
 
-          <p className="mt-10 flex items-center justify-center gap-2 text-center text-[0.8rem] font-medium text-muted-foreground">
+          <p className="mt-10 flex items-center justify-center gap-2 text-center text-[13px] font-medium text-muted-foreground">
             <MapPin size={13} /> Track any order without signing in — orders stay linked to your number.
           </p>
         </section>

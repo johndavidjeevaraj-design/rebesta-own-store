@@ -67,6 +67,7 @@ export default function FarmStory() {
   useEffect(() => {
     if (reduced || !root.current) return;
     gsap.registerPlugin(ScrollTrigger);
+    let storyTrigger: any = null;
     const ctx = gsap.context(() => {
       const n = PHASES.length;
       const imgs = gsap.utils.toArray<HTMLElement>("[data-fs-img]");
@@ -80,12 +81,13 @@ export default function FarmStory() {
           trigger: root.current,
           start: "top top",
           end: "bottom bottom",
-          /* no snap — snapping caused a pause-then-yank after the fling.
-             Apple's story pages scrub freely: momentum carries, dissolves
-             blend, scrub:1 eases the timeline toward the scroll position */
+          /* scrub 1 keeps the timeline easing toward the scroll position —
+             glides from the settle system (below) play through it, so a
+             phase change is one continuous smooth transform */
           scrub: 1,
         },
       });
+      storyTrigger = tl.scrollTrigger;
 
       // phase 0 visual settles in slowly while its text is already visible
       tl.fromTo(imgs[0], { scale: 1.12 }, { scale: 1, duration: 1.5, ease: "power1.out" }, 0);
@@ -106,6 +108,109 @@ export default function FarmStory() {
       if (bar) tl.fromTo(bar, { scaleX: 0 }, { scaleX: 1, duration: n, ease: "none" }, 0);
     }, root);
 
+    /* ── smooth settle ──────────────────────────────────────────────────
+       "when the user scrolls, smoothly transform to the next page."
+       After scrolling comes to rest the story glides itself to a COMPLETE
+       phase — you never sit mid-blend with half-swapped text.
+       • rest bands (40% of each window, fully clean) are left untouched
+       • stop inside a blend and it completes the transform in the
+         direction you were scrolling, animated through Lenis's own
+         easing — one continuous motion, no pause-then-yank
+       • any user input mid-glide freezes it instantly and hands control
+         back, so it can never fight the finger */
+    let storyCleanup: (() => void) | undefined;
+    type LenisLike = {
+      scroll: number;
+      animatedScroll: number;
+      on: (e: string, cb: (p: { direction: number }) => void) => void;
+      off?: (e: string, cb: (p: { direction: number }) => void) => void;
+      scrollTo: (t: number, o?: Record<string, unknown>) => void;
+    };
+    /* LenisProvider wraps this section, and React runs child effects first —
+       window.__lenis may not exist yet when we mount. Attach as soon as it
+       shows up. */
+    const attachSettle = (lenis: LenisLike) => {
+      const N = PHASES.length;
+      const centers = PHASES.map((_, i) => i + 0.5); // rest point of each phase
+      const unitAt = (y: number) => ((y - storyTrigger.start) / (storyTrigger.end - storyTrigger.start)) * N;
+      const yAt = (u: number) => storyTrigger.start + ((storyTrigger.end - storyTrigger.start) * u) / N;
+
+      let settleTimer: ReturnType<typeof setTimeout> | undefined;
+      let gestureU = -1; // where the current gesture began (-1 = no anchor yet)
+      let lastDir = 1;
+      let gliding = false;
+
+      const glide = (target: number, fromU: number) => {
+        gliding = true;
+        lenis.scrollTo(yAt(target), {
+          duration: Math.min(1.5, 0.5 + Math.abs(target - fromU) * 0.6),
+          easing: (x: number) => 1 - Math.pow(1 - x, 3),
+          onComplete: () => {
+            gliding = false;
+            gestureU = target;
+          },
+        });
+      };
+
+      const settle = () => {
+        if (!storyTrigger.end) return;
+        const y = lenis.scroll ?? window.scrollY;
+        const u = unitAt(y);
+        if (u <= 0.35 || u >= N - 0.4) { gestureU = -1; return; } // entering/leaving — free
+        const nearest = centers.reduce((a, b) => (Math.abs(b - u) < Math.abs(a - u) ? b : a));
+        if (Math.abs(nearest - u) <= 0.2) { gestureU = nearest; return; } // clean rest — hands off
+        const dir = gestureU >= 0 && u !== gestureU ? Math.sign(u - gestureU) : lastDir;
+        const target =
+          dir >= 0
+            ? centers.find((c) => c > u) ?? centers[N - 1]
+            : [...centers].reverse().find((c) => c < u) ?? centers[0];
+        if (Math.abs(yAt(target) - y) < 4) { gestureU = target; return; }
+        glide(target, u);
+      };
+
+      const onLenisScroll = ({ direction }: { direction: number }) => {
+        if (direction) lastDir = direction;
+        clearTimeout(settleTimer);
+        settleTimer = setTimeout(settle, 170);
+      };
+      lenis.on("scroll", onLenisScroll);
+
+      /* user input mid-glide: freeze the animation exactly where it is,
+         re-anchor the gesture — the next settle decides from here */
+      const onUser = () => {
+        clearTimeout(settleTimer);
+        if (gliding) {
+          lenis.scrollTo(lenis.animatedScroll, { immediate: true, force: true });
+          gliding = false;
+        }
+        const u = unitAt(lenis.scroll ?? window.scrollY);
+        gestureU = u >= 0 && u <= N ? u : -1;
+      };
+      window.addEventListener("wheel", onUser, { passive: true });
+      window.addEventListener("touchstart", onUser, { passive: true });
+      window.addEventListener("keydown", onUser);
+
+      storyCleanup = () => {
+        lenis.off?.("scroll", onLenisScroll);
+        window.removeEventListener("wheel", onUser);
+        window.removeEventListener("touchstart", onUser);
+        window.removeEventListener("keydown", onUser);
+        clearTimeout(settleTimer);
+      };
+    };
+    const lenisNow = (window as any).__lenis as LenisLike | undefined;
+    if (lenisNow && storyTrigger) {
+      attachSettle(lenisNow);
+    } else {
+      let tries = 0;
+      const poll = setInterval(() => {
+        const l = (window as any).__lenis as LenisLike | undefined;
+        if (l && storyTrigger) { clearInterval(poll); attachSettle(l); }
+        else if (++tries > 50) clearInterval(poll);
+      }, 100);
+      storyCleanup = () => clearInterval(poll);
+    }
+
     /* content above this section (lazy images, client-rendered product
        grids) shifts layout AFTER the trigger positions are captured — keep
        the scrub window honest by refreshing whenever page height settles */
@@ -119,6 +224,7 @@ export default function FarmStory() {
     const t2 = setTimeout(debounced, 1200);
     return () => {
       ctx.revert();
+      storyCleanup?.();
       window.removeEventListener("load", debounced);
       document.removeEventListener("load", debounced, true);
       ro.disconnect();
@@ -151,6 +257,7 @@ export default function FarmStory() {
     <section
       id="how"
       ref={root}
+      data-settle="1"
       aria-label="How it works — farm to door story"
       className="relative h-[600vh] bg-[#0b0d0c] md:h-[400vh]"
       /* a long, cinematic runway — one phone fling ≈ one phase, and the

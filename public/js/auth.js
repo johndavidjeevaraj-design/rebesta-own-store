@@ -12,13 +12,24 @@
   }
   function clearError() { if (errBox) errBox.hidden = true; }
 
-  async function post(url, body) {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    const data = await res.json().catch(() => ({ ok: false, error: 'Something went wrong. Please try again.' }));
+  async function post(url, body, attempt = 0) {
+    let res = null, data = null;
+    try {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      data = await res.json().catch(() => null);
+    } catch { data = null; } /* network drop */
+    /* transient blip — server restarting mid-deploy, gateway page, flaky
+       mobile network: one silent retry after a beat. Most hiccups never
+       reach the customer. */
+    if (!data && attempt < 1) {
+      await new Promise(r => setTimeout(r, 1300));
+      return post(url, body, attempt + 1);
+    }
+    if (!data) throw new Error('Connection problem — please check your internet and try again.');
     if (!res.ok || !data.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
     return data;
   }
@@ -153,7 +164,7 @@
     }
     return null;
   }
-  const widgetError = e => (e && (e.message || e.error || e.msg)) || (typeof e === 'string' ? e : null) || 'Something went wrong. Please try again.';
+  const widgetError = e => (e && (e.message || e.error || e.msg)) || (typeof e === 'string' ? e : null) || 'The SMS service did not respond — please try again in a moment.';
   function widgetVerifyCode(code) {
     return new Promise((resolve, reject) => {
       if (typeof window.verifyOtp !== 'function') return reject(new Error('OTP system is still loading — wait a few seconds and try again.'));

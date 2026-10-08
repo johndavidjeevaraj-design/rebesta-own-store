@@ -33,7 +33,7 @@ export function LoginView() {
     /* the page flow itself */
     if (!document.querySelector("script[data-auth-page]")) {
       const s = document.createElement("script");
-      s.src = "/js/auth.js?v=20261005d"; s.async = true; s.dataset.authPage = "1";
+      s.src = "/js/auth.js?v=20261008a"; s.async = true; s.dataset.authPage = "1";
       document.head.appendChild(s);
     }
   }, []);

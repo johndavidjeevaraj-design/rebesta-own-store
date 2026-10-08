@@ -394,7 +394,7 @@ export function CartView() {
     setAuthOpen(true);
     loadOtpSdk();
     const s = document.createElement("script");
-    s.src = "/js/auth.js?v=20261005d";
+    s.src = "/js/auth.js?v=20261008a";
     s.async = true;
     s.onload = () => {
       const RFSAuth = (window as any).RFSAuth;

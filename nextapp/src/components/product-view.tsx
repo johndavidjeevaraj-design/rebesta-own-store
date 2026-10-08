@@ -160,19 +160,27 @@ export function ProductView({ handle }: { handle: string }) {
         ) : (
           <>
             <div className="grid gap-8 md:grid-cols-2 md:items-start">
-              {/* Media */}
+              {/* Media — dark cinematic frame, same DNA as the farm story */}
               <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }} className="relative">
                 <motion.button
                   type="button"
                   onClick={() => setZoom(true)}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
-                  className="block w-full overflow-hidden rounded-3xl border border-line bg-mint"
+                  className="block w-full overflow-hidden rounded-[28px] bg-[#0b0d0c] shadow-[0_24px_80px_rgba(0,0,0,0.35)]"
                   title="Click to enlarge"
                   aria-label={`Enlarge image of ${product.title}`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={product.image} alt={product.title} className="aspect-[4/3] w-full object-cover transition-transform duration-500 hover:scale-[1.04]" decoding="async" />
+                  <motion.img
+                    src={product.image}
+                    alt={product.title}
+                    initial={{ scale: 1.08 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 1.2, ease: [0.33, 0.66, 0.33, 1] }}
+                    className="aspect-[4/3] w-full object-cover"
+                    decoding="async"
+                  />
                 </motion.button>
                 {discount > 0 && (
                   <motion.span
@@ -188,7 +196,7 @@ export function ProductView({ handle }: { handle: string }) {
 
               {/* Copy */}
               <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.08 }}>
-                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#c8400f]">{product.category}</span>
+                <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-leaf">{product.category}</span>
                 <h1 className="mt-1.5 font-display text-2xl font-semibold leading-tight text-forest md:text-[28px]">{product.title}</h1>
                 {product.description && <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-ink-2/85">{product.description}</p>}
 

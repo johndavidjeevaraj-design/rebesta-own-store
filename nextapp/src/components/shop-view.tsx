@@ -6,6 +6,7 @@ import { History, SlidersHorizontal } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ProductCard } from "@/components/product-card";
+import Reveal from "@/components/reveal";
 import { api, Product, Settings, readRecent } from "@/lib/store";
 import { matchesQuery } from "@/lib/tamil";
 
@@ -91,7 +92,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
         <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: "easeOut" }}>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-leaf">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-leaf">
                 Shop fresh
               </span>
               <h1 className="font-display text-xl font-semibold text-forest md:text-2xl">{conf.heading}</h1>
@@ -107,6 +108,21 @@ export function ShopView({ mode }: { mode: ShopMode }) {
             </motion.span>
           </div>
         </motion.div>
+
+        {/* offers — a quiet cinematic band, same DNA as the farm story */}
+        {mode === "offers" && (
+          <Reveal className="mt-8">
+            <section aria-label="This week's deals" className="overflow-hidden rounded-[32px] bg-[#0b0d0c] px-6 py-14 text-center sm:py-16">
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-leaf-2">Fresh deals</p>
+              <h2 className="mx-auto mt-3 max-w-xl font-display text-[28px] font-semibold leading-tight tracking-tight text-white sm:text-[32px]">
+                This week&rsquo;s harvest, at kinder prices.
+              </h2>
+              <p className="mx-auto mt-3 max-w-md text-[14px] font-medium leading-relaxed text-white/70">
+                Picked at first light, priced to move — while the crate lasts.
+              </p>
+            </section>
+          </Reveal>
+        )}
 
         {error ? (
           <div className="mt-10 grid place-items-center rounded-3xl border border-dashed border-line-2 bg-white/60 py-16 text-center">
@@ -128,13 +144,13 @@ export function ShopView({ mode }: { mode: ShopMode }) {
                 <h2 className="flex items-center gap-2 text-[15px] font-semibold text-forest">
                   <History size={17} className="text-leaf" /> Your last looks
                 </h2>
-                <div className="rail -mx-4 mt-3 flex gap-4 overflow-x-auto px-4 pb-2">
+                <Reveal stagger={0.05} className="rail -mx-4 mt-3 flex gap-4 overflow-x-auto px-4 pb-2">
                   {recent.map((p, i) => (
                     <div key={p.handle} className="w-[46%] shrink-0 sm:w-[30%] md:w-[22%] lg:w-[17%]">
                       <ProductCard product={p} index={i} />
                     </div>
                   ))}
-                </div>
+                </Reveal>
               </motion.section>
             )}
 

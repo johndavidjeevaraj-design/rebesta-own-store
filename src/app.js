@@ -60,6 +60,7 @@ ${productUrls}
   app.get('/', (req, res) => res.sendFile('v2/index.html', { root: config.publicDir }));
   app.get(['/shop', '/offers', '/greens'], (req, res) => res.sendFile(`v2${req.path}.html`, { root: config.publicDir }));
   app.get(['/about', '/faq', '/terms', '/privacy', '/refund'], (req, res) => res.sendFile(`v2${req.path}.html`, { root: config.publicDir }));
+  app.get('/cart', (req, res) => res.sendFile('v2/cart.html', { root: config.publicDir }));
 
   app.use(express.static(config.publicDir, {
     extensions: ['html'],

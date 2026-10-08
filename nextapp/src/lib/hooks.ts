@@ -73,3 +73,8 @@ export function useCartQty(handle: string) {
   const lines = useSyncExternalStore(linesSub, getLines, () => [] as CartLine[]);
   return lines.find((l) => l.handle === handle)?.qty || 0;
 }
+
+/* ---- full cart lines for the basket page ---- */
+export function useCartLines() {
+  return useSyncExternalStore(linesSub, getLines, () => [] as CartLine[]);
+}

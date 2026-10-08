@@ -15,6 +15,10 @@ export interface Product {
   featured?: boolean;
   description?: string;
   tags?: string[];
+  sku?: string;
+  baseHandle?: string;
+  weightGrams?: number;
+  variantTitle?: string;
 }
 
 export interface CartLine { handle: string; qty: number }

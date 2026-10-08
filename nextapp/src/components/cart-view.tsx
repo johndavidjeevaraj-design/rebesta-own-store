@@ -794,7 +794,7 @@ export function CartView() {
                         <b className="mt-1.5 block truncate text-[11px] font-extrabold text-ink">{p.title}</b>
                         <div className="text-[11px] font-bold text-forest">
                           {money(p.priceInr)}
-                          {compare ? <s className="ml-1 font-semibold text-muted-foreground">{money(compare)}</s> : null} <small className="text-muted-foreground">· {p.unitLabel || ""}</small>
+                          {compare ? <s className="ml-1 font-semibold text-muted-foreground">{money(compare)}</s> : null} <small className="text-[12px] text-muted-foreground">· {p.unitLabel || ""}</small>
                         </div>
                       </div>
                     );
@@ -1023,7 +1023,7 @@ export function CartView() {
                         </div>
                         <div className="flex justify-between">
                           <span>
-                            Delivery Fee{eligible && quote?.distanceKm ? <small className="ml-1 text-muted-foreground">| {Number(quote.distanceKm).toFixed(1)} kms</small> : null}
+                            Delivery Fee{eligible && quote?.distanceKm ? <small className="ml-1 text-[12px] text-muted-foreground">| {Number(quote.distanceKm).toFixed(1)} kms</small> : null}
                           </span>
                           <span>{fee === null ? "—" : fee === 0 ? "FREE" : money(fee)}</span>
                         </div>

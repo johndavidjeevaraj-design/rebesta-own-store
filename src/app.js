@@ -62,6 +62,20 @@ ${productUrls}
   app.get(['/about', '/faq', '/terms', '/privacy', '/refund'], (req, res) => res.sendFile(`v2${req.path}.html`, { root: config.publicDir }));
   app.get('/cart', (req, res) => res.sendFile('v2/cart.html', { root: config.publicDir }));
 
+  /* v3 islands for these too — fall back to the previous page if this build
+     somehow lacks the export, so the route can never 404 after a deploy */
+  const v3WithFallback = (page) => (req, res) => {
+    res.sendFile(`v2/${page}.html`, { root: config.publicDir }, (err) => {
+      if (err) res.sendFile(`${page}.html`, { root: config.publicDir });
+    });
+  };
+  app.get('/login', v3WithFallback('login'));
+  app.get('/account', v3WithFallback('account'));
+  app.get('/order-success', v3WithFallback('order-success'));
+  app.get('/track', v3WithFallback('track'));
+  app.get('/subscriptions', v3WithFallback('subscriptions'));
+  app.get('/partner', (req, res) => res.sendFile('partner.html', { root: config.publicDir }));
+
   app.use(express.static(config.publicDir, {
     extensions: ['html'],
     index: false,
@@ -69,10 +83,6 @@ ${productUrls}
   }));
   /* one auth page: number + OTP decides sign-in vs new account — /signup is legacy */
   app.get('/signup', (req, res) => res.redirect(302, '/login' + (req.query.phone ? `?phone=${encodeURIComponent(String(req.query.phone))}` : '')));
-  app.get(['/login', '/account'], (req, res) => res.sendFile(`${req.path.slice(1)}.html`, { root: config.publicDir }));
-  app.get(['/order-success', '/track', '/partner', '/subscriptions'], (req, res) => {
-    res.sendFile(`${req.path.slice(1)}.html`, { root: config.publicDir });
-  });
   /* product pages: v3 export when this build knows the product, else the
      previous product page (so products added after a build still render) */
   app.get('/products/:handle', (req, res) => {

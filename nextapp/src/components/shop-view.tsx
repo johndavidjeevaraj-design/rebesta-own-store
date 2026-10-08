@@ -112,7 +112,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
           <div className="mt-10 grid place-items-center rounded-3xl border border-dashed border-line-2 bg-white/60 py-16 text-center">
             <p className="text-3xl">🥕</p>
             <p className="mt-3 font-extrabold text-ink">Could not load products</p>
-            <p className="mt-1 text-sm text-muted">{error}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{error}</p>
           </div>
         ) : (
           <>
@@ -147,7 +147,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
                   onClick={() => setActiveCategory(cat)}
                   className={`flex shrink-0 items-center gap-2 rounded-full border py-1 pl-1 pr-3.5 transition ${
                     activeCategory === cat
-                      ? "border-transparent bg-forest text-white shadow-mid"
+                      ? "border-transparent bg-carrot text-white shadow-[0_4px_14px_rgba(214,62,10,0.25)]"
                       : "border-line bg-white text-ink hover:border-leaf/50"
                   }`}
                 >
@@ -155,7 +155,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
                   <img src={categoryImage(cat)} alt="" loading="lazy" className="h-8 w-8 rounded-full border border-white/60 object-cover" />
                   <span className="flex flex-col items-start leading-tight">
                     <span className="text-[0.78rem] font-extrabold">{cat}</span>
-                    <span className={`text-[0.6rem] font-bold ${activeCategory === cat ? "text-white/70" : "text-muted"}`}>{countOf(cat)}</span>
+                    <span className={`text-[0.6rem] font-bold ${activeCategory === cat ? "text-white/85" : "text-muted-foreground"}`}>{countOf(cat)}</span>
                   </span>
                 </button>
               ))}
@@ -169,7 +169,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
                 Offers only
               </label>
               <div className="flex flex-wrap items-center gap-1.5">
-                <SlidersHorizontal size={13} className="text-muted" aria-hidden="true" />
+                <SlidersHorizontal size={13} className="text-muted-foreground" aria-hidden="true" />
                 {(
                   [
                     ["featured", "Featured"],
@@ -183,7 +183,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
                     type="button"
                     onClick={() => setSort(key)}
                     className={`rounded-full px-3 py-1.5 text-[0.72rem] font-extrabold transition ${
-                      sort === key ? "border border-leaf/30 bg-mint text-leaf" : "text-muted hover:text-ink"
+                      sort === key ? "border border-leaf/30 bg-mint text-leaf" : "text-muted-foreground hover:text-ink"
                     }`}
                   >
                     {label}
@@ -201,9 +201,9 @@ export function ShopView({ mode }: { mode: ShopMode }) {
               </div>
             ) : filtered.length === 0 ? (
               <div className="mt-10 grid place-items-center rounded-3xl border border-dashed border-line-2 bg-white/60 py-16 text-center">
-                <p className="text-2xl text-muted-foreground/40"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9h16l-1.5 10.5a2 2 0 0 1-2 1.5H7.5a2 2 0 0 1-2-1.5L4 9Z" stroke="currentColor" strokeWidth="1.4"/><path d="M8 9V7a4 4 0 0 1 8 0v2" stroke="currentColor" strokeWidth="1.4"/></svg></p>
+                <p className="text-2xl text-muted-foreground/60"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9h16l-1.5 10.5a2 2 0 0 1-2 1.5H7.5a2 2 0 0 1-2-1.5L4 9Z" stroke="currentColor" strokeWidth="1.4"/><path d="M8 9V7a4 4 0 0 1 8 0v2" stroke="currentColor" strokeWidth="1.4"/></svg></p>
                 <p className="mt-3 font-extrabold text-ink">No products found</p>
-                <p className="mt-1 text-sm text-muted">
+                <p className="mt-1 text-sm text-muted-foreground">
                   Try another vegetable, leaf, or combo — Tamil works too (<i>keerai</i>, <i>murungakkai</i>…)
                 </p>
               </div>

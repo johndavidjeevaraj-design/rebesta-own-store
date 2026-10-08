@@ -80,13 +80,13 @@ export function AccountView() {
           text-decoration:none; transition:box-shadow .18s, transform .18s; }
         .account-order:hover { box-shadow:0 8px 24px rgba(0,0,0,0.08); transform:translateY(-1px); }
         .ao-main strong { display:block; font-size:0.95rem; font-weight:700; color:#1d1d1f; }
-        .ao-main span { font-size:0.78rem; font-weight:500; color:#6e6e73; }
+        .ao-main span { font-size:0.78rem; font-weight:500; color:#4a4a4f; }
         .ao-side { display:flex; align-items:center; gap:10px; }
-        .ao-id { font-size:0.72rem; font-weight:600; color:#6e6e73; font-variant-numeric:tabular-nums; }
+        .ao-id { font-size:0.72rem; font-weight:600; color:#4a4a4f; font-variant-numeric:tabular-nums; }
         .badge { display:inline-flex; align-items:center; border-radius:9999px; padding:3px 10px; font-size:0.66rem; font-weight:700; }
         .badge.green { background:#f0f5f0; color:#0d8736; }
         .badge.orange { background:rgba(255,91,32,0.10); color:#d84a15; }
-        .badge.gray { background:rgba(0,0,0,0.06); color:#6e6e73; }
+        .badge.gray { background:rgba(0,0,0,0.06); color:#4a4a4f; }
         .account-order.in { animation:orderIn .35s ease; }
         @keyframes orderIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
       `}</style>

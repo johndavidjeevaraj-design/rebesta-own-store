@@ -26,7 +26,7 @@ export function InfoShell({
               {eyebrow}
             </span>
             <h1 className="mt-2 font-display text-[1.9rem] font-extrabold leading-tight text-forest sm:text-[2.4rem]">{title}</h1>
-            <p className="mt-2 max-w-xl text-[0.95rem] font-medium leading-relaxed text-muted">{subtitle}</p>
+            <p className="mt-2 max-w-xl text-[0.95rem] font-medium leading-relaxed text-muted-foreground">{subtitle}</p>
           </div>
           <div className="rounded-3xl border border-line bg-white p-6 shadow-soft sm:p-10">
             <div className="prose-page">{children}</div>

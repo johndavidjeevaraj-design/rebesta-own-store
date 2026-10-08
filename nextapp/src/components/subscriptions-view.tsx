@@ -88,7 +88,7 @@ export function SubscriptionsView() {
       <SiteHeader />
       <main className="pb-20">
         <section className="mx-auto max-w-xl px-4 pt-14 sm:pt-16">
-          <p className="text-[0.72rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">Set &amp; forget</p>
+          <p className="text-[0.72rem] font-bold uppercase tracking-[0.14em] text-[#c8400f]">Set &amp; forget</p>
           <h1 className="mt-3 font-display text-[2.2rem] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-[3rem]">Your weekly veg basket.</h1>
           <p className="mt-3 text-[1rem] font-medium leading-relaxed text-muted-foreground">
             Same fresh vegetables, same morning slot, every week. Pay on delivery each time. Pause, resume or cancel anytime — no charges, no calls.
@@ -99,7 +99,7 @@ export function SubscriptionsView() {
               id="subPhone" inputMode="numeric" maxLength={10} autoComplete="tel" required
               placeholder="10-digit number used on your orders" value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="h-12 flex-1 rounded-xl border-line-2 bg-white text-[0.95rem] font-medium placeholder:text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-ink/20"
+              className="h-12 flex-1 rounded-xl border-line-2 bg-white text-[0.95rem] font-medium placeholder:text-[#8e8e93] focus-visible:ring-2 focus-visible:ring-ink/20"
             />
             <Button type="submit" data-sub-find className="h-12 rounded-xl bg-ink px-6 text-[0.9rem] font-bold text-white hover:bg-ink/90">
               Show
@@ -136,7 +136,7 @@ export function SubscriptionsView() {
                     {sub.status === "ACTIVE" ? (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-mint px-2.5 py-1 text-[0.68rem] font-bold text-leaf"><CheckCircle2 size={12} /> Active</span>
                     ) : sub.status === "PAUSED" ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-carrot/10 px-2.5 py-1 text-[0.68rem] font-bold text-[#d84a15]"><Pause size={12} /> Paused</span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-carrot/10 px-2.5 py-1 text-[0.68rem] font-bold text-[#c8400f]"><Pause size={12} /> Paused</span>
                     ) : (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-black/[0.06] px-2.5 py-1 text-[0.68rem] font-bold text-muted-foreground">Cancelled</span>
                     )}

@@ -38,7 +38,7 @@ function StatusChip({ status }: { status: string }) {
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.68rem] font-bold ${
-        tone === "leaf" ? "bg-mint text-leaf" : tone === "orange" ? "bg-carrot/10 text-[#d84a15]" : "bg-black/[0.06] text-muted-foreground"
+        tone === "leaf" ? "bg-mint text-leaf" : tone === "orange" ? "bg-carrot/10 text-[#c8400f]" : "bg-black/[0.06] text-muted-foreground"
       }`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${tone === "leaf" ? "bg-leaf" : tone === "orange" ? "bg-carrot" : "bg-muted-foreground"}`} />
@@ -260,7 +260,7 @@ export function TrackView() {
       <SiteHeader />
       <main className="pb-20">
         <section className="mx-auto max-w-2xl px-4 pt-14 sm:pt-16">
-          <p className="text-[0.72rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">Track order</p>
+          <p className="text-[0.72rem] font-bold uppercase tracking-[0.14em] text-[#c8400f]">Track order</p>
           <h1 className="mt-3 font-display text-[2.2rem] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-[3rem]">Where&rsquo;s my delivery?</h1>
           <p className="mt-3 text-[1rem] font-medium text-muted-foreground">Enter your Rebesta order ID and the mobile number used at checkout.</p>
 
@@ -268,12 +268,12 @@ export function TrackView() {
             <Input
               id="orderId" required placeholder="RB-20260922-ABC123" value={orderId}
               onChange={(e) => setOrderId(e.target.value)}
-              className="h-12 rounded-xl border-line-2 bg-white text-[0.95rem] font-medium placeholder:text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-ink/20"
+              className="h-12 rounded-xl border-line-2 bg-white text-[0.95rem] font-medium placeholder:text-[#8e8e93] focus-visible:ring-2 focus-visible:ring-ink/20"
             />
             <Input
               id="trackPhone" required inputMode="tel" placeholder="10-digit mobile" value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="h-12 rounded-xl border-line-2 bg-white text-[0.95rem] font-medium placeholder:text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-ink/20"
+              className="h-12 rounded-xl border-line-2 bg-white text-[0.95rem] font-medium placeholder:text-[#8e8e93] focus-visible:ring-2 focus-visible:ring-ink/20"
             />
             <Button type="submit" className="h-12 rounded-xl bg-ink px-6 text-[0.9rem] font-bold text-white hover:bg-ink/90 active:scale-[0.98]">
               <Search size={16} /> Track
@@ -348,7 +348,7 @@ export function TrackView() {
                     <textarea
                       maxLength={400} value={reviewText} onChange={(e) => setReviewText(e.target.value)}
                       placeholder="Tell others what you think (optional) — freshness, packing, delivery…"
-                      className="mt-4 min-h-24 w-full resize-none rounded-xl border border-transparent bg-white p-4 text-[0.9rem] font-medium text-ink outline-none transition placeholder:text-muted-foreground/70 focus:border-black/10"
+                      className="mt-4 min-h-24 w-full resize-none rounded-xl border border-transparent bg-white p-4 text-[0.9rem] font-medium text-ink outline-none transition placeholder:text-[#8e8e93] focus:border-black/10"
                     />
                     <Button onClick={sendReview} className="mt-3 h-11 w-full rounded-full bg-leaf text-[0.9rem] font-bold text-white hover:brightness-110">Send review</Button>
                   </Card>
@@ -389,7 +389,7 @@ export function TrackView() {
               <Input
                 id="historyPhone" inputMode="tel" required placeholder="10-digit mobile" value={historyPhone}
                 onChange={(e) => setHistoryPhone(e.target.value)}
-                className="h-12 flex-1 rounded-xl border-transparent bg-white text-[0.95rem] font-medium placeholder:text-muted-foreground/60 focus-visible:border-black/10 focus-visible:ring-0"
+                className="h-12 flex-1 rounded-xl border-transparent bg-white text-[0.95rem] font-medium placeholder:text-[#8e8e93] focus-visible:border-black/10 focus-visible:ring-0"
               />
               <Button type="submit" className="h-12 rounded-xl bg-ink px-6 text-[0.9rem] font-bold text-white hover:bg-ink/90">Show</Button>
             </form>

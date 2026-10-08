@@ -73,7 +73,7 @@ export default function Home() {
                 <h2 id="cats-h" className="font-display text-[1.9rem] font-extrabold leading-tight tracking-tight text-ink sm:text-[2.4rem]">
                   Shop by category.
                 </h2>
-                <a href="/shop" className="hidden shrink-0 items-center gap-1 text-[0.9rem] font-semibold text-leaf transition hover:gap-2 sm:flex">
+                <a href="/shop" className="hidden shrink-0 items-center gap-1 text-[0.9rem] font-semibold text-[#c8400f] transition hover:gap-2 sm:flex">
                   Full shop <ChevronRight size={15} />
                 </a>
               </div>
@@ -104,12 +104,12 @@ export default function Home() {
           <Reveal>
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-[0.72rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">Harvested today</p>
+                <p className="text-[0.72rem] font-bold uppercase tracking-[0.14em] text-[#c8400f]">Harvested today</p>
                 <h2 id="feat-h" className="mt-2 font-display text-[1.9rem] font-extrabold leading-tight tracking-tight text-ink sm:text-[2.4rem]">
                   This morning&rsquo;s picks.
                 </h2>
               </div>
-              <a href="/shop" className="hidden shrink-0 items-center gap-1 text-[0.9rem] font-semibold text-leaf transition hover:gap-2 sm:flex">
+              <a href="/shop" className="hidden shrink-0 items-center gap-1 text-[0.9rem] font-semibold text-[#c8400f] transition hover:gap-2 sm:flex">
                 See everything <ChevronRight size={15} />
               </a>
             </div>
@@ -118,8 +118,8 @@ export default function Home() {
           <div className="mt-8 grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-4">
             {loading
               ? Array.from({ length: 4 }).map((_, i) => (
-                  <Card key={i} className="h-full gap-0 rounded-[24px] border-transparent bg-[#f5f5f7] p-3 shadow-none">
-                    <Skeleton className="aspect-square w-full rounded-[16px]" />
+                  <Card key={i} className="h-full gap-0 rounded-[20px] border border-line bg-white p-3 shadow-[0_1px_5px_rgba(0,0,0,0.05)]">
+                    <Skeleton className="aspect-square w-full rounded-[14px]" />
                     <div className="space-y-2 px-1 pt-3 pb-1">
                       <Skeleton className="h-4 w-3/4" />
                       <Skeleton className="h-3 w-1/3" />
@@ -253,7 +253,7 @@ export default function Home() {
                   <br />
                   Start yours tomorrow.
                 </h2>
-                <p className="mx-auto mt-5 max-w-md text-[1rem] font-medium text-white/60">
+                <p className="mx-auto mt-5 max-w-md text-[1rem] font-medium text-white/80">
                   Order before 9 PM — your vegetables arrive with the morning dew, at your exact pin.
                 </p>
                 <Button

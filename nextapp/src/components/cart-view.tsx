@@ -142,7 +142,7 @@ function PortalSheet({ open, onClose, label, children }: { open: boolean; onClos
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full border border-line bg-white text-muted transition hover:text-ink"
+              className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full border border-line bg-white text-muted-foreground transition hover:text-ink"
             >
               <X size={16} />
             </button>
@@ -556,9 +556,9 @@ export function CartView() {
         {/* ---------- empty state ---------- */}
         {lines.length === 0 && (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="grid place-items-center rounded-3xl border border-dashed border-line-2 bg-white/60 py-14 text-center">
-            <motion.p initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 240, damping: 18 }} className="text-muted-foreground/30"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9h16l-1.5 10.5a2 2 0 0 1-2 1.5H7.5a2 2 0 0 1-2-1.5L4 9Z" stroke="currentColor" strokeWidth="1.2"/><path d="M8 9V7a4 4 0 0 1 8 0v2" stroke="currentColor" strokeWidth="1.2"/></svg></motion.p>
+            <motion.p initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 240, damping: 18 }} className="text-muted-foreground/60"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9h16l-1.5 10.5a2 2 0 0 1-2 1.5H7.5a2 2 0 0 1-2-1.5L4 9Z" stroke="currentColor" strokeWidth="1.2"/><path d="M8 9V7a4 4 0 0 1 8 0v2" stroke="currentColor" strokeWidth="1.2"/></svg></motion.p>
             <h1 className="mt-4 font-display text-2xl font-extrabold text-forest">Your basket is empty</h1>
-            <p className="mt-1 text-sm text-muted">Add fresh vegetables and they&rsquo;ll show up right here.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Add fresh vegetables and they&rsquo;ll show up right here.</p>
             {repeatKnown && (
               <div className="mt-5 w-full max-w-xs">
                 <button
@@ -571,7 +571,7 @@ export function CartView() {
                 >
                   🔁 Repeat last order
                 </button>
-                <p className="mt-1.5 text-[0.72rem] font-semibold text-muted">Adds every product from your previous order in one tap.</p>
+                <p className="mt-1.5 text-[0.72rem] font-semibold text-muted-foreground">Adds every product from your previous order in one tap.</p>
               </div>
             )}
             <a href="/shop" className="mt-5 rounded-2xl bg-carrot px-6 py-3 text-sm font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-110">
@@ -579,7 +579,7 @@ export function CartView() {
             </a>
             {emptyPicks.length > 0 && (
               <div className="mt-8 w-full px-6">
-                <h3 className="text-[0.72rem] font-extrabold uppercase tracking-[0.14em] text-muted">Top picks right now</h3>
+                <h3 className="text-[0.72rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">Top picks right now</h3>
                 <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {emptyPicks.map((p, i) => (
                     <motion.a
@@ -628,8 +628,8 @@ export function CartView() {
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-mint text-leaf">
                   <Home size={16} />
                 </span>
-                <span className={`min-w-0 flex-1 truncate text-[0.82rem] font-extrabold ${addr1.trim() ? "text-ink" : "text-muted"}`}>{addrLine}</span>
-                <motion.span animate={{ rotate: addrEditOpen ? 90 : 0 }} className="text-muted">
+                <span className={`min-w-0 flex-1 truncate text-[0.82rem] font-extrabold ${addr1.trim() ? "text-ink" : "text-muted-foreground"}`}>{addrLine}</span>
+                <motion.span animate={{ rotate: addrEditOpen ? 90 : 0 }} className="text-muted-foreground">
                   <ChevronRight size={16} />
                 </motion.span>
               </button>
@@ -649,7 +649,7 @@ export function CartView() {
                         placeholder="House / flat / street"
                         value={addr1}
                         onChange={(e) => setAddr1(e.target.value)}
-                        className="w-full rounded-xl border border-line bg-white px-3.5 py-3 text-sm font-bold text-ink outline-none transition placeholder:font-semibold placeholder:text-muted focus:border-leaf/60"
+                        className="w-full rounded-xl border border-line bg-white px-3.5 py-3 text-sm font-bold text-ink outline-none transition placeholder:font-semibold placeholder:text-muted-foreground focus:border-leaf/60"
                       />
                       <div className="mt-2.5 flex gap-2.5">
                         <input
@@ -660,7 +660,7 @@ export function CartView() {
                           placeholder="6-digit pincode"
                           value={pin}
                           onChange={(e) => setPin(e.target.value)}
-                          className="w-36 rounded-xl border border-line bg-white px-3.5 py-3 text-sm font-bold text-ink outline-none transition placeholder:font-semibold placeholder:text-muted focus:border-leaf/60"
+                          className="w-36 rounded-xl border border-line bg-white px-3.5 py-3 text-sm font-bold text-ink outline-none transition placeholder:font-semibold placeholder:text-muted-foreground focus:border-leaf/60"
                         />
                         <button type="button" onClick={() => setLocSheetOpen(true)} className="flex-1 rounded-xl border border-dashed border-leaf/50 bg-mint px-3 py-3 text-[0.78rem] font-extrabold text-leaf transition hover:bg-leaf hover:text-white">
                           📍 Change area — pick your locality
@@ -680,7 +680,7 @@ export function CartView() {
                     className="overflow-hidden"
                   >
                     <div className="mt-3 rounded-2xl bg-mint px-4 py-2.5 text-[0.82rem] font-extrabold text-forest">
-                      🎉 {money(savings)} saved! <span className="font-bold text-muted">On this order</span>
+                      🎉 {money(savings)} saved! <span className="font-bold text-muted-foreground">On this order</span>
                     </div>
                   </motion.div>
                 )}
@@ -707,13 +707,13 @@ export function CartView() {
                         <img src={p.image} alt="" loading="lazy" className="h-14 w-14 shrink-0 rounded-xl border border-line object-cover" />
                         <div className="min-w-0 flex-1">
                           <b className="block truncate text-[0.85rem] font-extrabold text-ink">{p.title}</b>
-                          <small className="text-[0.7rem] font-semibold text-muted">{p.unitLabel || ""}</small>
+                          <small className="text-[0.7rem] font-semibold text-muted-foreground">{p.unitLabel || ""}</small>
                           <div className="mt-0.5 flex items-center gap-1.5 text-[0.78rem] font-extrabold text-forest">
                             {money(p.priceInr)}
                             {compare ? (
                               <>
-                                <s className="font-semibold text-muted">{money(compare)}</s>
-                                <span className="rounded-full bg-carrot/10 px-1.5 py-0.5 text-[0.6rem] font-extrabold text-carrot">
+                                <s className="font-semibold text-muted-foreground">{money(compare)}</s>
+                                <span className="rounded-full bg-carrot/10 px-1.5 py-0.5 text-[0.6rem] font-extrabold text-[#c8400f]">
                                   {Math.round(((compare - p.priceInr) * 100) / compare)}% OFF
                                 </span>
                               </>
@@ -751,7 +751,7 @@ export function CartView() {
             {/* complete your basket */}
             {products.length > 0 && (
               <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }} className="mt-4 rounded-3xl border border-line bg-white p-5 shadow-soft">
-                <h4 className="text-[0.7rem] font-extrabold uppercase tracking-[0.14em] text-muted">Complete your basket</h4>
+                <h4 className="text-[0.7rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">Complete your basket</h4>
                 <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1">
                   {ADD_TABS.map((t) => (
                     <button
@@ -794,12 +794,12 @@ export function CartView() {
                         <b className="mt-1.5 block truncate text-[0.74rem] font-extrabold text-ink">{p.title}</b>
                         <div className="text-[0.72rem] font-bold text-forest">
                           {money(p.priceInr)}
-                          {compare ? <s className="ml-1 font-semibold text-muted">{money(compare)}</s> : null} <small className="text-muted">· {p.unitLabel || ""}</small>
+                          {compare ? <s className="ml-1 font-semibold text-muted-foreground">{money(compare)}</s> : null} <small className="text-muted-foreground">· {p.unitLabel || ""}</small>
                         </div>
                       </div>
                     );
                   })}
-                  {railPicks.picks.length === 0 && <p className="py-6 text-center text-[0.8rem] font-semibold text-muted">Nothing here right now — check the other tabs!</p>}
+                  {railPicks.picks.length === 0 && <p className="py-6 text-center text-[0.8rem] font-semibold text-muted-foreground">Nothing here right now — check the other tabs!</p>}
                 </div>
               </motion.section>
             )}
@@ -807,7 +807,7 @@ export function CartView() {
             {/* savings corner */}
             {coupons && coupons.length > 0 && (
               <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mt-4 rounded-3xl border border-line bg-white p-5 shadow-soft">
-                <h4 className="text-[0.7rem] font-extrabold uppercase tracking-[0.14em] text-muted">Savings corner</h4>
+                <h4 className="text-[0.7rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">Savings corner</h4>
                 {!coupon && (
                   <>
                     <button
@@ -817,7 +817,7 @@ export function CartView() {
                     >
                       <span className="grid h-9 w-9 place-items-center rounded-xl bg-carrot/10 font-black text-carrot">%</span>
                       <span className="flex-1 text-[0.85rem] font-extrabold text-ink">Apply Coupon</span>
-                      <motion.span animate={{ rotate: couponMoreOpen ? 90 : 0 }} className="text-muted">
+                      <motion.span animate={{ rotate: couponMoreOpen ? 90 : 0 }} className="text-muted-foreground">
                         <ChevronRight size={16} />
                       </motion.span>
                     </button>
@@ -842,7 +842,7 @@ export function CartView() {
                                 <Tag size={15} className="shrink-0 text-leaf" />
                                 <div className="min-w-0 flex-1">
                                   <b className="block text-[0.8rem] font-extrabold text-ink">{c.code}</b>
-                                  <small className="text-[0.7rem] font-semibold text-muted">{couponDesc(c)}</small>
+                                  <small className="text-[0.7rem] font-semibold text-muted-foreground">{couponDesc(c)}</small>
                                 </div>
                                 <button
                                   type="button"
@@ -866,7 +866,7 @@ export function CartView() {
                                     applyCoupon(couponInput);
                                   }
                                 }}
-                                className="min-w-0 flex-1 rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm font-bold uppercase text-ink outline-none transition placeholder:font-semibold placeholder:normal-case placeholder:text-muted focus:border-leaf/60"
+                                className="min-w-0 flex-1 rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm font-bold uppercase text-ink outline-none transition placeholder:font-semibold placeholder:normal-case placeholder:text-muted-foreground focus:border-leaf/60"
                               />
                               <button type="button" onClick={() => applyCoupon(couponInput)} className="shrink-0 rounded-xl bg-carrot px-4 py-2.5 text-[0.74rem] font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]">
                                 APPLY
@@ -878,7 +878,7 @@ export function CartView() {
                                   initial={{ opacity: 0, y: -4 }}
                                   animate={{ opacity: 1, y: 0 }}
                                   exit={{ opacity: 0 }}
-                                  className={`text-center text-[0.76rem] font-bold ${couponMsg.error ? "text-carrot" : "text-muted"}`}
+                                  className={`text-center text-[0.76rem] font-bold ${couponMsg.error ? "text-[#c8400f]" : "text-muted-foreground"}`}
                                 >
                                   {couponMsg.text}
                                 </motion.p>
@@ -901,7 +901,7 @@ export function CartView() {
                       <span className="min-w-0 flex-1 text-[0.8rem] font-extrabold text-forest">
                         🎟 {money(Number(coupon.discountInr) || 0)} saved with &lsquo;{coupon.code}&rsquo; <span className="ml-1 rounded-full bg-leaf px-2 py-0.5 text-[0.6rem] font-extrabold text-white">✓ Applied</span>
                       </span>
-                      <button type="button" aria-label="Remove coupon" onClick={removeCoupon} className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-muted shadow-sm transition hover:text-carrot">
+                      <button type="button" aria-label="Remove coupon" onClick={removeCoupon} className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-muted-foreground shadow-sm transition hover:text-carrot">
                         ✕
                       </button>
                     </motion.div>
@@ -925,7 +925,7 @@ export function CartView() {
                   role="tab"
                   aria-selected={seg === id}
                   onClick={() => setSeg(id)}
-                  className={`relative flex-1 rounded-xl px-2 py-2.5 text-[0.74rem] font-extrabold transition ${seg === id ? "text-white" : "text-muted hover:text-ink"}`}
+                  className={`relative flex-1 rounded-xl px-2 py-2.5 text-[0.74rem] font-extrabold transition ${seg === id ? "text-white" : "text-muted-foreground hover:text-ink"}`}
                 >
                   {seg === id && <motion.span layoutId="segPill" transition={{ type: "spring", stiffness: 420, damping: 34 }} className="absolute inset-0 rounded-xl bg-forest" />}
                   <span className="relative">{label}</span>
@@ -939,14 +939,14 @@ export function CartView() {
                     <span className="grid h-5 w-5 place-items-center rounded-full border-[5px] border-leaf bg-white" aria-hidden="true" />
                     <div className="flex-1">
                       <b className="block text-[0.85rem] font-extrabold text-ink">Standard</b>
-                      <small className="text-[0.72rem] font-semibold text-muted">Minimal order grouping</small>
+                      <small className="text-[0.72rem] font-semibold text-muted-foreground">Minimal order grouping</small>
                     </div>
                   </div>
                   <div className="mt-2 flex items-center gap-3 rounded-2xl border border-line bg-cream/60 px-3.5 py-3 opacity-70" aria-disabled="true">
                     <span className="grid h-5 w-5 place-items-center rounded-full border-2 border-line-2 bg-white" aria-hidden="true" />
                     <div className="flex-1">
                       <b className="block text-[0.85rem] font-extrabold text-ink">Drone delivery</b>
-                      <small className="text-[0.72rem] font-semibold text-muted">Hover-drop to your doorstep</small>
+                      <small className="text-[0.72rem] font-semibold text-muted-foreground">Hover-drop to your doorstep</small>
                     </div>
                     <span className="rounded-full bg-black/[0.06] px-2 py-0.5 text-[0.58rem] font-bold tracking-wide text-muted-foreground">COMING SOON</span>
                   </div>
@@ -964,7 +964,7 @@ export function CartView() {
               )}
               {seg === "tip" && (
                 <div>
-                  <p className="text-[0.78rem] font-semibold text-muted">100% of your tip goes to the delivery partner</p>
+                  <p className="text-[0.78rem] font-semibold text-muted-foreground">100% of your tip goes to the delivery partner</p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {TIP_CHOICES.map((v) => (
                       <motion.button
@@ -993,7 +993,7 @@ export function CartView() {
                   placeholder="Gate code, nearby shop, call on arrival…"
                   value={notes}
                   onChange={(e) => onNotesChange(e.target.value)}
-                  className="w-full resize-none rounded-2xl border border-line bg-cream/60 px-3.5 py-3 text-sm font-semibold text-ink outline-none transition placeholder:text-muted focus:border-leaf/60"
+                  className="w-full resize-none rounded-2xl border border-line bg-cream/60 px-3.5 py-3 text-sm font-semibold text-ink outline-none transition placeholder:text-muted-foreground focus:border-leaf/60"
                 />
               )}
             </motion.section>
@@ -1004,10 +1004,10 @@ export function CartView() {
                 <span className="grid h-9 w-9 place-items-center rounded-xl bg-mint text-leaf">
                   <ReceiptText size={16} />
                 </span>
-                <span className="flex-1 text-left text-[0.8rem] font-extrabold uppercase tracking-wide text-muted">To Pay</span>
-                {savings > 0 && <s className="text-[0.8rem] font-bold text-muted">{money(total + savings)}</s>}
+                <span className="flex-1 text-left text-[0.8rem] font-extrabold uppercase tracking-wide text-muted-foreground">To Pay</span>
+                {savings > 0 && <s className="text-[0.8rem] font-bold text-muted-foreground">{money(total + savings)}</s>}
                 <motion.strong layout className="text-lg font-extrabold text-forest">{money(total)}</motion.strong>
-                <motion.span animate={{ rotate: billOpen ? 180 : 0 }} className="text-muted">
+                <motion.span animate={{ rotate: billOpen ? 180 : 0 }} className="text-muted-foreground">
                   ▾
                 </motion.span>
               </button>
@@ -1023,11 +1023,11 @@ export function CartView() {
                         </div>
                         <div className="flex justify-between">
                           <span>
-                            Delivery Fee{eligible && quote?.distanceKm ? <small className="ml-1 text-muted">| {Number(quote.distanceKm).toFixed(1)} kms</small> : null}
+                            Delivery Fee{eligible && quote?.distanceKm ? <small className="ml-1 text-muted-foreground">| {Number(quote.distanceKm).toFixed(1)} kms</small> : null}
                           </span>
                           <span>{fee === null ? "—" : fee === 0 ? "FREE" : money(fee)}</span>
                         </div>
-                        <p className="text-[0.7rem] font-semibold text-muted">Free delivery applicable on orders above {money(500)}</p>
+                        <p className="text-[0.7rem] font-semibold text-muted-foreground">Free delivery applicable on orders above {money(500)}</p>
                         <div className="flex justify-between">
                           <span>Delivery Tip</span>
                           {tip ? <span>{money(tip)}</span> : (
@@ -1062,9 +1062,9 @@ export function CartView() {
           >
             <div className="mx-auto flex max-w-[640px] items-center gap-3 px-4 py-3">
               <button type="button" onClick={() => setPmOpen(true)} className="min-w-0 flex-1 text-left">
-                <small className="block text-[0.58rem] font-extrabold uppercase tracking-[0.14em] text-muted">Pay using</small>
+                <small className="block text-[0.58rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">Pay using</small>
                 <span className="flex items-center gap-1 truncate text-[0.85rem] font-extrabold text-ink">
-                  {PM_LABELS[payApp] || "Cash on Delivery"} <span className="text-muted">▾</span>
+                  {PM_LABELS[payApp] || "Cash on Delivery"} <span className="text-muted-foreground">▾</span>
                 </span>
               </button>
               <motion.button
@@ -1072,7 +1072,7 @@ export function CartView() {
                 whileTap={{ scale: 0.97 }}
                 disabled={!eligible || payBusy}
                 onClick={placeOrder}
-                className="shrink-0 rounded-2xl bg-carrot px-7 py-3.5 text-[0.95rem] font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-110 disabled:from-line-2 disabled:to-line-2 disabled:text-muted disabled:shadow-none"
+                className="shrink-0 rounded-2xl bg-carrot px-7 py-3.5 text-[0.95rem] font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-110 disabled:from-line-2 disabled:to-line-2 disabled:text-muted-foreground disabled:shadow-none"
               >
                 {payBusy ? payLabel : `Pay ${money(total)}`}
               </motion.button>
@@ -1084,7 +1084,7 @@ export function CartView() {
       {/* payment options sheet */}
       <PortalSheet open={pmOpen} onClose={() => setPmOpen(false)} label="Payment options">
         <h3 className="font-display text-lg font-extrabold text-forest">Payment Options</h3>
-        <p className="mt-0.5 text-[0.8rem] font-bold text-muted">
+        <p className="mt-0.5 text-[0.8rem] font-bold text-muted-foreground">
           {count} item{count === 1 ? "" : "s"} · {money(total)}
         </p>
         <div className="mt-4 grid gap-2">
@@ -1115,12 +1115,12 @@ export function CartView() {
               {app === "upi" ? (
                 <span className="min-w-0 flex-1">
                   <b className="block text-[0.85rem] font-extrabold text-ink">All UPI Apps · Cards · Netbanking</b>
-                  <small className="text-[0.7rem] font-semibold text-muted">More options inside secure Cashfree checkout</small>
+                  <small className="text-[0.7rem] font-semibold text-muted-foreground">More options inside secure Cashfree checkout</small>
                 </span>
               ) : app === "cod" ? (
                 <span className="min-w-0 flex-1">
                   <b className="block text-[0.85rem] font-extrabold text-ink">Cash on Delivery</b>
-                  <small className="text-[0.7rem] font-semibold text-muted">Pay when the vegetables reach your door</small>
+                  <small className="text-[0.7rem] font-semibold text-muted-foreground">Pay when the vegetables reach your door</small>
                 </span>
               ) : (
                 <span className="min-w-0 flex-1 text-[0.85rem] font-extrabold text-ink">{label}</span>
@@ -1129,7 +1129,7 @@ export function CartView() {
             </button>
           ))}
         </div>
-        <p className="mt-4 flex items-center justify-center gap-1.5 text-[0.72rem] font-bold text-muted">
+        <p className="mt-4 flex items-center justify-center gap-1.5 text-[0.72rem] font-bold text-muted-foreground">
           <Lock size={12} /> 100% secure payments · Powered by Cashfree
         </p>
       </PortalSheet>
@@ -1191,7 +1191,7 @@ export function CartView() {
             </p>
           </div>
           <p className="flow-error" data-flow-error hidden />
-          <button type="button" onClick={() => setAuthOpen(false)} className="mt-4 w-full text-center text-[0.8rem] font-extrabold text-muted transition hover:text-ink">
+          <button type="button" onClick={() => setAuthOpen(false)} className="mt-4 w-full text-center text-[0.8rem] font-extrabold text-muted-foreground transition hover:text-ink">
             ← Back to basket
           </button>
         </form>

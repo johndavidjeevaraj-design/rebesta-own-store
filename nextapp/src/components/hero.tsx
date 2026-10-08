@@ -61,7 +61,7 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
           </Button>
           <button
             type="button"
-            className="hero-cta inline-flex items-center gap-1.5 text-[0.95rem] font-semibold text-leaf transition hover:underline"
+            className="hero-cta inline-flex items-center gap-1.5 text-[0.95rem] font-semibold text-[#c8400f] transition hover:underline"
             onClick={() => {
               const lenis = (window as any).__lenis;
               if (lenis) lenis.scrollTo("#how", { offset: -70 });
@@ -92,16 +92,18 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
       <div className="hero-stage mx-auto mt-14 max-w-6xl px-4">
         <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
           {hero && (
-            <a href={`/products/${hero.handle}`} className="group relative block overflow-hidden rounded-[28px] bg-[#f5f5f7] shadow-[0_10px_40px_rgba(0,0,0,0.08)]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={hero.image} alt={hero.title} className="aspect-[16/10] w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
-              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between bg-gradient-to-t from-black/45 to-transparent p-6 pt-16">
-                <div className="text-left">
-                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white/70">Today&rsquo;s bestseller</p>
-                  <p className="mt-1 text-[1.25rem] font-extrabold tracking-tight text-white">{hero.title}</p>
-                </div>
-                <p className="text-[1.25rem] font-extrabold text-white">{money(hero.priceInr)}</p>
-              </div>
+            <a href={`/products/${hero.handle}`} className="group block overflow-hidden rounded-[28px] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.08)]">
+              <span className="block overflow-hidden rounded-t-[28px] bg-[#f5f5f7]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={hero.image} alt={hero.title} className="aspect-[16/10] w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+              </span>
+              <span className="flex items-end justify-between gap-4 p-5">
+                <span className="min-w-0 text-left">
+                  <span className="block text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[#c8400f]">Today&rsquo;s bestseller</span>
+                  <span className="mt-1 block truncate text-[1.25rem] font-extrabold tracking-tight text-ink">{hero.title}</span>
+                </span>
+                <span className="shrink-0 text-[1.25rem] font-extrabold text-carrot">{money(hero.priceInr)}</span>
+              </span>
             </a>
           )}
           <div className="grid gap-4">

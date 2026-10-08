@@ -88,7 +88,7 @@ export function OrderSuccessView() {
             <Check size={38} strokeWidth={3} />
           </motion.span>
 
-          <span className={`mt-6 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[0.72rem] font-bold ${badge.tone === "leaf" ? "bg-mint text-leaf" : "bg-carrot/10 text-[#d84a15]"}`} data-status-badge>
+          <span className={`mt-6 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[0.72rem] font-bold ${badge.tone === "leaf" ? "bg-mint text-leaf" : "bg-carrot/10 text-[#c8400f]"}`} data-status-badge>
             <span className={`h-1.5 w-1.5 rounded-full ${badge.tone === "leaf" ? "bg-leaf" : "bg-carrot"}`} />
             {badge.text}
           </span>
@@ -112,8 +112,8 @@ export function OrderSuccessView() {
                 <MessageCircle size={17} /> Confirm on WhatsApp
               </a>
             </Button>
-            <a href="/track" className="text-[0.95rem] font-semibold text-leaf transition hover:underline">Track order</a>
-            <a href="/subscriptions" className="inline-flex items-center gap-1.5 text-[0.95rem] font-semibold text-leaf transition hover:underline">
+            <a href="/track" className="text-[0.95rem] font-semibold text-[#c8400f] transition hover:underline">Track order</a>
+            <a href="/subscriptions" className="inline-flex items-center gap-1.5 text-[0.95rem] font-semibold text-[#c8400f] transition hover:underline">
               <Repeat2 size={15} /> Make it weekly
             </a>
           </div>
@@ -180,7 +180,7 @@ export function OrderSuccessView() {
                     {rewards.loyaltyEnabled && (
                       <p className="flex items-start gap-2.5">
                         <Sparkles size={16} className="mt-0.5 shrink-0 text-gold" />
-                        <span><strong>Earn a reward:</strong> once this order is delivered you get a LOY- coupon (about 2% back) on the <a href="/track" className="font-semibold text-leaf hover:underline">Track page</a></span>
+                        <span><strong>Earn a reward:</strong> once this order is delivered you get a LOY- coupon (about 2% back) on the <a href="/track" className="font-semibold text-[#c8400f] hover:underline">Track page</a></span>
                       </p>
                     )}
                     {rewards.referralEnabled && (() => {

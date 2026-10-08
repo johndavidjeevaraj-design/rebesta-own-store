@@ -130,8 +130,8 @@ export function ProductView({ handle }: { handle: string }) {
           <div className="grid place-items-center rounded-3xl border border-dashed border-line-2 bg-white/60 py-16 text-center">
             <p className="text-4xl">🥬</p>
             <h1 className="mt-3 font-display text-2xl font-extrabold text-forest">Product not found</h1>
-            <p className="mt-1 text-sm text-muted">{notFound}</p>
-            <a href="/shop" className="mt-6 rounded-2xl bg-leaf px-5 py-3 text-sm font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]">
+            <p className="mt-1 text-sm text-muted-foreground">{notFound}</p>
+            <a href="/shop" className="mt-6 rounded-full bg-carrot px-5 py-3 text-sm font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]">
               Back to shop
             </a>
           </div>
@@ -188,19 +188,19 @@ export function ProductView({ handle }: { handle: string }) {
 
               {/* Copy */}
               <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.08 }}>
-                <span className="text-[0.62rem] font-extrabold uppercase tracking-[0.16em] text-leaf">{product.category}</span>
+                <span className="text-[0.62rem] font-extrabold uppercase tracking-[0.16em] text-[#c8400f]">{product.category}</span>
                 <h1 className="mt-1.5 font-display text-2xl font-extrabold leading-tight text-forest md:text-[2rem]">{product.title}</h1>
                 {product.description && <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-ink-2/85">{product.description}</p>}
 
                 <div className="mt-4 flex items-end gap-2">
-                  <strong className="text-2xl font-extrabold text-forest">{money(product.priceInr)}</strong>
-                  {discount > 0 && <span className="text-sm font-semibold text-muted line-through">{money(Number(product.compareAtInr))}</span>}
-                  <span className="text-sm font-semibold text-muted">/ {product.unitLabel}</span>
+                  <strong className="text-[1.7rem] font-extrabold text-carrot">{money(product.priceInr)}</strong>
+                  {discount > 0 && <span className="text-sm font-semibold text-muted-foreground line-through">{money(Number(product.compareAtInr))}</span>}
+                  <span className="text-sm font-semibold text-muted-foreground">/ {product.unitLabel}</span>
                 </div>
 
                 {variants.length > 1 && (
                   <div className="mt-4 flex flex-wrap items-center gap-2">
-                    <span className="text-[0.72rem] font-extrabold uppercase tracking-wide text-muted">Size</span>
+                    <span className="text-[0.72rem] font-extrabold uppercase tracking-wide text-muted-foreground">Size</span>
                     {variants.map((v) => (
                       <a
                         key={v.handle}
@@ -216,20 +216,20 @@ export function ProductView({ handle }: { handle: string }) {
                 )}
 
                 <div className="mt-4 flex flex-wrap gap-2 text-[0.7rem] font-bold">
-                  <span className={`rounded-full px-2.5 py-1 ${product.stock > 10 ? "bg-mint text-leaf" : product.stock > 0 ? "bg-carrot/10 text-carrot" : "bg-line/60 text-muted"}`}>
+                  <span className={`rounded-full px-2.5 py-1 ${product.stock > 10 ? "bg-mint text-leaf" : product.stock > 0 ? "bg-carrot/10 text-[#c8400f]" : "bg-black/[0.06] text-muted-foreground"}`}>
                     {product.stock > 10 ? "In stock today" : product.stock > 0 ? `Only ${product.stock} left` : "Sold out today"}
                   </span>
-                  <span className="flex items-center gap-1 rounded-full bg-line/40 px-2.5 py-1 text-muted">
+                  <span className="flex items-center gap-1 rounded-full bg-black/[0.05] px-2.5 py-1 text-muted-foreground">
                     <Truck size={12} /> Tomorrow morning
                   </span>
-                  {product.sku && <span className="rounded-full bg-line/40 px-2.5 py-1 text-muted">{product.sku}</span>}
+                  {product.sku && <span className="rounded-full bg-black/[0.05] px-2.5 py-1 text-muted-foreground">{product.sku}</span>}
                 </div>
 
                 {product.stock > 0 && product.stock <= 5 && (
                   <motion.p
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mt-3 rounded-xl border border-carrot/25 bg-carrot/10 px-3.5 py-2.5 text-[0.8rem] font-bold text-carrot"
+                    className="mt-3 rounded-xl border border-carrot/25 bg-carrot/10 px-3.5 py-2.5 text-[0.8rem] font-bold text-[#c8400f]"
                   >
                     Only {product.stock} left today — order now.
                   </motion.p>
@@ -237,7 +237,7 @@ export function ProductView({ handle }: { handle: string }) {
 
                 {/* Purchase panel */}
                 <div ref={panelRef} className="mt-5 rounded-3xl border border-line bg-white p-4 shadow-soft">
-                  <label className="text-[0.72rem] font-extrabold uppercase tracking-wide text-muted">Quantity</label>
+                  <label className="text-[0.72rem] font-extrabold uppercase tracking-wide text-muted-foreground">Quantity</label>
                   <div className="mt-2.5 flex flex-wrap items-center gap-3">
                     <span className="flex items-center gap-3 rounded-xl border border-line bg-cream px-2 py-1.5">
                       <button
@@ -267,7 +267,7 @@ export function ProductView({ handle }: { handle: string }) {
                       onClick={addCurrent}
                       disabled={product.stock <= 0}
                       whileTap={{ scale: 0.97 }}
-                      className="min-w-[180px] flex-1 rounded-xl bg-leaf px-5 py-3 text-sm font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-110 disabled:from-line-2 disabled:to-line-2 disabled:text-muted disabled:shadow-none"
+                      className="min-w-[180px] flex-1 rounded-full bg-carrot px-5 py-3 text-[0.95rem] font-extrabold text-white shadow-[0_4px_14px_rgba(255,91,32,0.30)] transition hover:bg-[#ff6a35] active:scale-[0.98] disabled:bg-line-2 disabled:text-muted-foreground disabled:shadow-none"
                     >
                       {product.stock <= 0 ? "Sold out" : "Add to basket"}
                     </motion.button>
@@ -318,10 +318,10 @@ export function ProductView({ handle }: { handle: string }) {
             {/* Reviews */}
             {reviews.length > 0 && (
               <section className="mt-14" aria-label="Customer reviews">
-                <span className="text-[0.62rem] font-extrabold uppercase tracking-[0.16em] text-leaf">Customer reviews</span>
+                <span className="text-[0.62rem] font-extrabold uppercase tracking-[0.16em] text-[#c8400f]">Customer reviews</span>
                 <h2 className="mt-1 font-display text-xl font-extrabold text-forest md:text-2xl">
                   ⭐ {(Math.round((reviews.reduce((s, r) => s + Number(r.rating || 0), 0) / reviews.length) * 10) / 10).toFixed(1)} / 5
-                  <span className="ml-2 text-sm font-bold text-muted">
+                  <span className="ml-2 text-sm font-bold text-muted-foreground">
                     · {reviews.length} review{reviews.length > 1 ? "s" : ""} for {product.title}
                   </span>
                 </h2>
@@ -353,7 +353,7 @@ export function ProductView({ handle }: { handle: string }) {
             {/* Related */}
             {related.length > 0 && (
               <section className="mt-14" aria-label="More fresh picks">
-                <span className="text-[0.62rem] font-extrabold uppercase tracking-[0.16em] text-leaf">Related</span>
+                <span className="text-[0.62rem] font-extrabold uppercase tracking-[0.16em] text-[#c8400f]">Related</span>
                 <h2 className="mt-1 font-display text-xl font-extrabold text-forest md:text-2xl">More fresh picks</h2>
                 <div className="rail -mx-4 mt-4 flex gap-4 overflow-x-auto px-4 pb-2 md:grid md:grid-cols-5 md:overflow-visible">
                   {related.map((p, i) => (

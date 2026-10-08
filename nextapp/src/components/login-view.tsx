@@ -164,7 +164,7 @@ export function LoginView() {
               <a href="#" data-pw-toggle className="font-bold text-leaf hover:underline">Sign in with password instead</a>
               <a href="#" data-otp-toggle hidden className="font-bold text-leaf hover:underline">Use SMS code instead</a>
             </p>
-            <p className="auth-alt mt-2 text-center text-[0.8rem] font-medium text-muted-foreground/80">
+            <p className="auth-alt mt-2 text-center text-[0.8rem] font-medium text-muted-foreground">
               You can always shop without an account · Orders stay linked to your number.
             </p>
 
@@ -185,7 +185,7 @@ export function LoginView() {
       {/* scoped styles for everything auth.js generates or toggles */}
       <style>{`
         .btn-main { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; height:52px; border-radius:9999px;
-          background:#ff5b20; color:#fff; font-size:0.95rem; font-weight:700; cursor:pointer; border:none;
+          background:#d63e0a; color:#fff; font-size:0.95rem; font-weight:700; cursor:pointer; border:none;
           box-shadow:0 4px 14px rgba(0,0,0,0.10); transition:filter .15s, transform .1s; }
         .btn-main:hover { filter:brightness(1.04); }
         .btn-main:active { transform:scale(0.98); }
@@ -212,7 +212,7 @@ export function LoginView() {
         @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
 
         .fx-eye { position:absolute; right:14px; top:50%; transform:translateY(-50%); display:grid; place-items:center;
-          width:34px; height:34px; border-radius:50%; border:none; background:transparent; color:#6e6e73; cursor:pointer; }
+          width:34px; height:34px; border-radius:50%; border:none; background:transparent; color:#4a4a4f; cursor:pointer; }
         .fx-eye:hover { background:rgba(0,0,0,0.05); color:#1d1d1f; }
         .fx-eye .eye-off { display:none; }
         .fx-eye.revealed .eye-on { display:none; }
@@ -237,7 +237,7 @@ export function LoginView() {
         .auth-success.show .as-confetti i { animation:confetti .9s ease-out forwards; }
         @keyframes confetti { 0% { transform:translate(0,0) rotate(0); opacity:1; } 100% { transform:translate(var(--dx),var(--dy)) rotate(240deg); opacity:0; } }
         .auth-success h3 { margin-top:14px; font-size:1.35rem; font-weight:800; color:#1d1d1f; letter-spacing:-0.02em; }
-        .auth-success p { margin-top:6px; font-size:0.9rem; font-weight:500; color:#6e6e73; }
+        .auth-success p { margin-top:6px; font-size:0.9rem; font-weight:500; color:#4a4a4f; }
       `}</style>
       <SiteFooter />
     </div>

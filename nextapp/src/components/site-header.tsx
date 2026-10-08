@@ -49,7 +49,7 @@ export function SiteHeader({
               ["Greens", "/greens"],
               ["About", "/about"],
             ].map(([label, href]) => (
-              <a key={href} href={href} className="text-[0.78rem] font-semibold text-ink/70 transition hover:text-ink">
+              <a key={href} href={href} className="text-[0.78rem] font-semibold text-ink/80 transition hover:text-ink">
                 {label}
               </a>
             ))}
@@ -86,7 +86,7 @@ export function SiteHeader({
               </span>
             </button>
 
-            <a href="/account" aria-label="Your account" className="text-ink/70 transition hover:text-ink">
+            <a href="/account" aria-label="Your account" className="text-ink/80 transition hover:text-ink">
               <User size={18} strokeWidth={1.8} />
             </a>
 
@@ -100,7 +100,7 @@ export function SiteHeader({
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.3, opacity: 0 }}
                     transition={{ type: "spring", stiffness: 600, damping: 22 }}
-                    className="absolute -right-2 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-leaf px-1 text-[0.6rem] font-bold text-white"
+                    className="absolute -right-2 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-carrot px-1 text-[0.6rem] font-bold text-white"
                   >
                     {count}
                   </motion.span>
@@ -148,7 +148,7 @@ export function SiteHeader({
             href={item.href}
             target={item.external ? "_blank" : undefined}
             rel={item.external ? "noopener" : undefined}
-            className="flex-1 rounded-2xl py-2 text-center text-[0.66rem] font-semibold text-ink/70 transition active:scale-95 active:text-ink"
+            className="flex-1 rounded-2xl py-2 text-center text-[0.66rem] font-semibold text-ink/80 transition active:scale-95 active:text-ink"
           >
             {item.label}
           </a>

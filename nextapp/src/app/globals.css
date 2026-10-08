@@ -41,7 +41,7 @@
   --secondary: #f5f5f7;
   --secondary-foreground: #1d1d1f;
   --muted: #f5f5f7;
-  --muted-foreground: #6e6e73;
+  --muted-foreground: #4a4a4f;
   --accent: #ff5b20;
   --accent-foreground: #ffffff;
   --destructive: #b33322;
@@ -77,9 +77,9 @@
   --color-forest: #1d1d1f;
   --color-forest-2: #073f1b;
   --color-forest-3: #021f0d;
-  --color-leaf: #0d8736;
+  --color-leaf: #0b7c31;
   --color-leaf-2: #0faa46;
-  --color-carrot: #ff5b20;
+  --color-carrot: #d63e0a;
   --color-carrot-2: #ff8b3d;
   --color-mint: #f0f5f0;
   --color-cream: #f5f5f7;
@@ -244,7 +244,7 @@ html.lenis body {
   border-top: 1px solid var(--color-line);
   padding-top: 1em;
   font-size: 0.82rem;
-  color: var(--color-muted);
+  color: var(--color-muted-foreground);
 }
 
 /* FAQ accordion — native details/summary */

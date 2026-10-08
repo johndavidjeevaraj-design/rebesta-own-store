@@ -80,7 +80,7 @@ export default function FarmStory() {
           trigger: root.current,
           start: "top top",
           end: "bottom bottom",
-          scrub: 0.6,
+          scrub: 0.35,
         },
       });
 
@@ -90,12 +90,14 @@ export default function FarmStory() {
       PHASES.forEach((_, i) => {
         const t = i; // this phase's window starts at t
         if (i > 0) {
-          tl.fromTo(imgs[i], { opacity: 0, scale: 1.12 }, { opacity: 1, scale: 1, duration: 0.55 }, t);
-          tl.to(imgs[i - 1], { opacity: 0, duration: 0.55 }, t);
+          /* crossfades complete AT the boundary, so a single swipe lands on
+             a fully settled phase — no mid-transition arrival */
+          tl.fromTo(imgs[i], { opacity: 0, scale: 1.12 }, { opacity: 1, scale: 1, duration: 0.35 }, t - 0.1);
+          tl.to(imgs[i - 1], { opacity: 0, duration: 0.35 }, t - 0.1);
+          tl.fromTo(texts[i], { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.15 }, t - 0.1);
         }
-        if (i > 0) tl.fromTo(texts[i], { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.4 }, t + 0.08);
-        if (i < n - 1) tl.to(texts[i], { opacity: 0, y: -18, duration: 0.32, ease: "power2.in" }, t + 0.66);
-        if (fills[i]) tl.to(fills[i], { opacity: 1, duration: 0.2 }, t + 0.12);
+        if (i < n - 1) tl.to(texts[i], { opacity: 0, y: -14, duration: 0.15, ease: "power2.in" }, t + 0.9);
+        if (fills[i]) tl.to(fills[i], { opacity: 1, duration: 0.12 }, t - 0.05);
       });
 
       if (bar) tl.fromTo(bar, { scaleX: 0 }, { scaleX: 1, duration: n, ease: "none" }, 0);
@@ -148,7 +150,9 @@ export default function FarmStory() {
       ref={root}
       aria-label="How it works — farm to door story"
       className="relative bg-[#0b0d0c]"
-      style={{ height: `${PHASES.length * 85 + 15}vh` }}
+      /* one swipe = one phase: 35vh of scroll per phase (was 85vh — needed
+         2-3 swipes to move on). Sticky panel itself adds the final 100vh. */
+      style={{ height: `${PHASES.length * 35 + 100}vh` }}
     >
       <div className="sticky top-0 flex h-[100svh] items-center overflow-hidden">
         <div className="mx-auto grid w-full max-w-6xl items-center gap-8 px-4 py-8 md:grid-cols-[1.12fr_1fr] md:gap-14">

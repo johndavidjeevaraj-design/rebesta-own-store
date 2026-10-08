@@ -35,30 +35,30 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
       className="h-full"
     >
       <Card
-        className={`group relative h-full gap-0 overflow-hidden rounded-3xl border-border/70 bg-white p-3 shadow-[0_2px_10px_rgba(7,64,21,0.05)] transition-shadow hover:shadow-[0_18px_40px_rgba(7,64,21,0.14)] ${
+        className={`group relative h-full gap-0 overflow-hidden rounded-[24px] border-transparent bg-white p-3 shadow-[0_1px_6px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-[0_10px_30px_rgba(0,0,0,0.09)] ${
           soldOut ? "opacity-70" : ""
         }`}
       >
         <a href={`/products/${product.handle}`} className="block">
-          <div className="relative aspect-square overflow-hidden rounded-2xl bg-mint">
+          <div className="relative aspect-square overflow-hidden rounded-[18px] bg-[#f5f5f7]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={product.image}
               alt={product.title}
               loading="lazy"
-              className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.07] ${soldOut ? "grayscale" : ""}`}
+              className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.05] ${soldOut ? "grayscale" : ""}`}
             />
             <div className="absolute left-2 top-2 flex flex-col gap-1">
               {offPct > 0 && !soldOut && (
-                <span className="rounded-full bg-carrot px-2 py-0.5 text-[0.62rem] font-extrabold text-white shadow">{offPct}% OFF</span>
+                <span className="rounded-full bg-carrot px-2 py-0.5 text-[0.62rem] font-bold text-white">{offPct}% OFF</span>
               )}
               {product.featured && !offPct && !soldOut && (
-                <span className="rounded-full bg-[#fff0e9] px-2 py-0.5 text-[0.62rem] font-extrabold text-[#b43f13] shadow">Bestseller</span>
+                <span className="rounded-full bg-white/90 px-2 py-0.5 text-[0.62rem] font-bold text-ink backdrop-blur">Bestseller</span>
               )}
             </div>
             {soldOut && (
               <div className="absolute inset-0 grid place-items-center bg-white/55 backdrop-blur-[2px]">
-                <span className="rounded-full bg-forest-3 px-3 py-1 text-[0.68rem] font-extrabold uppercase tracking-wide text-white">
+                <span className="rounded-full bg-ink px-3 py-1 text-[0.68rem] font-bold uppercase tracking-wide text-white">
                   Sold out today
                 </span>
               </div>
@@ -66,11 +66,11 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
           </div>
 
           <div className="px-1 pb-1 pt-3">
-            <h3 className="truncate text-[0.95rem] font-extrabold leading-tight text-ink">{product.title}</h3>
-            <p className="mt-0.5 text-[0.72rem] font-bold text-muted-foreground">{product.unitLabel}</p>
+            <h3 className="truncate text-[0.95rem] font-bold leading-tight tracking-tight text-ink">{product.title}</h3>
+            <p className="mt-0.5 text-[0.74rem] font-medium text-muted-foreground">{product.unitLabel}</p>
             <div className="mt-2 flex items-baseline gap-1.5">
-              <span className="text-[1.05rem] font-extrabold text-forest">{money(product.priceInr)}</span>
-              {compareAt && <span className="text-[0.78rem] font-bold text-muted-foreground line-through">{money(compareAt)}</span>}
+              <span className="text-[1.05rem] font-extrabold tracking-tight text-ink">{money(product.priceInr)}</span>
+              {compareAt && <span className="text-[0.78rem] font-medium text-muted-foreground line-through">{money(compareAt)}</span>}
             </div>
           </div>
         </a>
@@ -81,7 +81,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
               Sold out
             </span>
           ) : qty > 0 ? (
-            <div className="flex h-10 items-center justify-between rounded-full bg-gradient-to-br from-leaf to-[#0a6b2b] text-white shadow-inner">
+            <div className="flex h-10 items-center justify-between rounded-full bg-leaf text-white shadow-inner">
               <button
                 type="button"
                 onClick={step}
@@ -113,7 +113,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
                 e.preventDefault();
                 add();
               }}
-              className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-gradient-to-br from-leaf to-[#0a6b2b] text-[0.8rem] font-extrabold text-white shadow-[0_6px_14px_rgba(13,135,54,0.3)] transition hover:brightness-110"
+              className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-leaf text-[0.8rem] font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-110"
             >
               <ShoppingBasket size={14} /> Add
             </motion.button>

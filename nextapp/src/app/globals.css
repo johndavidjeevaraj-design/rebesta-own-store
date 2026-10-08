@@ -26,27 +26,28 @@
   font-display: swap;
 }
 
-/* ---- shadcn tokens on the true Rebesta palette (60:30:10) ----
-   60% cream/white surfaces · 30% forest/leaf greens · 10% carrot orange */
+/* ---- shadcn tokens — Apple-grade neutral canvas, green as the accent ----
+   White surfaces · near-black ink · leaf green = the interactive accent
+   (Apple's blue) · carrot orange reserved for CTAs and offers only */
 :root {
-  --background: #fbfaf3;
-  --foreground: #121910;
+  --background: #ffffff;
+  --foreground: #1d1d1f;
   --card: #ffffff;
-  --card-foreground: #121910;
+  --card-foreground: #1d1d1f;
   --popover: #ffffff;
-  --popover-foreground: #121910;
+  --popover-foreground: #1d1d1f;
   --primary: #0d8736;
   --primary-foreground: #ffffff;
-  --secondary: #e7f6e9;
-  --secondary-foreground: #073f1b;
-  --muted: #f0f2ea;
-  --muted-foreground: #6c7868;
+  --secondary: #f5f5f7;
+  --secondary-foreground: #1d1d1f;
+  --muted: #f5f5f7;
+  --muted-foreground: #6e6e73;
   --accent: #ff5b20;
   --accent-foreground: #ffffff;
   --destructive: #b33322;
   --destructive-foreground: #fff5f2;
-  --border: #dfe6da;
-  --input: #cbd8c7;
+  --border: #e8e8ed;
+  --input: #d2d2d7;
   --ring: #0d8736;
   --radius: 1rem;
 }
@@ -73,21 +74,22 @@
   --color-ring: var(--ring);
 
   /* brand extras — the real Rebesta tokens */
-  --color-forest: #032c13;
+  --color-forest: #1d1d1f;
   --color-forest-2: #073f1b;
   --color-forest-3: #021f0d;
   --color-leaf: #0d8736;
   --color-leaf-2: #0faa46;
   --color-carrot: #ff5b20;
   --color-carrot-2: #ff8b3d;
-  --color-mint: #e7f6e9;
-  --color-cream: #fbfaf3;
-  --color-ink: #121910;
-  --color-line: #dfe6da;
+  --color-mint: #f0f5f0;
+  --color-cream: #f5f5f7;
+  --color-ink: #1d1d1f;
+  --color-line: #e8e8ed;
+  --color-line-2: #d2d2d7;
   --color-gold: #ffd582;
 
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Bricolage Grotesque", "Manrope", ui-sans-serif, sans-serif;
+  --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) - 8px);
   --radius-md: calc(var(--radius) - 4px);
@@ -113,8 +115,8 @@
     50% { transform: translateY(-12px); }
   }
   @keyframes pulse-dot {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 91, 32, 0.5); }
-    50% { box-shadow: 0 0 0 7px rgba(255, 91, 32, 0); }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
   }
 }
 
@@ -135,6 +137,9 @@
   ::selection {
     background: #0faa46;
     color: #ffffff;
+  }
+  .font-display {
+    letter-spacing: -0.022em;
   }
 }
 
@@ -204,7 +209,7 @@ html.lenis body {
 }
 .prose-page p {
   margin: 0.7em 0;
-  color: #3d4a3a;
+  color: #3a3a3c;
   line-height: 1.72;
   font-size: 0.95rem;
 }
@@ -215,7 +220,7 @@ html.lenis body {
   gap: 0.45em;
 }
 .prose-page li {
-  color: #3d4a3a;
+  color: #3a3a3c;
   line-height: 1.65;
   font-size: 0.95rem;
   list-style: disc;
@@ -300,7 +305,7 @@ html.lenis body {
 .faq-list details p {
   margin: 0;
   padding: 0 16px 15px;
-  color: #4a5847;
+  color: #48484c;
   font-size: 0.88rem;
   line-height: 1.68;
 }
@@ -467,7 +472,7 @@ html.lenis body {
 }
 .sent-chip span {
   font-size: 0.78rem;
-  color: #4d6b4f;
+  color: #424245;
   font-weight: 600;
 }
 .otp-boxes {

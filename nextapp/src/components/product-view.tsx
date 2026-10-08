@@ -131,7 +131,7 @@ export function ProductView({ handle }: { handle: string }) {
             <p className="text-4xl">🥬</p>
             <h1 className="mt-3 font-display text-2xl font-extrabold text-forest">Product not found</h1>
             <p className="mt-1 text-sm text-muted">{notFound}</p>
-            <a href="/shop" className="mt-6 rounded-2xl bg-gradient-to-br from-leaf to-[#0a6b2b] px-5 py-3 text-sm font-extrabold text-white shadow-[0_8px_20px_rgba(13,135,54,0.35)]">
+            <a href="/shop" className="mt-6 rounded-2xl bg-leaf px-5 py-3 text-sm font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]">
               Back to shop
             </a>
           </div>
@@ -179,7 +179,7 @@ export function ProductView({ handle }: { handle: string }) {
                     initial={{ scale: 0, rotate: -12 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: "spring", stiffness: 400, damping: 18, delay: 0.25 }}
-                    className="absolute left-3 top-3 rounded-full bg-carrot px-2.5 py-0.5 text-[0.66rem] font-extrabold text-white shadow-[0_4px_12px_rgba(255,91,32,0.4)]"
+                    className="absolute left-3 top-3 rounded-full bg-carrot px-2.5 py-0.5 text-[0.66rem] font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]"
                   >
                     {discount}% off
                   </motion.span>
@@ -231,7 +231,7 @@ export function ProductView({ handle }: { handle: string }) {
                     animate={{ opacity: 1, y: 0 }}
                     className="mt-3 rounded-xl border border-carrot/25 bg-carrot/10 px-3.5 py-2.5 text-[0.8rem] font-bold text-carrot"
                   >
-                    🔥 Only {product.stock} left — selling fast today, order now!
+                    Only {product.stock} left today — order now.
                   </motion.p>
                 )}
 
@@ -267,7 +267,7 @@ export function ProductView({ handle }: { handle: string }) {
                       onClick={addCurrent}
                       disabled={product.stock <= 0}
                       whileTap={{ scale: 0.97 }}
-                      className="min-w-[180px] flex-1 rounded-xl bg-gradient-to-br from-leaf to-[#0a6b2b] px-5 py-3 text-sm font-extrabold text-white shadow-[0_8px_20px_rgba(13,135,54,0.35)] transition hover:brightness-110 disabled:from-line-2 disabled:to-line-2 disabled:text-muted disabled:shadow-none"
+                      className="min-w-[180px] flex-1 rounded-xl bg-leaf px-5 py-3 text-sm font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-110 disabled:from-line-2 disabled:to-line-2 disabled:text-muted disabled:shadow-none"
                     >
                       {product.stock <= 0 ? "Sold out" : "Add to basket"}
                     </motion.button>
@@ -391,7 +391,7 @@ export function ProductView({ handle }: { handle: string }) {
               type="button"
               onClick={addCurrent}
               whileTap={{ scale: 0.95 }}
-              className="shrink-0 rounded-xl bg-gradient-to-br from-carrot to-[#d8431f] px-4 py-2.5 text-[0.8rem] font-extrabold text-white shadow-[0_6px_16px_rgba(255,91,32,0.35)] transition hover:brightness-110"
+              className="shrink-0 rounded-xl bg-carrot px-4 py-2.5 text-[0.8rem] font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-110"
             >
               Add · {money(product.priceInr * qty)}
             </motion.button>

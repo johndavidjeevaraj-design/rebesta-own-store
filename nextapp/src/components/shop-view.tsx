@@ -92,7 +92,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <span className="inline-flex items-center gap-1.5 text-[0.62rem] font-extrabold uppercase tracking-[0.16em] text-leaf">
-                <span className="h-1.5 w-1.5 rounded-full bg-carrot animate-pulse-dot" /> Shop fresh
+                Shop fresh
               </span>
               <h1 className="font-display text-2xl font-extrabold text-forest md:text-3xl">{conf.heading}</h1>
             </div>
@@ -139,7 +139,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
             )}
 
             {/* Category pills */}
-            <div className="rail sticky top-16 z-30 -mx-4 mt-6 flex gap-2 overflow-x-auto border-b border-line/60 bg-cream/95 px-4 py-2.5 backdrop-blur">
+            <div className="rail sticky top-14 z-30 -mx-4 mt-6 flex gap-2 overflow-x-auto border-b border-line/60 bg-cream/95 px-4 py-2.5 backdrop-blur">
               {["All", ...categories].map((cat) => (
                 <button
                   key={cat}
@@ -201,7 +201,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
               </div>
             ) : filtered.length === 0 ? (
               <div className="mt-10 grid place-items-center rounded-3xl border border-dashed border-line-2 bg-white/60 py-16 text-center">
-                <p className="text-3xl">🧺</p>
+                <p className="text-2xl text-muted-foreground/40"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9h16l-1.5 10.5a2 2 0 0 1-2 1.5H7.5a2 2 0 0 1-2-1.5L4 9Z" stroke="currentColor" strokeWidth="1.4"/><path d="M8 9V7a4 4 0 0 1 8 0v2" stroke="currentColor" strokeWidth="1.4"/></svg></p>
                 <p className="mt-3 font-extrabold text-ink">No products found</p>
                 <p className="mt-1 text-sm text-muted">
                   Try another vegetable, leaf, or combo — Tamil works too (<i>keerai</i>, <i>murungakkai</i>…)

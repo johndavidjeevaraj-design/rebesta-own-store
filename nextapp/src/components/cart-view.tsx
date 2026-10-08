@@ -556,9 +556,7 @@ export function CartView() {
         {/* ---------- empty state ---------- */}
         {lines.length === 0 && (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="grid place-items-center rounded-3xl border border-dashed border-line-2 bg-white/60 py-14 text-center">
-            <motion.p initial={{ scale: 0.6, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 260, damping: 16 }} className="text-5xl">
-              🥕
-            </motion.p>
+            <motion.p initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 240, damping: 18 }} className="text-muted-foreground/30"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9h16l-1.5 10.5a2 2 0 0 1-2 1.5H7.5a2 2 0 0 1-2-1.5L4 9Z" stroke="currentColor" strokeWidth="1.2"/><path d="M8 9V7a4 4 0 0 1 8 0v2" stroke="currentColor" strokeWidth="1.2"/></svg></motion.p>
             <h1 className="mt-4 font-display text-2xl font-extrabold text-forest">Your basket is empty</h1>
             <p className="mt-1 text-sm text-muted">Add fresh vegetables and they&rsquo;ll show up right here.</p>
             {repeatKnown && (
@@ -576,7 +574,7 @@ export function CartView() {
                 <p className="mt-1.5 text-[0.72rem] font-semibold text-muted">Adds every product from your previous order in one tap.</p>
               </div>
             )}
-            <a href="/shop" className="mt-5 rounded-2xl bg-gradient-to-br from-carrot to-[#d8431f] px-6 py-3 text-sm font-extrabold text-white shadow-[0_8px_20px_rgba(255,91,32,0.35)] transition hover:brightness-110">
+            <a href="/shop" className="mt-5 rounded-2xl bg-carrot px-6 py-3 text-sm font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-110">
               Start shopping →
             </a>
             {emptyPicks.length > 0 && (
@@ -681,7 +679,7 @@ export function CartView() {
                     exit={{ opacity: 0, scale: 0.96, height: 0 }}
                     className="overflow-hidden"
                   >
-                    <div className="mt-3 rounded-2xl bg-gradient-to-r from-mint to-[#fff0e9] px-4 py-2.5 text-[0.82rem] font-extrabold text-forest">
+                    <div className="mt-3 rounded-2xl bg-mint px-4 py-2.5 text-[0.82rem] font-extrabold text-forest">
                       🎉 {money(savings)} saved! <span className="font-bold text-muted">On this order</span>
                     </div>
                   </motion.div>
@@ -786,7 +784,7 @@ export function CartView() {
                                 whileTap={{ scale: 0.85 }}
                                 aria-label={`Add ${p.title}`}
                                 onClick={() => addToCart(p.handle, 1)}
-                                className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-leaf to-[#0a6b2b] text-white shadow-[0_4px_12px_rgba(13,135,54,0.4)]"
+                                className="grid h-8 w-8 place-items-center rounded-full bg-leaf text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]"
                               >
                                 <Plus size={15} />
                               </motion.button>
@@ -870,7 +868,7 @@ export function CartView() {
                                 }}
                                 className="min-w-0 flex-1 rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm font-bold uppercase text-ink outline-none transition placeholder:font-semibold placeholder:normal-case placeholder:text-muted focus:border-leaf/60"
                               />
-                              <button type="button" onClick={() => applyCoupon(couponInput)} className="shrink-0 rounded-xl bg-gradient-to-br from-carrot to-[#d8431f] px-4 py-2.5 text-[0.74rem] font-extrabold text-white shadow-[0_5px_14px_rgba(255,91,32,0.3)]">
+                              <button type="button" onClick={() => applyCoupon(couponInput)} className="shrink-0 rounded-xl bg-carrot px-4 py-2.5 text-[0.74rem] font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]">
                                 APPLY
                               </button>
                             </div>
@@ -950,7 +948,7 @@ export function CartView() {
                       <b className="block text-[0.85rem] font-extrabold text-ink">Drone delivery</b>
                       <small className="text-[0.72rem] font-semibold text-muted">Hover-drop to your doorstep</small>
                     </div>
-                    <span className="rounded-full bg-gold/30 px-2 py-0.5 text-[0.58rem] font-extrabold tracking-wide text-forest">COMING SOON</span>
+                    <span className="rounded-full bg-black/[0.06] px-2 py-0.5 text-[0.58rem] font-bold tracking-wide text-muted-foreground">COMING SOON</span>
                   </div>
                   <motion.p key={JSON.stringify(quote)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3.5 flex items-center gap-1.5 text-[0.8rem] font-bold text-ink-2">
                     <Truck13 />{" "}
@@ -978,7 +976,7 @@ export function CartView() {
                           writePref(TIP_KEY, v);
                         }}
                         className={`rounded-2xl border px-5 py-2.5 text-[0.82rem] font-extrabold transition ${
-                          tip === v ? "border-transparent bg-gradient-to-br from-carrot to-[#d8431f] text-white shadow-[0_5px_14px_rgba(255,91,32,0.3)]" : "border-line bg-white text-ink-2 hover:border-leaf/50"
+                          tip === v ? "border-transparent bg-carrot text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]" : "border-line bg-white text-ink-2 hover:border-leaf/50"
                         }`}
                       >
                         {v ? money(v) : "No tip"}
@@ -1074,7 +1072,7 @@ export function CartView() {
                 whileTap={{ scale: 0.97 }}
                 disabled={!eligible || payBusy}
                 onClick={placeOrder}
-                className="shrink-0 rounded-2xl bg-gradient-to-br from-carrot to-[#d8431f] px-7 py-3.5 text-[0.95rem] font-extrabold text-white shadow-[0_8px_22px_rgba(255,91,32,0.4)] transition hover:brightness-110 disabled:from-line-2 disabled:to-line-2 disabled:text-muted disabled:shadow-none"
+                className="shrink-0 rounded-2xl bg-carrot px-7 py-3.5 text-[0.95rem] font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-110 disabled:from-line-2 disabled:to-line-2 disabled:text-muted disabled:shadow-none"
               >
                 {payBusy ? payLabel : `Pay ${money(total)}`}
               </motion.button>

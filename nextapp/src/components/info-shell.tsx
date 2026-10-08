@@ -23,7 +23,7 @@ export function InfoShell({
         <Reveal>
           <div className="mb-6">
             <span className="inline-flex items-center gap-1.5 text-[0.62rem] font-extrabold uppercase tracking-[0.16em] text-leaf">
-              <span className="h-1.5 w-1.5 rounded-full bg-carrot animate-pulse-dot" /> {eyebrow}
+              {eyebrow}
             </span>
             <h1 className="mt-2 font-display text-[1.9rem] font-extrabold leading-tight text-forest sm:text-[2.4rem]">{title}</h1>
             <p className="mt-2 max-w-xl text-[0.95rem] font-medium leading-relaxed text-muted">{subtitle}</p>

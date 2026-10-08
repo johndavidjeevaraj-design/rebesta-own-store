@@ -89,7 +89,7 @@ export function SubscriptionsView() {
       <main className="pb-20">
         <section className="mx-auto max-w-xl px-4 pt-14 sm:pt-16">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#c8400f]">Set &amp; forget</p>
-          <h1 className="mt-3 font-display text-[32px] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-[40px]">Your weekly veg basket.</h1>
+          <h1 className="mt-3 font-display text-[28px] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-[36px]">Your weekly veg basket.</h1>
           <p className="mt-3 text-[14px] font-medium leading-relaxed text-muted-foreground">
             Same fresh vegetables, same morning slot, every week. Pay on delivery each time. Pause, resume or cancel anytime — no charges, no calls.
           </p>

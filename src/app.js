@@ -76,6 +76,14 @@ ${productUrls}
   app.get('/subscriptions', v3WithFallback('subscriptions'));
   app.get('/partner', (req, res) => res.sendFile('partner.html', { root: config.publicDir }));
 
+  /* the service worker must NEVER sit in an HTTP cache — a browser that
+     can't fetch fresh sw.js bytes never updates or retires a stale worker,
+     and returning visitors can get stuck on an old app shell */
+  app.get(['/sw.js', '/manifest.json'], (req, res) => {
+    res.set('Cache-Control', 'public, max-age=0, must-revalidate');
+    res.sendFile(req.path.slice(1), { root: config.publicDir });
+  });
+
   /* speed: content-hashed Next assets cache forever; images cache a week */
   app.use('/v2/_next/static', express.static(path.join(config.publicDir, 'v2/_next/static'), { maxAge: '365d', immutable: true }));
   app.use('/assets', express.static(path.join(config.publicDir, 'assets'), { maxAge: '7d' }));

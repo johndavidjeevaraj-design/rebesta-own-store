@@ -261,7 +261,7 @@ export function TrackView() {
       <main className="pb-20">
         <section className="mx-auto max-w-2xl px-4 pt-14 sm:pt-16">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#c8400f]">Track order</p>
-          <h1 className="mt-3 font-display text-[32px] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-[40px]">Where&rsquo;s my delivery?</h1>
+          <h1 className="mt-3 font-display text-[28px] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-[36px]">Where&rsquo;s my delivery?</h1>
           <p className="mt-3 text-[14px] font-medium text-muted-foreground">Enter your Rebesta order ID and the mobile number used at checkout.</p>
 
           <form data-track-form onSubmit={trackOrder} className="mt-8 grid gap-3 sm:grid-cols-[1.2fr_1fr_auto]">

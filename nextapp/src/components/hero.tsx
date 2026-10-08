@@ -43,7 +43,7 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
       <div className="mx-auto max-w-5xl px-4 text-center">
         <span className="hero-eyebrow text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{badge}</span>
 
-        <h1 className="mx-auto mt-4 max-w-4xl font-display text-[clamp(2rem,4.5vw,3rem)] font-extrabold leading-[1.02] text-ink">
+        <h1 className="mx-auto mt-4 max-w-4xl font-display text-[clamp(1.875rem,4vw,2.5rem)] font-extrabold leading-[1.02] text-ink">
           {title.split(" ").map((word, i) => (
             <span key={i} className="w-mask">
               <span className={`w-in${i === 0 ? " text-fresh-grad" : ""}`}>{word}&nbsp;</span>

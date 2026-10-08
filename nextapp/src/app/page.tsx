@@ -248,7 +248,7 @@ export default function Home() {
                 <span className="inline-grid h-12 w-12 place-items-center rounded-full bg-white/20 text-white">
                   <Store size={22} strokeWidth={1.8} />
                 </span>
-                <h2 className="mx-auto mt-7 max-w-3xl font-display text-[32px] font-extrabold leading-[1.05] tracking-tight sm:text-[48px]">
+                <h2 className="mx-auto mt-7 max-w-3xl font-display text-[32px] font-extrabold leading-[1.05] tracking-tight sm:text-[40px]">
                   Fresh is a habit.
                   <br />
                   Start yours tomorrow.

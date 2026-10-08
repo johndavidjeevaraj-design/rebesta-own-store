@@ -93,7 +93,7 @@ export function OrderSuccessView() {
             {badge.text}
           </span>
 
-          <h1 data-success-title className="mt-4 font-display text-[32px] font-extrabold leading-[1.06] tracking-tight text-ink sm:text-[40px]">
+          <h1 data-success-title className="mt-4 font-display text-[28px] font-extrabold leading-[1.06] tracking-tight text-ink sm:text-[36px]">
             {badge.title}
           </h1>
 

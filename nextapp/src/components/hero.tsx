@@ -46,7 +46,7 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
         <h1 className="mx-auto mt-4 max-w-4xl font-display text-[clamp(2.6rem,6.5vw,4.9rem)] font-extrabold leading-[1.02] text-ink">
           {title.split(" ").map((word, i) => (
             <span key={i} className="w-mask">
-              <span className="w-in">{word}&nbsp;</span>
+              <span className={`w-in${i === 0 ? " text-carrot-grad" : ""}`}>{word}&nbsp;</span>
             </span>
           ))}
         </h1>
@@ -54,7 +54,7 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
         <p className="hero-sub mx-auto mt-5 max-w-xl text-[1.05rem] font-medium leading-relaxed text-muted-foreground sm:text-[1.2rem]">{subtitle}</p>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-x-7 gap-y-4">
-          <Button asChild size="lg" className="hero-cta h-12 rounded-full bg-carrot px-7 text-[0.95rem] font-bold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] hover:brightness-[1.04] active:scale-[0.98]">
+          <Button asChild size="lg" className="hero-cta carrot-grad h-12 rounded-full px-7 text-[0.95rem] font-bold text-white shadow-[0_8px_20px_rgba(232,71,12,0.35)] hover:brightness-[1.05] active:scale-[0.98]">
             <a href="/shop">
               Shop fresh stock <ArrowRight size={17} />
             </a>
@@ -81,7 +81,7 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
           ].map((s, i) => (
             <div key={i} className="hero-stat">
               <dt className="sr-only">{s.small}</dt>
-              <dd className="text-[1.45rem] font-extrabold tracking-tight text-ink">{s.big}</dd>
+              <dd className="text-[1.45rem] font-extrabold tracking-tight text-carrot">{s.big}</dd>
               <dd className="mt-1 text-[0.72rem] font-medium uppercase tracking-[0.08em] text-muted-foreground">{s.small}</dd>
             </div>
           ))}

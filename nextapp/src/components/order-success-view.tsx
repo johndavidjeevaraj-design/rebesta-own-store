@@ -107,7 +107,7 @@ export function OrderSuccessView() {
           </p>
 
           <div className="success-actions mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-3">
-            <Button asChild size="lg" className="h-12 rounded-full bg-[#25D366] px-7 text-[0.92rem] font-bold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] hover:brightness-[1.03]">
+            <Button asChild size="lg" className="carrot-grad h-12 rounded-full px-7 text-[0.92rem] font-bold text-white shadow-[0_8px_20px_rgba(232,71,12,0.35)] hover:brightness-[1.05]">
               <a href={whatsapp || `https://wa.me/918438765119?text=${encodeURIComponent("Hi! Confirming my order " + (order?.id || ""))}`} target="_blank" rel="noopener">
                 <MessageCircle size={17} /> Confirm on WhatsApp
               </a>

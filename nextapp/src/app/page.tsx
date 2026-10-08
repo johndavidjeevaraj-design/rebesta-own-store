@@ -190,7 +190,7 @@ export default function Home() {
                 <Button
                   size="lg"
                   onClick={() => setSheetOpen(true)}
-                  className="h-12 shrink-0 rounded-full bg-carrot px-7 text-[0.92rem] font-bold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] hover:brightness-[1.04]"
+                  className="carrot-grad h-12 shrink-0 rounded-full px-7 text-[0.92rem] font-bold text-white shadow-[0_8px_20px_rgba(232,71,12,0.35)] hover:brightness-[1.05]"
                 >
                   {content?.deliveryNoteButton || "Check my pin"} <MapPin size={16} />
                 </Button>
@@ -240,12 +240,12 @@ export default function Home() {
         {/* final CTA — full-bleed deep green, Apple-black moment */}
         <section className="mt-24">
           <Reveal>
-            <div className="grain relative overflow-hidden bg-forest-2 px-6 py-20 text-center text-white sm:py-28">
+            <div className="grain relative overflow-hidden px-6 py-20 text-center text-white sm:py-28 carrot-grad">
               <div className="pointer-events-none absolute inset-0">
-                <div className="absolute left-1/2 top-0 h-80 w-[44rem] -translate-x-1/2 rounded-full bg-leaf/20 blur-[120px]" />
+                <div className="absolute left-1/2 top-0 h-80 w-[44rem] -translate-x-1/2 rounded-full bg-white/25 blur-[120px]" />
               </div>
               <div className="relative z-[2]">
-                <span className="inline-grid h-12 w-12 place-items-center rounded-full bg-white/10 text-leaf-2">
+                <span className="inline-grid h-12 w-12 place-items-center rounded-full bg-white/20 text-white">
                   <Store size={22} strokeWidth={1.8} />
                 </span>
                 <h2 className="mx-auto mt-7 max-w-3xl font-display text-[2.2rem] font-extrabold leading-[1.05] tracking-tight sm:text-[3.6rem]">
@@ -253,13 +253,13 @@ export default function Home() {
                   <br />
                   Start yours tomorrow.
                 </h2>
-                <p className="mx-auto mt-5 max-w-md text-[1rem] font-medium text-white/80">
+                <p className="mx-auto mt-5 max-w-md text-[1rem] font-medium text-white/90">
                   Order before 9 PM — your vegetables arrive with the morning dew, at your exact pin.
                 </p>
                 <Button
                   asChild
                   size="lg"
-                  className="mt-9 h-13 rounded-full bg-carrot px-9 py-6 text-[1rem] font-bold text-white shadow-[0_4px_14px_rgba(0,0,0,0.2)] hover:brightness-[1.04]"
+                  className="mt-9 h-13 rounded-full bg-white px-9 py-6 text-[1rem] font-extrabold text-[#c8400f] shadow-[0_10px_28px_rgba(0,0,0,0.22)] transition hover:scale-[1.03] active:scale-[0.98]"
                 >
                   <a href="/shop">
                     Shop this morning&rsquo;s stock <ArrowRight size={18} />

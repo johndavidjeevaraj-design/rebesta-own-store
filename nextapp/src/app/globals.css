@@ -587,3 +587,15 @@ html.lenis body {
     transform: translateX(4px);
   }
 }
+
+/* ---- signature orange gradient (brand CTA) + gradient text ---- */
+.carrot-grad {
+  background-image: linear-gradient(135deg, #ff7a2f 0%, #f2570d 45%, #d63e0a 100%);
+}
+.carrot-grad:hover { background-image: linear-gradient(135deg, #ff8442 0%, #ff5f13 45%, #e8480d 100%); }
+.text-carrot-grad {
+  background-image: linear-gradient(120deg, #ff6a1f 0%, #e8470c 60%, #d63e0a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

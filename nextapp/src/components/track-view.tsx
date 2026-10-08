@@ -275,7 +275,7 @@ export function TrackView() {
               onChange={(e) => setPhone(e.target.value)}
               className="h-12 rounded-xl border-line-2 bg-white text-[0.95rem] font-medium placeholder:text-[#8e8e93] focus-visible:ring-2 focus-visible:ring-ink/20"
             />
-            <Button type="submit" className="h-12 rounded-xl bg-ink px-6 text-[0.9rem] font-bold text-white hover:bg-ink/90 active:scale-[0.98]">
+            <Button type="submit" className="carrot-grad h-12 rounded-xl px-6 text-[0.9rem] font-bold text-white shadow-[0_6px_16px_rgba(232,71,12,0.3)] hover:brightness-[1.05] active:scale-[0.98]">
               <Search size={16} /> Track
             </Button>
           </form>
@@ -391,7 +391,7 @@ export function TrackView() {
                 onChange={(e) => setHistoryPhone(e.target.value)}
                 className="h-12 flex-1 rounded-xl border-transparent bg-white text-[0.95rem] font-medium placeholder:text-[#8e8e93] focus-visible:border-black/10 focus-visible:ring-0"
               />
-              <Button type="submit" className="h-12 rounded-xl bg-ink px-6 text-[0.9rem] font-bold text-white hover:bg-ink/90">Show</Button>
+              <Button type="submit" className="carrot-grad h-12 rounded-xl px-6 text-[0.9rem] font-bold text-white shadow-[0_6px_16px_rgba(232,71,12,0.3)] hover:brightness-[1.05]">Show</Button>
             </form>
             <div className="mt-5">
               {historyMsg && (

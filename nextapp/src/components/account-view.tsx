@@ -31,7 +31,7 @@ export function AccountView() {
               Sign in to see your orders and profile — or keep shopping, no account needed.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <a className="inline-flex h-11 items-center rounded-full bg-carrot px-7 text-[0.9rem] font-bold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-[1.04] active:scale-[0.98]" href="/login">Sign in</a>
+              <a className="carrot-grad inline-flex h-11 items-center rounded-full px-7 text-[0.9rem] font-bold text-white shadow-[0_8px_20px_rgba(232,71,12,0.35)] transition hover:brightness-[1.05] active:scale-[0.98]" href="/login">Sign in</a>
             </div>
           </div>
 
@@ -63,7 +63,7 @@ export function AccountView() {
                 </span>
                 <h4 className="mt-4 text-[1.1rem] font-bold text-ink">No orders yet</h4>
                 <p className="mt-1.5 text-[0.88rem] font-medium text-muted-foreground">Your first Rebesta order will appear here.</p>
-                <a className="mt-5 inline-flex h-11 items-center rounded-full bg-carrot px-7 text-[0.9rem] font-bold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-[1.04]" href="/shop">Start shopping</a>
+                <a className="carrot-grad mt-5 inline-flex h-11 items-center rounded-full px-7 text-[0.9rem] font-bold text-white shadow-[0_8px_20px_rgba(232,71,12,0.35)] transition hover:brightness-[1.05]" href="/shop">Start shopping</a>
               </div>
             </div>
           </div>

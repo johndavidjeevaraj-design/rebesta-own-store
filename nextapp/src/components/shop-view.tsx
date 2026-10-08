@@ -147,7 +147,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
                   onClick={() => setActiveCategory(cat)}
                   className={`flex shrink-0 items-center gap-2 rounded-full border py-1 pl-1 pr-3.5 transition ${
                     activeCategory === cat
-                      ? "border-transparent bg-carrot text-white shadow-[0_4px_14px_rgba(214,62,10,0.25)]"
+                      ? "carrot-grad border-transparent text-white shadow-[0_6px_16px_rgba(232,71,12,0.3)]"
                       : "border-line bg-white text-ink hover:border-leaf/50"
                   }`}
                 >

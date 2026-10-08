@@ -131,7 +131,7 @@ export function ProductView({ handle }: { handle: string }) {
             <p className="text-4xl">🥬</p>
             <h1 className="mt-3 font-display text-2xl font-extrabold text-forest">Product not found</h1>
             <p className="mt-1 text-sm text-muted-foreground">{notFound}</p>
-            <a href="/shop" className="mt-6 rounded-full bg-carrot px-5 py-3 text-sm font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]">
+            <a href="/shop" className="carrot-grad mt-6 rounded-full px-5 py-3 text-sm font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]">
               Back to shop
             </a>
           </div>
@@ -267,7 +267,7 @@ export function ProductView({ handle }: { handle: string }) {
                       onClick={addCurrent}
                       disabled={product.stock <= 0}
                       whileTap={{ scale: 0.97 }}
-                      className="min-w-[180px] flex-1 rounded-full bg-carrot px-5 py-3 text-[0.95rem] font-extrabold text-white shadow-[0_4px_14px_rgba(255,91,32,0.30)] transition hover:bg-[#ff6a35] active:scale-[0.98] disabled:bg-line-2 disabled:text-muted-foreground disabled:shadow-none"
+                      className="carrot-grad min-w-[180px] flex-1 rounded-full px-5 py-3 text-[0.95rem] font-extrabold text-white shadow-[0_8px_20px_rgba(232,71,12,0.35)] transition hover:brightness-[1.05] active:scale-[0.98] disabled:bg-line-2 disabled:text-muted-foreground disabled:shadow-none disabled:bg-none"
                     >
                       {product.stock <= 0 ? "Sold out" : "Add to basket"}
                     </motion.button>

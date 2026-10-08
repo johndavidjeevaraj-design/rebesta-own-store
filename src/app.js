@@ -76,6 +76,10 @@ ${productUrls}
   app.get('/subscriptions', v3WithFallback('subscriptions'));
   app.get('/partner', (req, res) => res.sendFile('partner.html', { root: config.publicDir }));
 
+  /* speed: content-hashed Next assets cache forever; images cache a week */
+  app.use('/v2/_next/static', express.static(path.join(config.publicDir, 'v2/_next/static'), { maxAge: '365d', immutable: true }));
+  app.use('/assets', express.static(path.join(config.publicDir, 'assets'), { maxAge: '7d' }));
+
   app.use(express.static(config.publicDir, {
     extensions: ['html'],
     index: false,

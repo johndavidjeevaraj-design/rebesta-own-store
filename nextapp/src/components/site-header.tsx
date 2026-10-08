@@ -38,7 +38,7 @@ export function SiteHeader({
               <img src="/assets/brand/logo.png" alt="Rebesta Fresh" className="h-8 w-8 object-contain" />
             </span>
             <span className="text-[17px] font-extrabold tracking-tight text-ink">
-              Rebesta<span className="text-leaf"> Fresh</span>
+              Rebesta<span className="text-carrot-grad"> Fresh</span>
             </span>
           </a>
 
@@ -100,7 +100,7 @@ export function SiteHeader({
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.3, opacity: 0 }}
                     transition={{ type: "spring", stiffness: 600, damping: 22 }}
-                    className="absolute -right-2 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-carrot px-1 text-[0.6rem] font-bold text-white"
+                    className="carrot-grad absolute -right-2 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[0.6rem] font-bold text-white shadow-[0_2px_8px_rgba(232,71,12,0.4)]"
                   >
                     {count}
                   </motion.span>

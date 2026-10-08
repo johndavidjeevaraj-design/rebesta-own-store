@@ -574,7 +574,7 @@ export function CartView() {
                 <p className="mt-1.5 text-[0.72rem] font-semibold text-muted-foreground">Adds every product from your previous order in one tap.</p>
               </div>
             )}
-            <a href="/shop" className="mt-5 rounded-2xl bg-carrot px-6 py-3 text-sm font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-110">
+            <a href="/shop" className="carrot-grad mt-5 rounded-full px-6 py-3 text-sm font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-110">
               Start shopping →
             </a>
             {emptyPicks.length > 0 && (
@@ -868,7 +868,7 @@ export function CartView() {
                                 }}
                                 className="min-w-0 flex-1 rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm font-bold uppercase text-ink outline-none transition placeholder:font-semibold placeholder:normal-case placeholder:text-muted-foreground focus:border-leaf/60"
                               />
-                              <button type="button" onClick={() => applyCoupon(couponInput)} className="shrink-0 rounded-xl bg-carrot px-4 py-2.5 text-[0.74rem] font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]">
+                              <button type="button" onClick={() => applyCoupon(couponInput)} className="carrot-grad shrink-0 rounded-xl px-4 py-2.5 text-[0.74rem] font-extrabold text-white shadow-[0_4px_12px_rgba(232,71,12,0.3)]">
                                 APPLY
                               </button>
                             </div>
@@ -976,7 +976,7 @@ export function CartView() {
                           writePref(TIP_KEY, v);
                         }}
                         className={`rounded-2xl border px-5 py-2.5 text-[0.82rem] font-extrabold transition ${
-                          tip === v ? "border-transparent bg-carrot text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]" : "border-line bg-white text-ink-2 hover:border-leaf/50"
+                          tip === v ? "carrot-grad border-transparent text-white shadow-[0_4px_12px_rgba(232,71,12,0.3)]" : "border-line bg-white text-ink-2 hover:border-leaf/50"
                         }`}
                       >
                         {v ? money(v) : "No tip"}
@@ -1072,7 +1072,7 @@ export function CartView() {
                 whileTap={{ scale: 0.97 }}
                 disabled={!eligible || payBusy}
                 onClick={placeOrder}
-                className="shrink-0 rounded-2xl bg-carrot px-7 py-3.5 text-[0.95rem] font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-110 disabled:from-line-2 disabled:to-line-2 disabled:text-muted-foreground disabled:shadow-none"
+                className="carrot-grad shrink-0 rounded-full px-8 py-3.5 text-[0.98rem] font-extrabold text-white shadow-[0_8px_20px_rgba(232,71,12,0.35)] transition hover:brightness-[1.05] active:scale-[0.98] disabled:bg-line-2 disabled:bg-none disabled:text-muted-foreground disabled:shadow-none"
               >
                 {payBusy ? payLabel : `Pay ${money(total)}`}
               </motion.button>

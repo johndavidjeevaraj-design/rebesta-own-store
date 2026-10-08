@@ -62,7 +62,7 @@ export function LocationSheet({ open, onOpenChange }: { open: boolean; onOpenCha
               <Crosshair size={19} />
             </span>
             <span>
-              <span className="block text-[15px] font-extrabold text-forest">Use my current location</span>
+              <span className="block text-[14px] font-extrabold text-forest">Use my current location</span>
               <span className="block text-[13px] text-muted-foreground">GPS pin — most accurate</span>
             </span>
             <ChevronRight size={16} className="ml-auto text-muted-foreground" />

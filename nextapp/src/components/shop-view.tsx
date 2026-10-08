@@ -94,7 +94,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
               <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.16em] text-leaf">
                 Shop fresh
               </span>
-              <h1 className="font-display text-2xl font-extrabold text-forest md:text-3xl">{conf.heading}</h1>
+              <h1 className="font-display text-xl font-extrabold text-forest md:text-2xl">{conf.heading}</h1>
             </div>
             <motion.span
               key={`${filtered.length}-${search}-${activeCategory}-${offersOnly}`}
@@ -125,7 +125,7 @@ export function ShopView({ mode }: { mode: ShopMode }) {
                 className="mt-8"
                 aria-label="Your last looks"
               >
-                <h2 className="flex items-center gap-2 text-[17px] font-extrabold text-forest">
+                <h2 className="flex items-center gap-2 text-[15px] font-extrabold text-forest">
                   <History size={17} className="text-leaf" /> Your last looks
                 </h2>
                 <div className="rail -mx-4 mt-3 flex gap-4 overflow-x-auto px-4 pb-2">

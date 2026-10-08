@@ -70,10 +70,10 @@ export default function Home() {
           <section className="mx-auto max-w-6xl px-4 pt-20" aria-labelledby="cats-h">
             <Reveal>
               <div className="flex items-end justify-between gap-4">
-                <h2 id="cats-h" className="font-display text-[32px] font-extrabold leading-tight tracking-tight text-ink sm:text-[36px]">
+                <h2 id="cats-h" className="font-display text-[28px] font-extrabold leading-tight tracking-tight text-ink sm:text-[32px]">
                   Shop by category.
                 </h2>
-                <a href="/shop" className="hidden shrink-0 items-center gap-1 text-[15px] font-semibold text-[#c8400f] transition hover:gap-2 sm:flex">
+                <a href="/shop" className="hidden shrink-0 items-center gap-1 text-[14px] font-semibold text-[#c8400f] transition hover:gap-2 sm:flex">
                   Full shop <ChevronRight size={15} />
                 </a>
               </div>
@@ -90,7 +90,7 @@ export default function Home() {
                     <img src={image} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]" />
                   </span>
                   <span className="flex flex-1 flex-col justify-between p-4">
-                    <span className="text-[15px] font-bold capitalize tracking-tight text-ink">{cat}</span>
+                    <span className="text-[14px] font-bold capitalize tracking-tight text-ink">{cat}</span>
                     <span className="mt-1 text-[13px] font-medium text-muted-foreground">{count} items</span>
                   </span>
                 </a>
@@ -105,11 +105,11 @@ export default function Home() {
             <div className="flex items-end justify-between gap-4">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#c8400f]">Harvested today</p>
-                <h2 id="feat-h" className="mt-2 font-display text-[32px] font-extrabold leading-tight tracking-tight text-ink sm:text-[36px]">
+                <h2 id="feat-h" className="mt-2 font-display text-[28px] font-extrabold leading-tight tracking-tight text-ink sm:text-[32px]">
                   This morning&rsquo;s picks.
                 </h2>
               </div>
-              <a href="/shop" className="hidden shrink-0 items-center gap-1 text-[15px] font-semibold text-[#c8400f] transition hover:gap-2 sm:flex">
+              <a href="/shop" className="hidden shrink-0 items-center gap-1 text-[14px] font-semibold text-[#c8400f] transition hover:gap-2 sm:flex">
                 See everything <ChevronRight size={15} />
               </a>
             </div>
@@ -134,7 +134,7 @@ export default function Home() {
         {/* how it works */}
         <section id="how" className="mx-auto max-w-6xl px-4 pt-24" aria-labelledby="how-h">
           <Reveal className="mx-auto max-w-2xl text-center">
-            <h2 id="how-h" className="font-display text-[32px] font-extrabold leading-tight tracking-tight text-ink sm:text-[36px]">
+            <h2 id="how-h" className="font-display text-[28px] font-extrabold leading-tight tracking-tight text-ink sm:text-[32px]">
               From farm to door in three steps.
             </h2>
           </Reveal>
@@ -160,12 +160,12 @@ export default function Home() {
               },
             ].map((s) => (
               <Card key={s.step} className="group relative gap-0 overflow-hidden rounded-[28px] border-transparent bg-[#f5f5f7] p-7 shadow-none transition hover:shadow-[0_12px_36px_rgba(0,0,0,0.08)]">
-                <span className="absolute -right-2 -top-6 select-none font-display text-[96px] font-extrabold leading-none text-black/[0.05]">{s.step}</span>
+                <span className="absolute -right-2 -top-6 select-none font-display text-[72px] font-extrabold leading-none text-black/[0.05]">{s.step}</span>
                 <span className="grid h-11 w-11 place-items-center rounded-full bg-white text-ink shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
                   <s.icon size={19} strokeWidth={1.9} />
                 </span>
-                <h3 className="mt-5 text-[17px] font-bold tracking-tight text-ink">{s.title}</h3>
-                <p className="mt-2 text-[15px] font-medium leading-relaxed text-muted-foreground">{s.text}</p>
+                <h3 className="mt-5 text-[15px] font-bold tracking-tight text-ink">{s.title}</h3>
+                <p className="mt-2 text-[14px] font-medium leading-relaxed text-muted-foreground">{s.text}</p>
               </Card>
             ))}
           </Reveal>
@@ -180,17 +180,17 @@ export default function Home() {
                   <Truck size={24} strokeWidth={1.8} />
                 </span>
                 <div className="flex-1">
-                  <h2 id="del-h" className="font-display text-[24px] font-extrabold leading-tight tracking-tight text-ink sm:text-[32px]">
+                  <h2 id="del-h" className="font-display text-[21px] font-extrabold leading-tight tracking-tight text-ink sm:text-[28px]">
                     {content?.deliveryNoteTitle || "Delivery by real road distance"}
                   </h2>
-                  <p className="mt-2 max-w-xl text-[15px] font-medium leading-relaxed text-muted-foreground">
+                  <p className="mt-2 max-w-xl text-[14px] font-medium leading-relaxed text-muted-foreground">
                     {content?.deliveryNoteText || `Fair, transparent delivery fees based on the actual road distance to your pin — free over ₹${freeOver}.`}
                   </p>
                 </div>
                 <Button
                   size="lg"
                   onClick={() => setSheetOpen(true)}
-                  className="fresh-grad h-12 shrink-0 rounded-full px-7 text-[15px] font-bold text-white shadow-[0_8px_20px_rgba(11,124,49,0.35)] hover:brightness-[1.05]"
+                  className="fresh-grad h-12 shrink-0 rounded-full px-7 text-[14px] font-bold text-white shadow-[0_8px_20px_rgba(11,124,49,0.35)] hover:brightness-[1.05]"
                 >
                   {content?.deliveryNoteButton || "Check my pin"} <MapPin size={16} />
                 </Button>
@@ -202,7 +202,7 @@ export default function Home() {
         {/* trust */}
         <section className="mx-auto max-w-6xl px-4 pt-24" aria-labelledby="trust-h">
           <Reveal className="mx-auto max-w-2xl text-center">
-            <h2 id="trust-h" className="font-display text-[32px] font-extrabold leading-tight tracking-tight text-ink sm:text-[36px]">
+            <h2 id="trust-h" className="font-display text-[28px] font-extrabold leading-tight tracking-tight text-ink sm:text-[32px]">
               Why Hosur shops with us.
             </h2>
           </Reveal>
@@ -229,8 +229,8 @@ export default function Home() {
                   <span className="grid h-11 w-11 place-items-center rounded-full bg-[#f5f5f7] text-ink">
                     <t.icon size={20} strokeWidth={1.9} />
                   </span>
-                  <h3 className="mt-5 text-[17px] font-bold tracking-tight text-ink">{t.title}</h3>
-                  <p className="mt-2 text-[15px] font-medium leading-relaxed text-muted-foreground">{t.text}</p>
+                  <h3 className="mt-5 text-[15px] font-bold tracking-tight text-ink">{t.title}</h3>
+                  <p className="mt-2 text-[14px] font-medium leading-relaxed text-muted-foreground">{t.text}</p>
                 </Card>
               </motion.div>
             ))}
@@ -248,18 +248,18 @@ export default function Home() {
                 <span className="inline-grid h-12 w-12 place-items-center rounded-full bg-white/20 text-white">
                   <Store size={22} strokeWidth={1.8} />
                 </span>
-                <h2 className="mx-auto mt-7 max-w-3xl font-display text-[36px] font-extrabold leading-[1.05] tracking-tight sm:text-[56px]">
+                <h2 className="mx-auto mt-7 max-w-3xl font-display text-[32px] font-extrabold leading-[1.05] tracking-tight sm:text-[48px]">
                   Fresh is a habit.
                   <br />
                   Start yours tomorrow.
                 </h2>
-                <p className="mx-auto mt-5 max-w-md text-[15px] font-medium text-white/90">
+                <p className="mx-auto mt-5 max-w-md text-[14px] font-medium text-white/90">
                   Order before 9 PM — your vegetables arrive with the morning dew, at your exact pin.
                 </p>
                 <Button
                   asChild
                   size="lg"
-                  className="mt-9 h-13 rounded-full bg-white px-9 py-6 text-[17px] font-bold text-[#075c23] shadow-[0_10px_28px_rgba(0,0,0,0.22)] transition hover:scale-[1.03] active:scale-[0.98]"
+                  className="mt-9 h-13 rounded-full bg-white px-9 py-6 text-[15px] font-bold text-[#075c23] shadow-[0_10px_28px_rgba(0,0,0,0.22)] transition hover:scale-[1.03] active:scale-[0.98]"
                 >
                   <a href="/shop">
                     Shop this morning&rsquo;s stock <ArrowRight size={18} />

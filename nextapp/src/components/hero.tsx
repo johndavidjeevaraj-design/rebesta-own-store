@@ -43,7 +43,7 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
       <div className="mx-auto max-w-5xl px-4 text-center">
         <span className="hero-eyebrow text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{badge}</span>
 
-        <h1 className="mx-auto mt-4 max-w-4xl font-display text-[clamp(2.4rem,6vw,5rem)] font-extrabold leading-[1.02] text-ink">
+        <h1 className="mx-auto mt-4 max-w-4xl font-display text-[clamp(2rem,4.5vw,3rem)] font-extrabold leading-[1.02] text-ink">
           {title.split(" ").map((word, i) => (
             <span key={i} className="w-mask">
               <span className={`w-in${i === 0 ? " text-fresh-grad" : ""}`}>{word}&nbsp;</span>
@@ -51,17 +51,17 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
           ))}
         </h1>
 
-        <p className="hero-sub mx-auto mt-5 max-w-xl text-[17px] font-medium leading-relaxed text-muted-foreground sm:text-[19px]">{subtitle}</p>
+        <p className="hero-sub mx-auto mt-5 max-w-xl text-[15px] font-medium leading-relaxed text-muted-foreground sm:text-[17px]">{subtitle}</p>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-x-7 gap-y-4">
-          <Button asChild size="lg" className="hero-cta fresh-grad h-12 rounded-full px-7 text-[17px] font-bold text-white shadow-[0_8px_20px_rgba(11,124,49,0.35)] hover:brightness-[1.05] active:scale-[0.98]">
+          <Button asChild size="lg" className="hero-cta carrot-grad h-11 rounded-full px-6 text-[14px] font-bold text-white shadow-[0_8px_20px_rgba(232,71,12,0.35)] hover:brightness-[1.05] active:scale-[0.98]">
             <a href="/shop">
               Shop fresh stock <ArrowRight size={17} />
             </a>
           </Button>
           <button
             type="button"
-            className="hero-cta inline-flex items-center gap-1.5 text-[15px] font-semibold text-leaf transition hover:underline"
+            className="hero-cta inline-flex items-center gap-1.5 text-[14px] font-semibold text-leaf transition hover:underline"
             onClick={() => {
               const lenis = (window as any).__lenis;
               if (lenis) lenis.scrollTo("#how", { offset: -70 });
@@ -81,7 +81,7 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
           ].map((s, i) => (
             <div key={i} className="hero-stat">
               <dt className="sr-only">{s.small}</dt>
-              <dd className="text-[21px] font-bold tracking-tight text-leaf">{s.big}</dd>
+              <dd className="text-[15px] font-bold tracking-tight text-leaf">{s.big}</dd>
               <dd className="mt-1 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{s.small}</dd>
             </div>
           ))}
@@ -100,9 +100,9 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
               <span className="flex items-end justify-between gap-4 p-5">
                 <span className="min-w-0 text-left">
                   <span className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#c8400f]">Today&rsquo;s bestseller</span>
-                  <span className="mt-1 block truncate text-[19px] font-extrabold tracking-tight text-ink">{hero.title}</span>
+                  <span className="mt-1 block truncate text-[17px] font-extrabold tracking-tight text-ink">{hero.title}</span>
                 </span>
-                <span className="shrink-0 text-[19px] font-bold text-ink">{money(hero.priceInr)}</span>
+                <span className="shrink-0 text-[17px] font-bold text-ink">{money(hero.priceInr)}</span>
               </span>
             </a>
           )}
@@ -112,9 +112,9 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={p.image} alt={p.title} className="h-24 w-24 shrink-0 rounded-[18px] object-cover transition-transform duration-500 group-hover:scale-[1.05] sm:h-28 sm:w-28" />
                 <div className="min-w-0">
-                  <p className="truncate text-[17px] font-bold tracking-tight text-ink">{p.title}</p>
+                  <p className="truncate text-[15px] font-bold tracking-tight text-ink">{p.title}</p>
                   <p className="mt-0.5 text-[13px] font-medium text-muted-foreground">{p.unitLabel}</p>
-                  <p className="mt-2 text-[17px] font-extrabold text-ink">{money(p.priceInr)}</p>
+                  <p className="mt-2 text-[15px] font-extrabold text-ink">{money(p.priceInr)}</p>
                 </div>
               </a>
             ))}

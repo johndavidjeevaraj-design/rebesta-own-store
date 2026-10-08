@@ -189,11 +189,11 @@ export function ProductView({ handle }: { handle: string }) {
               {/* Copy */}
               <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.08 }}>
                 <span className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#c8400f]">{product.category}</span>
-                <h1 className="mt-1.5 font-display text-2xl font-extrabold leading-tight text-forest md:text-[32px]">{product.title}</h1>
+                <h1 className="mt-1.5 font-display text-2xl font-extrabold leading-tight text-forest md:text-[28px]">{product.title}</h1>
                 {product.description && <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-ink-2/85">{product.description}</p>}
 
                 <div className="mt-4 flex items-end gap-2">
-                  <strong className="text-[28px] font-bold tracking-tight text-ink">{money(product.priceInr)}</strong>
+                  <strong className="text-[24px] font-bold tracking-tight text-ink">{money(product.priceInr)}</strong>
                   {discount > 0 && <span className="text-sm font-semibold text-muted-foreground line-through">{money(Number(product.compareAtInr))}</span>}
                   <span className="text-sm font-semibold text-muted-foreground">/ {product.unitLabel}</span>
                 </div>
@@ -249,7 +249,7 @@ export function ProductView({ handle }: { handle: string }) {
                       >
                         <Minus size={14} />
                       </button>
-                      <motion.span key={qty} initial={{ scale: 1.25 }} animate={{ scale: 1 }} className="min-w-6 text-center text-[15px] font-extrabold text-ink">
+                      <motion.span key={qty} initial={{ scale: 1.25 }} animate={{ scale: 1 }} className="min-w-6 text-center text-[14px] font-extrabold text-ink">
                         {qty}
                       </motion.span>
                       <button
@@ -267,7 +267,7 @@ export function ProductView({ handle }: { handle: string }) {
                       onClick={addCurrent}
                       disabled={product.stock <= 0}
                       whileTap={{ scale: 0.97 }}
-                      className="fresh-grad min-w-[180px] flex-1 rounded-full px-5 py-3 text-[17px] font-extrabold text-white shadow-[0_8px_20px_rgba(11,124,49,0.35)] transition hover:brightness-[1.05] active:scale-[0.98] disabled:bg-line-2 disabled:text-muted-foreground disabled:shadow-none disabled:bg-none"
+                      className="carrot-grad min-w-[180px] flex-1 rounded-full px-5 py-3 text-[15px] font-extrabold text-white shadow-[0_8px_20px_rgba(232,71,12,0.35)] transition hover:brightness-[1.05] active:scale-[0.98] disabled:bg-line-2 disabled:text-muted-foreground disabled:shadow-none disabled:bg-none"
                     >
                       {product.stock <= 0 ? "Sold out" : "Add to basket"}
                     </motion.button>
@@ -305,7 +305,7 @@ export function ProductView({ handle }: { handle: string }) {
 
                 {/* Delivery proof */}
                 <div className="mt-5 rounded-3xl bg-forest-2 p-5 text-white">
-                  <h3 className="flex items-center gap-2 text-[15px] font-extrabold">
+                  <h3 className="flex items-center gap-2 text-[14px] font-extrabold">
                     <MapPin size={15} className="text-leaf-2" /> Delivery checked by your exact pin
                   </h3>
                   <p className="mt-1.5 text-[13px] leading-relaxed text-white/70">

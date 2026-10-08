@@ -93,7 +93,7 @@ export function OrderSuccessView() {
             {badge.text}
           </span>
 
-          <h1 data-success-title className="mt-4 font-display text-[36px] font-extrabold leading-[1.06] tracking-tight text-ink sm:text-[48px]">
+          <h1 data-success-title className="mt-4 font-display text-[32px] font-extrabold leading-[1.06] tracking-tight text-ink sm:text-[40px]">
             {badge.title}
           </h1>
 
@@ -102,25 +102,25 @@ export function OrderSuccessView() {
               {order ? order.id : "Loading order ID…"}
             </span>
           </p>
-          <p data-order-copy className="mt-3 text-[15px] font-medium text-muted-foreground">
+          <p data-order-copy className="mt-3 text-[14px] font-medium text-muted-foreground">
             {order ? `${money(order.totalInr)} · ${order.slot?.label || "Morning delivery"} · ${order.deliveryDate?.label || ""}` : "We are preparing the details…"}
           </p>
 
           <div className="success-actions mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-3">
-            <Button asChild size="lg" className="fresh-grad h-12 rounded-full px-7 text-[15px] font-bold text-white shadow-[0_8px_20px_rgba(11,124,49,0.35)] hover:brightness-[1.05]">
+            <Button asChild size="lg" className="fresh-grad h-12 rounded-full px-7 text-[14px] font-bold text-white shadow-[0_8px_20px_rgba(11,124,49,0.35)] hover:brightness-[1.05]">
               <a href={whatsapp || `https://wa.me/918438765119?text=${encodeURIComponent("Hi! Confirming my order " + (order?.id || ""))}`} target="_blank" rel="noopener">
                 <MessageCircle size={17} /> Confirm on WhatsApp
               </a>
             </Button>
-            <a href="/track" className="text-[15px] font-semibold text-[#c8400f] transition hover:underline">Track order</a>
-            <a href="/subscriptions" className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-[#c8400f] transition hover:underline">
+            <a href="/track" className="text-[14px] font-semibold text-[#c8400f] transition hover:underline">Track order</a>
+            <a href="/subscriptions" className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#c8400f] transition hover:underline">
               <Repeat2 size={15} /> Make it weekly
             </a>
           </div>
 
           <div data-order-summary className="mt-10 text-left">
-            {error && <div className="rounded-2xl bg-carrot/10 px-5 py-4 text-[15px] font-semibold text-[#c8400f]">{error}</div>}
-            {!error && !order && <div className="rounded-2xl bg-[#f5f5f7] px-5 py-4 text-[15px] font-semibold text-muted-foreground">Loading your order…</div>}
+            {error && <div className="rounded-2xl bg-carrot/10 px-5 py-4 text-[14px] font-semibold text-[#c8400f]">{error}</div>}
+            {!error && !order && <div className="rounded-2xl bg-[#f5f5f7] px-5 py-4 text-[14px] font-semibold text-muted-foreground">Loading your order…</div>}
             {order && (
               <>
                 <Card className="gap-0 rounded-2xl border-line p-2 shadow-[0_1px_6px_rgba(0,0,0,0.04)]">
@@ -129,10 +129,10 @@ export function OrderSuccessView() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={item.image} alt={item.title} className="h-12 w-12 rounded-lg object-cover" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[15px] font-bold text-ink">{item.title}</p>
+                        <p className="truncate text-[14px] font-bold text-ink">{item.title}</p>
                         <p className="text-[13px] font-medium text-muted-foreground">{item.qty} × {item.unitLabel}</p>
                       </div>
-                      <p className="text-[15px] font-bold tabular-nums text-ink">{money(item.lineTotalInr)}</p>
+                      <p className="text-[14px] font-bold tabular-nums text-ink">{money(item.lineTotalInr)}</p>
                     </div>
                   ))}
                 </Card>
@@ -155,7 +155,7 @@ export function OrderSuccessView() {
                       <span>Delivery tip</span><span className="tabular-nums">{money(order.tipInr)}</span>
                     </div>
                   )}
-                  <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-[17px] font-extrabold text-ink">
+                  <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-[15px] font-extrabold text-ink">
                     <span>Total</span><span className="tabular-nums">{money(order.totalInr)}</span>
                   </div>
                 </Card>

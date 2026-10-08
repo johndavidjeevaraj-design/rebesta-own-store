@@ -89,8 +89,8 @@ export function SubscriptionsView() {
       <main className="pb-20">
         <section className="mx-auto max-w-xl px-4 pt-14 sm:pt-16">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#c8400f]">Set &amp; forget</p>
-          <h1 className="mt-3 font-display text-[36px] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-[48px]">Your weekly veg basket.</h1>
-          <p className="mt-3 text-[15px] font-medium leading-relaxed text-muted-foreground">
+          <h1 className="mt-3 font-display text-[32px] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-[40px]">Your weekly veg basket.</h1>
+          <p className="mt-3 text-[14px] font-medium leading-relaxed text-muted-foreground">
             Same fresh vegetables, same morning slot, every week. Pay on delivery each time. Pause, resume or cancel anytime — no charges, no calls.
           </p>
 
@@ -99,16 +99,16 @@ export function SubscriptionsView() {
               id="subPhone" inputMode="numeric" maxLength={10} autoComplete="tel" required
               placeholder="10-digit number used on your orders" value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="h-12 flex-1 rounded-xl border-line-2 bg-white text-[15px] font-medium placeholder:text-[#8e8e93] focus-visible:ring-2 focus-visible:ring-ink/20"
+              className="h-12 flex-1 rounded-xl border-line-2 bg-white text-[14px] font-medium placeholder:text-[#8e8e93] focus-visible:ring-2 focus-visible:ring-ink/20"
             />
-            <Button type="submit" data-sub-find className="fresh-grad h-12 rounded-xl px-6 text-[15px] font-bold text-white shadow-[0_6px_16px_rgba(11,124,49,0.3)] hover:brightness-[1.05]">
+            <Button type="submit" data-sub-find className="fresh-grad h-12 rounded-xl px-6 text-[14px] font-bold text-white shadow-[0_6px_16px_rgba(11,124,49,0.3)] hover:brightness-[1.05]">
               Show
             </Button>
           </form>
 
           <div data-sub-list className="mt-6">
             {msg && (
-              <div className={`rounded-2xl px-5 py-4 text-[15px] font-semibold ${msg.kind === "error" ? "bg-carrot/10 text-[#c8400f]" : "bg-[#f5f5f7] text-muted-foreground"}`}>
+              <div className={`rounded-2xl px-5 py-4 text-[14px] font-semibold ${msg.kind === "error" ? "bg-carrot/10 text-[#c8400f]" : "bg-[#f5f5f7] text-muted-foreground"}`}>
                 {msg.text}
               </div>
             )}
@@ -118,7 +118,7 @@ export function SubscriptionsView() {
                 <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-white text-ink shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
                   <ShoppingBasket size={24} strokeWidth={1.8} />
                 </span>
-                <h3 className="mt-4 text-[17px] font-bold text-ink">No subscriptions on this number</h3>
+                <h3 className="mt-4 text-[15px] font-bold text-ink">No subscriptions on this number</h3>
                 <p className="mx-auto mt-2 max-w-xs text-[13px] font-medium leading-relaxed text-muted-foreground">
                   Tick <strong className="text-ink">“Make it a weekly order”</strong> at checkout next time and your basket repeats automatically every week.
                 </p>
@@ -129,7 +129,7 @@ export function SubscriptionsView() {
               <motion.div key={sub.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className={`mb-3 ${sub.status === "ACTIVE" ? "" : "opacity-75"}`}>
                 <Card className="gap-0 rounded-2xl border-line p-6 shadow-[0_1px_6px_rgba(0,0,0,0.04)]">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="flex items-center gap-2 text-[17px] font-extrabold tracking-tight text-ink">
+                    <p className="flex items-center gap-2 text-[15px] font-extrabold tracking-tight text-ink">
                       <span className="grid h-8 w-8 place-items-center rounded-full bg-mint text-leaf"><ShoppingBasket size={15} /></span>
                       Weekly basket
                     </p>
@@ -142,7 +142,7 @@ export function SubscriptionsView() {
                     )}
                   </div>
 
-                  <div className="mt-4 space-y-2.5 text-[15px] font-medium text-ink">
+                  <div className="mt-4 space-y-2.5 text-[14px] font-medium text-ink">
                     <p className="flex items-center gap-2.5">
                       <CalendarDays size={15} className="shrink-0 text-muted-foreground" />
                       Every <strong>{sub.weekdayLabel || WEEKDAYS[sub.weekday || 0]}</strong>
@@ -203,7 +203,7 @@ export function SubscriptionsView() {
 
       <div className={`toast-note fixed inset-x-4 top-20 z-[90] mx-auto max-w-sm transition-all ${toast ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-3 opacity-0"}`} id="toast">
         {toast && (
-          <div className={`rounded-2xl px-5 py-3.5 text-[15px] font-semibold shadow-[0_10px_30px_rgba(0,0,0,0.15)] ${toast.kind === "error" ? "bg-carrot text-white" : "bg-ink text-white"}`}>
+          <div className={`rounded-2xl px-5 py-3.5 text-[14px] font-semibold shadow-[0_10px_30px_rgba(0,0,0,0.15)] ${toast.kind === "error" ? "bg-carrot text-white" : "bg-ink text-white"}`}>
             {toast.text}
           </div>
         )}

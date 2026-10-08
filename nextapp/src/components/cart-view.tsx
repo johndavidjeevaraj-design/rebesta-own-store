@@ -1036,7 +1036,7 @@ export function CartView() {
                             </button>
                           )}
                         </div>
-                        <div className="mt-1 flex justify-between border-t border-dashed border-line pt-2.5 text-[15px] font-extrabold text-forest">
+                        <div className="mt-1 flex justify-between border-t border-dashed border-line pt-2.5 text-[14px] font-extrabold text-forest">
                           <span>To Pay</span>
                           <span>{money(total)}</span>
                         </div>
@@ -1072,7 +1072,7 @@ export function CartView() {
                 whileTap={{ scale: 0.97 }}
                 disabled={!eligible || payBusy}
                 onClick={placeOrder}
-                className="fresh-grad shrink-0 rounded-full px-8 py-3.5 text-[17px] font-extrabold text-white shadow-[0_8px_20px_rgba(11,124,49,0.35)] transition hover:brightness-[1.05] active:scale-[0.98] disabled:bg-line-2 disabled:bg-none disabled:text-muted-foreground disabled:shadow-none"
+                className="fresh-grad shrink-0 rounded-full px-8 py-3.5 text-[15px] font-extrabold text-white shadow-[0_8px_20px_rgba(11,124,49,0.35)] transition hover:brightness-[1.05] active:scale-[0.98] disabled:bg-line-2 disabled:bg-none disabled:text-muted-foreground disabled:shadow-none"
               >
                 {payBusy ? payLabel : `Pay ${money(total)}`}
               </motion.button>
@@ -1106,10 +1106,10 @@ export function CartView() {
               } ${app !== "cod" && !onlineEnabled ? " opacity-50" : ""}`}
             >
               <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${app === "cod" || app === "upi" ? "bg-mint text-leaf" : "bg-white"} `}>
-                {app === "gpay" && <span className="font-display text-[15px] font-extrabold text-[#4285F4]">G</span>}
-                {app === "phonepe" && <span className="font-display text-[15px] font-extrabold text-[#5F259F]">Pe</span>}
+                {app === "gpay" && <span className="font-display text-[14px] font-extrabold text-[#4285F4]">G</span>}
+                {app === "phonepe" && <span className="font-display text-[14px] font-extrabold text-[#5F259F]">Pe</span>}
                 {app === "paytm" && <span className="font-display text-[13px] font-extrabold text-[#20336B]">paytm</span>}
-                {app === "upi" && <span className="text-[15px] font-black text-leaf">₹</span>}
+                {app === "upi" && <span className="text-[14px] font-black text-leaf">₹</span>}
                 {app === "cod" && <span className="text-lg">💵</span>}
               </span>
               {app === "upi" ? (

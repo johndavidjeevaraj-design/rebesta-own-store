@@ -81,6 +81,19 @@ export default function FarmStory() {
           start: "top top",
           end: "bottom bottom",
           scrub: 0.35,
+          /* snap: after a swipe (and its momentum) settles, glide to the
+             middle of the nearest phase — one clean phase per swipe, even
+             when touch momentum flings past several */
+          snap: {
+            snapTo: (value: number) => {
+              const n = PHASES.length;
+              const mid = Math.round(value * n - 0.5) + 0.5;
+              return Math.min(Math.max(mid, 0.5), n - 0.5) / n;
+            },
+            duration: { min: 0.25, max: 0.6 },
+            delay: 0.06,
+            ease: "power2.inOut",
+          },
         },
       });
 
@@ -149,10 +162,12 @@ export default function FarmStory() {
       id="how"
       ref={root}
       aria-label="How it works — farm to door story"
-      className="relative bg-[#0b0d0c]"
-      /* one swipe = one phase: 35vh of scroll per phase (was 85vh — needed
-         2-3 swipes to move on). Sticky panel itself adds the final 100vh. */
-      style={{ height: `${PHASES.length * 35 + 100}vh` }}
+      className="relative h-[425vh] bg-[#0b0d0c] md:h-[275vh]"
+      /* one swipe = one phase.
+         Mobile: 65vh per phase — a touch fling (drag + momentum) travels
+         ~60-70vh, so one swipe lands one phase, and snap cleans the landing.
+         Desktop: 35vh per phase — one wheel flick. Sticky panel = +100vh.
+         (5 phases: 425vh mobile / 275vh desktop) */
     >
       <div className="sticky top-0 flex h-[100svh] items-center overflow-hidden">
         <div className="mx-auto grid w-full max-w-6xl items-center gap-8 px-4 py-8 md:grid-cols-[1.12fr_1fr] md:gap-14">

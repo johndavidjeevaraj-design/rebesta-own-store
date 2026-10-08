@@ -139,14 +139,17 @@ export default function FarmStory() {
       let gestureU = -1; // where the current gesture began (-1 = no anchor yet)
       let lastDir = 1;
       let gliding = false;
+      let glideTarget = -1;
 
       const glide = (target: number, fromU: number) => {
         gliding = true;
+        glideTarget = target;
         lenis.scrollTo(yAt(target), {
           duration: Math.min(1.5, 0.5 + Math.abs(target - fromU) * 0.6),
           easing: (x: number) => 1 - Math.pow(1 - x, 3),
           onComplete: () => {
             gliding = false;
+            glideTarget = -1;
             gestureU = target;
           },
         });
@@ -169,32 +172,71 @@ export default function FarmStory() {
       };
 
       const onLenisScroll = ({ direction }: { direction: number }) => {
-        if (direction) lastDir = direction;
+        /* during a glide the events are our own animation (plus any stray
+           wheel ticks) — they must not poison the remembered direction */
+        if (!gliding && direction) lastDir = direction;
         clearTimeout(settleTimer);
         settleTimer = setTimeout(settle, 170);
       };
       lenis.on("scroll", onLenisScroll);
 
       /* user input mid-glide: freeze the animation exactly where it is,
-         re-anchor the gesture — the next settle decides from here */
-      const onUser = () => {
+         re-anchor the gesture — the next settle decides from here.
+         A single stray wheel tick (trackpad momentum tail) must not stutter
+         the glide: only sustained input (2 wheels within 220ms) or a
+         touch/keystroke — always deliberate — interrupts it. */
+      let prevWheelT = 0, lastWheelT = 0;
+      const onUser = (e: Event) => {
         clearTimeout(settleTimer);
-        if (gliding) {
-          lenis.scrollTo(lenis.animatedScroll, { immediate: true, force: true });
-          gliding = false;
+        const t = performance.now();
+        if (e.type === "wheel") { prevWheelT = lastWheelT; lastWheelT = t; }
+        if (gliding && glideTarget >= 0) {
+          /* deciding what counts as the user taking over mid-glide:
+             • touch or key — always deliberate
+             • sustained wheels (2 within 220ms) — deliberate
+             • a wheel OPPOSING the glide with real force (≥15px) — deliberate
+             • anything else is a trackpad-momentum straggler: absorb it and
+               keep gliding — it must not flip direction or stutter motion */
+          let deliberate = e.type !== "wheel" || t - prevWheelT < 220;
+          if (!deliberate && e.type === "wheel") {
+            const we = e as WheelEvent;
+            const glideDown = yAt(glideTarget) > (lenis.scroll ?? window.scrollY);
+            const opposes = we.deltaY > 0 !== glideDown;
+            deliberate = opposes && Math.abs(we.deltaY) >= 15;
+          }
+          if (deliberate) {
+            lenis.scrollTo(lenis.animatedScroll, { immediate: true, force: true });
+            gliding = false;
+            glideTarget = -1;
+          } else {
+            if (glideTarget >= 0) glide(glideTarget, unitAt(lenis.scroll ?? window.scrollY));
+            return;
+          }
         }
         const u = unitAt(lenis.scroll ?? window.scrollY);
         gestureU = u >= 0 && u <= N ? u : -1;
+        settleTimer = setTimeout(settle, 170);
       };
       window.addEventListener("wheel", onUser, { passive: true });
       window.addEventListener("touchstart", onUser, { passive: true });
       window.addEventListener("keydown", onUser);
+
+      /* Chrome can freeze this tab (memory saver) mid-glide — the moment it
+         comes back, finish the transform so we never sit half-blended */
+      const onVisible = () => {
+        if (document.visibilityState === "visible") {
+          clearTimeout(settleTimer);
+          settleTimer = setTimeout(settle, 300);
+        }
+      };
+      document.addEventListener("visibilitychange", onVisible);
 
       storyCleanup = () => {
         lenis.off?.("scroll", onLenisScroll);
         window.removeEventListener("wheel", onUser);
         window.removeEventListener("touchstart", onUser);
         window.removeEventListener("keydown", onUser);
+        document.removeEventListener("visibilitychange", onVisible);
         clearTimeout(settleTimer);
       };
     };
@@ -291,7 +333,8 @@ export default function FarmStory() {
                   src={p.image}
                   alt={p.title}
                   loading="lazy"
-                  className="absolute inset-0 h-full w-full object-cover will-change-transform"
+                  decoding="async"
+                  className="absolute inset-0 h-full w-full object-cover"
                   style={{ opacity: i === 0 ? 1 : 0 }}
                 />
               )

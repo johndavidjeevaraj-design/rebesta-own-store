@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
-import { ArrowRight, MapPin, ShoppingBasket, Sunrise, Leaf, BadgeIndianRupee, Truck, ChevronRight, Store } from "lucide-react";
+import { ArrowRight, MapPin, Leaf, BadgeIndianRupee, Truck, ChevronRight, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,6 +12,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { ProductCard } from "@/components/product-card";
 import { LocationSheet } from "@/components/location-sheet";
 import Reveal from "@/components/reveal";
+import FarmStory from "@/components/farm-story";
 import { api, Product, Settings } from "@/lib/store";
 
 export default function Home() {
@@ -131,45 +132,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* how it works */}
-        <section id="how" className="mx-auto max-w-6xl px-4 pt-24" aria-labelledby="how-h">
-          <Reveal className="mx-auto max-w-2xl text-center">
-            <h2 id="how-h" className="font-display text-[28px] font-semibold leading-tight tracking-tight text-ink sm:text-[32px]">
-              From farm to door in three steps.
-            </h2>
-          </Reveal>
-          <Reveal stagger={0.1} className="mt-12 grid gap-5 md:grid-cols-3">
-            {[
-              {
-                icon: MapPin,
-                step: "01",
-                title: "Pin your door",
-                text: "Set your exact location — we price delivery by real road distance, not circles on a map.",
-              },
-              {
-                icon: ShoppingBasket,
-                step: "02",
-                title: "Fill your basket",
-                text: "Pick from this morning's farm-fresh stock and pay by UPI or cash on delivery.",
-              },
-              {
-                icon: Sunrise,
-                step: "03",
-                title: "Fresh by morning",
-                text: "We harvest, pack and ride out at dawn. Your basket lands at your door in a 2-hour slot.",
-              },
-            ].map((s) => (
-              <Card key={s.step} className="group relative gap-0 overflow-hidden rounded-[28px] border-transparent bg-[#f5f5f7] p-7 shadow-none transition hover:shadow-[0_12px_36px_rgba(0,0,0,0.08)]">
-                <span className="absolute -right-2 -top-6 select-none font-display text-[72px] font-bold leading-none text-black/[0.05]">{s.step}</span>
-                <span className="grid h-11 w-11 place-items-center rounded-full bg-white text-ink shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
-                  <s.icon size={19} strokeWidth={1.9} />
-                </span>
-                <h3 className="mt-5 text-[15px] font-bold tracking-tight text-ink">{s.title}</h3>
-                <p className="mt-2 text-[14px] font-medium leading-relaxed text-muted-foreground">{s.text}</p>
-              </Card>
-            ))}
-          </Reveal>
-        </section>
+        {/* farm-to-door — Apple-style pinned scroll story (video-ready) */}
+        <FarmStory />
 
         {/* delivery band */}
         <section className="mt-24 bg-[#f5f5f7] py-20" aria-labelledby="del-h">

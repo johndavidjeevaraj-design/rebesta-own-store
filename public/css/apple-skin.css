@@ -1,0 +1,282 @@
+/* ============================================================
+   apple-skin.css — Rebesta Fresh
+   Loads AFTER styles.css + page inline styles on /partner and
+   /admin. Recolors the legacy UI to the Apple token system:
+   white canvas, #1d1d1f ink, #f5f5f7 bands, #e8e8ed hairlines,
+   leaf accent, flat buttons, Manrope. No markup/JS changes.
+   ============================================================ */
+
+/* ---------- base ---------- */
+body {
+  background: #ffffff !important;
+  color: #1d1d1f;
+  font-family: Manrope, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  animation: none !important;
+}
+body.admin-theme { background: #f5f5f7 !important; }
+
+h1, h2, h3, h4,
+.section-title, .p-section-title,
+.partner-login h1, .admin-side h2 {
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif !important;
+  color: #1d1d1f !important;
+  letter-spacing: -0.022em;
+}
+.section-title { font-weight: 800; }
+
+.eyebrow { color: #6e6e73; font-weight: 700; }
+.eyebrow::before { display: none; }
+
+.section-subtitle, .sub, .track-note { color: #6e6e73; }
+
+::selection { background: rgba(13, 135, 54, 0.18); }
+
+/* ---------- buttons: flat, no shine sweep ---------- */
+.button { font-weight: 700; transition: filter .15s ease, transform .1s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease; }
+.button::after { display: none !important; }
+.button:hover { transform: none; }
+.button:active { transform: scale(0.98); }
+.button.primary {
+  background: #0d8736;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.10);
+}
+.button.primary:hover { background: #0faa46; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.10); }
+.button.orange {
+  background: #ff5b20;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.10);
+}
+.button.orange:hover { background: #ff6d2f; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.10); }
+.button.ghost {
+  color: #1d1d1f;
+  background: #ffffff;
+  border-color: #d2d2d7;
+  box-shadow: none;
+}
+.button.ghost:hover { border-color: #1d1d1f; background: #ffffff; box-shadow: none; }
+.button.danger { color: #c8400f; }
+.button:disabled { background: #f5f5f7; border-color: #f5f5f7; color: #6e6e73; box-shadow: none; }
+
+/* ---------- panels & cards ---------- */
+.shop-panel, .summary-card, .admin-side {
+  border-color: #e8e8ed;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+  backdrop-filter: none;
+}
+
+.empty-state { color: #6e6e73; }
+
+/* ---------- badges & alerts ---------- */
+.badge { border-color: transparent; background: rgba(0, 0, 0, 0.06); color: #6e6e73; font-weight: 700; }
+.badge.green { color: #0d8736; background: #f0f5f0; }
+.badge.orange { color: #d84a15; background: rgba(255, 91, 32, 0.10); }
+.badge.gray { color: #6e6e73; background: rgba(0, 0, 0, 0.06); }
+
+.alert { background: #f5f5f7; border-radius: 16px; font-weight: 600; animation: none; }
+.alert.success { color: #0d8736; background: #f0f5f0; }
+.alert.info { color: #48484c; background: #f5f5f7; }
+.alert.error { color: #c8400f; background: rgba(255, 91, 32, 0.10); }
+
+/* ---------- forms ---------- */
+.field label { color: #48484c; font-weight: 700; }
+.field input, .field textarea, .field select, .small-input, .status-select {
+  border-color: #d2d2d7;
+  border-radius: 14px;
+  color: #1d1d1f;
+  font-weight: 600;
+  background: #fff;
+}
+.field input:focus, .field textarea:focus, .field select:focus, .small-input:focus, .status-select:focus {
+  border-color: rgba(29, 29, 31, 0.4);
+  box-shadow: 0 0 0 3px rgba(29, 29, 31, 0.08);
+  transform: none;
+}
+
+/* ---------- admin ---------- */
+.admin-tabs { background: #f5f5f7; border-radius: 18px; }
+.admin-tab { color: #48484c; }
+.admin-tab:hover { background: rgba(0, 0, 0, 0.05); }
+.admin-tab.active { background: #1d1d1f; color: #fff; box-shadow: none; }
+
+.metric { border-color: #e8e8ed; border-radius: 18px; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04); }
+.metric:hover { transform: none; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); }
+.metric strong { color: #1d1d1f; }
+.metric span { color: #6e6e73; font-weight: 700; }
+
+.admin-table-wrap { border-color: #e8e8ed; border-radius: 18px; }
+.admin-table th { color: #6e6e73; background: #f5f5f7; font-weight: 700; }
+.admin-table td { color: #3a3a3c; }
+.admin-table th, .admin-table td { border-bottom-color: #e8e8ed; }
+
+.packing-card, .packing-list { border-color: #e8e8ed; }
+.packing-num { background: #1d1d1f; color: #fff; }
+.packing-cod { background: rgba(255, 91, 32, 0.10); color: #d84a15; }
+.packing-paid { background: #f0f5f0; color: #0d8736; }
+
+/* ---------- partner ---------- */
+.partner-wrap { background: transparent; }
+.partner-head .p-badge { background: #1d1d1f; letter-spacing: 0.08em; }
+.p-stat { border-color: #e8e8ed; border-radius: 18px; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04); }
+.p-stat b { color: #1d1d1f; }
+.p-stat span { color: #6e6e73; }
+
+.track-toggle { border: 1.5px solid #d2d2d7; border-radius: 18px; color: #1d1d1f; font-weight: 700; }
+.track-toggle.on {
+  background: #1d1d1f;
+  border-color: #1d1d1f;
+  animation: none;
+}
+
+.order-card { border-color: #e8e8ed; border-radius: 24px; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04); }
+.order-card.out { border-left: 6px solid #ff5b20; }
+.order-card.ready { border-left: 6px solid #0d8736; }
+.oc-name { color: #1d1d1f; }
+.oc-addr { color: #6e6e73; }
+.oc-items { background: #f5f5f7; color: #3a3a3c; border-radius: 14px; }
+.oc-slot { background: #f0f5f0; color: #0d8736; }
+.oc-cod { background: rgba(255, 91, 32, 0.10); color: #d84a15; }
+
+.partner-login { border-color: #e8e8ed; border-radius: 24px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06); }
+.partner-login h1 { color: #1d1d1f; }
+.partner-login p.sub { color: #6e6e73; }
+
+.done-card { border-color: #e8e8ed; border-radius: 18px; }
+.done-card .tick { color: #0d8736; }
+
+.logout-row button { color: #c8400f; }
+
+/* route panel + misc generated bits */
+.route-panel, .route-step, .wa-card { border-color: #e8e8ed; }
+
+/* ---------- legacy chrome (admin/partner headers, filters, rows) ---------- */
+.site-header {
+  background: rgba(251, 251, 253, 0.85);
+  backdrop-filter: blur(20px) saturate(150%);
+  box-shadow: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+.site-header::before, .site-header::after { display: none !important; }
+.header-location { color: #6e6e73; font-weight: 700; }
+.header-location strong { color: #1d1d1f; font-weight: 800; }
+.cart-link {
+  color: #ffffff;
+  background: #ff5b20;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.10);
+}
+.cart-link:hover { transform: none; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.10); }
+
+.admin-side { border: 1px solid #e8e8ed; border-top: 1px solid #e8e8ed; }
+.admin-side h2 { color: #1d1d1f; }
+
+.orders-filter select, .orders-filter input {
+  border-color: #d2d2d7;
+  border-radius: 14px;
+}
+
+.recent-row { border-bottom-color: #e8e8ed; }
+.recent-row:hover { background: #f5f5f7; }
+.recent-row .rtotal { color: #1d1d1f; }
+.recent-row .rmeta { color: #6e6e73; }
+
+.live-pill { color: #0d8736; }
+.live-dot { animation: none; }
+
+.summary-note { color: #6e6e73; }
+
+/* generic admin accents that ship green/gold */
+.admin-side .button.ghost.full { margin-top: 9px; }
+a { color: #0d8736; }
+
+/* ---------- .admin-theme overrides (equal specificity, loaded last) ---------- */
+.admin-theme { background: #f5f5f7; }
+.admin-theme .eyebrow { color: #6e6e73; }
+.admin-theme .section-subtitle { color: #6e6e73; }
+
+.admin-theme .admin-tabs {
+  background: #f5f5f7;
+  border: none;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+  border-radius: 18px;
+}
+.admin-theme .admin-tab { color: #48484c; }
+.admin-theme .admin-tab:hover { background: rgba(0, 0, 0, 0.05); }
+.admin-theme .admin-tab.active {
+  background: #1d1d1f;
+  color: #fff;
+  box-shadow: none;
+}
+.admin-theme .live-pill {
+  color: #0d8736;
+  background: transparent;
+  border: none;
+}
+
+.admin-theme .admin-side {
+  background: #fff;
+  border: 1px solid #e8e8ed;
+  border-top: 1px solid #e8e8ed;
+  border-radius: 24px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+}
+.admin-theme .admin-side h2 { color: #1d1d1f; }
+.admin-theme .summary-note {
+  color: #6e6e73;
+  background: #f5f5f7;
+  border: none;
+  border-radius: 14px;
+}
+.admin-theme .shop-panel {
+  background: #fff;
+  border: 1px solid #e8e8ed;
+  border-radius: 24px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+}
+.admin-theme .section-head h2, .admin-theme .section-head h3 { color: #1d1d1f; }
+
+.admin-theme .metric {
+  border: 1px solid #e8e8ed;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+}
+.admin-theme .metric:hover { transform: none; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); }
+.admin-theme .metric strong { color: #1d1d1f; }
+.admin-theme .metric span { color: #6e6e73; }
+.admin-theme .metric:first-child {
+  background: #1d1d1f;
+  border-color: #1d1d1f;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+.admin-theme .metric:first-child strong { color: #fff; }
+.admin-theme .metric:first-child span { color: rgba(255, 255, 255, 0.6); }
+
+.admin-theme .admin-table-wrap { border-color: #e8e8ed; border-radius: 18px; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04); }
+.admin-theme .admin-table th { background: #f5f5f7; color: #6e6e73; }
+.admin-theme .admin-table td { color: #3a3a3c; }
+.admin-theme .admin-table tbody tr:hover { background: #f5f5f7; }
+
+.admin-theme .button { border-radius: 999px; }
+.admin-theme .button.primary { background: #0d8736; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.10); }
+.admin-theme .button.orange { background: #ff5b20; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.10); }
+.admin-theme .button.ghost { background: #fff; border: 1px solid #d2d2d7; color: #1d1d1f; }
+.admin-theme .button.ghost:hover { background: #f5f5f7; }
+.admin-theme .button:focus-visible, .admin-theme .admin-tab:focus-visible { outline: 3px solid rgba(29, 29, 31, 0.25); }
+
+.admin-theme .field input, .admin-theme .field select, .admin-theme .field textarea,
+.admin-theme .orders-filter select, .admin-theme .orders-filter input {
+  border: 1px solid #d2d2d7;
+  border-radius: 14px;
+  background: #fff;
+}
+.admin-theme .field input:focus, .admin-theme .field select:focus, .admin-theme .field textarea:focus,
+.admin-theme .orders-filter select:focus, .admin-theme .orders-filter input:focus {
+  border-color: rgba(29, 29, 31, 0.4);
+  box-shadow: 0 0 0 3px rgba(29, 29, 31, 0.08);
+}
+
+.admin-theme .recent-row { border-bottom-color: #e8e8ed; border-radius: 14px; }
+.admin-theme .recent-row:hover { background: #f5f5f7; }
+.admin-theme .recent-row .rtotal { color: #1d1d1f; }
+
+.admin-theme .badge { border: none; }

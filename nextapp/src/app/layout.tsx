@@ -4,9 +4,9 @@ import LenisProvider from "@/components/lenis-provider";
 import { ToastProvider } from "@/components/toaster";
 
 export const metadata: Metadata = {
-  title: "Rebesta Fresh — Fresh vegetables in Hosur, delivered every morning",
+  title: "Rebesta Fresh — Farm-Fresh Vegetables Delivered in Hosur Every Morning",
   description:
-    "Farm-fresh vegetables handpicked every morning and delivered to your exact doorstep pin in Hosur. Free delivery over ₹500. COD & UPI.",
+    "Order farm-fresh vegetables in Hosur with exact-pin morning delivery. Live stock, fair prices, cash on delivery & UPI. Free delivery over ₹500.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

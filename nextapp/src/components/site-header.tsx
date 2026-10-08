@@ -1,133 +1,131 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { MapPin, User, ShoppingBasket, Home, Activity, MessageCircle, Store } from "lucide-react";
+import { MapPin, Mic, Search, ShoppingCart, User, ChevronDown, X } from "lucide-react";
 import { useCartCount, useSavedLocation } from "@/lib/hooks";
-import { locationLabel } from "@/lib/store";
 import { LocationSheet } from "./location-sheet";
 
-export function SiteHeader() {
-  const count = useCartCount();
+export function SiteHeader({ search = "", onSearch }: { search?: string; onSearch?: (q: string) => void }) {
   const loc = useSavedLocation();
+  const count = useCartCount();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [speechOk, setSpeechOk] = useState(false);
+  const recRef = useRef<any>(null);
 
+  /* SpeechRecognition only exists in the browser — check post-mount so the
+     prerendered HTML matches the first client render (no hydration mismatch) */
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    setSpeechOk(Boolean((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition));
   }, []);
 
+  function startVoice() {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR || !onSearch) return;
+    if (listening) {
+      recRef.current?.stop();
+      return;
+    }
+    const rec = new SR();
+    recRef.current = rec;
+    rec.lang = "en-IN";
+    rec.interimResults = false;
+    rec.maxAlternatives = 3;
+    rec.onstart = () => setListening(true);
+    rec.onend = () => setListening(false);
+    rec.onerror = () => setListening(false);
+    rec.onresult = (ev: any) => {
+      const alts = Array.from(ev.results[0]).map((r: any) => r.transcript.trim()).filter(Boolean);
+      if (alts.length) onSearch(alts[0]);
+    };
+    rec.start();
+  }
+
   return (
-    <>
-      <header
-        className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-          scrolled ? "border-b border-border/70 bg-cream/85 shadow-[0_6px_24px_rgba(7,64,21,0.06)] backdrop-blur-xl" : "bg-transparent"
-        }`}
-      >
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
-          <a href="/" className="flex items-center gap-2" aria-label="Rebesta Fresh home">
-            <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-border">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/brand/logo.png" alt="Rebesta Fresh" className="h-7 w-7 object-contain" />
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-forest/95 backdrop-blur">
+      <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2.5 px-4 py-2.5 md:grid-cols-[auto_1fr_auto]">
+        <button
+          type="button"
+          onClick={() => setSheetOpen(true)}
+          className="-ml-3 flex items-center gap-2 rounded-2xl px-3 py-1.5 text-left transition hover:bg-white/5"
+        >
+          <MapPin size={17} className="shrink-0 text-leaf-2" />
+          <span className="min-w-0">
+            <span className="block text-[0.55rem] font-extrabold uppercase tracking-[0.14em] text-leaf-2/80">Deliver to</span>
+            <span className="flex max-w-[180px] items-center gap-1 truncate text-sm font-semibold text-white/95">
+              {loc?.label || "Set location"} <ChevronDown size={13} className="shrink-0 opacity-70" />
             </span>
-            <span className="hidden font-display text-[1.05rem] font-extrabold leading-none text-forest sm:block">
-              Rebesta<span className="text-leaf"> Fresh</span>
-            </span>
-          </a>
+          </span>
+        </button>
 
-          <nav className="ml-4 hidden items-center gap-1 md:flex" aria-label="Main">
-            {[
-              ["Shop", "/shop"],
-              ["Track order", "/track"],
-              ["About", "/about"],
-              ["FAQ", "/faq"],
-            ].map(([label, href]) => (
-              <a
-                key={href}
-                href={href}
-                className="rounded-full px-3.5 py-2 text-[0.84rem] font-bold text-ink/75 transition hover:bg-white/70 hover:text-forest"
-              >
-                {label}
-              </a>
-            ))}
-          </nav>
-
-          <div className="ml-auto flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setSheetOpen(true)}
-              className="group flex max-w-[10.5rem] items-center gap-1.5 rounded-full border border-border/80 bg-white/80 py-2 pl-2.5 pr-3.5 text-left shadow-sm backdrop-blur transition hover:border-leaf/60 hover:shadow-md"
-            >
-              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-mint text-leaf">
-                <MapPin size={13} />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-[0.58rem] font-extrabold uppercase tracking-wider text-muted-foreground">Delivering to</span>
-                <span className="block truncate text-[0.78rem] font-extrabold text-forest">{locationLabel(loc) || "Set location"}</span>
-              </span>
-            </button>
-
-            <a
-              href="/account"
-              aria-label="Your account"
-              className="grid h-10 w-10 place-items-center rounded-full border border-border/80 bg-white/80 text-ink/80 shadow-sm backdrop-blur transition hover:border-leaf/60 hover:text-forest"
-            >
-              <User size={17} />
-            </a>
-
-            <a
-              href="/cart"
-              aria-label="Your basket"
-              className="relative grid h-10 w-10 place-items-center rounded-full bg-forest text-white shadow-[0_6px_16px_rgba(7,64,21,0.32)] transition hover:-translate-y-0.5 hover:bg-forest-2"
-            >
-              <ShoppingBasket size={18} />
-              <AnimatePresence mode="popLayout">
-                {count > 0 && (
-                  <motion.span
-                    key={count}
-                    initial={{ scale: 0.3, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.3, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 600, damping: 22 }}
-                    className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-carrot px-1 text-[0.66rem] font-extrabold text-white ring-2 ring-cream"
+        {onSearch && (
+          <div className="order-3 relative col-span-2 md:order-none md:col-span-1">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/50" />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => onSearch(e.target.value)}
+              placeholder="Search fresh vegetables… (Tamil works too)"
+              className="w-full rounded-xl border border-white/15 bg-white/10 py-2.5 pl-10 pr-10 text-sm text-white outline-none transition placeholder:text-white/45 focus:border-leaf-2/60 focus:bg-white/15 md:pr-9"
+            />
+            <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+              {search ? (
+                <button type="button" onClick={() => onSearch("")} aria-label="Clear search" className="text-white/60 hover:text-white">
+                  <X size={15} />
+                </button>
+              ) : (
+                speechOk && (
+                  <button
+                    type="button"
+                    onClick={startVoice}
+                    aria-label="Search by voice"
+                    title="Speak to search — Tamil or English"
+                    className={`grid h-7 w-7 place-items-center rounded-lg transition ${
+                      listening ? "animate-pulse bg-carrot text-white" : "text-white/60 hover:bg-white/10 hover:text-white"
+                    }`}
                   >
-                    {count}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </a>
+                    <Mic size={15} />
+                  </button>
+                )
+              )}
+            </div>
           </div>
-        </div>
-      </header>
+        )}
 
-      {/* mobile quick nav */}
-      <nav
-        aria-label="Quick navigation"
-        className="fixed inset-x-3 bottom-3 z-50 flex items-center justify-around rounded-3xl border border-border/70 bg-white/90 p-1.5 shadow-[0_10px_30px_rgba(7,64,21,0.16)] backdrop-blur-xl md:hidden"
-      >
-        {[
-          { href: "/", label: "Home", icon: Home },
-          { href: "/shop", label: "Shop", icon: Store },
-          { href: "/track", label: "Track", icon: Activity },
-          { href: "https://wa.me/918438765119", label: "WhatsApp", icon: MessageCircle, external: true },
-        ].map((item) => (
+        <div className="flex items-center gap-1.5">
           <a
-            key={item.label}
-            href={item.href}
-            target={item.external ? "_blank" : undefined}
-            rel={item.external ? "noopener" : undefined}
-            className="flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-[0.62rem] font-extrabold text-ink/70 transition active:scale-95"
+            href="/account"
+            aria-label="Your account"
+            className="grid h-11 w-11 place-items-center rounded-2xl border border-white/15 bg-white/10 transition hover:bg-white/20"
           >
-            <item.icon size={19} />
-            {item.label}
+            <User size={18} className="text-white" />
           </a>
-        ))}
-      </nav>
+          <a
+            href="/cart"
+            aria-label="Your basket"
+            className="relative grid h-11 w-11 place-items-center rounded-2xl border border-white/15 bg-white/10 transition hover:bg-white/20"
+          >
+            <ShoppingCart size={19} className="text-white" />
+            <AnimatePresence mode="popLayout">
+              {count > 0 && (
+                <motion.span
+                  key={count}
+                  initial={{ scale: 0.3, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.3, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 600, damping: 22 }}
+                  className="absolute -right-1.5 -top-1.5 grid h-[19px] min-w-[19px] place-items-center rounded-full border-2 border-forest bg-carrot px-1 text-[0.62rem] font-extrabold text-white"
+                >
+                  {count > 99 ? "99+" : count}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </a>
+        </div>
+      </div>
 
-      <LocationSheet open={sheetOpen} onOpenChange={setSheetOpen} />
-    </>
+      {sheetOpen && <LocationSheet onClose={() => setSheetOpen(false)} />}
+    </header>
   );
 }

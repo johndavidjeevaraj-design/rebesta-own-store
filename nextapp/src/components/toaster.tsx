@@ -28,8 +28,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -12, scale: 0.94 }}
               transition={{ type: "spring", stiffness: 480, damping: 30 }}
-              className={`pointer-events-auto flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-bold text-white shadow-xl ${
-                t.kind === "error" ? "bg-destructive" : "bg-forest"
+              className={`pointer-events-auto flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-mid ${
+                t.kind === "error" ? "bg-destructive" : "bg-forest-2"
               }`}
             >
               {t.kind === "error" ? <AlertCircle size={16} /> : <CheckCircle2 size={16} className="text-leaf-2" />}

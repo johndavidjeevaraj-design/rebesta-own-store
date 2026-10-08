@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* ---- Brand fonts (same TTFs the rest of the site already serves) ---- */
+/* ---- Brand fonts (same TTFs the rest of the site serves) ---- */
 @font-face {
   font-family: "Manrope";
   src: url("/assets/fonts/manrope-regular.ttf") format("truetype");
@@ -22,31 +22,32 @@
 @font-face {
   font-family: "Bricolage Grotesque";
   src: url("/assets/fonts/bricolage-grotesque-bold.ttf") format("truetype");
-  font-weight: 800;
+  font-weight: 700 800;
   font-display: swap;
 }
 
-/* ---- shadcn tokens on a fresh Hosur-farm palette ---- */
+/* ---- shadcn tokens mapped onto the Rebesta palette (60:30:10) ----
+   60% cream/white surfaces · 30% forest/leaf greens · 10% carrot orange */
 :root {
-  --background: #f6f5ef;
-  --foreground: #14261a;
+  --background: #fbfaf3;
+  --foreground: #121910;
   --card: #ffffff;
-  --card-foreground: #14261a;
+  --card-foreground: #121910;
   --popover: #ffffff;
-  --popover-foreground: #14261a;
-  --primary: #074015;
-  --primary-foreground: #f0faf1;
-  --secondary: #e9f2e4;
-  --secondary-foreground: #1c3a24;
-  --muted: #eae8de;
-  --muted-foreground: #5c6b58;
-  --accent: #0faa46;
-  --accent-foreground: #06310f;
+  --popover-foreground: #121910;
+  --primary: #0d8736;
+  --primary-foreground: #ffffff;
+  --secondary: #e7f6e9;
+  --secondary-foreground: #073f1b;
+  --muted: #f0f2ea;
+  --muted-foreground: #6c7868;
+  --accent: #ff5b20;
+  --accent-foreground: #ffffff;
   --destructive: #b33322;
   --destructive-foreground: #fff5f2;
-  --border: #dee3d4;
-  --input: #dee3d4;
-  --ring: #0faa46;
+  --border: #dfe6da;
+  --input: #cbd8c7;
+  --ring: #0d8736;
   --radius: 1rem;
 }
 
@@ -71,46 +72,45 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* brand extras */
-  --color-forest: #074015;
-  --color-forest-2: #0a4a1a;
-  --color-forest-3: #062e11;
-  --color-leaf: #0faa46;
-  --color-leaf-2: #7ed957;
+  /* Rebesta brand — identical to the beloved vite app tokens */
+  --color-forest: #032c13;
+  --color-forest-2: #073f1b;
+  --color-leaf: #0d8736;
+  --color-leaf-2: #0faa46;
+  --color-mint: #e7f6e9;
   --color-carrot: #ff5b20;
-  --color-mint: #e9f7ea;
-  --color-cream: #f6f5ef;
-  --color-ink: #17281c;
+  --color-carrot-2: #ff8b3d;
+  --color-cream: #fbfaf3;
+  --color-ink: #121910;
+  --color-ink-2: #2c382b;
+  --color-muted: #6c7868;
+  --color-line: #dfe6da;
+  --color-line-2: #cbd8c7;
+  --color-gold: #ffd582;
 
-  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Bricolage Grotesque", "Manrope", ui-sans-serif, sans-serif;
+  --shadow-soft: 0 12px 32px rgba(3, 44, 19, 0.08);
+  --shadow-mid: 0 20px 56px rgba(3, 44, 19, 0.14);
+
+  --font-sans: "Manrope", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Manrope", system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) - 8px);
   --radius-md: calc(var(--radius) - 4px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 8px);
-  --radius-2xl: calc(var(--radius) + 14px);
+  --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 22px);
 
-  --animate-marquee: marquee 30s linear infinite;
-  --animate-spin-slow: spin-slow 18s linear infinite;
-  --animate-floaty: floaty 5.5s ease-in-out infinite;
+  --animate-floaty: floaty 5.7s ease-in-out infinite;
   --animate-pulse-dot: pulse-dot 2.4s ease-in-out infinite;
 
-  @keyframes marquee {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
-  }
-  @keyframes spin-slow {
-    to { transform: rotate(360deg); }
-  }
   @keyframes floaty {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-12px); }
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-7px) rotate(-0.6deg); }
   }
   @keyframes pulse-dot {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(15, 170, 70, 0.5); }
-    50% { box-shadow: 0 0 0 7px rgba(15, 170, 70, 0); }
+    0%, 100% { box-shadow: 0 0 0 4px rgba(255, 91, 32, 0.12); }
+    50% { box-shadow: 0 0 0 9px rgba(255, 91, 32, 0.04); }
   }
 }
 
@@ -122,8 +122,8 @@
     scroll-behavior: smooth;
   }
   body {
-    background: var(--color-background);
-    color: var(--color-foreground);
+    background: var(--color-cream);
+    color: var(--color-ink);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     overflow-x: clip;
@@ -132,6 +132,14 @@
     background: #0faa46;
     color: #ffffff;
   }
+}
+
+/* ---- hero mesh gradient — same vibe as the beloved home ---- */
+.hero-mesh {
+  background:
+    radial-gradient(1200px 500px at 85% -10%, rgba(15, 170, 70, 0.35), transparent 60%),
+    radial-gradient(900px 420px at -10% 20%, rgba(255, 91, 32, 0.18), transparent 55%),
+    linear-gradient(160deg, #032c13 0%, #073f1b 58%, #0a4a20 100%);
 }
 
 /* ---- Lenis smooth scroll ---- */
@@ -149,27 +157,11 @@ html.lenis body {
   overflow: hidden;
 }
 
-/* ---- film grain overlay for dark sections ---- */
-.grain {
-  position: relative;
-  isolation: isolate;
-}
-.grain::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0.07;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* ---- horizontal rails ---- */
-.rail {
+/* ---- thin horizontal product rails ---- */
+.rail-scroll {
   scrollbar-width: none;
-  -ms-overflow-style: none;
 }
-.rail::-webkit-scrollbar {
+.rail-scroll::-webkit-scrollbar {
   display: none;
 }
 

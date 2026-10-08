@@ -54,18 +54,22 @@ ${productUrls}
   app.use('/api/partner', partnerRouter);
   /* checkout page retired 2026-10-07 — /cart is the one-page checkout now */
   app.get(['/checkout', '/checkout.html'], (req, res) => res.redirect(302, '/cart'));
+
+  /* v3 (Next export) pages — MUST be registered before express.static, which
+     otherwise wins with the legacy public/<page>.html files */
+  app.get('/', (req, res) => res.sendFile('v2/index.html', { root: config.publicDir }));
+  app.get(['/shop', '/offers', '/greens'], (req, res) => res.sendFile(`v2${req.path}.html`, { root: config.publicDir }));
+  app.get(['/about', '/faq', '/terms', '/privacy', '/refund'], (req, res) => res.sendFile(`v2${req.path}.html`, { root: config.publicDir }));
+
   app.use(express.static(config.publicDir, {
     extensions: ['html'],
     index: false,
     maxAge: config.nodeEnv === 'production' ? '10m' : 0
   }));
-
-  app.get('/', (req, res) => res.sendFile('v2/index.html', { root: config.publicDir }));
-  app.get(['/shop', '/offers', '/greens'], (req, res) => res.sendFile('shop.html', { root: config.publicDir }));
   /* one auth page: number + OTP decides sign-in vs new account — /signup is legacy */
   app.get('/signup', (req, res) => res.redirect(302, '/login' + (req.query.phone ? `?phone=${encodeURIComponent(String(req.query.phone))}` : '')));
   app.get(['/login', '/account'], (req, res) => res.sendFile(`${req.path.slice(1)}.html`, { root: config.publicDir }));
-  app.get(['/cart', '/order-success', '/track', '/about', '/faq', '/terms', '/privacy', '/refund', '/partner', '/subscriptions'], (req, res) => {
+  app.get(['/cart', '/order-success', '/track', '/partner', '/subscriptions'], (req, res) => {
     res.sendFile(`${req.path.slice(1)}.html`, { root: config.publicDir });
   });
   app.get('/products/:handle', (req, res) => res.sendFile('product.html', { root: config.publicDir }));

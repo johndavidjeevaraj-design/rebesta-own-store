@@ -79,6 +79,20 @@ export function setCartQty(handle: string, qty: number) {
 }
 export const cartCount = () => readCart().reduce((sum, l) => sum + l.qty, 0);
 
+/* ---------- recently viewed (same key as the old app) ---------- */
+const RECENT_KEY = "rebesta_recent";
+export function readRecent(): string[] {
+  if (typeof window === "undefined") return [];
+  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch { return []; }
+}
+export function pushRecent(handle: string) {
+  try {
+    const seen = readRecent().filter((x) => x !== handle);
+    seen.unshift(handle);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(seen.slice(0, 12)));
+  } catch {}
+}
+
 /* ---------- location (same contract as store.js) ---------- */
 export function getSavedLocation(): SavedLocation | null {
   if (typeof window === "undefined") return null;

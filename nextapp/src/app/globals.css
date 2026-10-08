@@ -189,3 +189,118 @@ html.lenis body {
   display: inline-block;
   will-change: transform;
 }
+
+/* ---- info / prose pages ---- */
+.prose-page h3 {
+  margin: 1.7em 0 0.45em;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--color-forest);
+  font-size: 1.12rem;
+  letter-spacing: -0.02em;
+}
+.prose-page > p:first-child {
+  margin-top: 0;
+}
+.prose-page p {
+  margin: 0.7em 0;
+  color: #3d4a3a;
+  line-height: 1.72;
+  font-size: 0.95rem;
+}
+.prose-page ul {
+  margin: 0.7em 0;
+  padding-left: 1.25em;
+  display: grid;
+  gap: 0.45em;
+}
+.prose-page li {
+  color: #3d4a3a;
+  line-height: 1.65;
+  font-size: 0.95rem;
+  list-style: disc;
+}
+.prose-page a {
+  color: var(--color-leaf);
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-color: rgba(13, 135, 54, 0.3);
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+.prose-page a:hover {
+  color: var(--color-carrot);
+}
+.prose-page strong {
+  color: var(--color-ink);
+}
+.prose-page .fssai-line {
+  margin-top: 1.6em;
+  border-top: 1px solid var(--color-line);
+  padding-top: 1em;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+/* FAQ accordion — native details/summary */
+.faq-list {
+  display: grid;
+  gap: 0.6rem;
+}
+.faq-list details {
+  border: 1px solid var(--color-line);
+  border-radius: 1.1rem;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(3, 44, 19, 0.03);
+  overflow: hidden;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.faq-list details[open] {
+  border-color: rgba(13, 135, 54, 0.4);
+  box-shadow: 0 10px 26px rgba(3, 44, 19, 0.07);
+}
+.faq-list summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+  color: var(--color-ink);
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.35;
+  -webkit-tap-highlight-color: transparent;
+}
+.faq-list summary::-webkit-details-marker {
+  display: none;
+}
+.faq-list summary::after {
+  content: "+";
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--color-mint);
+  color: var(--color-leaf);
+  font-weight: 800;
+  font-size: 1rem;
+  line-height: 1;
+  transition: transform 0.2s var(--ease-out, ease), background 0.2s ease, color 0.2s ease;
+}
+.faq-list details[open] summary::after {
+  content: "−";
+  background: var(--color-carrot);
+  color: #ffffff;
+  transform: rotate(180deg);
+}
+.faq-list details p {
+  margin: 0;
+  padding: 0 16px 15px;
+  color: #4a5847;
+  font-size: 0.88rem;
+  line-height: 1.68;
+}

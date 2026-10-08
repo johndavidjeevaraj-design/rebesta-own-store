@@ -80,37 +80,27 @@ export default function FarmStory() {
           trigger: root.current,
           start: "top top",
           end: "bottom bottom",
-          scrub: 0.35,
-          /* snap: after a swipe (and its momentum) settles, glide to the
-             middle of the nearest phase — one clean phase per swipe, even
-             when touch momentum flings past several */
-          snap: {
-            snapTo: (value: number) => {
-              const n = PHASES.length;
-              const mid = Math.round(value * n - 0.5) + 0.5;
-              return Math.min(Math.max(mid, 0.5), n - 0.5) / n;
-            },
-            duration: { min: 0.25, max: 0.6 },
-            delay: 0.06,
-            ease: "power2.inOut",
-          },
+          /* no snap — snapping caused a pause-then-yank after the fling.
+             Apple's story pages scrub freely: momentum carries, dissolves
+             blend, scrub:1 eases the timeline toward the scroll position */
+          scrub: 1,
         },
       });
 
-      // phase 0 visual settles in while its text is already visible
-      tl.fromTo(imgs[0], { scale: 1.12 }, { scale: 1, duration: 0.9 }, 0);
+      // phase 0 visual settles in slowly while its text is already visible
+      tl.fromTo(imgs[0], { scale: 1.12 }, { scale: 1, duration: 1.2, ease: "power1.out" }, 0);
 
       PHASES.forEach((_, i) => {
         const t = i; // this phase's window starts at t
         if (i > 0) {
-          /* crossfades complete AT the boundary, so a single swipe lands on
-             a fully settled phase — no mid-transition arrival */
-          tl.fromTo(imgs[i], { opacity: 0, scale: 1.12 }, { opacity: 1, scale: 1, duration: 0.35 }, t - 0.1);
-          tl.to(imgs[i - 1], { opacity: 0, duration: 0.35 }, t - 0.1);
-          tl.fromTo(texts[i], { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.15 }, t - 0.1);
+          /* slow dissolves straddling the boundary — both phases blend
+             through the transition, never a hard swap */
+          tl.fromTo(imgs[i], { opacity: 0, scale: 1.12 }, { opacity: 1, scale: 1, duration: 0.5 }, t - 0.25);
+          tl.to(imgs[i - 1], { opacity: 0, duration: 0.5 }, t - 0.25);
+          tl.fromTo(texts[i], { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, t - 0.2);
         }
-        if (i < n - 1) tl.to(texts[i], { opacity: 0, y: -14, duration: 0.15, ease: "power2.in" }, t + 0.9);
-        if (fills[i]) tl.to(fills[i], { opacity: 1, duration: 0.12 }, t - 0.05);
+        if (i < n - 1) tl.to(texts[i], { opacity: 0, y: -14, duration: 0.4, ease: "power1.in" }, t + 0.8);
+        if (fills[i]) tl.to(fills[i], { opacity: 1, duration: 0.3 }, t);
       });
 
       if (bar) tl.fromTo(bar, { scaleX: 0 }, { scaleX: 1, duration: n, ease: "none" }, 0);
@@ -162,12 +152,10 @@ export default function FarmStory() {
       id="how"
       ref={root}
       aria-label="How it works — farm to door story"
-      className="relative h-[425vh] bg-[#0b0d0c] md:h-[275vh]"
-      /* one swipe = one phase.
-         Mobile: 65vh per phase — a touch fling (drag + momentum) travels
-         ~60-70vh, so one swipe lands one phase, and snap cleans the landing.
-         Desktop: 35vh per phase — one wheel flick. Sticky panel = +100vh.
-         (5 phases: 425vh mobile / 275vh desktop) */
+      className="relative h-[525vh] bg-[#0b0d0c] md:h-[350vh]"
+      /* a longer, more cinematic runway — momentum glides through it.
+         Mobile: 85vh per phase. Desktop: 50vh per phase. Sticky = +100vh.
+         (5 phases: 525vh mobile / 350vh desktop) */
     >
       <div className="sticky top-0 flex h-[100svh] items-center overflow-hidden">
         <div className="mx-auto grid w-full max-w-6xl items-center gap-8 px-4 py-8 md:grid-cols-[1.12fr_1fr] md:gap-14">

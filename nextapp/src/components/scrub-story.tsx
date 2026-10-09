@@ -38,21 +38,23 @@ export default function ScrubStory() {
     const imgs: (HTMLImageElement | undefined)[] = new Array(N);
     let loadedTo = -1; // highest contiguously loaded frame
     let target = 0; // scroll progress 0..1
-    let cur = 0; // lightly damped progress — tight follow, Lenis provides the butter
     let paintedIdx = -1;
     let raf = 0;
     let preloading = false;
 
     const sizeCanvas = () => {
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
       const r = canvas.getBoundingClientRect();
+      if (!r.width || !r.height) return false;
+      /* pixel budget ≈ 2.4MP: full retina on phones, capped on big desktop
+         screens so each repaint stays cheap — no dropped frames, no shake */
+      const dpr = Math.min(2, Math.sqrt(2_400_000 / (r.width * r.height)));
       const w = Math.round(r.width * dpr);
       const h = Math.round(r.height * dpr);
       if (canvas.width !== w || canvas.height !== h) {
         canvas.width = w;
         canvas.height = h;
       }
-      return w !== 0 && h !== 0;
+      return true;
     };
 
     const drawCover = (img: HTMLImageElement) => {
@@ -85,9 +87,11 @@ export default function ScrubStory() {
       paintedIdx = idx;
     };
 
+    /* Apple's method, exactly: the frame IS the scroll position. No easing,
+       no lag, no extra smoothing layer fighting the scroller — Lenis's
+       physics provide all the butter, the canvas is locked to it 1:1. */
     const tick = () => {
-      cur += (target - cur) * 0.28;
-      const want = Math.max(0, Math.min(N - 1, Math.round(cur * (N - 1))));
+      const want = Math.max(0, Math.min(N - 1, Math.round(target * (N - 1))));
       paint(want);
       raf = requestAnimationFrame(tick);
     };

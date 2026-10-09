@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll, useSpring, useTransform, type MotionValue } from "motion/react";
+import { Volume2, VolumeX } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -96,6 +97,13 @@ function Segment({ i, n, progress, label, onClick }: { i: number; n: number; pro
   );
 }
 
+/* Apple-lyrics word — scrubbed from dim grey to radiant white as the
+   step's scroll window passes, word by word */
+function Word({ progress, range, children }: { progress: MotionValue<number>; range: [number, number]; children: string }) {
+  const color = useTransform(progress, range, ["rgba(255,255,255,0.32)", "rgba(255,255,255,1)"]);
+  return <motion.span style={{ color }}>{children} </motion.span>;
+}
+
 export default function FarmStory() {
   const root = useRef<HTMLElement>(null);
   const [reduced, setReduced] = useState(false);
@@ -122,6 +130,48 @@ export default function FarmStory() {
       return s === prev ? prev : s;
     });
   });
+
+  /* haptic step ticks — an ultra-subtle digital-crown blip on every phase
+     change. Off by default; the toggle click doubles as the user gesture
+     browsers require before audio may play. */
+  const [sound, setSound] = useState(false);
+  const audioRef = useRef<AudioContext | null>(null);
+  const lastStepRef = useRef(0);
+  useEffect(() => {
+    try { setSound(localStorage.getItem("rfs-story-sound") === "1"); } catch { /* private mode */ }
+  }, []);
+  const tick = () => {
+    const ctx = audioRef.current;
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(2350, t);
+    osc.frequency.exponentialRampToValueAtTime(1750, t + 0.03);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.05, t + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.06);
+  };
+  useEffect(() => {
+    if (step !== lastStepRef.current) {
+      lastStepRef.current = step;
+      if (sound) tick();
+    }
+  }, [step, sound]);
+  const toggleSound = () => {
+    const next = !sound;
+    setSound(next);
+    try { localStorage.setItem("rfs-story-sound", next ? "1" : "0"); } catch { /* private mode */ }
+    if (next) {
+      audioRef.current = audioRef.current || new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioRef.current.resume?.();
+      tick();
+    }
+  };
 
   const goToPhase = (i: number) => {
     const el = root.current;
@@ -343,7 +393,22 @@ export default function FarmStory() {
                 <h2 className="-mt-6 font-display text-[28px] font-semibold leading-tight tracking-tight text-white sm:text-[32px]">
                   {PHASES[step].title}
                 </h2>
-                <p className="mt-4 max-w-md text-[15px] font-medium leading-relaxed text-white/70">{PHASES[step].text}</p>
+                {/* word-by-word scrubbed lighting — Apple lyrics style */}
+                <p className="mt-4 max-w-md text-[15px] font-medium leading-relaxed">
+                  {(() => {
+                    const a = step / n;
+                    const b = (step + 1) / n;
+                    const words = PHASES[step].text.split(" ");
+                    const litFrom = a + (b - a) * 0.18;
+                    const litTo = a + (b - a) * 0.9;
+                    const per = (litTo - litFrom) / words.length;
+                    return words.map((w, k) => (
+                      <Word key={k} progress={smooth} range={[litFrom + k * per, litFrom + k * per + per * 2.4]}>
+                        {w}
+                      </Word>
+                    ));
+                  })()}
+                </p>
               </motion.div>
             </AnimatePresence>
 
@@ -360,6 +425,15 @@ export default function FarmStory() {
                 <span>03</span>
                 <span>04</span>
                 <span>05</span>
+                <button
+                  type="button"
+                  onClick={toggleSound}
+                  aria-label={sound ? "Mute step sounds" : "Play step sounds"}
+                  aria-pressed={sound}
+                  className="-mr-1 ml-3 shrink-0 text-white/40 transition hover:text-white/85"
+                >
+                  {sound ? <Volume2 size={13} /> : <VolumeX size={13} />}
+                </button>
               </div>
             </div>
           </div>

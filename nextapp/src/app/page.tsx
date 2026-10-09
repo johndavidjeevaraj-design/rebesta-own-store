@@ -13,7 +13,6 @@ import { ProductCard } from "@/components/product-card";
 import { LocationSheet } from "@/components/location-sheet";
 import Reveal from "@/components/reveal";
 import FarmStory from "@/components/farm-story";
-import ScrubStory from "@/components/scrub-story";
 import { api, Product, Settings } from "@/lib/store";
 
 export default function Home() {
@@ -135,9 +134,6 @@ export default function Home() {
 
         {/* farm-to-door — Apple-style pinned scroll story (video-ready) */}
         <FarmStory />
-
-        {/* the AirPods method — 69-frame canvas scrub, camera locked to the finger */}
-        <ScrubStory />
 
         {/* delivery band */}
         <section className="mt-24 bg-[#f5f5f7] py-20" aria-labelledby="del-h">

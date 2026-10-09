@@ -38,8 +38,8 @@ export default function ScrubStory() {
     const imgs: (HTMLImageElement | undefined)[] = new Array(N);
     let loadedTo = -1; // highest contiguously loaded frame
     let target = 0; // scroll progress 0..1
-    let cur = 0; // damped progress — the butter
-    let lastFrame = -1;
+    let cur = 0; // lightly damped progress — tight follow, Lenis provides the butter
+    let paintedIdx = -1;
     let raf = 0;
     let preloading = false;
 
@@ -51,8 +51,8 @@ export default function ScrubStory() {
       if (canvas.width !== w || canvas.height !== h) {
         canvas.width = w;
         canvas.height = h;
-        lastFrame = -1; // force repaint at the new size
       }
+      return w !== 0 && h !== 0;
     };
 
     const drawCover = (img: HTMLImageElement) => {
@@ -70,21 +70,25 @@ export default function ScrubStory() {
     };
 
     const paint = (want: number) => {
-      // the wanted frame if decoded, else the nearest one below it
+      // the wanted frame if decoded, else the nearest one below it — but
+      // never jump BACKWARD while streaming in (that reads as jiggling)
       let idx = -1;
       if (want < N && ready(want)) idx = want;
-      else for (let k = Math.min(want, loadedTo); k >= 0; k--) if (ready(k)) { idx = k; break; }
-      if (idx < 0) return;
-      if (idx !== lastFrame) {
-        drawCover(imgs[idx]!);
-        lastFrame = idx;
+      else {
+        const cap = Math.min(want, loadedTo);
+        for (let k = cap; k >= 0; k--)
+          if (ready(k)) { idx = k; break; }
+        if (idx < paintedIdx && want > paintedIdx) idx = paintedIdx;
       }
+      if (idx < 0 || idx === paintedIdx) return;
+      drawCover(imgs[idx]!);
+      paintedIdx = idx;
     };
 
     const tick = () => {
-      cur += (target - cur) * 0.085;
+      cur += (target - cur) * 0.28;
       const want = Math.max(0, Math.min(N - 1, Math.round(cur * (N - 1))));
-      if (Math.abs(target - cur) > 0.0004 || want !== lastFrame) paint(want);
+      paint(want);
       raf = requestAnimationFrame(tick);
     };
 
@@ -130,9 +134,10 @@ export default function ScrubStory() {
           target = self.progress;
         },
       });
-      /* caption rides the same window — in as the camera settles, out as it leaves */
+      /* caption rides the same window — locked tight to the scroll so it
+         never shears against the canvas */
       const tl = gsap.timeline({
-        scrollTrigger: { trigger: root.current, start: "top top", end: "bottom bottom", scrub: 0.6 },
+        scrollTrigger: { trigger: root.current, start: "top top", end: "bottom bottom", scrub: 0.25 },
       });
       tl.fromTo(
         "[data-scrub-cap]",
@@ -142,12 +147,24 @@ export default function ScrubStory() {
       ).to("[data-scrub-cap]", { opacity: 0, y: -24, duration: 0.3, ease: "power1.in" }, 0.8);
     }, root);
 
+    /* repaint the SAME frame synchronously on resize (mobile address-bar
+       svh changes) — a cleared canvas frame would flash as jiggling */
     const ro = new ResizeObserver(() => {
       sizeCanvas();
-      lastFrame = -1;
+      if (paintedIdx >= 0 && ready(paintedIdx)) drawCover(imgs[paintedIdx]!);
     });
     ro.observe(canvas);
     raf = requestAnimationFrame(tick);
+
+    /* test hook (mirrors window.__lenis convention) */
+    (window as any).__scrub = {
+      get painted() {
+        return paintedIdx;
+      },
+      get target() {
+        return target;
+      },
+    };
 
     return () => {
       cancelAnimationFrame(raf);

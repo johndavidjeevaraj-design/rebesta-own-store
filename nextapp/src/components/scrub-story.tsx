@@ -53,6 +53,8 @@ export default function ScrubStory() {
       if (canvas.width !== w || canvas.height !== h) {
         canvas.width = w;
         canvas.height = h;
+        ctx.fillStyle = "#ffffff"; // white studio — never flash black on resize
+        ctx.fillRect(0, 0, w, h);
       }
       return true;
     };
@@ -181,12 +183,12 @@ export default function ScrubStory() {
   /* reduced motion: the story as one still, caption always readable */
   if (reduced) {
     return (
-      <section aria-label="Vine ripened" className="relative bg-[#0b0d0c]">
+      <section aria-label="Vine ripened" className="relative bg-white">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={frameUrl(Math.floor(FRAMES / 2))} alt="Vine-ripened tomatoes, picked this morning" className="h-[70svh] w-full object-cover" />
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 pb-10 text-center text-white">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-leaf-2">Vine ripened</p>
-          <h2 className="mx-auto mt-2 max-w-xl font-display text-[24px] font-semibold leading-tight tracking-tight sm:text-[32px]">
+        <img src={frameUrl(Math.floor(FRAMES / 2))} alt="Vine-ripened tomatoes, picked this morning" className="mx-auto h-[60svh] w-auto max-w-full object-contain" />
+        <div className="absolute inset-x-0 bottom-0 px-4 pb-10 text-center">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-leaf">Vine ripened</p>
+          <h2 className="mx-auto mt-2 max-w-xl font-display text-[24px] font-semibold leading-tight tracking-tight text-[#1d1d1f] sm:text-[32px]">
             Red today. At your door tomorrow.
           </h2>
         </div>
@@ -195,17 +197,27 @@ export default function ScrubStory() {
   }
 
   return (
-    <section ref={root} aria-label="Vine ripened — scroll to move the camera" className="relative h-[280vh] bg-[#0b0d0c]">
-      <div className="sticky top-0 h-[100svh] overflow-hidden">
-        <canvas ref={canvasRef} className="block h-full w-full" />
-        {/* readability veil */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-black/25" />
-        <div data-scrub-cap className="absolute inset-x-0 bottom-0 px-4 pb-16 text-center text-white sm:pb-24">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-leaf-2">Vine ripened</p>
-          <h2 className="mx-auto mt-3 max-w-xl font-display text-[28px] font-semibold leading-tight tracking-tight sm:text-[40px]">
+    <section ref={root} aria-label="Vine ripened — scroll to move the camera" className="relative h-[280vh] bg-white">
+      <div className="sticky top-0 h-[100svh] overflow-hidden [transform:translateZ(0)] [backface-visibility:hidden]">
+        {/* elliptical ground shadow — the product floats above it */}
+        <div className="pointer-events-none absolute left-1/2 top-[58%] h-[9%] w-[52%] -translate-x-1/2 rounded-[50%] bg-black/25 blur-2xl" />
+        {/* the frame sequence, edges dissolving into the white void */}
+        <canvas
+          ref={canvasRef}
+          className="block h-full w-full"
+          style={{
+            maskImage: "radial-gradient(115% 88% at 50% 46%, black 52%, transparent 76%)",
+            WebkitMaskImage: "radial-gradient(115% 88% at 50% 46%, black 52%, transparent 76%)",
+          }}
+        />
+        {/* subtle studio spotlight behind the product */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(16,185,129,0.07)_0%,transparent_62%)]" />
+        <div data-scrub-cap className="absolute inset-x-0 bottom-0 px-4 pb-14 text-center sm:pb-20">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-leaf">Vine ripened</p>
+          <h2 className="mx-auto mt-3 max-w-xl font-display text-[28px] font-semibold leading-tight tracking-tight text-[#1d1d1f] sm:text-[40px]">
             Red today. At your door tomorrow.
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-[14px] font-medium leading-relaxed text-white/70">
+          <p className="mx-auto mt-3 max-w-md text-[14px] font-medium leading-relaxed text-[#86868b]">
             Scroll moves the camera — slow and deliberate, the same way it was picked.
           </p>
         </div>

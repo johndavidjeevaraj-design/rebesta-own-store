@@ -73,7 +73,6 @@ export default function FarmStory() {
       const imgs = gsap.utils.toArray<HTMLElement>("[data-fs-img]");
       const texts = gsap.utils.toArray<HTMLElement>("[data-fs-text]");
       const fills = gsap.utils.toArray<HTMLElement>("[data-fs-fill]");
-      const bar = root.current?.querySelector<HTMLElement>("[data-fs-bar]");
 
       const tl = gsap.timeline({
         defaults: { ease: "power2.inOut" },
@@ -81,10 +80,9 @@ export default function FarmStory() {
           trigger: root.current,
           start: "top top",
           end: "bottom bottom",
-          /* scrub 1 keeps the timeline easing toward the scroll position —
-             glides from the settle system (below) play through it, so a
-             phase change is one continuous smooth transform */
-          scrub: 1,
+          /* Lenis is the spring (lerp 0.11) — scrub just tightens the
+             timeline to it so step swaps stay crisp, never smeared */
+          scrub: 0.5,
         },
       });
       storyTrigger = tl.scrollTrigger;
@@ -95,17 +93,20 @@ export default function FarmStory() {
       PHASES.forEach((_, i) => {
         const t = i; // this phase's window starts at t
         if (i > 0) {
-          /* the blend spans 60% of the window — a full swipe's worth of
-             travel — so the transition unfolds gradually, never a whip */
+          /* the image blend spans the boundary — cinematic continuity */
           tl.fromTo(imgs[i], { opacity: 0, scale: 1.12 }, { opacity: 1, scale: 1, duration: 0.6 }, t - 0.3);
           tl.to(imgs[i - 1], { opacity: 0, duration: 0.6 }, t - 0.3);
-          tl.fromTo(texts[i], { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, t - 0.2);
         }
-        if (i < n - 1) tl.to(texts[i], { opacity: 0, y: -14, duration: 0.4, ease: "power1.in" }, t + 0.8);
-        if (fills[i]) tl.to(fills[i], { opacity: 1, duration: 0.4 }, t);
+        /* TEXT IS DISCRETE — one headline at a time, never overlapping:
+           in (rise) completes by t+0.24, out (exit) starts t+0.86 and is
+           fully gone by t+1.0; the next step's text only mounts after.
+           autoAlpha also sets visibility:hidden → no compositing overdraw */
+        tl.fromTo(texts[i], { autoAlpha: 0, y: 20 }, { autoAlpha: 1, y: 0, duration: 0.14, ease: "power2.out" }, t + 0.1);
+        if (i < n - 1) tl.to(texts[i], { autoAlpha: 0, y: -20, duration: 0.14, ease: "power1.in" }, t + 0.86);
+        /* segment N fills 0→100% across step N's own scroll range */
+        if (fills[i]) tl.fromTo(fills[i], { scaleX: 0 }, { scaleX: 1, duration: 1, ease: "none" }, t);
       });
 
-      if (bar) tl.fromTo(bar, { scaleX: 0 }, { scaleX: 1, duration: n, ease: "none" }, 0);
     }, root);
 
     /* ── smooth settle ──────────────────────────────────────────────────
@@ -307,7 +308,7 @@ export default function FarmStory() {
          Mobile: 100vh per phase. Desktop: 60vh per phase. Sticky = +100vh.
          (5 phases: 600vh mobile / 400vh desktop) */
     >
-      <div className="sticky top-0 flex h-[100svh] items-center overflow-hidden">
+      <div className="sticky top-0 flex h-[100svh] items-center overflow-hidden [transform:translateZ(0)] [backface-visibility:hidden] [perspective:1000px]">
         <div className="mx-auto grid w-full max-w-6xl items-center gap-8 px-4 py-8 md:grid-cols-[1.12fr_1fr] md:gap-14">
           {/* visual — crossfading phases, video-ready */}
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[24px] bg-[#151816] shadow-[0_24px_80px_rgba(0,0,0,0.5)] sm:aspect-[16/11]">
@@ -356,17 +357,41 @@ export default function FarmStory() {
               </div>
             ))}
 
-            {/* progress */}
+            {/* 5-segment scrubber — Apple chapter control: each bar fills
+                across its own step range; tap a bar to glide to that phase */}
             <div className="absolute inset-x-0 bottom-0">
               <div className="flex items-center gap-2">
                 {PHASES.map((p, i) => (
-                  <span key={p.step} className="relative h-[3px] w-8 overflow-hidden rounded-full bg-white/15">
-                    <span data-fs-fill className="absolute inset-0 bg-leaf-2" style={{ opacity: i === 0 ? 1 : 0 }} />
-                  </span>
+                  <button
+                    key={p.step}
+                    type="button"
+                    onClick={() => {
+                      const el = root.current;
+                      const lenis = (window as any).__lenis;
+                      if (!el || !lenis) return;
+                      const per = (el.offsetHeight - window.innerHeight) / PHASES.length;
+                      lenis.scrollTo(el.offsetTop + per * (i + 0.5), {
+                        duration: 1,
+                        easing: (x: number) => 1 - Math.pow(1 - x, 3),
+                      });
+                    }}
+                    aria-label={`Go to step ${p.step}: ${p.title}`}
+                    className="group relative h-[4px] flex-1 cursor-pointer overflow-hidden rounded-full bg-white/15"
+                  >
+                    <span
+                      data-fs-fill
+                      className="absolute inset-0 origin-left bg-leaf-2 transition-colors group-hover:bg-leaf"
+                      style={{ transform: "scaleX(0)" }}
+                    />
+                  </button>
                 ))}
               </div>
-              <div className="mt-3 h-[2px] w-full overflow-hidden rounded-full bg-white/10">
-                <div data-fs-bar className="h-full w-full origin-left bg-leaf-2/70" style={{ transform: "scaleX(0)" }} />
+              <div className="mt-3 flex items-center justify-between text-[11px] font-bold tabular-nums text-white/40">
+                <span>01</span>
+                <span>02</span>
+                <span>03</span>
+                <span>04</span>
+                <span>05</span>
               </div>
             </div>
           </div>

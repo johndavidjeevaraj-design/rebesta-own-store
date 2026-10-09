@@ -33,15 +33,12 @@ type Phase = {
   iw: number;
   ih: number;
   step: string;
-  tag: string; // mono micro-data tag above the headline
   title: string;
   text: string;
   mode: "macro" | "wash" | "dock" | "cold" | "unbox";
   scale: [number, number];
   hotspots?: Hotspot[];
   parts?: DockPart[];
-  chip?: string; // mono telemetry chip over the visual
-  chipAt?: number; // window fraction when the chip appears
 };
 
 const PHASES: Phase[] = [
@@ -50,13 +47,10 @@ const PHASES: Phase[] = [
     cut: "/assets/story/cut-baby-spinach-palak.webp",
     iw: 709, ih: 727,
     step: "01",
-    tag: "BATCH #04 · 5:00 AM HARVEST",
     title: "Picked at first light",
     text: "Harvested from Hosur's farms before the sun is up — leaves still cool, still carrying the morning dew.",
     mode: "macro",
     scale: [1.45, 1.08],
-    chip: "DAWN DEW · 4:1 MACRO",
-    chipAt: 0.34,
     hotspots: [{ x: 0.499, y: 0.398, label: "Heirloom seed", spec: "Zero chemical pesticide detected" }],
   },
   {
@@ -64,13 +58,10 @@ const PHASES: Phase[] = [
     cut: "/assets/story/cut-heirloom-tomatoes.webp",
     iw: 888, ih: 366,
     step: "02",
-    tag: "HYDRO-WASH · BATCH #04",
     title: "Washed, sorted, weighed",
     text: "Every crate is checked and packed the same morning. Nothing sits around, nothing waits for tomorrow.",
     mode: "wash",
     scale: [1.14, 1],
-    chip: "99.98% PURITY CHECKED",
-    chipAt: 0.42,
     hotspots: [{ x: 0.534, y: 0.536, label: "8.9° Brix sugar index", spec: "Sniped at vine-ripeness" }],
   },
   {
@@ -78,7 +69,6 @@ const PHASES: Phase[] = [
     cut: "/assets/story/cut-weekly-family-combo.webp",
     iw: 859, ih: 421,
     step: "03",
-    tag: "PACK LINE · CRATE #RB-04",
     title: "Packed in your crate",
     text: "Your basket is assembled to order — the exact vegetables you picked, never pre-bagged, never mixed up.",
     mode: "dock",
@@ -95,20 +85,16 @@ const PHASES: Phase[] = [
     cut: "/assets/story/cut-carrot-ooty.webp",
     iw: 900, ih: 314,
     step: "04",
-    tag: "COLD-LOCK · 3.8°C",
     title: "Riding out at sunrise",
     text: "Our riders leave at dawn while the city is still asleep, so freshness doesn't spend its day in traffic.",
     mode: "cold",
     scale: [1.14, 1],
-    chip: "3.8°C LOCKED · EV POD #04",
-    chipAt: 0.3,
   },
   {
     image: "/assets/products/mixed-greens-box.jpg",
     cut: "/assets/story/cut-mixed-greens-box.webp",
     iw: 814, ih: 400,
     step: "05",
-    tag: "LAST MILE · EV POD #04",
     title: "At your door by morning",
     text: "From farm to doorstep in hours, inside your two-hour slot. That's the whole story.",
     mode: "unbox",
@@ -117,8 +103,6 @@ const PHASES: Phase[] = [
 ];
 
 const SPRING = { stiffness: 140, damping: 26, mass: 0.18, restDelta: 0.0001 };
-const SF_STACK =
-  '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 /* ── shared stage math — canvas and DOM layers read the SAME numbers so
    hotspots track the produce perfectly ── */
@@ -411,26 +395,6 @@ function HotspotLayer({ i, n, phase, progress, step, openIdx, onToggle }: {
   );
 }
 
-/* mono telemetry chip over the visual — appears mid-window */
-function StageChip({ i, n, phase, progress }: { i: number; n: number; phase: Phase; progress: MotionValue<number> }) {
-  const a = i / n, b = (i + 1) / n;
-  const at = phase.chipAt ?? 0.35;
-  const opacity = useTransform(progress, [a + (b - a) * at, a + (b - a) * (at + 0.1), b - 0.05, b + 0.03], [0, 1, 1, 0]);
-  const cold = phase.mode === "cold";
-  return (
-    <motion.div
-      data-stage-chip
-      style={{ opacity }}
-      className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2"
-    >
-      <div className={`flex items-center gap-2 rounded-full border px-3 py-1.5 backdrop-blur ${cold ? "border-sky-300/25 bg-black/50" : "border-emerald-400/25 bg-black/50"}`}>
-        {cold && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-300 shadow-[0_0_8px_rgba(125,211,252,0.9)]" />}
-        <span className={`font-mono text-[10px] tracking-[0.18em] ${cold ? "text-sky-200/90" : "text-emerald-300/90"}`}>{phase.chip}</span>
-      </div>
-    </motion.div>
-  );
-}
-
 /* one scrubber segment — fills exactly across its step's scroll range */
 function Segment({ i, n, progress, label, onClick }: { i: number; n: number; progress: MotionValue<number>; label: string; onClick: () => void }) {
   const fill = useTransform(progress, [i / n, (i + 1) / n], [0, 1]);
@@ -678,14 +642,14 @@ export default function FarmStory() {
     return (
       <section id="how" aria-label="How it works" className="bg-[#0b0d0c] py-20 text-white">
         <div className="mx-auto max-w-6xl space-y-16 px-4">
-          <p className="font-mono text-[11px] tracking-widest text-emerald-400">FARM TO DOOR / BATCH #04 / 5:00 AM HARVEST</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-leaf-2">Farm to door</p>
           {PHASES.map((p) => (
             <div key={p.step} className="grid items-center gap-6 md:grid-cols-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={p.image} alt={p.title} loading="lazy" className="aspect-[4/3] w-full rounded-[24px] object-cover" />
               <div>
-                <p className="font-mono text-[11px] tracking-[0.18em] text-emerald-400/80">{p.tag}</p>
-                <h2 className="mt-2 text-[24px] font-semibold tracking-tight sm:text-[28px]">{p.title}</h2>
+                <p className="text-[13px] font-semibold text-white/50">{p.step} / 0{PHASES.length}</p>
+                <h2 className="mt-2 font-display text-[24px] font-semibold tracking-tight sm:text-[28px]">{p.title}</h2>
                 <p className="mt-3 max-w-md text-[15px] font-medium leading-relaxed text-white/70">{p.text}</p>
               </div>
             </div>
@@ -701,7 +665,6 @@ export default function FarmStory() {
       ref={root}
       aria-label="How it works — farm to door story"
       className="relative h-[500vh] bg-[#0b0d0c]"
-      style={{ fontFamily: SF_STACK }}
       /* outer scroll track: 500vh = ~100vh per stage for the 5-step sequence */
     >
       <style>{`@keyframes rfsPing { 0% { transform: scale(0.6); opacity: 0.9 } 80%, 100% { transform: scale(1.9); opacity: 0 } } .rfs-ping { animation: rfsPing 2.2s cubic-bezier(0,0,0.2,1) infinite }`}</style>
@@ -721,13 +684,12 @@ export default function FarmStory() {
                 <HotspotLayer key={p.step} i={i} n={n} phase={p} progress={smooth} step={step} openIdx={openHot} onToggle={setOpenHot} />
               ) : null
             )}
-            {PHASES.map((p, i) => (p.chip ? <StageChip key={p.step} i={i} n={n} phase={p} progress={smooth} /> : null))}
           </div>
 
           {/* copy — ONE step at a time. AnimatePresence mode="wait": the
               outgoing step exits fully before the incoming mounts */}
           <div className="relative min-h-[240px] md:min-h-[260px]">
-            <p className="font-mono text-[11px] tracking-widest text-emerald-400">FARM TO DOOR / BATCH #04 / 5:00 AM HARVEST</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-leaf-2">Farm to door</p>
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={step}
@@ -738,8 +700,10 @@ export default function FarmStory() {
                 transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
                 className="absolute inset-x-0 top-8"
               >
-                <p className="font-mono text-[11px] tracking-[0.18em] text-emerald-400/80">{PHASES[step].tag}</p>
-                <h2 className="mt-2 text-[28px] font-semibold leading-tight tracking-[-0.03em] text-white sm:text-[32px]">
+                <p className="font-display text-[72px] font-bold leading-none text-white/[0.07]" aria-hidden>
+                  {PHASES[step].step}
+                </p>
+                <h2 className="-mt-6 font-display text-[28px] font-semibold leading-tight tracking-tight text-white sm:text-[32px]">
                   {PHASES[step].title}
                 </h2>
                 {/* word-by-word scrubbed lighting — Apple lyrics style */}

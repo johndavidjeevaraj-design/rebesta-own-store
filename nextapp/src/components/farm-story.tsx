@@ -31,7 +31,7 @@ type Phase = {
 
 const PHASES: Phase[] = [
   {
-    image: "/assets/story/stage-1.webp", // owner-supplied cutout — more arriving one by one
+    image: "/assets/story/stage-1-v2.webp", // owner cutout, padded to card aspect — fills the card, never cropped
     contain: true,
     step: "01",
     title: "Picked at first light",

@@ -74,7 +74,7 @@ function PhaseVisual({ i, n, phase, progress }: { i: number; n: number; phase: P
     i === 0 ? [-1, 0, b - 0.02, b + 0.08] : i === n - 1 ? [a - 0.08, a + 0.02, 2, 3] : [a - 0.08, a + 0.02, b - 0.02, b + 0.08],
     i === 0 ? [1, 1, 1, 0] : i === n - 1 ? [0, 1, 1, 1] : [0, 1, 1, 0]
   );
-  const scale = useTransform(progress, [a, b], [1.12, 1]);
+  const scale = useTransform(progress, [a, b], phase.contain ? [1, 1] : [1.12, 1]); // cutouts: never zoom — always fully visible
   return (
     <motion.div className="absolute inset-0" style={{ opacity, scale }}>
       {phase.video ? (

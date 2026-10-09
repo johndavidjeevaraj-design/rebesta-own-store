@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { ArrowRight } from "lucide-react";
 import { Product, Settings, money } from "@/lib/store";
 import { Button } from "@/components/ui/button";
+import { AddButton } from "@/components/add-button";
 
 /* Apple-style hero: white canvas, one huge quiet headline, a pill CTA,
    then the product photography does the talking. */
@@ -88,36 +89,85 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
         </dl>
       </div>
 
-      {/* product stage */}
+      {/* product stage — same card language as the shop: badges, save
+          pricing, fresh-grad add/stepper */}
       <div className="hero-stage mx-auto mt-14 max-w-6xl px-4">
         <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-          {hero && (
-            <a href={`/products/${hero.handle}`} className="group block overflow-hidden rounded-[28px] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.08)]">
-              <span className="block overflow-hidden rounded-t-[28px] bg-[#f5f5f7]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={hero.image} alt={hero.title} className="aspect-[16/10] w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
-              </span>
-              <span className="flex items-end justify-between gap-4 p-5">
-                <span className="min-w-0 text-left">
-                  <span className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#c8400f]">Today&rsquo;s bestseller</span>
-                  <span className="mt-1 block truncate text-[17px] font-semibold tracking-tight text-ink">{hero.title}</span>
-                </span>
-                <span className="shrink-0 text-[17px] font-semibold text-ink">{money(hero.priceInr)}</span>
-              </span>
-            </a>
-          )}
-          <div className="grid gap-4">
-            {minis.map((p) => (
-              <a key={p.handle} href={`/products/${p.handle}`} className="group flex items-center gap-5 overflow-hidden rounded-[28px] bg-[#f5f5f7] p-5 pr-7 shadow-[0_6px_24px_rgba(0,0,0,0.05)] transition hover:shadow-[0_12px_36px_rgba(0,0,0,0.09)]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.image} alt={p.title} className="h-24 w-24 shrink-0 rounded-[18px] object-cover transition-transform duration-500 group-hover:scale-[1.05] sm:h-28 sm:w-28" />
-                <div className="min-w-0">
-                  <p className="truncate text-[15px] font-semibold tracking-tight text-ink">{p.title}</p>
-                  <p className="mt-0.5 text-[13px] font-medium text-muted-foreground">{p.unitLabel}</p>
-                  <p className="mt-2 text-[15px] font-bold text-ink">{money(p.priceInr)}</p>
+          {hero && (() => {
+            const compareAt = hero.compareAtInr && hero.compareAtInr > hero.priceInr ? hero.compareAtInr : null;
+            const offPct = compareAt ? Math.round((1 - hero.priceInr / compareAt) * 100) : 0;
+            const saveInr = compareAt ? compareAt - hero.priceInr : 0;
+            return (
+              <div className="group overflow-hidden rounded-[20px] border border-line bg-white p-3 shadow-[0_1px_5px_rgba(0,0,0,0.05)] transition-shadow hover:shadow-[0_14px_32px_rgba(0,0,0,0.10)]">
+                <a href={`/products/${hero.handle}`} className="block">
+                  <div className="relative aspect-[16/10] overflow-hidden rounded-[14px] bg-[#f5f5f7]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={hero.image} alt={hero.title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+                    <div className="absolute left-2 top-2 flex flex-col gap-1">
+                      {offPct > 0 && (
+                        <span className="carrot-grad rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-[0_2px_8px_rgba(232,71,12,0.4)]">{offPct}% OFF</span>
+                      )}
+                      {hero.featured && !offPct && (
+                        <span className="rounded-full bg-carrot/15 px-2 py-0.5 text-[10px] font-bold text-[#c8400f] backdrop-blur-sm">Bestseller</span>
+                      )}
+                    </div>
+                  </div>
+                </a>
+                <div className="flex items-end justify-between gap-4 px-0.5 pb-0.5 pt-3">
+                  <a href={`/products/${hero.handle}`} className="min-w-0">
+                    <h3 className="truncate text-[16px] font-semibold tracking-tight text-ink">{hero.title}</h3>
+                    <p className="mt-0.5 text-[11px] font-semibold text-muted-foreground">{hero.unitLabel}</p>
+                    <div className="mt-1.5 flex flex-wrap items-baseline gap-x-1.5">
+                      <span className="text-[16px] font-semibold tracking-tight text-ink">{money(hero.priceInr)}</span>
+                      {compareAt && <span className="text-[13px] font-semibold text-muted-foreground line-through">{money(compareAt)}</span>}
+                      {saveInr > 0 && <span className="text-[11px] font-bold text-[#c8400f]">Save {money(saveInr)}</span>}
+                    </div>
+                  </a>
+                  <div className="w-[128px] shrink-0">
+                    <AddButton product={hero} />
+                  </div>
                 </div>
-              </a>
-            ))}
+              </div>
+            );
+          })()}
+          <div className="grid gap-4">
+            {minis.map((p) => {
+              const compareAt = p.compareAtInr && p.compareAtInr > p.priceInr ? p.compareAtInr : null;
+              const offPct = compareAt ? Math.round((1 - p.priceInr / compareAt) * 100) : 0;
+              const saveInr = compareAt ? compareAt - p.priceInr : 0;
+              return (
+                <div
+                  key={p.handle}
+                  className="group flex items-center gap-4 overflow-hidden rounded-[20px] border border-line bg-white p-3 shadow-[0_1px_5px_rgba(0,0,0,0.05)] transition-shadow hover:shadow-[0_14px_32px_rgba(0,0,0,0.10)]"
+                >
+                  <a href={`/products/${p.handle}`} className="relative block shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={p.image}
+                      alt={p.title}
+                      className="h-[84px] w-[84px] rounded-[14px] object-cover transition-transform duration-500 group-hover:scale-[1.05] sm:h-[96px] sm:w-[96px]"
+                    />
+                    {offPct > 0 && (
+                      <span className="carrot-grad absolute left-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold text-white shadow-[0_2px_8px_rgba(232,71,12,0.4)]">{offPct}% OFF</span>
+                    )}
+                  </a>
+                  <div className="min-w-0 flex-1">
+                    <a href={`/products/${p.handle}`}>
+                      <p className="truncate text-[14px] font-semibold tracking-tight text-ink">{p.title}</p>
+                    </a>
+                    <p className="mt-0.5 text-[11px] font-semibold text-muted-foreground">{p.unitLabel}</p>
+                    <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5">
+                      <span className="text-[14px] font-semibold tracking-tight text-ink">{money(p.priceInr)}</span>
+                      {compareAt && <span className="text-[12px] font-semibold text-muted-foreground line-through">{money(compareAt)}</span>}
+                      {saveInr > 0 && <span className="text-[10px] font-bold text-[#c8400f]">Save {money(saveInr)}</span>}
+                    </div>
+                  </div>
+                  <div className="w-[92px] shrink-0">
+                    <AddButton product={p} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

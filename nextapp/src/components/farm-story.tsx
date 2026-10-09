@@ -23,6 +23,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 type Phase = {
   image: string;
   video?: string; // future: "/assets/story/phase-1.mp4" — muted loop w/ poster
+  contain?: boolean; // transparent cutouts: show in full on the card (no crop)
   step: string;
   title: string;
   text: string;
@@ -31,6 +32,7 @@ type Phase = {
 const PHASES: Phase[] = [
   {
     image: "/assets/story/stage-1.webp", // owner-supplied cutout — more arriving one by one
+    contain: true,
     step: "01",
     title: "Picked at first light",
     text: "Harvested from Hosur's farms before the sun is up — leaves still cool, still carrying the morning dew.",
@@ -79,7 +81,13 @@ function PhaseVisual({ i, n, phase, progress }: { i: number; n: number; phase: P
         <video src={phase.video} poster={phase.image} muted loop playsInline preload="none" className="h-full w-full object-cover" />
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={phase.image} alt={phase.title} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+        <img
+          src={phase.image}
+          alt={phase.title}
+          loading="lazy"
+          decoding="async"
+          className={phase.contain ? "h-full w-full object-contain" : "h-full w-full object-cover"}
+        />
       )}
     </motion.div>
   );
@@ -335,7 +343,7 @@ export default function FarmStory() {
           {PHASES.map((p) => (
             <div key={p.step} className="grid items-center gap-6 md:grid-cols-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.image} alt={p.title} loading="lazy" className="aspect-[4/3] w-full rounded-[24px] object-cover" />
+              <img src={p.image} alt={p.title} loading="lazy" className={`aspect-[4/3] w-full rounded-[24px] bg-white object-cover ${p.contain ? "" : ""}`} />
               <div>
                 <p className="text-[13px] font-semibold text-white/50">{p.step} / 0{PHASES.length}</p>
                 <h2 className="mt-2 font-display text-[24px] font-semibold tracking-tight sm:text-[28px]">{p.title}</h2>
@@ -359,7 +367,7 @@ export default function FarmStory() {
       <div className="sticky top-0 flex h-[100svh] items-center overflow-hidden [transform:translateZ(0)] [backface-visibility:hidden] [perspective:1000px] will-change-transform">
         <div className="mx-auto grid w-full max-w-6xl items-center gap-8 px-4 py-8 md:grid-cols-[1.12fr_1fr] md:gap-14">
           {/* visual — the card: crossfading phases inside, spring-driven */}
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[24px] bg-[#151816] shadow-[0_24px_80px_rgba(0,0,0,0.5)] sm:aspect-[16/11]">
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[24px] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.5)] sm:aspect-[16/11]">
             {PHASES.map((p, i) => (
               <PhaseVisual key={p.step} i={i} n={n} phase={p} progress={smooth} />
             ))}

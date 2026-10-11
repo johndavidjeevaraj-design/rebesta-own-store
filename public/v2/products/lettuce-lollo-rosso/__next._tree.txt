@@ -1,5 +1,5 @@
-:HL["/v2/_next/static/chunks/1ebseorwcfslo.css","style"]
+:HL["/v2/_next/static/chunks/258b2f0ecnmlu.css","style"]
 3:[["children",{"s":"__PAGE__","h":160}]]
 2:[["children",{"s":{"n":"handle","t":"d","k":"lettuce-lollo-rosso","s":[]},"h":65632,"c":"$Q3"}]]
 1:[["children",{"s":"products","h":131168,"c":"$Q2"}]]
-0:{"b":"gDCr4kRpyL3npvOcDOYfh","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}
+0:{"b":"-ipo01PqO99Zj74WhGIpk","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}

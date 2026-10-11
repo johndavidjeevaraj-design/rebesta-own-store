@@ -41,7 +41,7 @@ export function FilmSection() {
   };
 
   return (
-    <section id="film" className="mt-24 bg-[#0e1310] py-20 sm:py-24">
+    <section id="film" className="mt-24 bg-black py-20 sm:py-24">
       <div className="mx-auto max-w-[1040px] px-4">
         <div className="mx-auto max-w-xl text-center">
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-leaf-2">

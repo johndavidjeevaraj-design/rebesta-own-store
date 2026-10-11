@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { MapPin, Search, ShoppingBasket, User, X } from "lucide-react";
 import { useCartCount, useSavedLocation } from "@/lib/hooks";
@@ -20,6 +21,15 @@ export function SiteHeader({
   const count = useCartCount();
   const loc = useSavedLocation();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const pathname = usePathname();
+
+  /* which nav item owns the current page — so users always see where they are */
+  const isCurrent = (href: string) => {
+    if (href === "/") return pathname === "/";
+    if (href === "/shop") return pathname === "/shop" || pathname.startsWith("/products");
+    if (href === "/track") return pathname === "/track" || pathname.startsWith("/order-success");
+    return pathname.startsWith(href);
+  };
 
   useEffect(() => {
     const onScroll = () => document.documentElement.dataset.scrolled = String(window.scrollY > 8);
@@ -49,7 +59,16 @@ export function SiteHeader({
               ["Greens", "/greens"],
               ["About", "/about"],
             ].map(([label, href]) => (
-              <a key={href} href={href} className="text-[13px] font-semibold text-ink/80 transition hover:text-ink">
+              <a
+                key={href}
+                href={href}
+                aria-current={isCurrent(href) ? "page" : undefined}
+                className={
+                  isCurrent(href)
+                    ? "text-[13px] font-semibold text-ink underline decoration-leaf decoration-2 underline-offset-[6px]"
+                    : "text-[13px] font-semibold text-ink/80 transition hover:text-ink"
+                }
+              >
                 {label}
               </a>
             ))}
@@ -142,17 +161,25 @@ export function SiteHeader({
           { href: "/shop", label: "Shop" },
           { href: "/track", label: "Track" },
           { href: "https://wa.me/918438765119", label: "WhatsApp", external: true },
-        ].map((item) => (
-          <a
-            key={item.label}
-            href={item.href}
-            target={item.external ? "_blank" : undefined}
-            rel={item.external ? "noopener" : undefined}
-            className="flex-1 rounded-2xl py-2 text-center text-[11px] font-semibold text-ink/80 transition active:scale-95 active:text-ink"
-          >
-            {item.label}
-          </a>
-        ))}
+        ].map((item) => {
+          const current = !item.external && isCurrent(item.href);
+          return (
+            <a
+              key={item.label}
+              href={item.href}
+              target={item.external ? "_blank" : undefined}
+              rel={item.external ? "noopener" : undefined}
+              aria-current={current ? "page" : undefined}
+              className={
+                current
+                  ? "flex-1 rounded-2xl bg-leaf py-2 text-center text-[11px] font-bold text-white shadow-[0_6px_16px_rgba(11,124,49,0.35)]"
+                  : "flex-1 rounded-2xl py-2 text-center text-[11px] font-semibold text-ink/80 transition active:scale-95 active:text-ink"
+              }
+            >
+              {item.label}
+            </a>
+          );
+        })}
       </nav>
 
       {sheetOpen && <LocationSheet open={sheetOpen} onOpenChange={setSheetOpen} />}

@@ -139,7 +139,7 @@ export default function Home() {
         <FarmStory />
 
         {/* delivery band */}
-        <section className="mt-14 bg-[#f5f5f7] py-14" aria-labelledby="del-h">
+        <section className="bg-[#f5f5f7] py-14" aria-labelledby="del-h">
           <div className="mx-auto max-w-6xl px-4">
             <Reveal>
               <div className="flex flex-col items-start gap-8 rounded-[32px] bg-white p-8 shadow-[0_8px_36px_rgba(0,0,0,0.06)] sm:p-12 sm:flex-row sm:items-center">
@@ -207,7 +207,7 @@ export default function Home() {
         {/* final CTA — full-bleed deep green, Apple-black moment */}
         <section className="mt-14">
           <Reveal>
-            <div className="grain relative overflow-hidden px-6 py-20 text-center text-white sm:py-28 fresh-grad">
+            <div className="grain relative overflow-hidden px-6 pt-16 pb-12 text-center text-white sm:pt-20 sm:pb-14 fresh-grad">
               <div className="pointer-events-none absolute inset-0">
                 <div className="absolute left-1/2 top-0 h-80 w-[44rem] -translate-x-1/2 rounded-full bg-white/25 blur-[120px]" />
               </div>

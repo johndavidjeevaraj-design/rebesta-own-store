@@ -40,12 +40,12 @@ export function SiteHeader({
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-black/[0.08] bg-[#fbfbfd]/80 shadow-[0_1px_0_rgba(0,0,0,0.02)] backdrop-blur-xl backdrop-saturate-150">
+      <header className="sticky top-0 z-50 border-b border-black/[0.06] bg-[#fbfbfd]/70 shadow-[0_1px_0_rgba(0,0,0,0.02)] backdrop-blur-2xl backdrop-saturate-150">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
           <a href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Rebesta Fresh home">
             <span className="grid h-8 w-8 place-items-center overflow-hidden rounded-[10px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/brand/logo.png" alt="Rebesta Fresh" className="h-8 w-8 object-contain" />
+              <img src="/assets/brand/logo-orange-leaf.png" alt="Rebesta Fresh" className="h-8 w-8 object-cover" />
             </span>
             <span className="text-[15px] font-bold tracking-tight text-ink">
               Rebesta<span className="text-leaf"> Fresh</span>
@@ -154,7 +154,7 @@ export function SiteHeader({
       {/* mobile quick nav */}
       <nav
         aria-label="Quick navigation"
-        className="fixed inset-x-3 bottom-3 z-50 flex items-center justify-around rounded-[22px] border border-black/[0.08] bg-[#fbfbfd]/85 p-1 shadow-[0_8px_28px_rgba(0,0,0,0.12)] backdrop-blur-xl md:hidden"
+        className="fixed inset-x-3 bottom-3 z-50 flex items-center justify-around rounded-[22px] border border-black/[0.06] bg-white/70 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_28px_rgba(0,0,0,0.12)] backdrop-blur-2xl backdrop-saturate-150 md:hidden"
       >
         {[
           { href: "/", label: "Home" },

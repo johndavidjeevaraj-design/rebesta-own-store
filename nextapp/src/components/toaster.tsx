@@ -31,7 +31,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               exit={{ opacity: 0, y: 16, scale: 0.96 }}
               transition={{ type: "spring", stiffness: 460, damping: 30 }}
               className={`pointer-events-auto flex max-w-[calc(100vw-2rem)] items-center gap-2.5 rounded-full px-5 py-3 text-[14px] font-semibold text-white shadow-mid ${
-                t.kind === "error" ? "bg-destructive" : "bg-ink/95 backdrop-blur-md"
+                t.kind === "error" ? "bg-destructive" : "bg-ink/80 backdrop-blur-xl"
               }`}
             >
               {t.kind === "error" ? <AlertCircle size={17} className="shrink-0" /> : <CheckCircle2 size={17} className="shrink-0 text-leaf-2" />}

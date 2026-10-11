@@ -329,7 +329,7 @@ export default function FarmStory() {
   /* reduced motion: same story, told as a calm stacked column */
   if (reduced) {
     return (
-      <section id="how" aria-label="How it works" className="bg-[#0b0d0c] py-20 text-white">
+      <section id="how" aria-label="How it works" className="bg-[#0b0d0c] py-14 text-white">
         <div className="mx-auto max-w-6xl space-y-16 px-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-leaf-2">Farm to door</p>
           {PHASES.map((p) => (

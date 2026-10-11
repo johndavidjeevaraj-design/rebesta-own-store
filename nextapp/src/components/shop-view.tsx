@@ -82,7 +82,6 @@ export function ShopView({ mode }: { mode: ShopMode }) {
       ? (live.find((p) => p.featured) || live[0])?.image || "/assets/brand/basket.jpg"
       : live.find((p) => p.category === category)?.image || "/assets/brand/basket.jpg";
 
-  const countOf = (category: string) => (category === "All" ? live.length : live.filter((p) => p.category === category).length);
 
   return (
     <div className="min-h-screen bg-cream pb-20 md:pb-0">
@@ -169,9 +168,8 @@ export function ShopView({ mode }: { mode: ShopMode }) {
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={categoryImage(cat)} alt="" loading="lazy" className="h-8 w-8 rounded-full border border-white/60 object-cover" />
-                  <span className="flex flex-col items-start leading-tight">
+                  <span className="flex flex-col items-start justify-center leading-tight">
                     <span className="text-[13px] font-bold">{cat}</span>
-                    <span className={`text-[10px] font-bold ${activeCategory === cat ? "text-white/85" : "text-muted-foreground"}`}>{countOf(cat)}</span>
                   </span>
                 </button>
               ))}

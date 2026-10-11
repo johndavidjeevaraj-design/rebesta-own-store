@@ -54,7 +54,7 @@ export default function Home() {
       counts.set(p.category, (counts.get(p.category) || 0) + 1);
       if (!img.has(p.category)) img.set(p.category, p.image);
     });
-    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([cat, count]) => ({ cat, count, image: img.get(cat) }));
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([cat]) => ({ cat, image: img.get(cat) }));
   }, [active]);
 
   const content = settings?.content;
@@ -72,7 +72,7 @@ export default function Home() {
 
         {/* categories — photography tiles, not icons */}
         {categories.length > 0 && (
-          <section className="mx-auto max-w-6xl px-4 pt-20" aria-labelledby="cats-h">
+          <section className="mx-auto max-w-6xl px-4 pt-12" aria-labelledby="cats-h">
             <Reveal>
               <div className="flex items-end justify-between gap-4">
                 <h2 id="cats-h" className="font-display text-[28px] font-semibold leading-tight tracking-tight text-ink sm:text-[32px]">
@@ -84,7 +84,7 @@ export default function Home() {
               </div>
             </Reveal>
             <Reveal stagger={0.04} className="rail mt-8 flex gap-4 overflow-x-auto pb-2">
-              {categories.map(({ cat, count, image }) => (
+              {categories.map(({ cat, image }) => (
                 <a
                   key={cat}
                   href="/shop"
@@ -96,7 +96,6 @@ export default function Home() {
                   </span>
                   <span className="flex flex-1 flex-col justify-between p-4">
                     <span className="text-[14px] font-bold capitalize tracking-tight text-ink">{cat}</span>
-                    <span className="mt-1 text-[13px] font-medium text-muted-foreground">{count} items</span>
                   </span>
                 </a>
               ))}
@@ -105,7 +104,7 @@ export default function Home() {
         )}
 
         {/* featured */}
-        <section className="mx-auto max-w-6xl px-4 pt-20" aria-labelledby="feat-h">
+        <section className="mx-auto max-w-6xl px-4 pt-12" aria-labelledby="feat-h">
           <Reveal>
             <div className="flex items-end justify-between gap-4">
               <div>
@@ -140,7 +139,7 @@ export default function Home() {
         <FarmStory />
 
         {/* delivery band */}
-        <section className="mt-24 bg-[#f5f5f7] py-20" aria-labelledby="del-h">
+        <section className="mt-14 bg-[#f5f5f7] py-14" aria-labelledby="del-h">
           <div className="mx-auto max-w-6xl px-4">
             <Reveal>
               <div className="flex flex-col items-start gap-8 rounded-[32px] bg-white p-8 shadow-[0_8px_36px_rgba(0,0,0,0.06)] sm:p-12 sm:flex-row sm:items-center">
@@ -168,7 +167,7 @@ export default function Home() {
         </section>
 
         {/* trust */}
-        <section className="mx-auto max-w-6xl px-4 pt-24" aria-labelledby="trust-h">
+        <section className="mx-auto max-w-6xl px-4 pt-12" aria-labelledby="trust-h">
           <Reveal className="mx-auto max-w-2xl text-center">
             <h2 id="trust-h" className="font-display text-[28px] font-semibold leading-tight tracking-tight text-ink sm:text-[32px]">
               Why Hosur shops with us.
@@ -206,7 +205,7 @@ export default function Home() {
         </section>
 
         {/* final CTA — full-bleed deep green, Apple-black moment */}
-        <section className="mt-24">
+        <section className="mt-14">
           <Reveal>
             <div className="grain relative overflow-hidden px-6 py-20 text-center text-white sm:py-28 fresh-grad">
               <div className="pointer-events-none absolute inset-0">

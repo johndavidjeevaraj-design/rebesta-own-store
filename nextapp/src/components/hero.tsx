@@ -73,7 +73,7 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
           </button>
         </div>
 
-        <dl className="mx-auto mt-14 grid max-w-3xl grid-cols-2 gap-y-8 border-t border-black/[0.08] pt-8 sm:grid-cols-4">
+        <dl className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-y-8 border-t border-black/[0.08] pt-8 sm:grid-cols-4">
           {[
             { big: `${liveCount}+`, small: "items in stock today" },
             { big: `₹${freeOver}+`, small: "free delivery over" },

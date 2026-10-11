@@ -3,13 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 
-/* Apple-style film band: full-bleed near-black section with one rounded
+/* Apple-style film band: full-bleed pure-black section with one rounded
    video card. Muted looping playback only while on screen; pauses
    off-screen to save data. Tap video = play/pause, corner icon = sound. */
 export function FilmSection() {
   const vidRef = useRef<HTMLVideoElement | null>(null);
   const [muted, setMuted] = useState(true);
-  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const v = vidRef.current;
@@ -41,7 +40,7 @@ export function FilmSection() {
   };
 
   return (
-    <section id="film" className="mt-24 bg-black py-20 sm:py-24">
+    <section id="film" className="mt-14 bg-black py-14 sm:py-16">
       <div className="mx-auto max-w-[1040px] px-4">
         <div className="mx-auto max-w-xl text-center">
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-leaf-2">
@@ -52,11 +51,11 @@ export function FilmSection() {
           </h2>
           <p className="mt-2.5 text-[15px] leading-relaxed text-white/55">
             Twenty-seven seconds inside a Rebesta Fresh morning — picked at
-            dawn, packed in crates, riding across Coimbatore.
+            dawn, packed in crates, riding across Hosur.
           </p>
         </div>
 
-        <div className="mt-10 overflow-hidden rounded-[24px] bg-black shadow-[0_30px_80px_rgba(0,0,0,0.55)] ring-1 ring-white/10 sm:rounded-[28px]">
+        <div className="mt-8 overflow-hidden rounded-[24px] bg-black ring-1 ring-white/10 sm:rounded-[28px]">
           <div className="relative">
             <video
               ref={vidRef}
@@ -68,10 +67,6 @@ export function FilmSection() {
               playsInline
               preload="metadata"
               onClick={toggle}
-              onTimeUpdate={(e) => {
-                const v = e.currentTarget;
-                if (v.duration) setProgress(v.currentTime / v.duration);
-              }}
             />
             <button
               type="button"
@@ -81,11 +76,6 @@ export function FilmSection() {
             >
               {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
             </button>
-            <div
-              aria-hidden
-              className="absolute bottom-0 left-0 h-[2px] bg-leaf-2/90"
-              style={{ width: `${progress * 100}%` }}
-            />
           </div>
         </div>
       </div>

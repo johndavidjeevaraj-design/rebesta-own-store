@@ -600,15 +600,13 @@ html.lenis body {
   color: transparent;
 }
 
-/* ---- signature green gradient (freshness — the primary 60% brand color;
-       orange stays for offers, badges and deal accents) ---- */
+/* ---- the green: one flat, calm accent that sits beside black & white.
+       Solid leaf #0b7c31 everywhere (no gradient) — Apple-style flat accent.
+       Orange stays for offers, badges and deal accents only. ---- */
 .fresh-grad {
-  background-image: linear-gradient(135deg, #17b34e 0%, #0faa46 45%, #0b7c31 100%);
+  background-color: #0b7c31;
 }
-.fresh-grad:hover { background-image: linear-gradient(135deg, #22c25f 0%, #14b950 45%, #0d8a36 100%); }
+.fresh-grad:hover { background-color: #096b2a; }
 .text-fresh-grad {
-  background-image: linear-gradient(120deg, #0faa46 0%, #0b7c31 60%, #076327 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: #0b7c31;
 }

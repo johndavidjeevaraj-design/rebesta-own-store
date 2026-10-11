@@ -1,29 +1,30 @@
 1:"$Sreact.fragment"
-2:"/v2/_next/static/chunks/13t2revb4mkjz.js"
+2:"/v2/_next/static/chunks/2q2tp6asqqq4c.js"
 3:"/v2/_next/static/chunks/1ur6bo93hbj0-.js"
 4:"/v2/_next/static/chunks/3uvgz8xx2rjz3.js"
 5:I[96402,["$2","$3","$4"],"default"]
 6:I[54272,["$2","$3","$4"],"ToastProvider"]
 7:I[7253,["$2","$3","$4"],"default"]
 8:I[50530,["$2","$3","$4"],"default"]
-c:"/v2/_next/static/chunks/39pmszlmp7mdo.js"
-d:"/v2/_next/static/chunks/1c1jpx4kkuah5.js"
-e:"OrderSuccessView"
-f:I[54509,["$2","$3","$4","$c","$d"],"$e"]
-10:I[30416,["$2","$3","$4"],"OutletBoundary"]
-11:"$Sreact.suspense"
-13:"ViewportBoundary"
-14:I[30416,["$2","$3","$4"],"$13"]
-16:"MetadataBoundary"
-17:I[30416,["$2","$3","$4"],"$16"]
-19:I[43563,["$2","$3","$4"],"default",1]
+9:I[64101,["$2","$3","$4"],"PwaRegister"]
+d:"/v2/_next/static/chunks/39pmszlmp7mdo.js"
+e:"/v2/_next/static/chunks/1c1jpx4kkuah5.js"
+f:"OrderSuccessView"
+10:I[54509,["$2","$3","$4","$d","$e"],"$f"]
+11:I[30416,["$2","$3","$4"],"OutletBoundary"]
+12:"$Sreact.suspense"
+14:"ViewportBoundary"
+15:I[30416,["$2","$3","$4"],"$14"]
+17:"MetadataBoundary"
+18:I[30416,["$2","$3","$4"],"$17"]
+1a:I[43563,["$2","$3","$4"],"default",1]
 :HL["/v2/_next/static/chunks/3nsihatnnuj36.css","style"]
-a:X
-b:[["children",{"s":"__PAGE__","h":512,"d":{"r":["$","$1","c",{"children":[["$","$Lf",null,{}],[["$","script","script-0",{"src":"/v2/_next/static/chunks/39pmszlmp7mdo.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/v2/_next/static/chunks/1c1jpx4kkuah5.js","async":true,"nonce":"$undefined"}]],["$","$L10",null,{"children":["$","$11",null,{"name":"Next.MetadataOutlet","children":"$@12"}]}]]}],"p":false,"v":null}}]]
-9:[["children",{"s":"order-success","h":512,"d":{"r":["$","$1","c",{"children":[null,["$","$L7",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L8",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],"p":false,"v":"$a"},"c":"$Qb"}]]
-0:{"P":null,"c":["","order-success"],"q":"","i":false,"t":{"t":{"s":"","h":528,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/v2/_next/static/chunks/3nsihatnnuj36.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}],["$","script","script-0",{"src":"/v2/_next/static/chunks/13t2revb4mkjz.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/v2/_next/static/chunks/1ur6bo93hbj0-.js","async":true,"nonce":"$undefined"}],["$","script","script-2",{"src":"/v2/_next/static/chunks/3uvgz8xx2rjz3.js","async":true,"nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":["$","body",null,{"className":"font-sans antialiased","children":["$","$L5",null,{"children":["$","$L6",null,{"children":["$","$L7",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L8",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]}]}]}]]}],"p":false,"v":null},"c":"$Q9"},"h":{"r":["$","$1","h",{"children":[null,["$","$L14",null,{"children":"$L15"}],["$","$L17",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$11",null,{"name":"Next.Metadata","children":"$L18"}]}],null]}],null]}],"p":false,"v":null}},"m":"$undefined","G":["$19",[["$","link","0",{"rel":"stylesheet","href":"/v2/_next/static/chunks/3nsihatnnuj36.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]]],"S":true,"r":"$undefined","s":"$undefined","a":"$undefined","l":"$undefined","p":"$undefined","d":"$undefined","b":"TI9CTP5R61mDNoFWN17an"}
-a:C
-15:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
-1a:I[67932,["$2","$3","$4"],"IconMark"]
-12:null
-18:[["$","title","0",{"children":"Order confirmed — Rebesta Fresh"}],["$","meta","1",{"name":"description","content":"Your fresh vegetables are locked in — see your order summary, timeline and rewards."}],["$","link","2",{"rel":"icon","href":"/favicon.ico?favicon.117ezoe8m31dk.ico","sizes":"48x48","type":"image/x-icon"}],["$","$L1a","3",{}]]
+b:X
+c:[["children",{"s":"__PAGE__","h":512,"d":{"r":["$","$1","c",{"children":[["$","$L10",null,{}],[["$","script","script-0",{"src":"/v2/_next/static/chunks/39pmszlmp7mdo.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/v2/_next/static/chunks/1c1jpx4kkuah5.js","async":true,"nonce":"$undefined"}]],["$","$L11",null,{"children":["$","$12",null,{"name":"Next.MetadataOutlet","children":"$@13"}]}]]}],"p":false,"v":null}}]]
+a:[["children",{"s":"order-success","h":512,"d":{"r":["$","$1","c",{"children":[null,["$","$L7",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L8",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],"p":false,"v":"$b"},"c":"$Qc"}]]
+0:{"P":null,"c":["","order-success"],"q":"","i":false,"t":{"t":{"s":"","h":528,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/v2/_next/static/chunks/3nsihatnnuj36.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}],["$","script","script-0",{"src":"/v2/_next/static/chunks/2q2tp6asqqq4c.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/v2/_next/static/chunks/1ur6bo93hbj0-.js","async":true,"nonce":"$undefined"}],["$","script","script-2",{"src":"/v2/_next/static/chunks/3uvgz8xx2rjz3.js","async":true,"nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":["$","body",null,{"className":"font-sans antialiased","children":[["$","$L5",null,{"children":["$","$L6",null,{"children":["$","$L7",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L8",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]}],["$","$L9",null,{}]]}]}]]}],"p":false,"v":null},"c":"$Qa"},"h":{"r":["$","$1","h",{"children":[null,["$","$L15",null,{"children":"$L16"}],["$","$L18",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$12",null,{"name":"Next.Metadata","children":"$L19"}]}],null]}],null]}],"p":false,"v":null}},"m":"$undefined","G":["$1a",[["$","link","0",{"rel":"stylesheet","href":"/v2/_next/static/chunks/3nsihatnnuj36.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]]],"S":true,"r":"$undefined","s":"$undefined","a":"$undefined","l":"$undefined","p":"$undefined","d":"$undefined","b":"f0v1N17lOFJjYtxSgzPIr"}
+b:C
+16:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#032c13"}]]
+1b:I[67932,["$2","$3","$4"],"IconMark"]
+13:null
+19:[["$","title","0",{"children":"Order confirmed — Rebesta Fresh"}],["$","meta","1",{"name":"description","content":"Your fresh vegetables are locked in — see your order summary, timeline and rewards."}],["$","meta","2",{"name":"application-name","content":"Rebesta Fresh"}],["$","link","3",{"rel":"manifest","href":"/manifest.json","crossOrigin":"$undefined"}],["$","meta","4",{"name":"mobile-web-app-capable","content":"yes"}],["$","meta","5",{"name":"apple-mobile-web-app-title","content":"Rebesta Fresh"}],["$","meta","6",{"name":"apple-mobile-web-app-status-bar-style","content":"default"}],["$","link","7",{"rel":"icon","href":"/favicon.ico?favicon.117ezoe8m31dk.ico","sizes":"48x48","type":"image/x-icon"}],["$","link","8",{"rel":"icon","href":"/assets/brand/icon-r-192.png","sizes":"192x192","type":"image/png"}],["$","link","9",{"rel":"icon","href":"/assets/brand/icon-r-512.png","sizes":"512x512","type":"image/png"}],["$","link","10",{"rel":"apple-touch-icon","href":"/assets/brand/icon-r-180.png","sizes":"180x180","type":"image/png"}],["$","$L1b","11",{}]]

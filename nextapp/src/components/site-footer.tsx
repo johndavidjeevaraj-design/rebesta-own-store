@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { MapPin, Mail, MessageCircle } from "lucide-react";
 import { api, Settings } from "@/lib/store";
+import { InstallButton } from "@/components/install-button";
 
 /* Apple-style footer: light gray, tiny quiet links, hairlines. */
 export function SiteFooter() {
@@ -74,6 +75,7 @@ export function SiteFooter() {
                 >
                   WhatsApp +91 84387 65119
                 </a>
+                <InstallButton />
               </div>
             </div>
 

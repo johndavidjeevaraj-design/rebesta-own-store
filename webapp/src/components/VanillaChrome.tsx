@@ -201,7 +201,6 @@ export function VanillaFooter({ minimal = false, fssai = false }: { minimal?: bo
           <div className="footer-col">
             <h4>Contact &amp; delivery</h4>
             <a href="https://wa.me/918438765119" target="_blank" rel="noopener">WhatsApp +91 84387 65119</a>
-            <a href="mailto:warehouseretailingmart@gmail.com" data-temp-email>warehouseretailingmart@gmail.com</a>
             <p>Morning slots: 7–9 AM &amp; 9–11 AM<br />Hosur · up to 9 km road radius<br />Free delivery over ₹500 · COD available<br />📍 Shanthi Nagar, Hosur – 635 109<br /><span data-fssai>{lic}</span></p>
           </div>
         </div>

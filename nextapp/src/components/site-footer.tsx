@@ -74,9 +74,6 @@ export function SiteFooter() {
                 >
                   WhatsApp +91 84387 65119
                 </a>
-                <a href="mailto:warehouseretailingmart@gmail.com" className="block break-all text-[11px] font-medium text-muted-foreground transition hover:text-ink hover:underline">
-                  warehouseretailingmart@gmail.com
-                </a>
               </div>
             </div>
 

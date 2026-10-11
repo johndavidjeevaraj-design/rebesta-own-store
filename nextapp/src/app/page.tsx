@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Hero } from "@/components/hero";
+import { FilmSection } from "@/components/film-section";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ProductCard } from "@/components/product-card";
@@ -65,6 +66,9 @@ export default function Home() {
 
       <main>
         <Hero products={active} settings={settings} />
+
+        {/* the film — Apple-style dark cinematic band */}
+        <FilmSection />
 
         {/* categories — photography tiles, not icons */}
         {categories.length > 0 && (

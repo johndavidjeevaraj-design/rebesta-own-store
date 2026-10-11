@@ -601,14 +601,14 @@ html.lenis body {
 }
 
 /* ---- signature green gradient (freshness — the primary 60% brand color;
-       owner's pick: buttons carry the gradient. Orange stays for offers,
+       owner's pick "C": brighter, fresher green. Orange stays for offers,
        badges and deal accents) ---- */
 .fresh-grad {
-  background-image: linear-gradient(135deg, #17b34e 0%, #0faa46 45%, #0b7c31 100%);
+  background-image: linear-gradient(135deg, #2ecb66 0%, #17b34e 45%, #0faa46 100%);
 }
-.fresh-grad:hover { background-image: linear-gradient(135deg, #22c25f 0%, #14b950 45%, #0d8a36 100%); }
+.fresh-grad:hover { background-image: linear-gradient(135deg, #3fd97a 0%, #24c361 45%, #14b24f 100%); }
 .text-fresh-grad {
-  background-image: linear-gradient(120deg, #0faa46 0%, #0b7c31 60%, #076327 100%);
+  background-image: linear-gradient(120deg, #17b34e 0%, #0faa46 55%, #0b7c31 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

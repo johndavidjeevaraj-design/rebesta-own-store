@@ -185,7 +185,7 @@ export function LoginView() {
       {/* scoped styles for everything auth.js generates or toggles */}
       <style>{`
         .btn-main { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; height:52px; border-radius:9999px;
-          background-image:linear-gradient(135deg,#17b34e 0%,#0faa46 45%,#0b7c31 100%); color:#fff; font-size: 14px; font-weight:700; cursor:pointer; border:none;
+          background-image:linear-gradient(135deg,#2ecb66 0%,#17b34e 45%,#0faa46 100%); color:#fff; font-size: 14px; font-weight:700; cursor:pointer; border:none;
           box-shadow:0 8px 20px rgba(11,124,49,0.35); transition:filter .15s, transform .1s; }
         .btn-main:hover { filter:brightness(1.04); }
         .btn-main:active { transform:scale(0.98); }

@@ -104,7 +104,7 @@ export default function Home() {
         )}
 
         {/* featured */}
-        <section className="mx-auto max-w-6xl px-4 pt-12" aria-labelledby="feat-h">
+        <section className="mx-auto max-w-6xl px-4 pt-12 pb-14" aria-labelledby="feat-h">
           <Reveal>
             <div className="flex items-end justify-between gap-4">
               <div>
@@ -139,7 +139,7 @@ export default function Home() {
         <FarmStory />
 
         {/* delivery band */}
-        <section className="bg-[#f5f5f7] py-14" aria-labelledby="del-h">
+        <section className="mt-8 bg-[#f5f5f7] py-14" aria-labelledby="del-h">
           <div className="mx-auto max-w-6xl px-4">
             <Reveal>
               <div className="flex flex-col items-start gap-8 rounded-[32px] bg-white p-8 shadow-[0_8px_36px_rgba(0,0,0,0.06)] sm:p-12 sm:flex-row sm:items-center">

@@ -1,5 +1,5 @@
-:HL["/v2/_next/static/chunks/2-ab1l111ewyd.css","style"]
+:HL["/v2/_next/static/chunks/44fd9zaphpim9.css","style"]
 3:[["children",{"s":"__PAGE__","h":160}]]
 2:[["children",{"s":{"n":"handle","t":"d","k":"banana-flower","s":[]},"h":65632,"c":"$Q3"}]]
 1:[["children",{"s":"products","h":131168,"c":"$Q2"}]]
-0:{"b":"dHaZT1CU24q5_fYGNGdH7","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}
+0:{"b":"HmHgryFJiX-z7Nb0QHgLc","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}

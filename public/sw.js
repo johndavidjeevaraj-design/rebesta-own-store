@@ -2,10 +2,13 @@
    Strategy:
    - HTML navigations: network-first, cached home as offline fallback
    - Product images: stale-while-revalidate
-   - Other static assets: cache-first (URLs are cache-busted on deploy)
+   - Other static assets: stale-while-revalidate — served instantly from
+     cache, then refreshed from the network in the background. Next.js can
+     keep the same CSS filename across deploys when only its content
+     changes, so assets must self-heal instead of being served frozen.
    - API calls: always live (stock and prices must be real-time)
 */
-const CACHE = 'rebesta-shell-v4';
+const CACHE = 'rebesta-shell-v5';
 const SHELL = [
   '/',
   '/css/styles.css',
@@ -53,28 +56,17 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  if (url.pathname.startsWith('/assets/products/')) {
-    event.respondWith((async () => {
-      const cache = await caches.open(CACHE);
-      const cached = await cache.match(request);
-      const network = fetch(request)
-        .then(response => { if (response.ok) cache.put(request, response.clone()); return response; })
-        .catch(() => null);
-      return cached || (await network) || Response.error();
-    })());
-    return;
-  }
-
+  /* everything else: stale-while-revalidate — instant offline-capable
+     response, cache healed from network on every load */
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
     const cached = await cache.match(request);
-    if (cached) return cached;
-    try {
-      const response = await fetch(request);
-      if (response.ok) cache.put(request, response.clone());
-      return response;
-    } catch {
-      return cached || Response.error();
-    }
+    const network = fetch(request)
+      .then(response => {
+        if (response.ok) cache.put(request, response.clone());
+        return response;
+      })
+      .catch(() => null);
+    return cached || (await network) || Response.error();
   })());
 });

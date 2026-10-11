@@ -65,7 +65,7 @@ export function SiteHeader({
                 aria-current={isCurrent(href) ? "page" : undefined}
                 className={
                   isCurrent(href)
-                    ? "text-[13px] font-semibold text-ink underline decoration-ink decoration-2 underline-offset-[6px]"
+                    ? "text-[13px] font-semibold text-ink underline decoration-black decoration-2 underline-offset-[6px]"
                     : "text-[13px] font-semibold text-ink/80 transition hover:text-ink"
                 }
               >
@@ -172,7 +172,7 @@ export function SiteHeader({
               aria-current={current ? "page" : undefined}
               className={
                 current
-                  ? "flex-1 rounded-2xl bg-ink py-2 text-center text-[11px] font-bold text-white shadow-[0_6px_16px_rgba(0,0,0,0.28)]"
+                  ? "flex-1 rounded-2xl bg-black py-2 text-center text-[11px] font-bold text-white shadow-[0_6px_16px_rgba(0,0,0,0.28)]"
                   : "flex-1 rounded-2xl py-2 text-center text-[11px] font-semibold text-ink/80 transition active:scale-95 active:text-ink"
               }
             >

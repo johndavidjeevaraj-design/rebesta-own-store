@@ -92,12 +92,16 @@ function loadCashfreeSdk(): Promise<void> {
   });
 }
 async function startCashfreeDropin(el: string, payment: { sessionId: string; mode?: string }) {
-  /* drop-in: Cashfree's checkout renders INSIDE our page — no redirect away */
+  /* drop-in: Cashfree's checkout renders INSIDE our page — no redirect away.
+     SDK contract: redirectTarget must be the ELEMENT itself (HTMLElement),
+     not a selector string — anything else falls back to a full-page redirect. */
   await loadCashfreeSdk();
   const mode = payment.mode === "live" ? "production" : "sandbox";
   const Cashfree = (window as any).Cashfree;
   const cashfree = typeof Cashfree === "function" ? Cashfree({ mode }) : await Cashfree.load({ mode });
-  cashfree.checkout({ paymentSessionId: payment.sessionId, component: el });
+  const target = document.querySelector(el);
+  if (!target) throw new Error("checkout container missing");
+  cashfree.checkout({ paymentSessionId: payment.sessionId, redirectTarget: target, redirect: "if_required" });
 }
 
 /* ================= bottom sheet (motion + portal) ================= */

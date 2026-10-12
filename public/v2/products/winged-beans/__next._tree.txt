@@ -1,5 +1,5 @@
-:HL["/v2/_next/static/chunks/37ubiosx5odko.css","style"]
+:HL["/v2/_next/static/chunks/197ldp9ux_rc-.css","style"]
 3:[["children",{"s":"__PAGE__","h":160}]]
 2:[["children",{"s":{"n":"handle","t":"d","k":"winged-beans","s":[]},"h":65632,"c":"$Q3"}]]
 1:[["children",{"s":"products","h":131168,"c":"$Q2"}]]
-0:{"b":"u8LPQPTWEe99GgRlXAhjo","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}
+0:{"b":"aqO6KF5IYrMBwmNZZ2Wjm","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}

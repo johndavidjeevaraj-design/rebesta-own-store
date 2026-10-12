@@ -196,19 +196,75 @@ async function sendMsg91(c, phone, code) {
 }
 
 /* ── Order confirmation push (fires on payment success / COD order placed) ──
-   Transactional pushes need an approved template on the gateway (DLT), so
-   this is config-driven and NEVER blocks checkout. To enable, add to
-   data/sms-config.json:
-     "orderSms": { "flowId": "<MSG91 flow id>" }
-   Create the flow in MSG91 dashboard (SMS → Flows) with a template whose
-   variables are {ORDER}, {AMOUNT}, {STATUS} — the sender registered there
-   is used automatically. Without orderSms the notification is skipped. */
+   Channel 1 (CHOSEN — no DLT): WhatsApp template message via MSG91.
+     MSG91 API: POST /api/v5/whatsapp/whatsapp-outbound-message/bulk/
+     (WhatsApp needs no Indian DLT registration — only a Meta-approved
+      template + a number connected in the MSG91 WhatsApp panel.)
+     Enable by adding to data/sms-config.json:
+       "whatsapp": {
+         "integratedNumber": "919XXXXXXXXX",     // WhatsApp business number connected in MSG91
+         "templateName": "order_confirmed",      // approved utility template name (lowercase_with_underscores)
+         "language": "en",                       // optional (default en)
+         "authkey": "..."                        // optional — falls back to main authKey
+       }
+     Template body variables: {{1}}=order id, {{2}}=amount, {{3}}=status.
+   Channel 2 (LATER — needs DLT): MSG91 SMS flow. Same function, add:
+       "orderSms": { "flowId": "<MSG91 flow id>" }
+     (SMS template variables {ORDER}, {AMOUNT}, {STATUS}.)
+   Both channels are config-driven and NEVER block checkout — whichever is
+   configured first wins; WhatsApp takes priority while both exist. */
 export async function notifyOrderConfirmed(order, { paid = false } = {}) {
   const c = loadSmsConfig() || {};
-  const flow = c.orderSms;
   const phone = String(order?.customer?.phone || '').replace(/\D/g, '');
-  const out = { event: 'order.notify', order: order?.id, paid, sms: 'skipped' };
+  const out = { event: 'order.notify', order: order?.id, paid, channel: 'none', result: 'skipped' };
+
+  /* Channel 1: WhatsApp via MSG91 (no DLT needed). */
+  const wa = c.whatsapp;
+  if (wa && wa.enabled !== false && wa.templateName && wa.integratedNumber && phone) {
+    const authkey = wa.authkey || c.authKey;
+    if (authkey) {
+      out.channel = 'whatsapp';
+      try {
+        const res = await fetch('https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', authkey: String(authkey) },
+          body: JSON.stringify({
+            integrated_number: String(wa.integratedNumber),
+            content_type: 'template',
+            payload: {
+              messaging_product: 'whatsapp',
+              type: 'template',
+              template: {
+                name: String(wa.templateName),
+                language: { code: String(wa.language || 'en'), policy: 'deterministic' },
+                to_and_components: [{
+                  to: ['91' + phone],
+                  components: {
+                    body_1: { type: 'text', value: String(order.id) },
+                    body_2: { type: 'text', value: 'Rs.' + Math.round(Number(order.totalInr || 0)) },
+                    body_3: { type: 'text', value: paid ? 'Paid online' : 'Cash on Delivery' }
+                  }
+                }]
+              }
+            }
+          }),
+          signal: AbortSignal.timeout(8000)
+        });
+        out.result = res.ok ? 'sent' : 'error-' + res.status;
+        if (!res.ok) { try { out.body = (await res.text()).slice(0, 140); } catch {} }
+      } catch (e) {
+        out.result = 'error';
+        out.error = String(e?.message || e).slice(0, 140);
+      }
+      console.log(JSON.stringify(out));
+      return;
+    }
+  }
+
+  /* Channel 2: SMS flow via MSG91 (requires your own DLT-approved template). */
+  const flow = c.orderSms;
   if (flow && flow.flowId && c.authKey && phone) {
+    out.channel = 'sms';
     try {
       const res = await fetch('https://control.msg91.com/api/v5/flow/', {
         method: 'POST',
@@ -224,9 +280,9 @@ export async function notifyOrderConfirmed(order, { paid = false } = {}) {
         }),
         signal: AbortSignal.timeout(8000)
       });
-      out.sms = res.ok ? 'sent' : 'error-' + res.status;
+      out.result = res.ok ? 'sent' : 'error-' + res.status;
     } catch (e) {
-      out.sms = 'error';
+      out.result = 'error';
       out.error = String(e?.message || e).slice(0, 140);
     }
   }

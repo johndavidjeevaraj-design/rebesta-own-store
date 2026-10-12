@@ -548,7 +548,7 @@ router.get('/version', (req, res) => {
    GET  /api/admin/sms        → current provider status
    POST /api/admin/sms        → save/replace config {provider, ...} or {provider:'none'} to disable
    POST /api/admin/sms/test   → dry-run send with UNSAVED credentials {phone, config:{...}} */
-import { loadSmsConfig, otpAvailable, sendManagedOtp, sendOtpSms, msg91Balance, verifyWidgetToken, clearMcToken } from '../sms.js';
+import { loadSmsConfig, otpAvailable, sendManagedOtp, sendOtpSms, msg91Balance, verifyWidgetToken, clearMcToken, notifyOrderConfirmed } from '../sms.js';
 
 const SMS_FILE = () => path.join(config.dataDir, 'sms-config.json');
 
@@ -583,12 +583,67 @@ router.post('/sms', (req, res) => {
     return res.status(400).json({ ok: false, error: 'provider must be msg91-widget, msg91, messagecentral, dev or none.' });
   }
   if (out) {
+    const prev = loadSmsConfig() || {};
+    if (prev.whatsapp) out.whatsapp = prev.whatsapp;   // keep WhatsApp config across provider re-saves
+    if (prev.orderSms) out.orderSms = prev.orderSms;   // keep SMS flow config too
     fs.mkdirSync(config.dataDir, { recursive: true });
     fs.writeFileSync(SMS_FILE(), JSON.stringify(out, null, 2));
   }
   clearMcToken();
   console.log(JSON.stringify({ event: 'admin.smsConfig', provider }));
   res.json({ ok: true, provider: provider === 'none' ? null : provider, otpEnabled: provider === 'none' ? false : otpAvailable() });
+});
+
+/* ===== WhatsApp order-confirm config (no DLT, no SSH — merge-safe) ===== */
+router.get('/whatsapp', (req, res) => {
+  const c = loadSmsConfig() || {};
+  const wa = c.whatsapp;
+  res.json({
+    ok: true,
+    whatsapp: wa ? {
+      integratedNumber: wa.integratedNumber || null,
+      templateName: wa.templateName || null,
+      language: wa.language || 'en',
+      enabled: wa.enabled !== false
+    } : null,
+    authKeyPresent: Boolean(c.authKey)
+  });
+});
+
+router.post('/whatsapp', (req, res) => {
+  const b = req.body || {};
+  const c = loadSmsConfig() || {};
+  if (b.clear) {
+    delete c.whatsapp;
+  } else {
+    const integratedNumber = String(b.integratedNumber || '').replace(/\D/g, '');
+    const templateName = String(b.templateName || '').trim();
+    if (!/^91\d{10}$/.test(integratedNumber)) return res.status(400).json({ ok: false, error: 'integratedNumber must be 91 + 10 digits (the WhatsApp number connected in MSG91).' });
+    if (!/^[a-z0-9_]+$/.test(templateName)) return res.status(400).json({ ok: false, error: 'templateName must be lowercase letters/numbers/underscores (Meta template name, e.g. order_confirmed).' });
+    if (!c.authKey) return res.status(400).json({ ok: false, error: 'Main MSG91 authKey not set yet (save the SMS provider config first).' });
+    c.whatsapp = {
+      ...(c.whatsapp || {}),
+      integratedNumber,
+      templateName,
+      ...(b.language ? { language: String(b.language).slice(0, 5) } : {}),
+      enabled: b.enabled === false ? false : true
+    };
+  }
+  fs.mkdirSync(config.dataDir, { recursive: true });
+  fs.writeFileSync(SMS_FILE(), JSON.stringify(c, null, 2));
+  console.log(JSON.stringify({ event: 'admin.whatsappConfig', cleared: Boolean(b.clear) }));
+  res.json({ ok: true, whatsapp: c.whatsapp || null });
+});
+
+router.post('/whatsapp/test', async (req, res) => {
+  const phone = String((req.body || {}).phone || '').replace(/\D/g, '');
+  if (!/^[6-9]\d{9}$/.test(phone)) return res.status(400).json({ ok: false, error: 'Enter a valid 10-digit Indian mobile number.' });
+  const c = loadSmsConfig() || {};
+  if (!c.whatsapp || !c.whatsapp.integratedNumber || !c.whatsapp.templateName) {
+    return res.status(400).json({ ok: false, error: 'WhatsApp not configured yet (need integratedNumber + templateName).' });
+  }
+  await notifyOrderConfirmed({ id: 'RB-WA-TEST', totalInr: 1, customer: { phone } }, { paid: false });
+  res.json({ ok: true, note: 'Test fired to ' + phone + ' — check WhatsApp there. Delivers only if the template is approved and the number is connected in MSG91.' });
 });
 
 router.post('/sms/test', async (req, res) => {

@@ -57,3 +57,34 @@ code to the server console; local testing only). Disable with
   max 5 wrong tries, 60 s between sends, max 10 sends per 15 min per IP.
 - If sending fails, `pm2 logs` shows `otp.sendFailed` with MSG91's exact
   error (invalid key, zero balance, template issue…).
+
+## WhatsApp order confirmations (NO DLT needed — chosen path)
+
+Order confirmation messages go out via MSG91's WhatsApp API — no DLT
+registration, ~₹0.12/message (Meta utility rate in India).
+
+Setup (one time, in MSG91 dashboard):
+1. WhatsApp section → connect a number (the "integrated number").
+2. Create a UTILITY template named `order_confirmed` with 3 body variables:
+   `Your Rebesta Fresh order {{1}} is confirmed. Amount: {{2}} ({{3}}). Fresh vegetables arrive with your selected morning slot. Thank you!`
+3. Wait for Meta approval (usually minutes to a few hours).
+
+Activate on the server (no SSH needed):
+```bash
+curl -X POST https://rebestafresh.in/api/admin/whatsapp \
+  -H 'x-admin-key: <admin key>' -H 'Content-Type: application/json' \
+  -d '{"integratedNumber":"91XXXXXXXXXX","templateName":"order_confirmed"}'
+```
+
+Test delivery to any phone:
+```bash
+curl -X POST https://rebestafresh.in/api/admin/whatsapp/test \
+  -H 'x-admin-key: <admin key>' -H 'Content-Type: application/json' \
+  -d '{"phone":"8072568386"}'
+```
+
+Fires automatically on every order (COD when placed, online when paid).
+Never blocks checkout; failures just log `order.notify`. Template variables:
+`{{1}}` = order id, `{{2}}` = amount (Rs.N), `{{3}}` = "Paid online" / "Cash on Delivery".
+Switching to SMS later (after DLT) = add `"orderSms": {"flowId": "..."}` to
+data/sms-config.json — or remove the whatsapp block to fall back.

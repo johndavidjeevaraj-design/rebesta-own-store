@@ -367,14 +367,14 @@ html.lenis body {
 .fx-phone input {
   flex: 1;
   min-width: 0;
-  padding-left: 88px;
+  padding-left: 66px;
 }
 .fx-phone label {
-  left: 92px;
+  left: 70px;
 }
 .fx-prefix {
   position: absolute;
-  left: 16px;
+  left: 17px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;

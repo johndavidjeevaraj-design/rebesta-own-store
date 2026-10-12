@@ -1160,7 +1160,7 @@ export function CartView() {
             <div className="fx-field fx-phone">
               <input id="bpPhone" data-flow-phone inputMode="tel" autoComplete="tel" placeholder=" " defaultValue="" />
               <label htmlFor="bpPhone">Mobile number</label>
-              <span className="fx-prefix">🇮🇳 +91</span>
+              <span className="fx-prefix">+91</span>
             </div>
             <button className="btn-main" type="button" data-flow-send>
               <span className="btn-label">Send code by SMS</span>

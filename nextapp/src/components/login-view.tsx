@@ -57,10 +57,10 @@ export function LoginView() {
                 <div className="relative">
                   <input
                     id="otpPhone" inputMode="tel" autoComplete="tel" placeholder=" " defaultValue=""
-                    className="peer h-14 w-full rounded-2xl border border-line-2 bg-white pl-[86px] pr-4 text-[14px] font-semibold text-ink outline-none transition placeholder:text-transparent focus:border-ink/30 focus:ring-2 focus:ring-ink/10"
+                    className="peer h-14 w-full rounded-2xl border border-line-2 bg-white pl-16 pr-4 text-[14px] font-semibold text-ink outline-none transition placeholder:text-transparent focus:border-ink/30 focus:ring-2 focus:ring-ink/10"
                   />
-                  <span className="pointer-events-none absolute left-4 top-1/2 flex -translate-y-1/2 items-center gap-2 text-[14px] font-bold text-ink">🇮🇳 +91<span className="h-[22px] w-px bg-line-2" /></span>
-                  <label htmlFor="otpPhone" className="pointer-events-none absolute left-[90px] top-1/2 -translate-y-1/2 text-[14px] font-medium text-muted-foreground transition-all peer-focus:top-3.5 peer-focus:text-[11px] peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wide peer-focus:text-muted-foreground peer-[:not(:placeholder-shown)]:top-3.5 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-bold peer-[:not(:placeholder-shown)]:uppercase peer-[:not(:placeholder-shown)]:tracking-wide">
+                  <span className="pointer-events-none absolute left-4 top-1/2 flex -translate-y-1/2 items-center gap-2 text-[14px] font-bold text-ink">+91<span className="h-[22px] w-px bg-line-2" /></span>
+                  <label htmlFor="otpPhone" className="pointer-events-none absolute left-[68px] top-1/2 -translate-y-1/2 text-[14px] font-medium text-muted-foreground transition-all peer-focus:top-3.5 peer-focus:text-[11px] peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wide peer-focus:text-muted-foreground peer-[:not(:placeholder-shown)]:top-3.5 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-bold peer-[:not(:placeholder-shown)]:uppercase peer-[:not(:placeholder-shown)]:tracking-wide">
                     Mobile number
                   </label>
                 </div>

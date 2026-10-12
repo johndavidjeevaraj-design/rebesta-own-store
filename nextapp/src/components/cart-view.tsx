@@ -9,6 +9,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { LocationSheet } from "@/components/location-sheet";
 import { useToast } from "@/components/toaster";
 import { useCartLines, useSavedLocation } from "@/lib/hooks";
+import { startCashfreeDropin, startUpiApp, startUpiQr } from "@/lib/cashfree-client";
 import { addToCart, api, money, Product, saveCart, setCartQty, defaultVariant, lineVariantId } from "@/lib/store";
 
 /* ================= keys + constants (identical to the old checkout) ================= */
@@ -75,81 +76,6 @@ function removePref(key: string) {
 }
 
 /* ================= Cashfree hosted checkout (JS SDK, loaded on demand) ================= */
-function loadCashfreeSdk(): Promise<void> {
-  if ((window as any).Cashfree) return Promise.resolve();
-  const urls = ["https://sdk.cashfree.com/js/v3/cashfree.js", "https://js.cashfree.com/cashfree-js.js", "https://js.cashfree.com/v2/cashfree.js"];
-  return new Promise((resolve, reject) => {
-    let i = 0;
-    const tryNext = () => {
-      if (i >= urls.length) return reject(new Error("Could not load the payment page (script blocked). Check your network and try again."));
-      const script = document.createElement("script");
-      script.src = urls[i++];
-      script.onload = () => ((window as any).Cashfree ? resolve() : tryNext());
-      script.onerror = tryNext;
-      document.head.appendChild(script);
-    };
-    tryNext();
-  });
-}
-async function startCashfreeDropin(el: string, payment: { sessionId: string; mode?: string }) {
-  /* drop-in: Cashfree's checkout renders INSIDE our page — no redirect away.
-     SDK contract: redirectTarget must be the ELEMENT itself (HTMLElement),
-     not a selector string — anything else falls back to a full-page redirect. */
-  await loadCashfreeSdk();
-  const mode = payment.mode === "live" ? "production" : "sandbox";
-  const Cashfree = (window as any).Cashfree;
-  const cashfree = typeof Cashfree === "function" ? Cashfree({ mode }) : await Cashfree.load({ mode });
-  const target = document.querySelector(el);
-  if (!target) throw new Error("checkout container missing");
-  cashfree.checkout({ paymentSessionId: payment.sessionId, redirectTarget: target, redirect: "if_required" });
-}
-
-async function getCashfreeClient(mode?: string) {
-  await loadCashfreeSdk();
-  const m = mode === "live" ? "production" : "sandbox";
-  const Cashfree = (window as any).Cashfree;
-  return typeof Cashfree === "function" ? Cashfree({ mode: m }) : await Cashfree.load({ mode: m });
-}
-
-/* Swiggy-style UPI intent: launch the customer's chosen UPI app with the
-   payment prefilled. The upiApp element must be mounted (hidden) first, then
-   triggered via cashfree.pay(). Mobile only — desktop uses the QR element. */
-async function startUpiApp(payment: { sessionId: string; mode?: string; app: string; orderId: string }) {
-  const cashfree = await getCashfreeClient(payment.mode);
-  if (!document.querySelector("#cf-upi-hidden")) throw new Error("upi container missing");
-  const comp = cashfree.create("upiApp", { values: { upiApp: payment.app } });
-  comp.mount("#cf-upi-hidden");
-  await new Promise<void>((resolve) => {
-    let done = false;
-    const fin = () => { if (!done) { done = true; resolve(); } };
-    comp.on("ready", fin);
-    comp.on("loaderror", fin);
-    setTimeout(fin, 2500);
-  });
-  const res = await cashfree.pay({
-    paymentMethod: comp,
-    paymentSessionId: payment.sessionId,
-    returnUrl: `${location.origin}/api/payments/cashfree/callback?order_id=${encodeURIComponent(payment.orderId)}`,
-    redirect: "if_required",
-  });
-  return res;
-}
-
-/* desktop: render Cashfree's UPI QR inside our branded sheet */
-async function startUpiQr(payment: { sessionId: string; mode?: string; orderId: string }) {
-  const cashfree = await getCashfreeClient(payment.mode);
-  if (!document.querySelector("#cf-qr")) throw new Error("qr container missing");
-  const comp = cashfree.create("upiQr", { values: { size: "230px" } });
-  comp.mount("#cf-qr");
-  const payPromise = cashfree.pay({
-    paymentMethod: comp,
-    paymentSessionId: payment.sessionId,
-    returnUrl: `${location.origin}/api/payments/cashfree/callback?order_id=${encodeURIComponent(payment.orderId)}`,
-    redirect: "if_required",
-  });
-  payPromise.catch(() => { /* polling + manual check cover success */ });
-}
-
 /* ================= bottom sheet (motion + portal) ================= */
 function PortalSheet({ open, onClose, label, children }: { open: boolean; onClose: () => void; label: string; children: React.ReactNode }) {
   useEffect(() => {
@@ -407,10 +333,12 @@ export function CartView() {
     setPmOpen(false);
   }
 
-  /* ---------- device class (desktop => QR, mobile => UPI app intent) ---------- */
+  /* ---------- device class (no touch = PC => QR; phones/tablets => UPI app intent).
+     Touch capability decides — NOT window width, so a narrow Mac window still gets the QR. ---------- */
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setIsDesktop(window.matchMedia("(min-width: 768px)").matches && !/android|iphone|ipad|ipod/i.test(navigator.userAgent || ""));
+    const hasTouch = "ontouchstart" in window || (navigator.maxTouchPoints || 0) > 0;
+    setIsDesktop(!hasTouch);
   }, []);
 
   /* ---------- Swiggy-style: which UPI apps are installed on this phone? ----------
@@ -499,8 +427,20 @@ export function CartView() {
     let dead = false;
     (async () => {
       try {
+        /* a no-touch device can never open a UPI app — show the QR instead */
+        if (cfPay.channel === "app" && isDesktop) {
+          setCfPay({ ...cfPay, channel: "qr" });
+          return;
+        }
         if (cfPay.channel === "app") await startUpiApp({ ...cfPay, app: cfPay.app || "default" });
-        else if (cfPay.channel === "qr") await startUpiQr(cfPay);
+        else if (cfPay.channel === "qr") {
+          await startUpiQr(cfPay);
+          /* if the QR never renders (SDK hiccup), fall back to the full drop-in */
+          setTimeout(() => {
+            if (dead) return;
+            if (!document.querySelector("#cf-qr > *")) setCfPay((prev) => (prev ? { ...prev, channel: "dropin" } : prev));
+          }, 6000);
+        }
         else await startCashfreeDropin("#cf-dropin", cfPay);
       } catch {
         if (!dead && cfPay.channel !== "app") window.location.href = `/order-success?id=${encodeURIComponent(cfPay.orderId)}&payment=failed`;
@@ -1410,6 +1350,13 @@ export function CartView() {
                 >
                   Open app again
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setCfPay({ ...cfPay, channel: "dropin" })}
+                  className="rounded-full border border-line bg-white px-4 py-2.5 text-[13px] font-bold text-ink transition hover:border-leaf/50"
+                >
+                  Pay by card / QR
+                </button>
               </div>
             </div>
           )}
@@ -1427,13 +1374,22 @@ export function CartView() {
                 <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-leaf" />
                 Waiting for payment…
               </div>
-              <button
-                type="button"
-                onClick={() => setUpiCheckNow(Date.now())}
-                className="rounded-full border border-line bg-white px-4 py-2.5 text-[13px] font-bold text-ink transition hover:border-leaf/50"
-              >
-                I've paid — check now
-              </button>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setUpiCheckNow(Date.now())}
+                  className="rounded-full border border-line bg-white px-4 py-2.5 text-[13px] font-bold text-ink transition hover:border-leaf/50"
+                >
+                  I've paid — check now
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCfPay({ ...cfPay, channel: "dropin" })}
+                  className="rounded-full bg-mint px-4 py-2.5 text-[13px] font-bold text-forest transition hover:brightness-95"
+                >
+                  Pay by card / netbanking
+                </button>
+              </div>
             </div>
           )}
 

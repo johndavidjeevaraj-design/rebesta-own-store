@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { Check, MessageCircle, Repeat2, Ruler, Sparkles, TrendingUp, Users } from "lucide-react";
+import { AlertTriangle, Check, Clock3, CreditCard, MessageCircle, Repeat2, Ruler, Sparkles, TrendingUp, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { api, money } from "@/lib/store";
+import { startCashfreeDropin } from "@/lib/cashfree-client";
 
 interface OrderItem { handle: string; title: string; qty: number; unitLabel: string; image: string; lineTotalInr: number; priceInr: number }
 interface Order {
@@ -28,6 +29,7 @@ export function OrderSuccessView() {
 
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState("");
+  const [retryPay, setRetryPay] = useState<{ sessionId: string; mode?: string; orderId: string; amount: number } | null>(null);
   const [rewards, setRewards] = useState<{ loyaltyEnabled: boolean; referralEnabled: boolean; referralBonusInr: number } | null>(null);
 
   useEffect(() => {
@@ -65,6 +67,31 @@ export function OrderSuccessView() {
     api("/api/settings").then((s: any) => setRewards(s.rewards || null)).catch(() => {});
   }, []);
 
+  /* retry payment — mount the in-site Cashfree checkout over this page */
+  useEffect(() => {
+    if (!retryPay) return;
+    let dead = false;
+    (async () => {
+      try {
+        await startCashfreeDropin("#cf-dropin", retryPay);
+      } catch {
+        if (!dead) setRetryPay(null);
+      }
+    })();
+    return () => { dead = true; };
+  }, [retryPay]);
+
+  async function completePaymentNow() {
+    try {
+      const d: any = await api(`/api/orders/${encodeURIComponent(order?.id || id)}/pay`, { method: "POST" });
+      if (d?.payment?.sessionId) {
+        setRetryPay({ sessionId: d.payment.sessionId, mode: d.payment.mode, orderId: order?.id || id, amount: Number(order?.totalInr || 0) });
+      }
+    } catch (e: any) {
+      setError(e?.message || "Could not start payment — please try again.");
+    }
+  }
+
   const badge = (() => {
     if (paymentState === "paid" || (order && order.paymentStatus === "PAID")) return { text: "Payment verified", tone: "leaf" as const, title: "Payment received. Your vegetables are locked." };
     if (paymentState === "failed" || (order && order.paymentStatus === "FAILED")) return { text: "Payment not completed", tone: "orange" as const, title: "Payment was not completed." };
@@ -83,9 +110,13 @@ export function OrderSuccessView() {
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 260, damping: 18 }}
-            className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-mint text-leaf"
+            className={`mx-auto grid h-20 w-20 place-items-center rounded-full ${badge.tone === "orange" ? "bg-carrot/10 text-[#c8400f]" : "bg-mint text-leaf"}`}
           >
-            <Check size={38} strokeWidth={3} />
+            {badge.tone === "orange" ? (
+              paymentState === "failed" || order?.paymentStatus === "FAILED" ? <AlertTriangle size={36} strokeWidth={2.6} /> : <Clock3 size={36} strokeWidth={2.6} />
+            ) : (
+              <Check size={38} strokeWidth={3} />
+            )}
           </motion.span>
 
           <span className={`mt-6 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${badge.tone === "leaf" ? "bg-mint text-leaf" : "bg-carrot/10 text-[#c8400f]"}`} data-status-badge>
@@ -116,6 +147,15 @@ export function OrderSuccessView() {
             <a href="/subscriptions" className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#c8400f] transition hover:underline">
               <Repeat2 size={15} /> Make it weekly
             </a>
+            {badge.tone === "orange" && order?.paymentMethod === "online" && (
+              <Button
+                size="lg"
+                onClick={completePaymentNow}
+                className="h-12 rounded-full bg-carrot px-7 text-[14px] font-bold text-white shadow-[0_8px_20px_rgba(232,71,12,0.3)] hover:brightness-[1.05]"
+              >
+                <CreditCard size={17} /> Complete payment
+              </Button>
+            )}
           </div>
 
           <div data-order-summary className="mt-10 text-left">
@@ -207,6 +247,32 @@ export function OrderSuccessView() {
           </div>
         </section>
       </main>
+      {/* retry-payment checkout — full-screen, in-site, same premium chrome */}
+      {retryPay && (
+        <div className="fixed inset-0 z-[90] flex flex-col bg-white">
+          <div className="flex items-center gap-3 border-b border-line px-4 py-3.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/assets/brand/logo-orange-leaf.png" alt="Rebesta Fresh" className="h-9 w-9 rounded-[10px] object-cover" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[14px] font-bold tracking-tight text-ink">Complete your payment</p>
+              <p className="truncate text-[12px] font-semibold text-muted-foreground">{retryPay.orderId} · {money(retryPay.amount)}</p>
+            </div>
+            <button
+              type="button"
+              aria-label="Close checkout"
+              onClick={() => { setRetryPay(null); window.location.reload(); }}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-line bg-white text-muted-foreground transition hover:text-ink"
+            >
+              <X size={16} />
+            </button>
+          </div>
+          <div id="cf-dropin" className="min-h-0 flex-1" />
+          <p className="border-t border-line bg-white px-4 py-2.5 text-center text-[11px] font-semibold text-muted-foreground">
+            Payments secured by Cashfree · UPI · Cards · Netbanking · Wallets
+          </p>
+        </div>
+      )}
+
       <SiteFooter />
     </div>
   );

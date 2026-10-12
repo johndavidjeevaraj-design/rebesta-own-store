@@ -459,6 +459,22 @@ router.get('/payments/cashfree/callback', async (req, res) => {
   }
 });
 
+/* retry payment for an existing unpaid online order (order-success page) */
+router.post('/orders/:id/pay', async (req, res) => {
+  try {
+    const order = getOrder(String(req.params.id || '').toUpperCase());
+    if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
+    if (String(order.paymentMethod || '') !== 'online') return res.status(400).json({ ok: false, error: 'This order is not an online payment order' });
+    if (String(order.paymentStatus || '').toUpperCase() === 'PAID') return res.status(400).json({ ok: false, error: 'This order is already paid' });
+    if (!cashfreeEnabled()) return res.status(503).json({ ok: false, error: 'Online payment is not configured yet' });
+    const payment = await createCashfreePayment(order);
+    return res.json({ ok: true, orderId: order.id, totalInr: order.totalInr, payment });
+  } catch (error) {
+    console.error(JSON.stringify({ event: 'order.retryPay.error', order: req.params.id, error: String(error?.message || error).slice(0, 300) }));
+    return res.status(502).json({ ok: false, error: error?.message || 'Could not start payment' });
+  }
+});
+
 /* lightweight payment poller for in-site UPI (intent + QR) — verifies with
    Cashfree, marks paid, fires the order notification, never throws */
 router.get('/orders/:id/verify-payment', async (req, res) => {

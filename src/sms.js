@@ -194,3 +194,41 @@ async function sendMsg91(c, phone, code) {
     return { ok: false, error: `MSG91 unreachable: ${error.message}` };
   }
 }
+
+/* ── Order confirmation push (fires on payment success / COD order placed) ──
+   Transactional pushes need an approved template on the gateway (DLT), so
+   this is config-driven and NEVER blocks checkout. To enable, add to
+   data/sms-config.json:
+     "orderSms": { "flowId": "<MSG91 flow id>" }
+   Create the flow in MSG91 dashboard (SMS → Flows) with a template whose
+   variables are {ORDER}, {AMOUNT}, {STATUS} — the sender registered there
+   is used automatically. Without orderSms the notification is skipped. */
+export async function notifyOrderConfirmed(order, { paid = false } = {}) {
+  const c = loadSmsConfig() || {};
+  const flow = c.orderSms;
+  const phone = String(order?.customer?.phone || '').replace(/\D/g, '');
+  const out = { event: 'order.notify', order: order?.id, paid, sms: 'skipped' };
+  if (flow && flow.flowId && c.authKey && phone) {
+    try {
+      const res = await fetch('https://control.msg91.com/api/v5/flow/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', authkey: String(c.authKey) },
+        body: JSON.stringify({
+          flow_id: String(flow.flowId),
+          recipients: [{
+            mobiles: '91' + phone,
+            ORDER: order.id,
+            AMOUNT: 'Rs.' + Math.round(Number(order.totalInr || 0)),
+            STATUS: paid ? 'PAID' : 'COD'
+          }]
+        }),
+        signal: AbortSignal.timeout(8000)
+      });
+      out.sms = res.ok ? 'sent' : 'error-' + res.status;
+    } catch (e) {
+      out.sms = 'error';
+      out.error = String(e?.message || e).slice(0, 140);
+    }
+  }
+  console.log(JSON.stringify(out));
+}

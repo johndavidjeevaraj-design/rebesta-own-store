@@ -91,12 +91,13 @@ function loadCashfreeSdk(): Promise<void> {
     tryNext();
   });
 }
-async function startCashfreeCheckout(payment: { sessionId: string; mode?: string }) {
+async function startCashfreeDropin(el: string, payment: { sessionId: string; mode?: string }) {
+  /* drop-in: Cashfree's checkout renders INSIDE our page — no redirect away */
   await loadCashfreeSdk();
   const mode = payment.mode === "live" ? "production" : "sandbox";
   const Cashfree = (window as any).Cashfree;
   const cashfree = typeof Cashfree === "function" ? Cashfree({ mode }) : await Cashfree.load({ mode });
-  cashfree.checkout({ paymentSessionId: payment.sessionId, redirectTarget: "_self" });
+  cashfree.checkout({ paymentSessionId: payment.sessionId, component: el });
 }
 
 /* ================= bottom sheet (motion + portal) ================= */
@@ -185,6 +186,8 @@ export function CartView() {
   const [couponInput, setCouponInput] = useState("");
   const [couponMsg, setCouponMsg] = useState<{ text: string; error: boolean } | null>(null);
   const [payBusy, setPayBusy] = useState(false);
+  /* in-site Cashfree checkout (drop-in) */
+  const [cfPay, setCfPay] = useState<{ sessionId: string; mode?: string; orderId: string; amount: number } | null>(null);
   const [payLabel, setPayLabel] = useState("Pay ₹0");
   const [lastOrder, setLastOrder] = useState<{ items: { handle: string; qty: number }[]; at: number } | null>(null);
   const [locSheetOpen, setLocSheetOpen] = useState(false);
@@ -350,6 +353,20 @@ export function CartView() {
     setPmOpen(false);
   }
 
+  /* ---------- in-site Cashfree checkout: mount drop-in into #cf-dropin ---------- */
+  useEffect(() => {
+    if (!cfPay) return;
+    let dead = false;
+    (async () => {
+      try {
+        await startCashfreeDropin("#cf-dropin", cfPay);
+      } catch {
+        if (!dead) window.location.href = `/order-success?id=${encodeURIComponent(cfPay.orderId)}&payment=failed`;
+      }
+    })();
+    return () => { dead = true; };
+  }, [cfPay]);
+
   /* ---------- login sheet: reuse the battle-tested /js/auth.js flow ---------- */
   function loadOtpSdk() {
     if (otpSdkLoaded.current || (window as any).initSendOTP) return;
@@ -393,7 +410,7 @@ export function CartView() {
     setAuthOpen(true);
     loadOtpSdk();
     const s = document.createElement("script");
-    s.src = "/js/auth.js?v=20261012a";
+    s.src = "/js/auth.js?v=20261012b";
     s.async = true;
     s.onload = () => {
       const RFSAuth = (window as any).RFSAuth;
@@ -484,17 +501,9 @@ export function CartView() {
         /* private mode */
       }
       if (order.payment && order.payment.type === "cashfree") {
-        try {
-          await startCashfreeCheckout(order.payment);
-          setTimeout(() => {
-            setPayBusy(false);
-            setPayLabel(`Pay ${money(total)}`);
-          }, 1500);
-          return;
-        } catch (error: any) {
-          toast(error?.message || "Could not open the payment page", "error");
-          await refreshQuote();
-        }
+        setPayBusy(false);
+        setCfPay({ sessionId: order.payment.sessionId, mode: order.payment.mode, orderId: String(order.orderId || ""), amount: Number(order.totalInr || total) || total });
+        return;
       } else {
         window.location.href = `/order-success?id=${encodeURIComponent(order.orderId)}&phone=${encodeURIComponent(me.phone || "")}&whatsapp=${encodeURIComponent(order.whatsappUrl || "")}`;
       }
@@ -1151,12 +1160,7 @@ export function CartView() {
             <div className="fx-field fx-phone">
               <input id="bpPhone" data-flow-phone inputMode="tel" autoComplete="tel" placeholder=" " defaultValue="" />
               <label htmlFor="bpPhone">Mobile number</label>
-              <span className="fx-prefix">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M4 6h3l2 4-2 2a12 12 0 0 0 5 5l2-2 4 2v3a2 2 0 0 1-2 2A16 16 0 0 1 2 8a2 2 0 0 1 2-2Z" fill="currentColor" />
-                </svg>
-                +91
-              </span>
+              <span className="fx-prefix">🇮🇳 +91</span>
             </div>
             <button className="btn-main" type="button" data-flow-send>
               <span className="btn-label">Send code by SMS</span>
@@ -1202,6 +1206,32 @@ export function CartView() {
           </button>
         </form>
       </PortalSheet>
+
+      {/* in-site Cashfree checkout — full-screen, never leaves rebestafresh.in */}
+      {cfPay && (
+        <div className="fixed inset-0 z-[90] flex flex-col bg-white">
+          <div className="flex items-center gap-3 border-b border-line px-4 py-3.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/assets/brand/logo-orange-leaf.png" alt="Rebesta Fresh" className="h-9 w-9 rounded-[10px] object-cover" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[14px] font-bold tracking-tight text-ink">Secure checkout</p>
+              <p className="truncate text-[12px] font-semibold text-muted-foreground">{cfPay.orderId} · {money(cfPay.amount)}</p>
+            </div>
+            <button
+              type="button"
+              aria-label="Close checkout"
+              onClick={() => { window.location.href = `/order-success?id=${encodeURIComponent(cfPay.orderId)}&payment=failed`; }}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-line bg-white text-muted-foreground transition hover:text-ink"
+            >
+              <X size={16} />
+            </button>
+          </div>
+          <div id="cf-dropin" className="min-h-0 flex-1" />
+          <p className="border-t border-line bg-white px-4 py-2.5 text-center text-[11px] font-semibold text-muted-foreground">
+            Payments secured by Cashfree · UPI · Cards · Netbanking · Wallets
+          </p>
+        </div>
+      )}
 
       <SiteFooter />
 

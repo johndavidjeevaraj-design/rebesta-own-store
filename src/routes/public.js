@@ -1,6 +1,7 @@
 import express from 'express';
 import crypto from 'node:crypto';
 import { config } from '../config.js';
+import { notifyOrderConfirmed } from '../sms.js';
 import {
   loadSettings,
   findCoupon,
@@ -307,6 +308,7 @@ router.post('/orders', async (req, res) => {
       }
     }
 
+    if (!payment) notifyOrderConfirmed(order, { paid: false }).catch(() => {});
     res.status(201).json({
       ok: true,
       order: maskCustomer(order),
@@ -449,6 +451,7 @@ router.get('/payments/cashfree/callback', async (req, res) => {
       provider: 'cashfree',
       raw: cfOrder
     });
+    if (paid) notifyOrderConfirmed(order, { paid: true }).catch(() => {});
     return res.redirect(303, `/order-success?id=${encodeURIComponent(order.id)}&payment=${paid ? 'paid' : 'failed'}`);
   } catch (error) {
     console.error(JSON.stringify({ event: 'cashfree.callback.error', order: orderId, error: String(error?.message || error).slice(0, 500) }));

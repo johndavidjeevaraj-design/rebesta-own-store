@@ -77,7 +77,9 @@
   });
 
   /* ---------- segmented OTP input boxes (auto-grow 4 → 8 digits) ---------- */
-  function otpBoxes(wrap, { min = 4, max = 8 } = {}) {
+  function otpBoxes(wrap, { min = 4, max = 4 } = {}) {
+    /* fixed 4 boxes — matches the MSG91 widget's otpLength; a 5th box must
+       never appear while typing (was: spawn-then-shrink flicker on box 4) */
     const inputs = [];
     function refresh() {
       inputs.forEach(i => i.classList.toggle('filled', !!i.value));

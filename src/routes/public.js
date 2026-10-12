@@ -459,6 +459,33 @@ router.get('/payments/cashfree/callback', async (req, res) => {
   }
 });
 
+/* lightweight payment poller for in-site UPI (intent + QR) — verifies with
+   Cashfree, marks paid, fires the order notification, never throws */
+router.get('/orders/:id/verify-payment', async (req, res) => {
+  try {
+    const order = getOrder(String(req.params.id || '').toUpperCase());
+    if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
+    if (String(order.paymentStatus || '').toUpperCase() === 'PAID') return res.json({ ok: true, paid: true });
+    if (String(order.paymentMethod || '') !== 'online') return res.json({ ok: true, paid: false });
+    const cfOrder = await getCashfreeOrder(order.id);
+    const paid = String(cfOrder?.order_status || '').toUpperCase() === 'PAID';
+    if (paid) {
+      const payment = (cfOrder?.payments || []).find(pp => String(pp?.payment_status || '').toUpperCase() === 'SUCCESS');
+      markPayuPayment(order.id, {
+        success: true,
+        reference: String(payment?.cf_payment_id || cfOrder?.cf_order_id || ''),
+        mode: 'cashfree',
+        provider: 'cashfree',
+        raw: cfOrder
+      });
+      notifyOrderConfirmed(order, { paid: true }).catch(() => {});
+    }
+    return res.json({ ok: true, paid });
+  } catch (e) {
+    return res.json({ ok: true, paid: false, note: 'verify pending' });
+  }
+});
+
 router.get('/orders/:id', (req, res) => {
   const order = getOrder(req.params.id);
   if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });

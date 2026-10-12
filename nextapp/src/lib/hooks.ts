@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { CART_EVENT, cartCount, LOCATION_EVENT, readCart, getSavedLocation, CART_KEY, LOCATION_KEY, CartLine, SavedLocation } from "./store";
+import { CART_EVENT, cartCount, LOCATION_EVENT, readCart, getSavedLocation, CART_KEY, LOCATION_KEY, CartLine, SavedLocation, Product, lineVariantId } from "./store";
 
 /* ---- live cart count for the header badge ---- */
 let countSnapshot = 0;
@@ -71,7 +71,12 @@ const getLines = (): CartLine[] => {
 };
 export function useCartQty(handle: string) {
   const lines = useSyncExternalStore(linesSub, getLines, () => [] as CartLine[]);
-  return lines.find((l) => l.handle === handle)?.qty || 0;
+  return lines.filter((l) => l.handle === handle).reduce((sum, l) => sum + l.qty, 0);
+}
+/* qty of ONE pack size (legacy variant-less lines count as the product default) */
+export function useVariantQty(product: Product, variantId: string) {
+  const lines = useSyncExternalStore(linesSub, getLines, () => [] as CartLine[]);
+  return lines.filter((l) => l.handle === product.handle && lineVariantId(product, l) === variantId).reduce((sum, l) => sum + l.qty, 0);
 }
 
 /* ---- full cart lines for the basket page ---- */

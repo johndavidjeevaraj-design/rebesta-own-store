@@ -3,8 +3,8 @@
 import { useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Minus, Plus } from "lucide-react";
-import { Product, setCartQty } from "@/lib/store";
-import { useCartQty } from "@/lib/hooks";
+import { Product, setCartQty, defaultVariant } from "@/lib/store";
+import { useVariantQty } from "@/lib/hooks";
 import { useToast } from "./toaster";
 
 /* fly-to-basket: a little photo of the veg flies into the header basket */
@@ -36,13 +36,14 @@ export function flyToBasket(imgUrl: string, fromEl: HTMLElement | null) {
    add-to-basket control shared by the hero stage (same behaviour as the
    shop cards: one shape that morphs, never jumps) */
 export function AddButton({ product, className = "" }: { product: Product; className?: string }) {
-  const qty = useCartQty(product.handle);
+  const pack = defaultVariant(product);
+  const qty = useVariantQty(product, pack.id);
   const toast = useToast();
   const soldOut = !product.stock || product.stock <= 0;
   const btnRef = useRef<HTMLButtonElement | null>(null);
 
   const add = () => {
-    setCartQty(product.handle, Math.min(99, qty + 1));
+    setCartQty(product.handle, Math.min(99, qty + 1), pack.id);
     if (!qty) {
       toast(`${product.title} added to basket`);
       flyToBasket(product.image, btnRef.current);
@@ -72,7 +73,7 @@ export function AddButton({ product, className = "" }: { product: Product; class
           >
             <button
               type="button"
-              onClick={() => setCartQty(product.handle, qty - 1)}
+              onClick={() => setCartQty(product.handle, qty - 1, pack.id)}
               aria-label={`Remove one ${product.title}`}
               className="grid h-8 w-8 place-items-center rounded-full bg-white/25 transition hover:bg-white/40 active:scale-90"
             >

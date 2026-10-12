@@ -1,11 +1,11 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Minus, Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Product, money, setCartQty } from "@/lib/store";
-import { useCartQty } from "@/lib/hooks";
+import { Product, money, setCartQty, defaultVariant } from "@/lib/store";
+import { useVariantQty } from "@/lib/hooks";
 import { useToast } from "./toaster";
 
 /* fly-to-basket: a little photo of the veg flies from the card into the
@@ -35,24 +35,27 @@ function flyToBasket(imgUrl: string, fromEl: HTMLElement | null) {
 }
 
 export function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
-  const qty = useCartQty(product.handle);
   const toast = useToast();
   const soldOut = !product.stock || product.stock <= 0;
+  const packs = product.variants && product.variants.length > 1 ? product.variants : null;
+  const [packId, setPackId] = useState(defaultVariant(product).id);
+  const pack = packs?.find((v) => v.id === packId) || defaultVariant(product);
+  const qty = useVariantQty(product, pack.id);
   const compareAt = product.compareAtInr && product.compareAtInr > product.priceInr ? product.compareAtInr : null;
   const offPct = compareAt ? Math.round((1 - product.priceInr / compareAt) * 100) : 0;
   const saveInr = compareAt ? compareAt - product.priceInr : 0;
   const btnRef = useRef<HTMLButtonElement | null>(null);
 
   const add = () => {
-    setCartQty(product.handle, Math.min(99, qty + 1));
+    setCartQty(product.handle, Math.min(99, qty + 1), pack.id);
     if (!qty) {
-      toast(`${product.title} added to basket`);
+      toast(`${product.title} (${pack.label}) added to basket`);
       flyToBasket(product.image, btnRef.current);
     }
   };
   const step = (e: React.MouseEvent) => {
     e.preventDefault();
-    setCartQty(product.handle, qty - 1);
+    setCartQty(product.handle, qty - 1, pack.id);
   };
 
   return (
@@ -99,12 +102,29 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
         <div className="flex flex-1 flex-col px-0.5 pt-3">
           <a href={`/products/${product.handle}`} className="block">
             <h3 className="line-clamp-2 min-h-[2.35em] text-[14px] font-semibold leading-snug tracking-tight text-ink">{product.title}</h3>
-            <p className="mt-0.5 text-[11px] font-semibold text-muted-foreground">{product.unitLabel}</p>
+            <p className="mt-0.5 text-[11px] font-semibold text-muted-foreground">{pack.label}</p>
           </a>
+
+          {packs && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {packs.map((v) => (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); setPackId(v.id); }}
+                  className={`rounded-full border px-2.5 py-[3px] text-[11px] font-bold transition ${
+                    v.id === pack.id ? "border-leaf bg-mint text-forest" : "border-line bg-white text-muted-foreground hover:border-leaf/50"
+                  }`}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="mt-auto pt-2.5">
             <div className="flex flex-wrap items-baseline gap-x-1.5">
-              <span className="text-[15px] font-semibold tracking-tight text-ink">{money(product.priceInr)}</span>
+              <span className="text-[15px] font-semibold tracking-tight text-ink">{money(pack.priceInr)}</span>
               {compareAt && <span className="text-[13px] font-semibold text-muted-foreground line-through">{money(compareAt)}</span>}
             </div>
             {saveInr > 0 && (

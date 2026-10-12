@@ -61,6 +61,37 @@ export function saveSettings(settings) {
   return settings;
 }
 
+/* ── Pack sizes / variants ──
+   Vegetables sold by the kg get 250 g / 500 g / 1 kg quick-packs (price
+   proportional, rounded to the rupee). Leafy greens are sold as bunches
+   (a bunch ≈ 250 g of the kg price — the owner can override any product by
+   adding an explicit `variants` array in the admin product data). */
+export function productVariants(p) {
+  if (Array.isArray(p.variants) && p.variants.length) {
+    return p.variants.map(v => ({ id: String(v.id || 'default'), label: String(v.label || p.unitLabel || '1 unit'), priceInr: Math.round(Number(v.priceInr || p.priceInr) * 100) / 100, default: Boolean(v.default) }));
+  }
+  const unit = String(p.unitLabel || '');
+  const category = String(p.category || '');
+  const base = Math.round(Number(p.priceInr || 0) * 100) / 100;
+  if (category === 'Leafy Greens') {
+    const bunch = Math.max(5, Math.ceil(base * 0.25));
+    return [
+      { id: 'bunch1', label: '1 bunch', priceInr: bunch, default: true },
+      { id: 'bunch2', label: '2 bunches', priceInr: bunch * 2 },
+      { id: 'bunch3', label: '3 bunches', priceInr: bunch * 3 }
+    ];
+  }
+  const kgMatch = unit.match(/^\s*1\s*kg$/i);
+  if (kgMatch && !/box|kit|combo/i.test(category)) {
+    return [
+      { id: '250g', label: '250 g', priceInr: Math.max(1, Math.round(base * 0.25)) },
+      { id: '500g', label: '500 g', priceInr: Math.max(1, Math.round(base * 0.5)) },
+      { id: '1kg', label: '1 kg', priceInr: base, default: true }
+    ];
+  }
+  return [{ id: 'default', label: unit || '1 unit', priceInr: base, default: true }];
+}
+
 export function publicCatalog({ includeInactive = false } = {}) {
   return loadProducts()
     .filter(p => includeInactive || p.active)
@@ -80,7 +111,8 @@ export function publicCatalog({ includeInactive = false } = {}) {
       unitLabel: p.unitLabel || '1 kg',
       weightGrams: p.weightGrams || 1000,
       stock: p.stock,
-      featured: Boolean(p.featured)
+      featured: Boolean(p.featured),
+      variants: productVariants(p)
     }));
 }
 
@@ -179,16 +211,21 @@ export function buildCart(rawItems) {
     if (!p || !p.active) throw Object.assign(new Error(`Product unavailable: ${handle || 'unknown'}`), { status: 400 });
     if (!Number.isInteger(qty) || qty < 1 || qty > 50) throw Object.assign(new Error(`Invalid quantity for ${p.title}`), { status: 400 });
     if (p.stock < qty) throw Object.assign(new Error(`${p.title}: only ${p.stock} ${p.unitLabel} available`), { status: 400 });
+    /* pack size: resolve the variant (falls back to the product default) */
+    const variants = productVariants(p);
+    const wanted = String(raw.variant || '').trim();
+    const v = variants.find(x => x.id === wanted) || variants.find(x => x.default) || variants[0];
     lines.push({
       handle: p.handle,
       sku: p.sku,
       title: p.title,
       category: p.category,
-      unitLabel: p.unitLabel,
+      unitLabel: v.label,
+      variant: v.id,
       image: p.image,
       qty,
-      priceInr: p.priceInr,
-      lineTotalInr: Math.round(p.priceInr * qty * 100) / 100
+      priceInr: v.priceInr,
+      lineTotalInr: Math.round(v.priceInr * qty * 100) / 100
     });
   }
   const subtotalInr = lines.reduce((s, line) => s + line.lineTotalInr, 0);

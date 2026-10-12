@@ -3,13 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { Banknote, ChevronRight, Home, Lock, MapPin, Plus, ReceiptText, ShieldCheck, Tag, X } from "lucide-react";
+import { Banknote, ChevronRight, CreditCard, Home, Lock, MapPin, Plus, QrCode, ReceiptText, ShieldCheck, Tag, X } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { LocationSheet } from "@/components/location-sheet";
 import { useToast } from "@/components/toaster";
 import { useCartLines, useSavedLocation } from "@/lib/hooks";
-import { addToCart, api, money, Product, saveCart, setCartQty } from "@/lib/store";
+import { addToCart, api, money, Product, saveCart, setCartQty, defaultVariant, lineVariantId } from "@/lib/store";
 
 /* ================= keys + constants (identical to the old checkout) ================= */
 const ADDR_KEY = "rebesta_checkout_addr_v1";
@@ -24,7 +24,7 @@ const ADD_TABS = [
   { id: "combos", label: "Combos", pick: (list: Product[]) => list.filter((p) => p.category === "Combos & Kits") },
   { id: "addons", label: "Add-ons", pick: (list: Product[]) => list.filter((p) => ADDON_RE.test(p.title) && p.category !== "Combos & Kits") },
 ];
-const PM_LABELS: Record<string, string> = { gpay: "Google Pay", phonepe: "PhonePe", paytm: "Paytm UPI", upi: "UPI · Card", cod: "Cash on Delivery" };
+const PM_LABELS: Record<string, string> = { gpay: "Google Pay", phonepe: "PhonePe", paytm: "Paytm UPI", upi: "Other UPI Apps", card: "Cards · Netbanking", cod: "Cash on Delivery" };
 
 interface Coupon {
   code: string;
@@ -102,6 +102,52 @@ async function startCashfreeDropin(el: string, payment: { sessionId: string; mod
   const target = document.querySelector(el);
   if (!target) throw new Error("checkout container missing");
   cashfree.checkout({ paymentSessionId: payment.sessionId, redirectTarget: target, redirect: "if_required" });
+}
+
+async function getCashfreeClient(mode?: string) {
+  await loadCashfreeSdk();
+  const m = mode === "live" ? "production" : "sandbox";
+  const Cashfree = (window as any).Cashfree;
+  return typeof Cashfree === "function" ? Cashfree({ mode: m }) : await Cashfree.load({ mode: m });
+}
+
+/* Swiggy-style UPI intent: launch the customer's chosen UPI app with the
+   payment prefilled. The upiApp element must be mounted (hidden) first, then
+   triggered via cashfree.pay(). Mobile only — desktop uses the QR element. */
+async function startUpiApp(payment: { sessionId: string; mode?: string; app: string; orderId: string }) {
+  const cashfree = await getCashfreeClient(payment.mode);
+  if (!document.querySelector("#cf-upi-hidden")) throw new Error("upi container missing");
+  const comp = cashfree.create("upiApp", { values: { upiApp: payment.app } });
+  comp.mount("#cf-upi-hidden");
+  await new Promise<void>((resolve) => {
+    let done = false;
+    const fin = () => { if (!done) { done = true; resolve(); } };
+    comp.on("ready", fin);
+    comp.on("loaderror", fin);
+    setTimeout(fin, 2500);
+  });
+  const res = await cashfree.pay({
+    paymentMethod: comp,
+    paymentSessionId: payment.sessionId,
+    returnUrl: `${location.origin}/api/payments/cashfree/callback?order_id=${encodeURIComponent(payment.orderId)}`,
+    redirect: "if_required",
+  });
+  return res;
+}
+
+/* desktop: render Cashfree's UPI QR inside our branded sheet */
+async function startUpiQr(payment: { sessionId: string; mode?: string; orderId: string }) {
+  const cashfree = await getCashfreeClient(payment.mode);
+  if (!document.querySelector("#cf-qr")) throw new Error("qr container missing");
+  const comp = cashfree.create("upiQr", { values: { size: "230px" } });
+  comp.mount("#cf-qr");
+  const payPromise = cashfree.pay({
+    paymentMethod: comp,
+    paymentSessionId: payment.sessionId,
+    returnUrl: `${location.origin}/api/payments/cashfree/callback?order_id=${encodeURIComponent(payment.orderId)}`,
+    redirect: "if_required",
+  });
+  payPromise.catch(() => { /* polling + manual check cover success */ });
 }
 
 /* ================= bottom sheet (motion + portal) ================= */
@@ -190,8 +236,10 @@ export function CartView() {
   const [couponInput, setCouponInput] = useState("");
   const [couponMsg, setCouponMsg] = useState<{ text: string; error: boolean } | null>(null);
   const [payBusy, setPayBusy] = useState(false);
-  /* in-site Cashfree checkout (drop-in) */
-  const [cfPay, setCfPay] = useState<{ sessionId: string; mode?: string; orderId: string; amount: number } | null>(null);
+  /* in-site Cashfree checkout: drop-in | upi app intent | upi qr */
+  const [cfPay, setCfPay] = useState<{ sessionId: string; mode?: string; orderId: string; amount: number; channel?: "dropin" | "app" | "qr"; app?: string } | null>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [upiDetected, setUpiDetected] = useState<Set<string>>(new Set());
   const [payLabel, setPayLabel] = useState("Pay ₹0");
   const [lastOrder, setLastOrder] = useState<{ items: { handle: string; qty: number }[]; at: number } | null>(null);
   const [locSheetOpen, setLocSheetOpen] = useState(false);
@@ -208,7 +256,9 @@ export function CartView() {
     let sum = 0;
     for (const item of lines) {
       const p = byHandle.get(item.handle);
-      if (p) sum += p.priceInr * item.qty;
+      if (!p) continue;
+      const v = p.variants?.find((x) => x.id === lineVariantId(p, item)) || defaultVariant(p);
+      sum += v.priceInr * item.qty;
     }
     return sum;
   }, [lines, byHandle]);
@@ -252,7 +302,7 @@ export function CartView() {
   }, []);
 
   useEffect(() => {
-    if (onlineEnabled) setPayApp("upi");
+    if (onlineEnabled) setPayApp(isDesktop ? "upi" : "gpay");
   }, [onlineEnabled]);
   useEffect(() => {
     meRef.current = me;
@@ -357,15 +407,103 @@ export function CartView() {
     setPmOpen(false);
   }
 
-  /* ---------- in-site Cashfree checkout: mount drop-in into #cf-dropin ---------- */
+  /* ---------- device class (desktop => QR, mobile => UPI app intent) ---------- */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setIsDesktop(window.matchMedia("(min-width: 768px)").matches && !/android|iphone|ipad|ipod/i.test(navigator.userAgent || ""));
+  }, []);
+
+  /* ---------- Swiggy-style: which UPI apps are installed on this phone? ----------
+     Best-effort iframe scheme probe — if launching the scheme hides the page
+     (app opened), the app is installed. iOS iframes don't fire schemes, so
+     there we simply show every app without the "on your phone" badge. */
+  function probeUpiApps() {
+    if (typeof window === "undefined" || upiProbed.current) return;
+    upiProbed.current = true;
+    const mobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent || "");
+    if (!mobile) return;
+    const schemes: Record<string, string> = { phonepe: "phonepe://", gpay: "tez://", paytm: "paytm://" };
+    const found = new Set<string>();
+    const check = (id: string, scheme: string) => new Promise<void>((resolve) => {
+      const t0 = Date.now();
+      const iframe = document.createElement("iframe");
+      iframe.style.cssText = "width:1px;height:1px;position:fixed;left:-9px;top:-9px;opacity:0;border:0;";
+      const finish = () => {
+        window.removeEventListener("visibilitychange", onVis);
+        window.removeEventListener("pagehide", onHide);
+        window.removeEventListener("blur", onHide);
+        clearTimeout(timer);
+        iframe.remove();
+        resolve();
+      };
+      const onHide = () => { if (Date.now() - t0 < 1600) found.add(id); finish(); };
+      const onVis = () => { if (document.hidden) onHide(); };
+      const timer = setTimeout(finish, 1000);
+      window.addEventListener("visibilitychange", onVis);
+      window.addEventListener("pagehide", onHide);
+      window.addEventListener("blur", onHide);
+      iframe.src = scheme;
+      document.body.appendChild(iframe);
+    });
+    Promise.all(Object.entries(schemes).map(([id, sc]) => check(id, sc))).then(() => setUpiDetected(new Set(found)));
+  }
+  const upiProbed = useRef(false);
+  useEffect(() => { if (pmOpen) probeUpiApps(); }, [pmOpen]);
+
+  /* ---------- payment method list (device aware, detected apps first) ---------- */
+  const pmRows = useMemo(() => {
+    if (isDesktop) {
+      return [
+        { app: "upi", label: "Scan & Pay with any UPI app", sub: "Google Pay · PhonePe · Paytm · BHIM", badge: false },
+        { app: "card", label: "Cards · Netbanking · Wallets", sub: "Inside secure Cashfree checkout", badge: false },
+        { app: "cod", label: "Cash on Delivery", sub: "Pay when the vegetables reach your door", badge: false },
+      ];
+    }
+    const apps = [
+      { app: "gpay", label: "Google Pay", sub: "", badge: upiDetected.has("gpay") },
+      { app: "phonepe", label: "PhonePe", sub: "", badge: upiDetected.has("phonepe") },
+      { app: "paytm", label: "Paytm UPI", sub: "", badge: upiDetected.has("paytm") },
+      { app: "upi", label: "Other UPI Apps", sub: "BHIM, CRED, Amazon Pay & more", badge: false },
+    ];
+    return [
+      ...apps.filter((r) => r.badge),
+      ...apps.filter((r) => !r.badge),
+      { app: "card", label: "Cards · Netbanking · Wallets", sub: "Inside secure Cashfree checkout", badge: false },
+      { app: "cod", label: "Cash on Delivery", sub: "Pay when the vegetables reach your door", badge: false },
+    ];
+  }, [isDesktop, upiDetected]);
+  const pmLabel = (app: string) =>
+    app === "upi" ? (isDesktop ? "Scan & Pay · UPI" : "Other UPI Apps") : PM_LABELS[app] || "Cash on Delivery";
+
+  /* ---------- UPI (intent/QR): poll until Cashfree confirms the payment ---------- */
+  const [upiCheckNow, setUpiCheckNow] = useState(0);
+  useEffect(() => {
+    if (!cfPay || (cfPay.channel !== "app" && cfPay.channel !== "qr")) return;
+    let stopped = false;
+    const check = async () => {
+      try {
+        const d: any = await api(`/api/orders/${encodeURIComponent(cfPay.orderId)}/verify-payment`);
+        if (d?.paid && !stopped) {
+          stopped = true;
+          window.location.href = `/order-success?id=${encodeURIComponent(cfPay.orderId)}&payment=paid`;
+        }
+      } catch { /* next tick */ }
+    };
+    const t = setInterval(() => { if (!stopped) check(); }, 4000);
+    return () => { stopped = true; clearInterval(t); };
+  }, [cfPay, upiCheckNow]);
+
+  /* ---------- in-site Cashfree checkout: drop-in | UPI app | UPI QR ---------- */
   useEffect(() => {
     if (!cfPay) return;
     let dead = false;
     (async () => {
       try {
-        await startCashfreeDropin("#cf-dropin", cfPay);
+        if (cfPay.channel === "app") await startUpiApp({ ...cfPay, app: cfPay.app || "default" });
+        else if (cfPay.channel === "qr") await startUpiQr(cfPay);
+        else await startCashfreeDropin("#cf-dropin", cfPay);
       } catch {
-        if (!dead) window.location.href = `/order-success?id=${encodeURIComponent(cfPay.orderId)}&payment=failed`;
+        if (!dead && cfPay.channel !== "app") window.location.href = `/order-success?id=${encodeURIComponent(cfPay.orderId)}&payment=failed`;
       }
     })();
     return () => { dead = true; };
@@ -481,7 +619,10 @@ export function CartView() {
     if (coupon) writePref(COUPON_KEY, { code: coupon.code });
     else removePref(COUPON_KEY);
     writePref(TIP_KEY, tip);
-    const orderItems = lines;
+    const orderItems = lines.map((l) => {
+      const p = byHandle.get(l.handle);
+      return { handle: l.handle, qty: l.qty, variant: p ? lineVariantId(p, l) : (l.variant || "") };
+    });
     const payload: Record<string, unknown> = {
       customer: { name: me.name || "", phone: me.phone || "", email: me.email || "" },
       address: { line1: addr1.trim(), area: saved.label || "", city: "Hosur", pincode: pin.trim() },
@@ -506,7 +647,15 @@ export function CartView() {
       }
       if (order.payment && order.payment.type === "cashfree") {
         setPayBusy(false);
-        setCfPay({ sessionId: order.payment.sessionId, mode: order.payment.mode, orderId: String(order.orderId || ""), amount: Number(order.totalInr || total) || total });
+        const channel = payApp === "card" ? "dropin" : payApp === "upi" ? (isDesktop ? "qr" : "app") : "app";
+        setCfPay({
+          sessionId: order.payment.sessionId,
+          mode: order.payment.mode,
+          orderId: String(order.orderId || ""),
+          amount: Number(order.totalInr || total) || total,
+          channel,
+          app: channel === "app" ? (["gpay", "phonepe", "paytm"].includes(payApp) ? payApp : "default") : undefined,
+        });
         return;
       } else {
         window.location.href = `/order-success?id=${encodeURIComponent(order.orderId)}&phone=${encodeURIComponent(me.phone || "")}&whatsapp=${encodeURIComponent(order.whatsappUrl || "")}`;
@@ -528,7 +677,7 @@ export function CartView() {
     return c.minOrderInr ? `${off} on orders above ${money(Number(c.minOrderInr))}` : `${off} on any order`;
   };
   const railPicks = useMemo(() => {
-    const inCart = new Map(lines.map((i) => [i.handle, i.qty]));
+    const inCart = new Map(lines.map((i) => [`${i.handle}:${i.variant || ""}`, i.qty]));
     const pool = products.filter((p) => p.active !== false && Number(p.stock) > 0);
     const seen = new Set<string>();
     const tab = ADD_TABS.find((t) => t.id === addTab) || ADD_TABS[0];
@@ -546,15 +695,15 @@ export function CartView() {
   const emptyPicks = products.filter((p) => p.featured && p.active !== false && p.stock > 0).slice(0, 4);
 
   /* stepper (items list + rail) */
-  const Step = ({ handle, qty, small }: { handle: string; qty: number; small?: boolean }) => (
+  const Step = ({ handle, qty, variant = "", small }: { handle: string; qty: number; variant?: string; small?: boolean }) => (
     <div className={`flex items-center gap-1.5 rounded-xl border border-leaf/40 bg-mint p-1 ${small ? "" : "shadow-sm"}`}>
-      <button type="button" aria-label="Decrease" onClick={() => setCartQty(handle, qty - 1)} className="grid h-7 w-7 place-items-center rounded-lg bg-white text-leaf shadow-sm transition active:scale-90">
+      <button type="button" aria-label="Decrease" onClick={() => setCartQty(handle, qty - 1, variant)} className="grid h-7 w-7 place-items-center rounded-lg bg-white text-leaf shadow-sm transition active:scale-90">
         −
       </button>
       <motion.span key={qty} initial={{ scale: 1.3 }} animate={{ scale: 1 }} className="min-w-5 text-center text-[13px] font-bold text-forest">
         {qty}
       </motion.span>
-      <button type="button" aria-label="Increase" onClick={() => setCartQty(handle, qty + 1)} className="grid h-7 w-7 place-items-center rounded-lg bg-white text-leaf shadow-sm transition active:scale-90">
+      <button type="button" aria-label="Increase" onClick={() => setCartQty(handle, qty + 1, variant)} className="grid h-7 w-7 place-items-center rounded-lg bg-white text-leaf shadow-sm transition active:scale-90">
         +
       </button>
     </div>
@@ -576,7 +725,7 @@ export function CartView() {
                 <button
                   type="button"
                   onClick={() => {
-                    repeatKnown.forEach((item) => addToCart(item.handle, item.qty));
+                    repeatKnown.forEach((item) => addToCart(item.handle, item.qty, (item as any).variant || ""));
                     toast(`${repeatKnown.length} products from your last order added`);
                   }}
                   className="w-full rounded-2xl border-2 border-dashed border-leaf/50 bg-mint px-5 py-3 text-sm font-bold text-leaf transition hover:bg-leaf hover:text-white"
@@ -704,10 +853,12 @@ export function CartView() {
                   {lines.map((item) => {
                     const p = byHandle.get(item.handle);
                     if (!p) return null;
-                    const compare = Number(p.compareAtInr || 0) > Number(p.priceInr || 0) ? Number(p.compareAtInr) : 0;
+                    const pack = p.variants?.find((x) => x.id === lineVariantId(p, item)) || defaultVariant(p);
+                    const multi = Boolean(p.variants && p.variants.length > 1);
+                    const compare = !multi && Number(p.compareAtInr || 0) > Number(p.priceInr || 0) ? Number(p.compareAtInr) : 0;
                     return (
                       <motion.div
-                        key={item.handle}
+                        key={`${item.handle}:${item.variant || "d"}`}
                         layout
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -719,9 +870,9 @@ export function CartView() {
                         <img src={p.image} alt="" loading="lazy" className="h-14 w-14 shrink-0 rounded-xl border border-line object-cover" />
                         <div className="min-w-0 flex-1">
                           <b className="block truncate text-[13px] font-bold text-ink">{p.title}</b>
-                          <small className="text-[11px] font-semibold text-muted-foreground">{p.unitLabel || ""}</small>
+                          <small className="text-[11px] font-semibold text-muted-foreground">{pack.label}</small>
                           <div className="mt-0.5 flex items-center gap-1.5 text-[13px] font-bold text-forest">
-                            {money(p.priceInr)}
+                            {money(pack.priceInr)}
                             {compare ? (
                               <>
                                 <s className="font-semibold text-muted-foreground">{money(compare)}</s>
@@ -732,7 +883,7 @@ export function CartView() {
                             ) : null}
                           </div>
                         </div>
-                        <Step handle={item.handle} qty={item.qty} />
+                        <Step handle={item.handle} qty={item.qty} variant={lineVariantId(p, item)} />
                       </motion.div>
                     );
                   })}
@@ -780,7 +931,8 @@ export function CartView() {
                 </div>
                 <div className="rail -mx-5 mt-3 flex gap-3 overflow-x-auto px-5 pb-1">
                   {railPicks.picks.map((p) => {
-                    const qty = railPicks.inCart.get(p.handle) || 0;
+                    const defPack = defaultVariant(p).id;
+                    const qty = railPicks.inCart.get(`${p.handle}:${defPack}`) || 0;
                     const compare = Number(p.compareAtInr || 0) > Number(p.priceInr || 0) ? Number(p.compareAtInr) : 0;
                     return (
                       <div key={p.handle} className="w-32 shrink-0">
@@ -789,13 +941,13 @@ export function CartView() {
                           <img src={p.image} alt="" loading="lazy" className="aspect-square w-full object-cover" />
                           <div className="absolute bottom-1.5 right-1.5">
                             {qty ? (
-                              <Step handle={p.handle} qty={qty} small />
+                              <Step handle={p.handle} qty={qty} variant={defPack} small />
                             ) : (
                               <motion.button
                                 type="button"
                                 whileTap={{ scale: 0.85 }}
                                 aria-label={`Add ${p.title}`}
-                                onClick={() => addToCart(p.handle, 1)}
+                                onClick={() => addToCart(p.handle, 1, defPack)}
                                 className="grid h-8 w-8 place-items-center rounded-full bg-leaf text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]"
                               >
                                 <Plus size={15} />
@@ -1076,8 +1228,11 @@ export function CartView() {
               <button type="button" onClick={() => setPmOpen(true)} className="min-w-0 flex-1 text-left">
                 <small className="block text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Pay using</small>
                 <span className="flex items-center gap-1.5 truncate text-[13px] font-bold text-ink">
-                  {payApp !== "cod" && <img src={`/assets/pay/${payApp}.svg`} alt="" className="h-[13px] w-auto shrink-0" />}
-                  {PM_LABELS[payApp] || "Cash on Delivery"} <span className="text-muted-foreground">▾</span>
+                  {["gpay", "phonepe", "paytm"].includes(payApp) && <img src={`/assets/pay/${payApp}.svg`} alt="" className="h-[13px] w-auto shrink-0" />}
+                  {payApp === "upi" && !isDesktop && <img src="/assets/pay/upi.svg" alt="" className="h-[13px] w-auto shrink-0" />}
+                  {payApp === "upi" && isDesktop && <QrCode size={14} className="shrink-0 text-leaf" />}
+                  {payApp === "card" && <CreditCard size={14} className="shrink-0 text-leaf" />}
+                  {pmLabel(payApp)} <span className="text-muted-foreground">▾</span>
                 </span>
               </button>
               <motion.button
@@ -1101,15 +1256,7 @@ export function CartView() {
           {count} item{count === 1 ? "" : "s"} · {money(total)}
         </p>
         <div className="mt-4 grid gap-2">
-          {(
-            [
-              ["gpay", "Google Pay"],
-              ["phonepe", "PhonePe"],
-              ["paytm", "Paytm UPI"],
-              ["upi", null],
-              ["cod", null],
-            ] as [string, string | null][]
-          ).map(([app, label]) => (
+          {pmRows.map(({ app, label, sub, badge }) => (
             <button
               key={app}
               type="button"
@@ -1122,21 +1269,17 @@ export function CartView() {
                 {app === "gpay" && <img src="/assets/pay/gpay.svg" alt="Google Pay" className="h-[19px] w-auto" />}
                 {app === "phonepe" && <img src="/assets/pay/phonepe.svg" alt="PhonePe" className="h-4 w-auto" />}
                 {app === "paytm" && <img src="/assets/pay/paytm.svg" alt="Paytm" className="h-4 w-auto" />}
-                {app === "upi" && <img src="/assets/pay/upi.svg" alt="UPI" className="h-[17px] w-auto" />}
+                {app === "upi" && !isDesktop && <img src="/assets/pay/upi.svg" alt="UPI" className="h-[17px] w-auto" />}
+                {app === "upi" && isDesktop && <QrCode className="h-6 w-6 text-leaf" />}
+                {app === "card" && <CreditCard className="h-6 w-6 text-leaf" />}
                 {app === "cod" && <Banknote className="h-5 w-5 text-leaf" />}
               </span>
-              {app === "upi" ? (
-                <span className="min-w-0 flex-1">
-                  <b className="block text-[13px] font-bold text-ink">All UPI Apps · Cards · Netbanking</b>
-                  <small className="text-[11px] font-semibold text-muted-foreground">More options inside secure Cashfree checkout</small>
-                </span>
-              ) : app === "cod" ? (
-                <span className="min-w-0 flex-1">
-                  <b className="block text-[13px] font-bold text-ink">Cash on Delivery</b>
-                  <small className="text-[11px] font-semibold text-muted-foreground">Pay when the vegetables reach your door</small>
-                </span>
-              ) : (
-                <span className="min-w-0 flex-1 text-[13px] font-bold text-ink">{label}</span>
+              <span className="min-w-0 flex-1">
+                <b className="block text-[13px] font-bold text-ink">{label}</b>
+                {sub ? <small className="text-[11px] font-semibold text-muted-foreground">{sub}</small> : null}
+              </span>
+              {badge && (
+                <span className="shrink-0 rounded-full bg-mint px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-forest">On your phone</span>
               )}
               <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 ${payApp === app ? "border-[5px] border-leaf" : "border-line-2"}`} aria-hidden="true" />
             </button>
@@ -1219,7 +1362,9 @@ export function CartView() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/assets/brand/logo-orange-leaf.png" alt="Rebesta Fresh" className="h-9 w-9 rounded-[10px] object-cover" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[14px] font-bold tracking-tight text-ink">Secure checkout</p>
+              <p className="truncate text-[14px] font-bold tracking-tight text-ink">
+                {cfPay.channel === "qr" ? "Scan & Pay" : cfPay.channel === "app" ? `Paying via ${PM_LABELS[cfPay.app || ""] || "UPI"}` : "Secure checkout"}
+              </p>
               <p className="truncate text-[12px] font-semibold text-muted-foreground">{cfPay.orderId} · {money(cfPay.amount)}</p>
             </div>
             <button
@@ -1231,7 +1376,70 @@ export function CartView() {
               <X size={16} />
             </button>
           </div>
-          <div id="cf-dropin" className="min-h-0 flex-1" />
+
+          {cfPay.channel === "app" && (
+            <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
+              <div id="cf-upi-hidden" className="pointer-events-none absolute h-px w-px overflow-hidden opacity-0" aria-hidden="true" />
+              {["gpay", "phonepe", "paytm"].includes(cfPay.app || "") ? (
+                <img src={`/assets/pay/${cfPay.app}.svg`} alt="" className="h-10 w-auto" />
+              ) : (
+                <img src="/assets/pay/upi.svg" alt="" className="h-9 w-auto" />
+              )}
+              <div>
+                <p className="text-[17px] font-bold tracking-tight text-ink">Complete the payment in {PM_LABELS[cfPay.app || ""] || "your UPI app"}</p>
+                <p className="mx-auto mt-1.5 max-w-[320px] text-[13px] font-semibold leading-relaxed text-muted-foreground">
+                  {cfPay.app === "default" ? "Choose your UPI app in the window that opens, pay, then come back — we'll confirm automatically." : "The app is opening with ₹" + Math.round(cfPay.amount) + " prefilled. Pay there, then come back — we'll confirm automatically."}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-[12px] font-bold text-leaf">
+                <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-leaf" />
+                Waiting for payment…
+              </div>
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setUpiCheckNow(Date.now())}
+                  className="rounded-full border border-line bg-white px-4 py-2.5 text-[13px] font-bold text-ink transition hover:border-leaf/50"
+                >
+                  I've paid — check now
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { startUpiApp({ ...cfPay, app: cfPay.app || "default" }).catch(() => {}); }}
+                  className="rounded-full bg-mint px-4 py-2.5 text-[13px] font-bold text-forest transition hover:brightness-95"
+                >
+                  Open app again
+                </button>
+              </div>
+            </div>
+          )}
+
+          {cfPay.channel === "qr" && (
+            <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-4 overflow-y-auto px-6 py-8 text-center">
+              <div>
+                <p className="text-[17px] font-bold tracking-tight text-ink">Scan the QR with any UPI app</p>
+                <p className="mx-auto mt-1.5 max-w-[320px] text-[13px] font-semibold leading-relaxed text-muted-foreground">
+                  Google Pay · PhonePe · Paytm · BHIM — we confirm automatically once you pay.
+                </p>
+              </div>
+              <div id="cf-qr" className="grid place-items-center rounded-2xl border border-line bg-white p-4 shadow-sm" />
+              <div className="flex items-center gap-2 text-[12px] font-bold text-leaf">
+                <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-leaf" />
+                Waiting for payment…
+              </div>
+              <button
+                type="button"
+                onClick={() => setUpiCheckNow(Date.now())}
+                className="rounded-full border border-line bg-white px-4 py-2.5 text-[13px] font-bold text-ink transition hover:border-leaf/50"
+              >
+                I've paid — check now
+              </button>
+            </div>
+          )}
+
+          {(!cfPay.channel || cfPay.channel === "dropin") && (
+            <div id="cf-dropin" className="min-h-0 flex-1" />
+          )}
           <p className="border-t border-line bg-white px-4 py-2.5 text-center text-[11px] font-semibold text-muted-foreground">
             Payments secured by Cashfree · UPI · Cards · Netbanking · Wallets
           </p>

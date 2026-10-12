@@ -7,8 +7,8 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ProductCard } from "@/components/product-card";
 import { useToast } from "@/components/toaster";
-import { useCartQty } from "@/lib/hooks";
-import { addToCart, api, money, Product, pushRecent } from "@/lib/store";
+import { useVariantQty } from "@/lib/hooks";
+import { addToCart, api, money, Product, pushRecent, defaultVariant, lineVariantId } from "@/lib/store";
 
 interface Review {
   name: string;
@@ -27,8 +27,17 @@ export function ProductView({ handle }: { handle: string }) {
   const [panelVisible, setPanelVisible] = useState(true);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  /* pack sizes (250 g / 500 g / 1 kg / bunches) — state must sit above its first use */
+  const [packId, setPackId] = useState("");
+  function selectedPack(p: Product | null) {
+    if (!p) return { id: "", label: "", priceInr: 0 } as any;
+    return p.variants?.find((v) => v.id === packId) || defaultVariant(p);
+  }
+  const hasPacks = Boolean(product && product.variants && product.variants.length > 1);
+  const pack = selectedPack(product);
+
   /* live cart qty for this product */
-  const inCart = useCartQty(handle);
+  const inCart = useVariantQty(product || ({ handle } as Product), selectedPack(product).id);
 
   useEffect(() => {
     (async () => {
@@ -109,7 +118,7 @@ export function ProductView({ handle }: { handle: string }) {
       toast(`Only ${available} more available today`, "error");
       return;
     }
-    addToCart(product.handle, qty);
+    addToCart(product.handle, qty, pack.id);
     toast(`${product.title} added to basket 🌿`);
   }
 
@@ -201,12 +210,30 @@ export function ProductView({ handle }: { handle: string }) {
                 {product.description && <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-ink-2/85">{product.description}</p>}
 
                 <div className="mt-4 flex items-end gap-2">
-                  <strong className="text-[24px] font-semibold tracking-tight text-ink">{money(product.priceInr)}</strong>
-                  {discount > 0 && <span className="text-sm font-semibold text-muted-foreground line-through">{money(Number(product.compareAtInr))}</span>}
-                  <span className="text-sm font-semibold text-muted-foreground">/ {product.unitLabel}</span>
+                  <strong className="text-[24px] font-semibold tracking-tight text-ink">{money(pack.priceInr)}</strong>
+                  {discount > 0 && !hasPacks && <span className="text-sm font-semibold text-muted-foreground line-through">{money(Number(product.compareAtInr))}</span>}
+                  <span className="text-sm font-semibold text-muted-foreground">/ {pack.label}</span>
                 </div>
 
-                {variants.length > 1 && (
+                {hasPacks && (
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Pack</span>
+                    {product.variants!.map((v) => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => setPackId(v.id)}
+                        className={`rounded-full border px-3.5 py-1.5 text-[13px] font-bold transition ${
+                          v.id === pack.id ? "border-leaf bg-mint text-forest" : "border-line bg-white text-ink hover:border-leaf/50"
+                        }`}
+                      >
+                        {v.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {variants.length > 1 && !hasPacks && (
                   <div className="mt-4 flex flex-wrap items-center gap-2">
                     <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Size</span>
                     {variants.map((v) => (
@@ -391,7 +418,7 @@ export function ProductView({ handle }: { handle: string }) {
             <span className="min-w-0 flex-1">
               <strong className="block truncate text-[13px] font-bold text-ink">{product.title}</strong>
               <span className="text-[11px] font-bold text-forest">
-                {money(product.priceInr)} / {product.unitLabel}
+                {money(pack.priceInr)} / {pack.label}
                 {qty > 1 ? ` · qty ${qty}` : ""}
               </span>
             </span>
@@ -401,7 +428,7 @@ export function ProductView({ handle }: { handle: string }) {
               whileTap={{ scale: 0.95 }}
               className="shrink-0 rounded-xl bg-carrot px-4 py-2.5 text-[13px] font-bold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-110"
             >
-              Add · {money(product.priceInr * qty)}
+              Add · {money(pack.priceInr * qty)}
             </motion.button>
           </motion.div>
         )}

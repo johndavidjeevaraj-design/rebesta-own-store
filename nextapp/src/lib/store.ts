@@ -2,6 +2,8 @@
    so the Next home, the old shop/cart pages and the vanilla islands all stay
    perfectly in sync (same localStorage cart, same location, same events). */
 
+export interface Variant { id: string; label: string; priceInr: number; default?: boolean }
+
 export interface Product {
   handle: string;
   title: string;
@@ -19,9 +21,10 @@ export interface Product {
   baseHandle?: string;
   weightGrams?: number;
   variantTitle?: string;
+  variants?: Variant[];
 }
 
-export interface CartLine { handle: string; qty: number }
+export interface CartLine { handle: string; qty: number; variant?: string }
 
 export interface SavedLocation { label?: string; lat: number; lng: number; source?: string }
 
@@ -55,6 +58,19 @@ export async function api<T = any>(path: string, options: RequestInit = {}): Pro
   return data as T;
 }
 
+/* ---------- pack sizes / variants ---------- */
+export function defaultVariant(p?: Product | null): Variant {
+  const fallback: Variant = { id: "default", label: p?.unitLabel || "1 unit", priceInr: p?.priceInr || 0, default: true };
+  if (!p?.variants?.length) return fallback;
+  return p.variants.find((v) => v.default) || p.variants[0];
+}
+/* the variant id a (possibly legacy, variant-less) cart line refers to */
+export function lineVariantId(p: Product, line: CartLine): string {
+  const wanted = String(line.variant || "").trim();
+  if (wanted && p.variants?.some((v) => v.id === wanted)) return wanted;
+  return defaultVariant(p).id;
+}
+
 /* ---------- cart (localStorage + cross-page events) ---------- */
 export function readCart(): CartLine[] {
   if (typeof window === "undefined") return [];
@@ -64,24 +80,30 @@ export function saveCart(lines: CartLine[]) {
   try { localStorage.setItem(CART_KEY, JSON.stringify(lines)); } catch {}
   window.dispatchEvent(new CustomEvent(CART_EVENT));
 }
-export function addToCart(handle: string, qty = 1) {
+export function addToCart(handle: string, qty = 1, variant = "") {
   const lines = readCart();
-  const line = lines.find((l) => l.handle === handle);
+  const line = lines.find((l) => l.handle === handle && (l.variant || "") === variant);
   if (line) line.qty = Math.min(99, line.qty + qty);
-  else lines.push({ handle, qty });
+  else lines.push({ handle, qty, variant });
   saveCart(lines);
 }
-export function setCartQty(handle: string, qty: number) {
+export function setCartQty(handle: string, qty: number, variant = "") {
   let lines = readCart();
-  if (qty <= 0) lines = lines.filter((l) => l.handle !== handle);
+  if (qty <= 0) lines = lines.filter((l) => !(l.handle === handle && (l.variant || "") === variant));
   else {
-    const line = lines.find((l) => l.handle === handle);
+    const line = lines.find((l) => l.handle === handle && (l.variant || "") === variant);
     if (line) line.qty = Math.min(99, qty);
-    else lines.push({ handle, qty });
+    else lines.push({ handle, qty, variant });
   }
   saveCart(lines);
 }
 export const cartCount = () => readCart().reduce((sum, l) => sum + l.qty, 0);
+/* qty of one specific pack size in the basket (legacy lines count as the product default) */
+export function cartQtyOf(p: Product, variantId: string): number {
+  return readCart()
+    .filter((l) => l.handle === p.handle && lineVariantId(p, l) === variantId)
+    .reduce((sum, l) => sum + l.qty, 0);
+}
 
 /* ---------- recently viewed (same key as the old app) ---------- */
 const RECENT_KEY = "rebesta_recent";

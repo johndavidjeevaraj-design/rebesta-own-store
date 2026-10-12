@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronRight, Home, Lock, MapPin, Plus, ReceiptText, ShieldCheck, Tag, X } from "lucide-react";
+import { Banknote, ChevronRight, Home, Lock, MapPin, Plus, ReceiptText, ShieldCheck, Tag, X } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { LocationSheet } from "@/components/location-sheet";
@@ -1075,7 +1075,8 @@ export function CartView() {
             <div className="mx-auto flex max-w-[640px] items-center gap-3 px-4 py-3">
               <button type="button" onClick={() => setPmOpen(true)} className="min-w-0 flex-1 text-left">
                 <small className="block text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Pay using</small>
-                <span className="flex items-center gap-1 truncate text-[13px] font-bold text-ink">
+                <span className="flex items-center gap-1.5 truncate text-[13px] font-bold text-ink">
+                  {payApp !== "cod" && <img src={`/assets/pay/${payApp}.svg`} alt="" className="h-[13px] w-auto shrink-0" />}
                   {PM_LABELS[payApp] || "Cash on Delivery"} <span className="text-muted-foreground">▾</span>
                 </span>
               </button>
@@ -1117,12 +1118,12 @@ export function CartView() {
                 payApp === app ? "border-leaf bg-mint shadow-sm" : "border-line bg-white hover:border-leaf/50"
               } ${app !== "cod" && !onlineEnabled ? " opacity-50" : ""}`}
             >
-              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${app === "cod" || app === "upi" ? "bg-mint text-leaf" : "bg-white"} `}>
-                {app === "gpay" && <span className="font-display text-[14px] font-bold text-[#4285F4]">G</span>}
-                {app === "phonepe" && <span className="font-display text-[14px] font-bold text-[#5F259F]">Pe</span>}
-                {app === "paytm" && <span className="font-display text-[13px] font-bold text-[#20336B]">paytm</span>}
-                {app === "upi" && <span className="text-[14px] font-bold text-leaf">₹</span>}
-                {app === "cod" && <span className="text-lg">💵</span>}
+              <span className={`grid h-10 w-16 shrink-0 place-items-center overflow-hidden rounded-xl px-1 ${app === "cod" ? "bg-mint" : "border border-line bg-white"}`}>
+                {app === "gpay" && <img src="/assets/pay/gpay.svg" alt="Google Pay" className="h-[19px] w-auto" />}
+                {app === "phonepe" && <img src="/assets/pay/phonepe.svg" alt="PhonePe" className="h-4 w-auto" />}
+                {app === "paytm" && <img src="/assets/pay/paytm.svg" alt="Paytm" className="h-4 w-auto" />}
+                {app === "upi" && <img src="/assets/pay/upi.svg" alt="UPI" className="h-[17px] w-auto" />}
+                {app === "cod" && <Banknote className="h-5 w-5 text-leaf" />}
               </span>
               {app === "upi" ? (
                 <span className="min-w-0 flex-1">

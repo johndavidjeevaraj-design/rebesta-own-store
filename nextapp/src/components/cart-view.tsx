@@ -1118,7 +1118,7 @@ export function CartView() {
                 payApp === app ? "border-leaf bg-mint shadow-sm" : "border-line bg-white hover:border-leaf/50"
               } ${app !== "cod" && !onlineEnabled ? " opacity-50" : ""}`}
             >
-              <span className={`grid h-10 w-16 shrink-0 place-items-center overflow-hidden rounded-xl px-1 ${app === "cod" ? "bg-mint" : "border border-line bg-white"}`}>
+              <span className="grid h-10 w-16 shrink-0 place-items-center px-1">
                 {app === "gpay" && <img src="/assets/pay/gpay.svg" alt="Google Pay" className="h-[19px] w-auto" />}
                 {app === "phonepe" && <img src="/assets/pay/phonepe.svg" alt="PhonePe" className="h-4 w-auto" />}
                 {app === "paytm" && <img src="/assets/pay/paytm.svg" alt="Paytm" className="h-4 w-auto" />}

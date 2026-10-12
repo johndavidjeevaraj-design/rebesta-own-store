@@ -364,23 +364,28 @@ html.lenis body {
   text-transform: uppercase;
   color: var(--color-leaf);
 }
-.fx-phone {
-  display: flex;
-  gap: 8px;
-}
 .fx-phone input {
   flex: 1;
   min-width: 0;
+  padding-left: 80px;
+}
+.fx-phone label {
+  left: 84px;
 }
 .fx-prefix {
-  flex: 0 0 auto;
+  position: absolute;
+  left: 7px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 13px;
+  height: 34px;
+  padding: 0 11px;
   border: 1.5px solid var(--color-line);
-  border-radius: 14px;
+  border-radius: 10px;
   background: #f4f8ef;
+  font-size: 13px;
   font-weight: 1000;
   color: var(--color-forest);
   transition: border-color 0.18s;

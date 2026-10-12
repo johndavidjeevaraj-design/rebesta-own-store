@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronRight, Home, Lock, MapPin, Plus, ReceiptText, Tag, X } from "lucide-react";
+import { ChevronRight, Home, Lock, MapPin, Plus, ReceiptText, ShieldCheck, Tag, X } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { LocationSheet } from "@/components/location-sheet";
@@ -135,9 +135,9 @@ function PortalSheet({ open, onClose, label, children }: { open: boolean; onClos
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 380, damping: 40 }}
-            className="fixed inset-x-0 bottom-0 z-[81] mx-auto max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-3xl border-t border-line bg-cream p-5 pb-8 shadow-mid"
+            className="fixed inset-x-0 bottom-0 z-[81] mx-auto max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-[28px] border-t border-white/70 bg-white p-6 pb-8 shadow-[0_-16px_48px_rgba(0,0,0,0.18)]"
           >
-            <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-line-2" aria-hidden="true" />
+            <div className="mx-auto mb-5 h-[5px] w-9 rounded-full bg-line-2" aria-hidden="true" />
             <button
               type="button"
               onClick={onClose}
@@ -358,7 +358,6 @@ export function CartView() {
       widgetId: "366a65687644323637363131",
       tokenAuth: "571380TgZrH8gvzsiK6aa8dedbP1",
       exposeMethods: true,
-      captchaRenderId: "bp-captcha",
       success: (data: unknown) => {
         (window as any).__otpWidgetSuccess = data;
       },
@@ -394,7 +393,7 @@ export function CartView() {
     setAuthOpen(true);
     loadOtpSdk();
     const s = document.createElement("script");
-    s.src = "/js/auth.js?v=20261008a";
+    s.src = "/js/auth.js?v=20261012a";
     s.async = true;
     s.onload = () => {
       const RFSAuth = (window as any).RFSAuth;
@@ -1137,7 +1136,17 @@ export function CartView() {
       {/* phone login sheet — island bound by /js/auth.js (RFSAuth.bindFlow) */}
       <PortalSheet open={authOpen} onClose={() => setAuthOpen(false)} label="Login">
         <form className="auth-form" data-bp-flow noValidate ref={authFormRef}>
-          <p className="cart-auth-note">Login to proceed — one quick SMS code 🔐</p>
+          <div className="mb-6 pr-10">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-leaf">
+              <ShieldCheck size={12} strokeWidth={2.6} /> Secure sign in
+            </span>
+            <h2 className="mt-2.5 font-display text-[24px] font-semibold leading-tight tracking-tight text-ink">
+              Sign in to Rebesta
+            </h2>
+            <p className="mt-1.5 text-[14px] font-medium leading-relaxed text-muted-foreground">
+              Enter your mobile number — we&rsquo;ll text you a one-time code. New here? Your account is created automatically.
+            </p>
+          </div>
           <div className="auth-step" data-step="number">
             <div className="fx-field fx-phone">
               <input id="bpPhone" data-flow-phone inputMode="tel" autoComplete="tel" placeholder=" " defaultValue="" />
@@ -1148,9 +1157,6 @@ export function CartView() {
                 </svg>
                 +91
               </span>
-            </div>
-            <div className="captcha-slot">
-              <div id="bp-captcha" className="otp-captcha" />
             </div>
             <button className="btn-main" type="button" data-flow-send>
               <span className="btn-label">Send code by SMS</span>
@@ -1191,7 +1197,7 @@ export function CartView() {
             </p>
           </div>
           <p className="flow-error" data-flow-error hidden />
-          <button type="button" onClick={() => setAuthOpen(false)} className="mt-4 w-full text-center text-[13px] font-bold text-muted-foreground transition hover:text-ink">
+          <button type="button" onClick={() => setAuthOpen(false)} className="mt-5 w-full text-center text-[13px] font-bold text-muted-foreground transition hover:text-ink">
             ← Back to basket
           </button>
         </form>

@@ -16,7 +16,6 @@ export function LoginView() {
         widgetId: "366a65687644323637363131",
         tokenAuth: "571380TgZrH8gvzsiK6aa8dedbP1",
         exposeMethods: true,
-        captchaRenderId: "otp-captcha",
         success: (data: unknown) => { (window as any).__otpWidgetSuccess = data; },
         failure: (error: unknown) => { (window as any).__otpWidgetFailure = error; },
       };
@@ -33,7 +32,7 @@ export function LoginView() {
     /* the page flow itself */
     if (!document.querySelector("script[data-auth-page]")) {
       const s = document.createElement("script");
-      s.src = "/js/auth.js?v=20261008a"; s.async = true; s.dataset.authPage = "1";
+      s.src = "/js/auth.js?v=20261012a"; s.async = true; s.dataset.authPage = "1";
       document.head.appendChild(s);
     }
   }, []);
@@ -64,14 +63,6 @@ export function LoginView() {
                   <label htmlFor="otpPhone" className="pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 text-[14px] font-medium text-muted-foreground transition-all peer-focus:top-3.5 peer-focus:text-[11px] peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wide peer-focus:text-muted-foreground peer-[:not(:placeholder-shown)]:top-3.5 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-bold peer-[:not(:placeholder-shown)]:uppercase peer-[:not(:placeholder-shown)]:tracking-wide">
                     Mobile number
                   </label>
-                </div>
-
-                <div className="captcha-slot mt-5">
-                  <p className="flex items-center gap-2 text-[13px] font-medium text-muted-foreground">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.4-7 9.9C8 19.4 5 15.5 5 11V6l7-3Z" stroke="currentColor" strokeWidth="2"/><path d="m9 11.5 2.2 2.2L15.5 9.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    Quick security check — keeps SMS free of bots
-                  </p>
-                  <div id="otp-captcha" className="otp-captcha mt-3"></div>
                 </div>
 
                 <button className="btn-main mt-5" type="submit" data-otp-send><span className="btn-label">Send code by SMS</span></button>

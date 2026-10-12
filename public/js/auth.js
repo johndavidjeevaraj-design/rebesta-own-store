@@ -272,7 +272,7 @@
       const phone = (phoneInput?.value || '').replace(/\D/g, '');
       if (phone.length !== 10 || !/^[6-9]/.test(phone)) return showError('Enter a valid 10-digit Indian mobile number.');
       if (typeof window.sendOtp !== 'function') return showError('OTP system is still loading — wait a few seconds and try again.');
-      if (typeof window.isCaptchaVerified === 'function' && !window.isCaptchaVerified()) return showError('Please complete the security check first.');
+      if (document.querySelector('#otp-captcha iframe, #bp-captcha iframe') && typeof window.isCaptchaVerified === 'function' && !window.isCaptchaVerified()) return showError('Please complete the security check first.');
       busy(sendBtn, true);
       window.sendOtp('91' + phone,
         () => {
@@ -482,7 +482,7 @@
         const phone = (phoneInput?.value || '').replace(/\D/g, '');
         if (phone.length !== 10 || !/^[6-9]/.test(phone)) return showError('Enter a valid 10-digit Indian mobile number.');
         if (typeof window.sendOtp !== 'function') return showError('OTP system is still loading — wait a few seconds and try again.');
-        if (typeof window.isCaptchaVerified === 'function' && !window.isCaptchaVerified()) return showError('Please complete the security check first.');
+        if (document.querySelector('#otp-captcha iframe, #bp-captcha iframe') && typeof window.isCaptchaVerified === 'function' && !window.isCaptchaVerified()) return showError('Please complete the security check first.');
         busy(sendBtn, true);
         window.sendOtp('91' + phone,
           () => {

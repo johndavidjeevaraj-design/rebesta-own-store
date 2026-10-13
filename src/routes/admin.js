@@ -1,7 +1,9 @@
 import express from 'express';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from '../config.js';
+import { rateLimit } from '../lib/rateLimit.js';
 import { loadProducts, loadSettings, loadPartners, savePartners, readOrders, saveOrders, updateOrderStatus, updateProduct, createProduct, saveSettings, createBackup, awardLoyalty, awardReferral, dataVersions, loadSubscriptions, saveSubscriptions, getSubscription, cashSummary, recordCashReceived, loadReviews, setReviewApproval, deleteReview } from '../lib/store.js';
 import { createPartner, updatePartner, deletePartner, publicPartner, freshPositions, haversineKm, etaMinutesFromKm, partnerScore } from '../lib/partners.js';
 import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
@@ -14,9 +16,21 @@ import { sendMorningDigest } from '../lib/digest.js';
 
 export const router = express.Router();
 
+/* every admin call needs the key — compare in constant time (no early-exit
+   string compare) and throttle guesses so the key can't be brute-forced */
+function keyMatches(provided) {
+  try {
+    const a = crypto.createHash('sha256').update(String(provided || '')).digest();
+    const b = crypto.createHash('sha256').update(String(config.adminKey || '')).digest();
+    return crypto.timingSafeEqual(a, b);
+  } catch { return false; }
+}
+
+router.use(rateLimit({ windowMs: 60 * 1000, max: 120, message: 'Too many admin requests — slow down.' }));
+
 function adminOnly(req, res, next) {
   const key = String(req.headers['x-admin-key'] || '');
-  if (!key || key !== config.adminKey) {
+  if (!key || !keyMatches(key)) {
     return res.status(401).json({ ok: false, error: 'Invalid admin key' });
   }
   next();

@@ -14,3 +14,9 @@ nextapp/node_modules/
 nextapp/.next/
 nextapp/out/
 nextapp/next-env.d.ts
+
+# live runtime data — never commit (PII: customer orders, partner pins, rider GPS)
+data/orders.json
+data/partners.json
+data/partner-positions.json
+data/products.previous.json

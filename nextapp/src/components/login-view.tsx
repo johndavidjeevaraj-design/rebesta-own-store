@@ -32,7 +32,7 @@ export function LoginView() {
     /* the page flow itself */
     if (!document.querySelector("script[data-auth-page]")) {
       const s = document.createElement("script");
-      s.src = "/js/auth.js?v=20261012b"; s.async = true; s.dataset.authPage = "1";
+      s.src = "/js/auth.js?v=20261013"; s.async = true; s.dataset.authPage = "1";
       document.head.appendChild(s);
     }
   }, []);

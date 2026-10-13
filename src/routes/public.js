@@ -507,8 +507,14 @@ router.get('/orders/:id', (req, res) => {
   const order = getOrder(req.params.id);
   if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
   const phone = normalizePhone(req.query.phone);
-  // Public tracking by link ID; link is intentionally long/random. Full address is masked.
-  const payload = { ok: true, order: maskCustomer(order), phoneVerified: phone ? order.customer?.phone === phone : null };
+  const phoneVerified = Boolean(phone && order.customer?.phone === phone);
+  // Public tracking by link ID; link is intentionally long/random. Full address is masked,
+  // and the customer's full name is only shown when the matching phone is supplied.
+  const orderOut = maskCustomer(order);
+  if (!phoneVerified && orderOut.customer?.name) {
+    orderOut.customer.name = String(orderOut.customer.name).trim().split(/\s+/)[0] + ' •';
+  }
+  const payload = { ok: true, order: orderOut, phoneVerified: phone ? phoneVerified : null };
   // Live partner location for the customer while the order is on the road
   if (order.assignedPartnerId && order.status === 'OUT_FOR_DELIVERY') {
     const partner = findPartnerById(order.assignedPartnerId);

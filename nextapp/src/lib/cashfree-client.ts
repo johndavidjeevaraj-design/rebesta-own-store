@@ -63,7 +63,7 @@ export async function startUpiApp(payment: { sessionId: string; mode?: string; a
 export async function startUpiQr(payment: { sessionId: string; mode?: string; orderId: string }) {
   const cashfree = await getCashfreeClient(payment.mode);
   if (!document.querySelector("#cf-qr")) throw new Error("qr container missing");
-  const comp = cashfree.create("upiQr", { values: { size: "230px" } });
+  const comp = cashfree.create("upiQr", { values: { size: "300px" } });
   comp.mount("#cf-qr");
   const payPromise = cashfree.pay({
     paymentMethod: comp,

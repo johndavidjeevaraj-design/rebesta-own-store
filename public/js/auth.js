@@ -166,7 +166,14 @@
     }
     return null;
   }
-  const widgetError = e => (e && (e.message || e.error || e.msg)) || (typeof e === 'string' ? e : null) || 'The SMS service did not respond — please try again in a moment.';
+  const widgetError = e => {
+    const raw = (e && (e.message || e.error || e.msg)) || (typeof e === 'string' ? e : null) || '';
+    const t = String(raw).toLowerCase();
+    if (/ip/.test(t) && /block|black|ban/.test(t)) return 'Our SMS partner has temporarily blocked this network (too many code requests from it). Please wait about an hour, or use password sign-in / WhatsApp us.';
+    if (/throttle|too many|limit/.test(t)) return 'Too many codes requested from this network — please wait a while and try again.';
+    if (/wallet|balance|credit/.test(t)) return 'The SMS service is briefly unavailable — we have been notified. Please try again shortly.';
+    return raw || 'The SMS service did not respond — please try again in a moment.';
+  };
   function widgetVerifyCode(code) {
     return new Promise((resolve, reject) => {
       if (typeof window.verifyOtp !== 'function') return reject(new Error('OTP system is still loading — wait a few seconds and try again.'));

@@ -413,7 +413,7 @@ export function CartView() {
         const d: any = await api(`/api/orders/${encodeURIComponent(cfPay.orderId)}/verify-payment`);
         if (d?.paid && !stopped) {
           stopped = true;
-          window.location.href = `/order-success?id=${encodeURIComponent(cfPay.orderId)}&payment=paid`;
+          window.location.href = `/order-success?id=${encodeURIComponent(cfPay.orderId)}&payment=paid&phone=${encodeURIComponent(meRef.current?.phone || "")}`;
         }
       } catch { /* next tick */ }
     };
@@ -443,7 +443,7 @@ export function CartView() {
         }
         else await startCashfreeDropin("#cf-dropin", cfPay);
       } catch {
-        if (!dead && cfPay.channel !== "app") window.location.href = `/order-success?id=${encodeURIComponent(cfPay.orderId)}&payment=failed`;
+        if (!dead && cfPay.channel !== "app") window.location.href = `/order-success?id=${encodeURIComponent(cfPay.orderId)}&payment=failed&phone=${encodeURIComponent(meRef.current?.phone || "")}`;
       }
     })();
     return () => { dead = true; };
@@ -1310,7 +1310,7 @@ export function CartView() {
             <button
               type="button"
               aria-label="Close checkout"
-              onClick={() => { window.location.href = `/order-success?id=${encodeURIComponent(cfPay.orderId)}&payment=failed`; }}
+              onClick={() => { window.location.href = `/order-success?id=${encodeURIComponent(cfPay.orderId)}&payment=failed&phone=${encodeURIComponent(meRef.current?.phone || "")}`; }}
               className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-line bg-white text-muted-foreground transition hover:text-ink"
             >
               <X size={16} />
@@ -1369,7 +1369,7 @@ export function CartView() {
                   Google Pay · PhonePe · Paytm · BHIM — we confirm automatically once you pay.
                 </p>
               </div>
-              <div id="cf-qr" className="grid place-items-center rounded-2xl border border-line bg-white p-4 shadow-sm" />
+              <div id="cf-qr" className="mx-auto grid w-fit place-items-center rounded-2xl border border-line bg-white p-4 shadow-sm [&_canvas]:[image-rendering:pixelated] [&_img]:[image-rendering:pixelated]" />
               <div className="flex items-center gap-2 text-[12px] font-bold text-leaf">
                 <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-leaf" />
                 Waiting for payment…

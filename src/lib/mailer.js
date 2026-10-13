@@ -46,6 +46,9 @@ function transport() {
   return cachedTransport;
 }
 
+/* customer-entered text (names, addresses) must never land in email HTML raw */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
 const shell = (title, bodyHtml) => `<!doctype html><html><body style="margin:0;padding:0;background:#f2f5ee;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f5ee;padding:22px 10px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #dfe7d8">
@@ -66,7 +69,7 @@ const shell = (title, bodyHtml) => `<!doctype html><html><body style="margin:0;p
 const itemsTable = order => `
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:12px 0;font-size:13px">
   ${order.items.map(i => `<tr>
-    <td style="padding:7px 0;border-bottom:1px solid #eef2ea;color:#333">${i.title} <span style="color:#8b988f">(${i.unitLabel})</span></td>
+    <td style="padding:7px 0;border-bottom:1px solid #eef2ea;color:#333">${esc(i.title)} <span style="color:#8b988f">(${esc(i.unitLabel)})</span></td>
     <td style="padding:7px 6px;border-bottom:1px solid #eef2ea;color:#8b988f;text-align:right">× ${i.qty}</td>
     <td style="padding:7px 0;border-bottom:1px solid #eef2ea;font-weight:700;text-align:right;white-space:nowrap">${money(i.priceInr * i.qty)}</td>
   </tr>`).join('')}
@@ -102,7 +105,7 @@ export function orderPlacedEmails(order) {
     subject: `Order confirmed — ${order.id}`,
     title: 'Thank you for your order! 🎉',
     bodyHtml: `
-      <p style="margin:0 0 4px;color:#333;font-size:13px">Hi ${order.customer?.name || 'there'}, your order <strong>${order.id}</strong> is in.</p>
+      <p style="margin:0 0 4px;color:#333;font-size:13px">Hi ${esc(order.customer?.name || 'there')}, your order <strong>${order.id}</strong> is in.</p>
       ${itemsTable(order)}
       <p style="margin:10px 0 0;color:#333;font-size:13px"><strong>Delivery:</strong> ${slotText}<br>
       <strong>Payment:</strong> ${order.paymentMethod === 'cod' ? 'Cash on delivery' : 'Online (PayU)'}<br>
@@ -114,8 +117,8 @@ export function orderPlacedEmails(order) {
     subject: `🛒 New order ${order.id} — ${money(order.totalInr)}`,
     title: 'New order received!',
     bodyHtml: `
-      <p style="margin:0;color:#333;font-size:13px"><strong>${order.customer?.name}</strong> · ${order.customer?.phone}<br>
-      ${order.address?.line1}, ${order.address?.area || ''} ${order.address?.pincode || ''}</p>
+      <p style="margin:0;color:#333;font-size:13px"><strong>${esc(order.customer?.name)}</strong> · ${order.customer?.phone}<br>
+      ${esc(order.address?.line1)}, ${esc(order.address?.area || '')} ${esc(order.address?.pincode || '')}</p>
       ${itemsTable(order)}
       <p style="margin:10px 0 0;color:#333;font-size:13px"><strong>Slot:</strong> ${slotText} · <strong>Payment:</strong> ${order.paymentMethod === 'cod' ? 'COD' : 'Online'}</p>
       <p style="margin:10px 0 0"><a href="${config.appUrl}/admin" style="display:inline-block;background:#0d8736;color:#fff;text-decoration:none;font-size:13px;font-weight:700;padding:10px 18px;border-radius:9px">Open admin dashboard</a></p>`
@@ -148,7 +151,7 @@ export function rewardCouponEmail(order, coupon, heading) {
     subject: `🎁 Your reward coupon ${coupon.code} is here!`,
     title: heading || 'A little thank-you from Rebesta Fresh 🎁',
     bodyHtml: `
-      <p style="margin:0 0 12px;color:#333;font-size:13px">Hi ${order.customer?.name || 'there'}, here's a reward for order <strong>${order.id}</strong>:</p>
+      <p style="margin:0 0 12px;color:#333;font-size:13px">Hi ${esc(order.customer?.name || 'there')}, here's a reward for order <strong>${order.id}</strong>:</p>
       <div style="border:2px dashed #0d8736;border-radius:12px;padding:16px;text-align:center;margin:0 0 12px">
         <div style="font-size:24px;font-weight:900;letter-spacing:.12em;color:#0d8736">${coupon.code}</div>
         <div style="color:#333;font-size:13px;margin-top:5px"><strong>${money(coupon.value)}</strong> off · min basket ${money(coupon.minOrderInr || 0)} · valid till ${dateLabel(coupon.expiresAt)}</div>

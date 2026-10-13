@@ -118,10 +118,18 @@ export async function createUpiQr(order) {
   });
   const data = await res.json().catch(() => ({}));
   const payload = data?.data?.payload || {};
-  const intent = payload.default || payload.qrData || payload.qrcode || null;
+  /* one link-channel call = ONE payment attempt; every app link below shares
+     it, so whichever app the customer pays in confirms the same attempt */
+  const apps = {
+    default: payload.default ? String(payload.default) : '',
+    gpay: payload.gpay ? String(payload.gpay) : '',
+    phonepe: payload.phonepe ? String(payload.phonepe) : '',
+    paytm: payload.paytm ? String(payload.paytm) : ''
+  };
+  const intent = apps.default || payload.qrData || payload.qrcode || null;
   if (!res.ok || !intent || !String(intent).startsWith('upi://')) {
     const msg = data?.message || data?.error_message || `Cashfree HTTP ${res.status}`;
     throw new Error(String(msg).slice(0, 300));
   }
-  return { qr: String(intent) };
+  return { qr: String(intent), apps };
 }

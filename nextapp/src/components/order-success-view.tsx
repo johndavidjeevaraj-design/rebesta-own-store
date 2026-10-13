@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { api, money } from "@/lib/store";
-import { startCashfreeDropin } from "@/lib/cashfree-client";
+import { startCashfreeDropin, startUpiApp, startUpiQr } from "@/lib/cashfree-client";
 
 interface OrderItem { handle: string; title: string; qty: number; unitLabel: string; image: string; lineTotalInr: number; priceInr: number }
 interface Order {
@@ -30,6 +30,54 @@ export function OrderSuccessView() {
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState("");
   const [retryPay, setRetryPay] = useState<{ sessionId: string; mode?: string; orderId: string; amount: number } | null>(null);
+  /* Swiggy-style retry, all inside our site: UPI first (QR on desktop, direct
+     app launch on mobile) — the Cashfree drop-in loads ONLY for card/netbanking,
+     so its redirecting UPI widget is never in play. */
+  const [isDesktop, setIsDesktop] = useState(true);
+  const [retryMode, setRetryMode] = useState<"choose" | "upi-qr" | "upi-app" | "card">("choose");
+  const [retryLaunchedApp, setRetryLaunchedApp] = useState("");
+  const [upiCheckNow, setUpiCheckNow] = useState(0);
+  const [upiNote, setUpiNote] = useState("");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hasTouch = "ontouchstart" in window || (navigator.maxTouchPoints || 0) > 0;
+    setIsDesktop(!hasTouch);
+  }, []);
+
+  /* poll Cashfree while a UPI retry is showing — on success just reload:
+     this page already renders the paid state */
+  useEffect(() => {
+    if (!retryPay || (retryMode !== "upi-qr" && retryMode !== "upi-app")) return;
+    let stopped = false;
+    const check = async () => {
+      try {
+        const d: any = await api(`/api/orders/${encodeURIComponent(retryPay.orderId)}/verify-payment`);
+        if (d?.paid && !stopped) { stopped = true; window.location.reload(); }
+      } catch { /* next tick */ }
+    };
+    const t = setInterval(() => { if (!stopped) check(); }, 4000);
+    return () => { stopped = true; clearInterval(t); };
+  }, [retryPay, retryMode, upiCheckNow]);
+
+  /* draw the retry QR once that mode is chosen */
+  useEffect(() => {
+    if (!retryPay || retryMode !== "upi-qr") return;
+    let dead = false;
+    (async () => {
+      try { await startUpiQr({ orderId: retryPay.orderId, host: "#cf-qr-retry" }); }
+      catch (e: any) { if (!dead) setUpiNote(e?.message || "Could not create the QR — try card payment."); }
+    })();
+    return () => { dead = true; };
+  }, [retryPay, retryMode]);
+
+  async function retryUpiApp(app: string) {
+    if (!retryPay) return;
+    setRetryLaunchedApp(app);
+    setUpiNote("");
+    setRetryMode("upi-app");
+    try { await startUpiApp({ orderId: retryPay.orderId, app }); }
+    catch (e: any) { setUpiNote(e?.message || "Could not start the payment — please try again."); }
+  }
   const [rewards, setRewards] = useState<{ loyaltyEnabled: boolean; referralEnabled: boolean; referralBonusInr: number } | null>(null);
 
   useEffect(() => {
@@ -67,9 +115,9 @@ export function OrderSuccessView() {
     api("/api/settings").then((s: any) => setRewards(s.rewards || null)).catch(() => {});
   }, []);
 
-  /* retry payment — mount the in-site Cashfree checkout over this page */
+  /* retry payment — the Cashfree drop-in mounts ONLY when card is chosen */
   useEffect(() => {
-    if (!retryPay) return;
+    if (!retryPay || retryMode !== "card") return;
     let dead = false;
     (async () => {
       try {
@@ -79,7 +127,7 @@ export function OrderSuccessView() {
       }
     })();
     return () => { dead = true; };
-  }, [retryPay]);
+  }, [retryPay, retryMode]);
 
   async function completePaymentNow() {
     try {
@@ -266,7 +314,103 @@ export function OrderSuccessView() {
               <X size={16} />
             </button>
           </div>
-          <div id="cf-dropin" className="min-h-0 flex-1" />
+          <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-4 overflow-y-auto px-6 py-8 text-center">
+            {retryMode === "choose" && (
+              <>
+                <div>
+                  <p className="text-[17px] font-bold tracking-tight text-ink">
+                    {isDesktop ? "Scan & Pay with any UPI app" : "Pay instantly with UPI"}
+                  </p>
+                  <p className="mx-auto mt-1.5 max-w-[320px] text-[13px] font-semibold leading-relaxed text-muted-foreground">
+                    {isDesktop ? "Google Pay · PhonePe · Paytm · BHIM — we confirm automatically once you pay." : "Pick your app — it opens with the amount prefilled. We confirm automatically once you pay."}
+                  </p>
+                </div>
+                {isDesktop ? (
+                  <button
+                    type="button"
+                    onClick={() => setRetryMode("upi-qr")}
+                    className="fresh-grad rounded-full px-8 py-3.5 text-[15px] font-bold text-white shadow-[0_8px_20px_rgba(11,124,49,0.35)] transition hover:brightness-[1.05]"
+                  >
+                    Show the QR · Pay {money(retryPay.amount)}
+                  </button>
+                ) : (
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    {[["gpay", "Google Pay"], ["phonepe", "PhonePe"], ["paytm", "Paytm UPI"]].map(([app, label]) => (
+                      <button
+                        key={app}
+                        type="button"
+                        onClick={() => retryUpiApp(app)}
+                        className="rounded-full border border-line bg-white px-5 py-3 text-[13px] font-bold text-ink transition hover:border-leaf/50"
+                      >
+                        {label}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => retryUpiApp("default")}
+                      className="rounded-full border border-line bg-white px-5 py-3 text-[13px] font-bold text-ink transition hover:border-leaf/50"
+                    >
+                      Other UPI Apps
+                    </button>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setRetryMode("card")}
+                  className="rounded-full bg-mint px-6 py-3 text-[13px] font-bold text-forest transition hover:brightness-95"
+                >
+                  Pay by card / netbanking
+                </button>
+              </>
+            )}
+            {retryMode === "upi-qr" && (
+              <>
+                <p className="text-[17px] font-bold tracking-tight text-ink">Scan the QR with any UPI app</p>
+                <div id="cf-qr-retry" className="mx-auto grid w-fit place-items-center rounded-2xl border border-line bg-white p-4 shadow-sm [&_img]:[image-rendering:pixelated]" />
+                <div className="flex items-center gap-2 text-[12px] font-bold text-leaf">
+                  <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-leaf" />
+                  Waiting for payment…
+                </div>
+                {upiNote && <p className="max-w-[320px] text-[13px] font-semibold text-carrot">{upiNote}</p>}
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <button type="button" onClick={() => setUpiCheckNow(Date.now())} className="rounded-full border border-line bg-white px-4 py-2.5 text-[13px] font-bold text-ink transition hover:border-leaf/50">
+                    I've paid — check now
+                  </button>
+                  <button type="button" onClick={() => setRetryMode("card")} className="rounded-full bg-mint px-4 py-2.5 text-[13px] font-bold text-forest transition hover:brightness-95">
+                    Pay by card / netbanking
+                  </button>
+                </div>
+              </>
+            )}
+            {retryMode === "upi-app" && retryLaunchedApp && (
+              <>
+                <div>
+                  <p className="text-[17px] font-bold tracking-tight text-ink">Complete the payment in your UPI app</p>
+                  <p className="mx-auto mt-1.5 max-w-[320px] text-[13px] font-semibold leading-relaxed text-muted-foreground">
+                    The app is opening with ₹{Math.round(retryPay.amount)} prefilled. Pay there, then come back — we'll confirm automatically.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-[12px] font-bold text-leaf">
+                  <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-leaf" />
+                  Waiting for payment…
+                </div>
+                {upiNote && <p className="max-w-[320px] text-[13px] font-semibold text-carrot">{upiNote}</p>}
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <button type="button" onClick={() => setUpiCheckNow(Date.now())} className="rounded-full border border-line bg-white px-4 py-2.5 text-[13px] font-bold text-ink transition hover:border-leaf/50">
+                    I've paid — check now
+                  </button>
+                  <button type="button" onClick={() => setRetryMode("choose")} className="rounded-full border border-line bg-white px-4 py-2.5 text-[13px] font-bold text-ink transition hover:border-leaf/50">
+                    Open a different UPI app
+                  </button>
+                  <button type="button" onClick={() => setRetryMode("card")} className="rounded-full bg-mint px-4 py-2.5 text-[13px] font-bold text-forest transition hover:brightness-95">
+                    Pay by card / netbanking
+                  </button>
+                </div>
+              </>
+            )}
+            {retryMode === "upi-app" && !retryLaunchedApp && null}
+            {retryMode === "card" && <div id="cf-dropin" className="min-h-0 w-full flex-1" />}
+          </div>
           <p className="border-t border-line bg-white px-4 py-2.5 text-center text-[11px] font-semibold text-muted-foreground">
             Payments secured by Cashfree · UPI · Cards · Netbanking · Wallets
           </p>

@@ -593,7 +593,11 @@ export function CartView() {
       }
       if (order.payment && order.payment.type === "cashfree") {
         setPayBusy(false);
-        const channel = payApp === "card" ? "dropin" : payApp === "upi" ? (isDesktop ? "qr" : "app") : "app";
+        /* Swiggy-style: desktop = ALWAYS the scan-and-pay QR (whatever UPI
+           option was picked); mobile = direct app launch. Cashfree's
+           app-intent element is never used — it redirects the whole page to
+           their hosted checkout whenever it can't finish in-page. */
+        const channel = payApp === "card" ? "dropin" : isDesktop ? "qr" : "app";
         setCfPay({
           sessionId: order.payment.sessionId,
           mode: order.payment.mode,
@@ -1361,7 +1365,7 @@ export function CartView() {
                   onClick={() => setCfPay({ ...cfPay, channel: "dropin" })}
                   className="rounded-full border border-line bg-white px-4 py-2.5 text-[13px] font-bold text-ink transition hover:border-leaf/50"
                 >
-                  Pay by card / QR
+                  Pay by card / netbanking
                 </button>
               </div>
             </div>

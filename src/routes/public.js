@@ -493,7 +493,7 @@ router.post('/orders/:id/upi-qr', async (req, res) => {
     if (String(order.paymentStatus || '').toUpperCase() === 'PAID') return res.status(400).json({ ok: false, error: 'This order is already paid' });
     if (!cashfreeEnabled()) return res.status(503).json({ ok: false, error: 'Online payment is not configured yet' });
     const qr = await createUpiQr(order);
-    return res.json({ ok: true, orderId: order.id, qr: qr.qr });
+    return res.json({ ok: true, orderId: order.id, qr: qr.qr, apps: qr.apps || {} });
   } catch (error) {
     console.error(JSON.stringify({ event: 'order.upiQr.error', order: req.params.id, error: String(error?.message || error).slice(0, 300) }));
     return res.status(502).json({ ok: false, error: error?.message || 'Could not create the QR payment' });

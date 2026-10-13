@@ -35,40 +35,44 @@ export async function startCashfreeDropin(el: string, payment: { sessionId: stri
   cashfree.checkout({ paymentSessionId: payment.sessionId, redirectTarget: target, redirect: "if_required" });
 }
 
-/* Swiggy-style UPI intent: launch the customer's chosen UPI app with the
-   payment prefilled. The upiApp element must be mounted (hidden) first, then
-   triggered via cashfree.pay(). Mobile only — desktop uses the QR element. */
-export async function startUpiApp(payment: { sessionId: string; mode?: string; app: string; orderId: string }) {
-  const cashfree = await getCashfreeClient(payment.mode);
-  if (!document.querySelector("#cf-upi-hidden")) throw new Error("upi container missing");
-  const comp = cashfree.create("upiApp", { values: { upiApp: payment.app } });
-  comp.mount("#cf-upi-hidden");
-  await new Promise<void>((resolve) => {
-    let done = false;
-    const fin = () => { if (!done) { done = true; resolve(); } };
-    comp.on("ready", fin);
-    comp.on("loaderror", fin);
-    setTimeout(fin, 2500);
-  });
-  const res = await cashfree.pay({
-    paymentMethod: comp,
-    paymentSessionId: payment.sessionId,
-    returnUrl: `${location.origin}/api/payments/cashfree/callback?order_id=${encodeURIComponent(payment.orderId)}`,
-    redirect: "if_required",
-  });
-  return res;
+/* UPI intents for an order — our server creates ONE payment attempt via
+   Cashfree's link channel and hands us the raw intent links (generic
+   upi:// + per-app). Cached per order so repeat launches ("Open app again",
+   QR + app on the same order) reuse the same attempt instead of piling up
+   new ones on Cashfree. */
+const upiIntents: Record<string, any> = {};
+export async function fetchUpiIntents(orderId: string) {
+  if (upiIntents[orderId]) return upiIntents[orderId];
+  const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}/upi-qr`, { method: "POST" });
+  const data: any = await res.json().catch(() => ({}));
+  if (!res.ok || !(data.qr || data.apps?.default)) throw new Error(data.error || "Could not create the UPI payment");
+  upiIntents[orderId] = data;
+  return data;
+}
+
+/* Swiggy-style app launch: open the customer's UPI app DIRECTLY with the
+   payment prefilled. Deliberately no Cashfree SDK element here — its upiApp
+   flow redirects the whole page to Cashfree's hosted checkout whenever it
+   can't complete in-page (app missing, iOS quirks, element load error).
+   Navigating to the app scheme ourselves can only ever open the app; if it
+   can't, the page simply stays put and the sheet keeps waiting. */
+export async function startUpiApp(payment: { orderId: string; app?: string }) {
+  const data = await fetchUpiIntents(payment.orderId);
+  const apps = data.apps || {};
+  const link = apps[payment.app || "default"] || apps.default || data.qr;
+  if (!link) throw new Error("Could not create the UPI payment");
+  window.location.href = link;
+  return true;
 }
 
 /* desktop: render the UPI QR OURSELVES as pure SVG from the raw upi:// intent.
    Cashfree's widgets can't be used here: their iframe QR ships a permanent
    blur(3px) loading state, and their qrcode payload is a 256px PNG that goes
    soft on retina screens. An SVG QR is mathematically crisp at any size. */
-export async function startUpiQr(payment: { orderId: string }) {
-  const host = document.querySelector("#cf-qr");
+export async function startUpiQr(payment: { orderId: string; host?: string }) {
+  const host = document.querySelector(payment.host || "#cf-qr");
   if (!host) throw new Error("qr container missing");
-  const res = await fetch(`/api/orders/${encodeURIComponent(payment.orderId)}/upi-qr`, { method: "POST" });
-  const data: any = await res.json().catch(() => ({}));
-  if (!res.ok || !data.qr) throw new Error(data.error || "Could not create the QR payment");
+  const data = await fetchUpiIntents(payment.orderId);
   const { default: QRCode } = await import("qrcode");
   const svg = await QRCode.toString(String(data.qr), { type: "svg", margin: 1, errorCorrectionLevel: "M" });
   host.innerHTML = svg;

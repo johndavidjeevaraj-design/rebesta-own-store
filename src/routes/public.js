@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import { config } from '../config.js';
 import { notifyOrderConfirmed } from '../sms.js';
 import {
+  productVariants,
   loadSettings,
   findCoupon,
   listPublicCoupons,
@@ -119,7 +120,7 @@ router.get('/products/featured', (req, res) => {
 router.get('/products/:handle', (req, res) => {
   const product = getProduct(req.params.handle);
   if (!product || !product.active) return res.status(404).json({ ok: false, error: 'Product not found' });
-  res.json({ ok: true, product });
+  res.json({ ok: true, product: { ...product, variants: productVariants(product) } });
 });
 
 /* ============ Customer reviews (moderated) ============ */

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Link2, MapPin, Minus, Plus, Star, Truck, X } from "lucide-react";
+import { Check, Link2, MapPin, Star, Truck, X } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ProductCard } from "@/components/product-card";
@@ -21,7 +21,6 @@ export function ProductView({ handle }: { handle: string }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [all, setAll] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [qty, setQty] = useState(1);
   const [zoom, setZoom] = useState(false);
   const [notFound, setNotFound] = useState("");
   const [panelVisible, setPanelVisible] = useState(true);
@@ -110,16 +109,15 @@ export function ProductView({ handle }: { handle: string }) {
 
   const discount = product && Number(product.compareAtInr) > Number(product.priceInr) ? Math.round((1 - Number(product.priceInr) / Number(product.compareAtInr)) * 100) : 0;
   const available = product ? Math.max(0, Number(product.stock || 0) - inCart) : 0;
-  const maxQty = product ? Math.min(50, product.stock) : 1;
 
   function addCurrent() {
     if (!product) return;
-    if (qty > available) {
-      toast(`Only ${available} more available today`, "error");
+    if (available < 1) {
+      toast(`Only ${product.stock} available today`, "error");
       return;
     }
-    addToCart(product.handle, qty, pack.id);
-    toast(`${product.title} added to basket 🌿`);
+    addToCart(product.handle, 1, pack.id);
+    toast(`${product.title} — ${pack.label} added to basket 🌿`);
   }
 
   async function copyLink() {
@@ -216,20 +214,38 @@ export function ProductView({ handle }: { handle: string }) {
                 </div>
 
                 {hasPacks && (
-                  <div className="mt-4 flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Pack</span>
-                    {product.variants!.map((v) => (
-                      <button
-                        key={v.id}
-                        type="button"
-                        onClick={() => setPackId(v.id)}
-                        className={`rounded-full border px-3.5 py-1.5 text-[13px] font-bold transition ${
-                          v.id === pack.id ? "border-leaf bg-mint text-forest" : "border-line bg-white text-ink hover:border-leaf/50"
-                        }`}
-                      >
-                        {v.label}
-                      </button>
-                    ))}
+                  <div className="mt-5">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Choose pack size</span>
+                    <div className="mt-2.5 grid grid-cols-3 gap-2">
+                      {product.variants!.map((v) => {
+                        const on = v.id === pack.id;
+                        return (
+                          <button
+                            key={v.id}
+                            type="button"
+                            onClick={() => setPackId(v.id)}
+                            aria-pressed={on}
+                            className={`relative flex flex-col items-center rounded-2xl border px-2 py-3 transition ${
+                              on
+                                ? "border-leaf bg-mint shadow-[0_6px_16px_rgba(11,124,49,0.14)]"
+                                : "border-line bg-white hover:border-leaf/50 hover:bg-cream/60"
+                            }`}
+                          >
+                            {on && (
+                              <motion.span
+                                layoutId="pack-check"
+                                transition={{ type: "spring", stiffness: 500, damping: 32 }}
+                                className="absolute right-1.5 top-1.5 grid h-[18px] w-[18px] place-items-center rounded-full bg-leaf text-white shadow-sm"
+                              >
+                                <Check size={10} strokeWidth={4} />
+                              </motion.span>
+                            )}
+                            <span className={`text-[13px] font-bold ${on ? "text-forest" : "text-ink"}`}>{v.label}</span>
+                            <span className={`mt-0.5 text-[12px] font-semibold tabular-nums ${on ? "text-forest/75" : "text-muted-foreground"}`}>{money(v.priceInr)}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 
@@ -270,47 +286,21 @@ export function ProductView({ handle }: { handle: string }) {
                   </motion.p>
                 )}
 
-                {/* Purchase panel */}
+                {/* Purchase panel — pack sizes carry the quantity story, so one clean CTA */}
                 <div ref={panelRef} className="mt-5 rounded-3xl border border-line bg-white p-4 shadow-soft">
-                  <label className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Quantity</label>
-                  <div className="mt-2.5 flex flex-wrap items-center gap-3">
-                    <span className="flex items-center gap-3 rounded-xl border border-line bg-cream px-2 py-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setQty((q) => Math.max(1, q - 1))}
-                        disabled={qty <= 1}
-                        aria-label="Decrease quantity"
-                        className="grid h-8 w-8 place-items-center rounded-lg border border-line bg-white text-ink transition hover:border-leaf/50 disabled:opacity-40"
-                      >
-                        <Minus size={14} />
-                      </button>
-                      <motion.span key={qty} initial={{ scale: 1.25 }} animate={{ scale: 1 }} className="min-w-6 text-center text-[14px] font-bold text-ink">
-                        {qty}
-                      </motion.span>
-                      <button
-                        type="button"
-                        onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
-                        disabled={qty >= maxQty}
-                        aria-label="Increase quantity"
-                        className="grid h-8 w-8 place-items-center rounded-lg border border-line bg-white text-ink transition hover:border-leaf/50 disabled:opacity-40"
-                      >
-                        <Plus size={14} />
-                      </button>
-                    </span>
-                    <motion.button
-                      type="button"
-                      onClick={addCurrent}
-                      disabled={product.stock <= 0}
-                      whileTap={{ scale: 0.97 }}
-                      className="fresh-grad min-w-[180px] flex-1 rounded-full px-5 py-3 text-[15px] font-bold text-white shadow-[0_8px_20px_rgba(11,124,49,0.35)] transition hover:brightness-[1.05] active:scale-[0.98] disabled:bg-line-2 disabled:text-muted-foreground disabled:shadow-none disabled:bg-none"
-                    >
-                      {product.stock <= 0 ? "Sold out" : "Add to basket"}
-                    </motion.button>
-                  </div>
+                  <motion.button
+                    type="button"
+                    onClick={addCurrent}
+                    disabled={product.stock <= 0}
+                    whileTap={{ scale: 0.98 }}
+                    className="fresh-grad w-full rounded-full px-5 py-3.5 text-[15px] font-bold text-white shadow-[0_8px_20px_rgba(11,124,49,0.35)] transition hover:brightness-[1.05] active:scale-[0.98] disabled:bg-line-2 disabled:text-muted-foreground disabled:shadow-none disabled:bg-none"
+                  >
+                    {product.stock <= 0 ? "Sold out" : `Add to basket · ${money(pack.priceInr)}`}
+                  </motion.button>
                   <AnimatePresence>
                     {inCart > 0 && (
-                      <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-2.5 text-[11px] font-bold text-leaf">
-                        {inCart} already in your basket
+                      <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-2.5 text-center text-[11px] font-bold text-leaf">
+                        {inCart} × {pack.label} in your basket — adjust quantity on the cart page
                       </motion.p>
                     )}
                   </AnimatePresence>
@@ -419,7 +409,6 @@ export function ProductView({ handle }: { handle: string }) {
               <strong className="block truncate text-[13px] font-bold text-ink">{product.title}</strong>
               <span className="text-[11px] font-bold text-forest">
                 {money(pack.priceInr)} / {pack.label}
-                {qty > 1 ? ` · qty ${qty}` : ""}
               </span>
             </span>
             <motion.button
@@ -428,7 +417,7 @@ export function ProductView({ handle }: { handle: string }) {
               whileTap={{ scale: 0.95 }}
               className="shrink-0 rounded-xl bg-carrot px-4 py-2.5 text-[13px] font-bold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)] transition hover:brightness-110"
             >
-              Add · {money(pack.priceInr * qty)}
+              Add · {money(pack.priceInr)}
             </motion.button>
           </motion.div>
         )}

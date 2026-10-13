@@ -59,23 +59,26 @@ export async function startUpiApp(payment: { sessionId: string; mode?: string; a
   return res;
 }
 
-/* desktop: render the UPI QR OURSELVES. Cashfree's SDK iframe QR ships a
-   blur(3px) "loading" style that never clears in embedded flows — so instead we
-   ask our server to create the QR payment (it proxies Cashfree's session
-   endpoint) and draw the returned QR image with our own crisp styling. */
+/* desktop: render the UPI QR OURSELVES as pure SVG from the raw upi:// intent.
+   Cashfree's widgets can't be used here: their iframe QR ships a permanent
+   blur(3px) loading state, and their qrcode payload is a 256px PNG that goes
+   soft on retina screens. An SVG QR is mathematically crisp at any size. */
 export async function startUpiQr(payment: { orderId: string }) {
   const host = document.querySelector("#cf-qr");
   if (!host) throw new Error("qr container missing");
   const res = await fetch(`/api/orders/${encodeURIComponent(payment.orderId)}/upi-qr`, { method: "POST" });
   const data: any = await res.json().catch(() => ({}));
   if (!res.ok || !data.qr) throw new Error(data.error || "Could not create the QR payment");
-  host.innerHTML = "";
-  const img = document.createElement("img");
-  img.src = String(data.qr);
-  img.alt = "UPI QR — scan with any UPI app";
-  img.width = 280;
-  img.height = 280;
-  img.style.cssText = "display:block;width:280px;height:280px;image-rendering:pixelated;";
-  img.onerror = () => { host.innerHTML = ""; };
-  host.appendChild(img);
+  const { default: QRCode } = await import("qrcode");
+  const svg = await QRCode.toString(String(data.qr), { type: "svg", margin: 1, errorCorrectionLevel: "M" });
+  host.innerHTML = svg;
+  const el = host.querySelector("svg");
+  if (el) {
+    el.setAttribute("width", "280");
+    el.setAttribute("height", "280");
+    el.setAttribute("role", "img");
+    el.setAttribute("aria-label", "UPI payment QR");
+    el.setAttribute("shape-rendering", "crispEdges");
+    el.style.display = "block";
+  }
 }

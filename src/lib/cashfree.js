@@ -84,11 +84,13 @@ export async function getCashfreeOrder(orderId) {
   return cf('/pg/orders/' + encodeURIComponent(String(orderId || '')));
 }
 
-/* UPI QR — created through Cashfree's SESSION endpoint (the exact call their SDK
-   iframe makes: authenticated by the payment session, not API keys, so it needs
-   no S2S flag). We render the returned QR image ourselves because the SDK's
-   iframe QR ships a blur(3px) "loading" style that never clears in embedded
-   flows — the customer sees a permanently blurred QR.
+/* UPI QR — we create the UPI intent via Cashfree's SESSION endpoint (the exact
+   call their SDK atoms make: authenticated by the payment session, not API
+   keys, no S2S flag) and render the QR OURSELVES as crisp SVG. Cashfree's own
+   widgets are unusable here: their iframe QR ships a permanent blur(3px)
+   loading state, and their qrcode-channel payload is a 256px PNG that goes
+   soft on retina screens. The link channel returns the raw upi:// intent —
+   the same URI their QR encodes — which we draw at any size, perfectly sharp.
    NOTE: the order's payment session is REUSED — Cashfree's create-order API
    409s (order_already_exists) if called twice with the same order id. */
 export async function createUpiQr(order) {
@@ -106,17 +108,20 @@ export async function createUpiQr(order) {
     },
     body: JSON.stringify({
       payment_session_id: sessionId,
-      payment_method: { upi: { channel: 'qrcode' } },
-      platform: 'jsxx-a-2026.10.05-x-d-c-138-macOS-15.1',
+      payment_method: { upi: { channel: 'link' } },
+      /* exact SDK platform format (single lowercase OS char) — the endpoint
+         rejects anything else with "Invalid OS received" */
+      platform: 'jsxx-a-2026.10.05-x-d-c-138-m-15.1',
       return_url: `${config.appUrl}/api/payments/cashfree/callback?order_id=${encodeURIComponent(order.id)}`
     }),
     signal: AbortSignal.timeout(15000)
   });
   const data = await res.json().catch(() => ({}));
-  const qr = data?.data?.payload?.qrcode || data?.data?.payload?.qrData || null;
-  if (!res.ok || !qr) {
+  const payload = data?.data?.payload || {};
+  const intent = payload.default || payload.qrData || payload.qrcode || null;
+  if (!res.ok || !intent || !String(intent).startsWith('upi://')) {
     const msg = data?.message || data?.error_message || `Cashfree HTTP ${res.status}`;
     throw new Error(String(msg).slice(0, 300));
   }
-  return { qr: String(qr) };
+  return { qr: String(intent) };
 }

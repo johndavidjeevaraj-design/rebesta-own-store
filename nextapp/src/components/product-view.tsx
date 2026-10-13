@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Check, Link2, MapPin, Star, Truck, X } from "lucide-react";
+import { Link2, MapPin, Star, Truck, X } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ProductCard } from "@/components/product-card";
@@ -232,16 +232,18 @@ export function ProductView({ handle }: { handle: string }) {
                 <h1 className="mt-1.5 font-display text-2xl font-semibold leading-tight text-forest md:text-[28px]">{product.title}</h1>
                 {product.description && <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-ink-2/85">{product.description}</p>}
 
-                <div className="mt-4 flex items-end gap-2">
-                  <strong className="text-[24px] font-semibold tracking-tight text-ink">{money(pack.priceInr)}</strong>
-                  {discount > 0 && !hasPacks && <span className="text-sm font-semibold text-muted-foreground line-through">{money(Number(product.compareAtInr))}</span>}
-                  <span className="text-sm font-semibold text-muted-foreground">/ {pack.label}</span>
-                </div>
+                {!hasPacks && (
+                  <div className="mt-4 flex items-end gap-2">
+                    <strong className="text-[24px] font-semibold tracking-tight text-ink">{money(pack.priceInr)}</strong>
+                    {discount > 0 && <span className="text-sm font-semibold text-muted-foreground line-through">{money(Number(product.compareAtInr))}</span>}
+                    <span className="text-sm font-semibold text-muted-foreground">/ {pack.label}</span>
+                  </div>
+                )}
 
                 {hasPacks && (
                   <div className="mt-5">
                     <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Choose pack size</span>
-                    <div className="mt-3 grid grid-cols-3 gap-2">
+                    <div className="mt-2.5 grid grid-cols-3 gap-1 rounded-2xl border border-line bg-cream p-1">
                       {product.variants!.map((v) => {
                         const on = v.id === pack.id;
                         const per = perUnitLabel(v);
@@ -251,28 +253,22 @@ export function ProductView({ handle }: { handle: string }) {
                             type="button"
                             onClick={() => setPackId(v.id)}
                             aria-pressed={on}
-                            whileTap={{ scale: 0.96 }}
-                            className={`relative flex flex-col items-center rounded-2xl border px-2 py-3 transition ${
-                              on
-                                ? "border-leaf bg-mint shadow-[0_6px_16px_rgba(11,124,49,0.14)]"
-                                : "border-line bg-white hover:-translate-y-0.5 hover:border-leaf/50 hover:bg-cream/60"
-                            }`}
+                            whileTap={{ scale: 0.97 }}
+                            className="relative flex flex-col items-center rounded-xl px-1 py-2.5 transition hover:bg-white/60"
                           >
-                            {bestValue?.id === v.id && (
-                              <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-carrot px-2 py-px text-[9px] font-bold uppercase tracking-[0.08em] text-white shadow-sm">Best value</span>
-                            )}
                             {on && (
                               <motion.span
-                                layoutId="pack-check"
-                                transition={{ type: "spring", stiffness: 500, damping: 32 }}
-                                className="absolute right-1.5 top-1.5 grid h-[18px] w-[18px] place-items-center rounded-full bg-leaf text-white shadow-sm"
-                              >
-                                <Check size={10} strokeWidth={4} />
-                              </motion.span>
+                                layoutId="pack-pill"
+                                transition={{ type: "spring", stiffness: 500, damping: 38 }}
+                                className="absolute inset-0 rounded-xl bg-white shadow-[0_3px_12px_rgba(20,32,24,0.10)]"
+                              />
                             )}
-                            <span className={`text-[13px] font-bold ${on ? "text-forest" : "text-ink"}`}>{v.label}</span>
-                            <span className="mt-0.5 text-[14px] font-bold tabular-nums text-ink">{money(v.priceInr)}</span>
-                            {per && <span className={`mt-0.5 text-[10px] font-semibold tabular-nums ${on ? "text-leaf/80" : "text-muted-foreground/80"}`}>{per}</span>}
+                            {bestValue?.id === v.id && (
+                              <span className="absolute -top-2.5 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-full bg-carrot px-2 py-px text-[9px] font-bold uppercase tracking-[0.08em] text-white shadow-sm">Best value</span>
+                            )}
+                            <span className={`relative z-10 text-[13px] font-bold leading-tight ${on ? "text-forest" : "text-ink"}`}>{v.label}</span>
+                            <span className="relative z-10 mt-0.5 text-[13px] font-bold tabular-nums leading-tight text-ink">{money(v.priceInr)}</span>
+                            {per && <span className={`relative z-10 mt-0.5 text-[10px] font-semibold tabular-nums leading-tight ${on ? "text-leaf/80" : "text-muted-foreground/80"}`}>{per}</span>}
                           </motion.button>
                         );
                       })}
@@ -432,7 +428,8 @@ export function ProductView({ handle }: { handle: string }) {
             <span className="min-w-0 flex-1">
               <strong className="block truncate text-[13px] font-bold text-ink">{product.title}</strong>
               <span className="text-[11px] font-bold text-forest">
-                {money(pack.priceInr)} / {pack.label}
+                {money(pack.priceInr)}
+                {!hasPacks && ` / ${pack.label}`}
               </span>
             </span>
             <motion.button

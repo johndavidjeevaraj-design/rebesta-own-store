@@ -434,8 +434,14 @@ export function CartView() {
         }
         if (cfPay.channel === "app") await startUpiApp({ ...cfPay, app: cfPay.app || "default" });
         else if (cfPay.channel === "qr") {
-          await startUpiQr(cfPay);
-          /* if the QR never renders (SDK hiccup), fall back to the full drop-in */
+          try {
+            await startUpiQr(cfPay);
+          } catch {
+            /* QR creation failed — offer the full drop-in (cards/netbanking) instead */
+            if (!dead) setCfPay((prev) => (prev ? { ...prev, channel: "dropin" } : prev));
+            return;
+          }
+          /* if the QR never renders (hiccup), fall back to the full drop-in */
           setTimeout(() => {
             if (dead) return;
             if (!document.querySelector("#cf-qr > *")) setCfPay((prev) => (prev ? { ...prev, channel: "dropin" } : prev));

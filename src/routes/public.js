@@ -14,6 +14,7 @@ import {
   buildCart,
   addOrder,
   getOrder,
+  setOrderPaymentSession,
   maskCustomer,
   markPayuPayment,
   ordersByPhone,
@@ -30,7 +31,7 @@ import {
 import { orderPlacedEmails } from '../lib/mailer.js';
 import { quoteDelivery, reverseGeocode } from '../lib/delivery.js';
 import { createPayuPayment, validatePayuResponse } from '../lib/payu.js';
-import { cashfreeEnabled, createCashfreePayment, getCashfreeOrder } from '../lib/cashfree.js';
+import { cashfreeEnabled, createCashfreePayment, createUpiQr, getCashfreeOrder } from '../lib/cashfree.js';
 import { findPartnerById, getPosition, haversineKm, etaMinutesFromKm } from '../lib/partners.js';
 import { createSubscriptionFromOrder, publicSubscription } from '../lib/subscriptions.js';
 
@@ -303,6 +304,9 @@ router.post('/orders', async (req, res) => {
     if (paymentMethod === 'online') {
       try {
         payment = await createCashfreePayment(order);
+        /* store the session on the order — QR/retry flows reuse it (Cashfree
+           409s if the same order id is created twice) */
+        try { setOrderPaymentSession(order.id, payment.sessionId, payment.mode); } catch {}
       } catch (error) {
         console.error(JSON.stringify({ event: 'cashfree.createOrder.error', order: order.id, error: String(error?.message || error).slice(0, 400) }));
         throw Object.assign(new Error('Online payment could not be started right now. Please choose Cash on Delivery.'), { status: 502 });
@@ -468,11 +472,31 @@ router.post('/orders/:id/pay', async (req, res) => {
     if (String(order.paymentMethod || '') !== 'online') return res.status(400).json({ ok: false, error: 'This order is not an online payment order' });
     if (String(order.paymentStatus || '').toUpperCase() === 'PAID') return res.status(400).json({ ok: false, error: 'This order is already paid' });
     if (!cashfreeEnabled()) return res.status(503).json({ ok: false, error: 'Online payment is not configured yet' });
-    const payment = await createCashfreePayment(order);
+    const sessionId = String(order.paymentSessionId || '');
+    if (!sessionId) return res.status(409).json({ ok: false, error: 'This order has no payment session left — please place the order again.' });
+    const payment = { type: 'cashfree', sessionId, mode: String(order.paymentMode || 'test') };
     return res.json({ ok: true, orderId: order.id, totalInr: order.totalInr, payment });
   } catch (error) {
     console.error(JSON.stringify({ event: 'order.retryPay.error', order: req.params.id, error: String(error?.message || error).slice(0, 300) }));
     return res.status(502).json({ ok: false, error: error?.message || 'Could not start payment' });
+  }
+});
+
+/* UPI QR for the desktop "Scan & Pay" sheet: creates the QR payment attempt via
+   Cashfree's session endpoint and returns the QR image so the page can render
+   it crisply itself (no SDK iframe, no blur). */
+router.post('/orders/:id/upi-qr', async (req, res) => {
+  try {
+    const order = getOrder(String(req.params.id || '').toUpperCase());
+    if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
+    if (String(order.paymentMethod || '') !== 'online') return res.status(400).json({ ok: false, error: 'This order is not an online payment order' });
+    if (String(order.paymentStatus || '').toUpperCase() === 'PAID') return res.status(400).json({ ok: false, error: 'This order is already paid' });
+    if (!cashfreeEnabled()) return res.status(503).json({ ok: false, error: 'Online payment is not configured yet' });
+    const qr = await createUpiQr(order);
+    return res.json({ ok: true, orderId: order.id, qr: qr.qr });
+  } catch (error) {
+    console.error(JSON.stringify({ event: 'order.upiQr.error', order: req.params.id, error: String(error?.message || error).slice(0, 300) }));
+    return res.status(502).json({ ok: false, error: error?.message || 'Could not create the QR payment' });
   }
 });
 

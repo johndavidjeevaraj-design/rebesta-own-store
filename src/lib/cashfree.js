@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { config } from '../config.js';
 
 /* Cashfree hosted checkout (replaces the never-configured PayU path).
@@ -81,4 +82,41 @@ export async function createCashfreePayment(order) {
 /* Authoritative status check — never trust the redirect query params. */
 export async function getCashfreeOrder(orderId) {
   return cf('/pg/orders/' + encodeURIComponent(String(orderId || '')));
+}
+
+/* UPI QR — created through Cashfree's SESSION endpoint (the exact call their SDK
+   iframe makes: authenticated by the payment session, not API keys, so it needs
+   no S2S flag). We render the returned QR image ourselves because the SDK's
+   iframe QR ships a blur(3px) "loading" style that never clears in embedded
+   flows — the customer sees a permanently blurred QR.
+   NOTE: the order's payment session is REUSED — Cashfree's create-order API
+   409s (order_already_exists) if called twice with the same order id. */
+export async function createUpiQr(order) {
+  const sessionId = String(order.paymentSessionId || '');
+  if (!sessionId) throw new Error('No payment session stored for this order — please place the order again');
+  const cfg = loadCashfreeConfig() || {};
+  const host = cfg.mode === 'live' ? 'https://api.cashfree.com' : 'https://sandbox.cashfree.com';
+  const res = await fetch(host + '/pg/sdk/js/pay', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-request-id': crypto.randomBytes(12).toString('hex').slice(0, 15),
+      'x-document-referrer': config.appUrl,
+      'x-api-version': '2022-09-01'
+    },
+    body: JSON.stringify({
+      payment_session_id: sessionId,
+      payment_method: { upi: { channel: 'qrcode' } },
+      platform: 'jsxx-a-2026.10.05-x-d-c-138-macOS-15.1',
+      return_url: `${config.appUrl}/api/payments/cashfree/callback?order_id=${encodeURIComponent(order.id)}`
+    }),
+    signal: AbortSignal.timeout(15000)
+  });
+  const data = await res.json().catch(() => ({}));
+  const qr = data?.data?.payload?.qrcode || data?.data?.payload?.qrData || null;
+  if (!res.ok || !qr) {
+    const msg = data?.message || data?.error_message || `Cashfree HTTP ${res.status}`;
+    throw new Error(String(msg).slice(0, 300));
+  }
+  return { qr: String(qr) };
 }

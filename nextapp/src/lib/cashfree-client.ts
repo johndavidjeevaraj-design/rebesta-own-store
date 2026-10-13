@@ -59,17 +59,23 @@ export async function startUpiApp(payment: { sessionId: string; mode?: string; a
   return res;
 }
 
-/* desktop: render Cashfree's UPI QR inside our branded sheet */
-export async function startUpiQr(payment: { sessionId: string; mode?: string; orderId: string }) {
-  const cashfree = await getCashfreeClient(payment.mode);
-  if (!document.querySelector("#cf-qr")) throw new Error("qr container missing");
-  const comp = cashfree.create("upiQr", { values: { size: "300px" } });
-  comp.mount("#cf-qr");
-  const payPromise = cashfree.pay({
-    paymentMethod: comp,
-    paymentSessionId: payment.sessionId,
-    returnUrl: `${location.origin}/api/payments/cashfree/callback?order_id=${encodeURIComponent(payment.orderId)}`,
-    redirect: "if_required",
-  });
-  payPromise.catch(() => { /* polling + manual check cover success */ });
+/* desktop: render the UPI QR OURSELVES. Cashfree's SDK iframe QR ships a
+   blur(3px) "loading" style that never clears in embedded flows — so instead we
+   ask our server to create the QR payment (it proxies Cashfree's session
+   endpoint) and draw the returned QR image with our own crisp styling. */
+export async function startUpiQr(payment: { orderId: string }) {
+  const host = document.querySelector("#cf-qr");
+  if (!host) throw new Error("qr container missing");
+  const res = await fetch(`/api/orders/${encodeURIComponent(payment.orderId)}/upi-qr`, { method: "POST" });
+  const data: any = await res.json().catch(() => ({}));
+  if (!res.ok || !data.qr) throw new Error(data.error || "Could not create the QR payment");
+  host.innerHTML = "";
+  const img = document.createElement("img");
+  img.src = String(data.qr);
+  img.alt = "UPI QR — scan with any UPI app";
+  img.width = 280;
+  img.height = 280;
+  img.style.cssText = "display:block;width:280px;height:280px;image-rendering:pixelated;";
+  img.onerror = () => { host.innerHTML = ""; };
+  host.appendChild(img);
 }

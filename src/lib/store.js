@@ -467,6 +467,19 @@ export function getOrder(id) {
   return readOrders().find(o => o.id === String(id || '').trim().toUpperCase());
 }
 
+/* Remember a Cashfree payment session on the order so later flows (QR sheet,
+   retry payment) can REUSE it — Cashfree's create-order API 409s if called
+   twice with the same order id, so re-creating is never an option. */
+export function setOrderPaymentSession(id, sessionId, mode) {
+  const orders = readOrders();
+  const order = orders.find(o => o.id === String(id || '').trim().toUpperCase());
+  if (!order) return null;
+  order.paymentSessionId = String(sessionId || '');
+  order.paymentMode = String(mode || '');
+  saveOrders(orders);
+  return order;
+}
+
 export function updateOrderStatus(id, status, note = '') {
   const allowed = ['PENDING_PAYMENT', 'PLACED', 'CONFIRMED', 'PACKING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'PAYMENT_FAILED', 'PAID_NEEDS_REVIEW'];
   if (!allowed.includes(status)) throw Object.assign(new Error('Invalid order status'), { status: 400 });

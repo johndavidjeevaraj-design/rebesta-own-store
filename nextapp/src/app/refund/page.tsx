@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { InfoShell } from "@/components/info-shell";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/refund" },
   title: "Refund & Cancellation Policy | Rebesta Fresh",
   description: "Our freshness promise: if it is not fresh, it is free. Cancellations, refunds and timelines explained.",
 };

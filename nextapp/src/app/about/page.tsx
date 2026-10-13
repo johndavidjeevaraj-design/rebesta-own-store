@@ -3,6 +3,7 @@ import { InfoShell } from "@/components/info-shell";
 import { FssaiLine } from "@/components/fssai-line";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/about" },
   title: "About Us — Farm-Fresh Vegetables from Hosur | Rebesta Fresh",
   description: "We buy direct from farmers around Hosur and Denkanikottai — harvested, hand-sorted and delivered to your door the next morning.",
 };

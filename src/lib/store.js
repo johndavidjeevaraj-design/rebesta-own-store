@@ -200,6 +200,18 @@ export function createProduct(payload = {}) {
   return product;
 }
 
+/* Hard-remove a product from the catalog. Past orders are unaffected (they keep
+   their own line snapshots); callers must guard against active subscriptions
+   referencing the handle (buildCart throws on missing products). */
+export function deleteProduct(handle) {
+  const products = loadProducts();
+  const idx = products.findIndex(p => p.handle === String(handle || '').trim());
+  if (idx < 0) return null;
+  const [removed] = products.splice(idx, 1);
+  saveProducts(products);
+  return removed;
+}
+
 export function buildCart(rawItems) {
   if (!Array.isArray(rawItems) || !rawItems.length) throw Object.assign(new Error('Your basket is empty'), { status: 400 });
   const byHandle = new Map(loadProducts().map(p => [p.handle, p]));

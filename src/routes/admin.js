@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { config } from '../config.js';
 import { rateLimit } from '../lib/rateLimit.js';
-import { loadProducts, loadSettings, loadPartners, savePartners, readOrders, saveOrders, updateOrderStatus, updateProduct, createProduct, saveSettings, createBackup, awardLoyalty, awardReferral, dataVersions, loadSubscriptions, saveSubscriptions, getSubscription, cashSummary, recordCashReceived, loadReviews, setReviewApproval, deleteReview } from '../lib/store.js';
+import { loadProducts, loadSettings, loadPartners, savePartners, readOrders, saveOrders, updateOrderStatus, updateProduct, createProduct, deleteProduct, saveSettings, createBackup, awardLoyalty, awardReferral, dataVersions, loadSubscriptions, saveSubscriptions, getSubscription, cashSummary, recordCashReceived, loadReviews, setReviewApproval, deleteReview } from '../lib/store.js';
 import { createPartner, updatePartner, deletePartner, publicPartner, freshPositions, haversineKm, etaMinutesFromKm, partnerScore } from '../lib/partners.js';
 import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
 import { publicSubscription } from '../lib/subscriptions.js';
@@ -77,6 +77,28 @@ router.patch('/products/:handle', (req, res) => {
     res.json({ ok: true, product });
   } catch (error) {
     res.status(error.status || 400).json({ ok: false, error: error.message || 'Could not update product' });
+  }
+});
+
+/* Remove a product from the catalog entirely. Guarded: a product inside an
+   active weekly subscription can't be removed (its weekly order build would
+   fail) — switch it off ("Live") instead in that case. */
+router.delete('/products/:handle', (req, res) => {
+  try {
+    const handle = String(req.params.handle || '').trim();
+    const activeSubs = loadSubscriptions().filter(s => String(s.status || '').toUpperCase() !== 'CANCELLED' && (s.items || []).some(i => i.handle === handle));
+    if (activeSubs.length) {
+      return res.status(409).json({
+        ok: false,
+        error: `${activeSubs.length} active weekly subscription${activeSubs.length > 1 ? 's' : ''} still contain this product. Cancel or pause ${activeSubs.length > 1 ? 'them' : 'it'} in the Subscriptions tab first — or simply switch the product off with the "Live" checkbox.`
+      });
+    }
+    const removed = deleteProduct(handle);
+    if (!removed) return res.status(404).json({ ok: false, error: 'Product not found' });
+    console.log(JSON.stringify({ event: 'product.deleted', handle: removed.handle, title: removed.title }));
+    res.json({ ok: true, product: removed });
+  } catch (error) {
+    res.status(error.status || 500).json({ ok: false, error: error.message || 'Could not remove the product' });
   }
 });
 

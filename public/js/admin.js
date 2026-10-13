@@ -481,10 +481,35 @@
       editBtn.textContent = '✏️ Edit';
       editBtn.title = 'Edit title, description, unit…';
       editBtn.addEventListener('click', () => openProductEditor(p));
+      tr.lastElementChild.style.whiteSpace = 'nowrap';
       tr.lastElementChild.appendChild(editBtn);
+      const delBtn = document.createElement('button');
+      delBtn.className = 'button ghost small';
+      delBtn.type = 'button';
+      delBtn.dataset.remove = '1';
+      delBtn.textContent = '🗑 Remove';
+      delBtn.title = 'Delete this product from the catalog';
+      delBtn.style.color = '#b3261e';
+      delBtn.addEventListener('click', async () => {
+        if (!window.confirm(`Remove "${p.title}" from the catalog?\n\nIt disappears from the shop immediately. Past orders keep their own copy, so history stays intact.`)) return;
+        delBtn.disabled = true;
+        delBtn.textContent = 'Removing…';
+        try {
+          await api(`/api/admin/products/${encodeURIComponent(p.handle)}`, { method: 'DELETE' });
+          RFS.toast(`🗑 ${p.title} removed from the catalog`, 'success');
+          await renderProducts();
+          refreshDashboard();
+          renderLowStock();
+        } catch (error) {
+          RFS.toast(error.message || 'Could not remove', 'error');
+          delBtn.disabled = false;
+          delBtn.textContent = '🗑 Remove';
+        }
+      });
+      tr.lastElementChild.appendChild(delBtn);
       const [price, stock, active] = tr.querySelectorAll('input');
       tr.querySelectorAll('button').forEach(btn => {
-        if (btn.hasAttribute('data-photo') || btn.hasAttribute('data-edit')) return;
+        if (btn.hasAttribute('data-photo') || btn.hasAttribute('data-edit') || btn.hasAttribute('data-remove')) return;
         btn.addEventListener('click', async event => {
           RFS.setBusy(event.currentTarget, true, 'Saving…');
           try {

@@ -84,6 +84,13 @@ ${productUrls}
     res.sendFile(req.path.slice(1), { root: config.publicDir });
   });
 
+  /* v1 admin/store scripts: always revalidate — the owner must see admin-panel
+     fixes the moment they deploy, not after a 10-minute browser cache */
+  app.get(['/js/admin.js', '/js/auth.js', '/js/store.js', '/js/partner.js'], (req, res) => {
+    res.set('Cache-Control', 'public, max-age=0, must-revalidate');
+    res.sendFile(req.path.slice(1), { root: config.publicDir });
+  });
+
   /* speed: content-hashed Next assets cache forever; images cache a week */
   app.use('/v2/_next/static', express.static(path.join(config.publicDir, 'v2/_next/static'), { maxAge: '365d', immutable: true }));
   app.use('/assets', express.static(path.join(config.publicDir, 'assets'), { maxAge: '7d' }));

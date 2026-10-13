@@ -10,6 +10,24 @@ import { useToast } from "@/components/toaster";
 import { useVariantQty } from "@/lib/hooks";
 import { addToCart, api, money, Product, pushRecent, defaultVariant, lineVariantId } from "@/lib/store";
 
+/* pack per-unit math — honest hints only; "Best value" shows only when a pack is genuinely cheaper per unit */
+function unitPrice(v: { label: string; priceInr: number }): number {
+  const m = String(v.label || "").toLowerCase().match(/(\d+(?:\.\d+)?)\s*(kg|g|bunch)/);
+  if (!m) return 0;
+  const n = parseFloat(m[1]);
+  const price = Number(v.priceInr) || 0;
+  if (!n || !price) return 0;
+  if (m[2] === "kg") return price / (n * 10); // ₹ per 100 g
+  if (m[2] === "g") return price / (n / 100); // ₹ per 100 g
+  return price / n; // ₹ per bunch
+}
+
+function perUnitLabel(v: { label: string; priceInr: number }): string {
+  const u = unitPrice(v);
+  if (!u) return "";
+  return `${money(u)} / ${/bunch/i.test(String(v.label)) ? "bunch" : "100 g"}`;
+}
+
 interface Review {
   name: string;
   rating: number;
@@ -108,6 +126,13 @@ export function ProductView({ handle }: { handle: string }) {
   }, [all, product, handle]);
 
   const discount = product && Number(product.compareAtInr) > Number(product.priceInr) ? Math.round((1 - Number(product.priceInr) / Number(product.compareAtInr)) * 100) : 0;
+  const bestValue = useMemo(() => {
+    const vs = (product?.variants || []).map((v) => ({ v, u: unitPrice(v) })).filter((x) => x.u > 0);
+    if (vs.length < 2) return null;
+    const min = Math.min(...vs.map((x) => x.u));
+    const winners = vs.filter((x) => x.u <= min + 1e-9);
+    return winners.length === 1 ? winners[0].v : null; // ties (linear pricing) → no badge
+  }, [product]);
   const available = product ? Math.max(0, Number(product.stock || 0) - inCart) : 0;
 
   function addCurrent() {
@@ -216,21 +241,26 @@ export function ProductView({ handle }: { handle: string }) {
                 {hasPacks && (
                   <div className="mt-5">
                     <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Choose pack size</span>
-                    <div className="mt-2.5 grid grid-cols-3 gap-2">
+                    <div className="mt-3 grid grid-cols-3 gap-2">
                       {product.variants!.map((v) => {
                         const on = v.id === pack.id;
+                        const per = perUnitLabel(v);
                         return (
-                          <button
+                          <motion.button
                             key={v.id}
                             type="button"
                             onClick={() => setPackId(v.id)}
                             aria-pressed={on}
+                            whileTap={{ scale: 0.96 }}
                             className={`relative flex flex-col items-center rounded-2xl border px-2 py-3 transition ${
                               on
                                 ? "border-leaf bg-mint shadow-[0_6px_16px_rgba(11,124,49,0.14)]"
-                                : "border-line bg-white hover:border-leaf/50 hover:bg-cream/60"
+                                : "border-line bg-white hover:-translate-y-0.5 hover:border-leaf/50 hover:bg-cream/60"
                             }`}
                           >
+                            {bestValue?.id === v.id && (
+                              <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-carrot px-2 py-px text-[9px] font-bold uppercase tracking-[0.08em] text-white shadow-sm">Best value</span>
+                            )}
                             {on && (
                               <motion.span
                                 layoutId="pack-check"
@@ -241,8 +271,9 @@ export function ProductView({ handle }: { handle: string }) {
                               </motion.span>
                             )}
                             <span className={`text-[13px] font-bold ${on ? "text-forest" : "text-ink"}`}>{v.label}</span>
-                            <span className={`mt-0.5 text-[12px] font-semibold tabular-nums ${on ? "text-forest/75" : "text-muted-foreground"}`}>{money(v.priceInr)}</span>
-                          </button>
+                            <span className="mt-0.5 text-[14px] font-bold tabular-nums text-ink">{money(v.priceInr)}</span>
+                            {per && <span className={`mt-0.5 text-[10px] font-semibold tabular-nums ${on ? "text-leaf/80" : "text-muted-foreground/80"}`}>{per}</span>}
+                          </motion.button>
                         );
                       })}
                     </div>
@@ -297,13 +328,6 @@ export function ProductView({ handle }: { handle: string }) {
                   >
                     {product.stock <= 0 ? "Sold out" : `Add to basket · ${money(pack.priceInr)}`}
                   </motion.button>
-                  <AnimatePresence>
-                    {inCart > 0 && (
-                      <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-2.5 text-center text-[11px] font-bold text-leaf">
-                        {inCart} × {pack.label} in your basket — adjust quantity on the cart page
-                      </motion.p>
-                    )}
-                  </AnimatePresence>
                 </div>
 
                 {/* Share */}

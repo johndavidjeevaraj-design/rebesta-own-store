@@ -30,7 +30,7 @@ export function SiteFooter() {
         <div className="mt-4 border-t border-black/[0.08] pt-5">
           <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
             <nav aria-label="Quick links">
-              <h4 className="mb-2.5 text-[11px] font-bold text-ink">Shop</h4>
+              <h3 className="mb-2.5 text-[11px] font-bold text-ink">Shop</h3>
               <div className="space-y-1.5">
                 {[
                   ["Fresh stock", "/shop"],
@@ -47,7 +47,7 @@ export function SiteFooter() {
             </nav>
 
             <nav aria-label="Company">
-              <h4 className="mb-2.5 text-[11px] font-bold text-ink">Company</h4>
+              <h3 className="mb-2.5 text-[11px] font-bold text-ink">Company</h3>
               <div className="space-y-1.5">
                 {[
                   ["About us", "/about"],
@@ -65,7 +65,7 @@ export function SiteFooter() {
             </nav>
 
             <div>
-              <h4 className="mb-2.5 text-[11px] font-bold text-ink">Contact</h4>
+              <h3 className="mb-2.5 text-[11px] font-bold text-ink">Contact</h3>
               <div className="space-y-1.5">
                 <a
                   href="https://wa.me/918438765119"
@@ -80,7 +80,7 @@ export function SiteFooter() {
             </div>
 
             <div>
-              <h4 className="mb-2.5 text-[11px] font-bold text-ink">Delivery</h4>
+              <h3 className="mb-2.5 text-[11px] font-bold text-ink">Delivery</h3>
               <p className="text-[11px] font-medium leading-relaxed text-muted-foreground">
                 Morning slots: 7–9 AM &amp; 9–11 AM
                 <br />

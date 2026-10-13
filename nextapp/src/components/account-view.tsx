@@ -61,7 +61,7 @@ export function AccountView() {
                 <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-white text-ink shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
                   <ShoppingBasket size={22} strokeWidth={1.8} />
                 </span>
-                <h4 className="mt-4 text-[15px] font-bold text-ink">No orders yet</h4>
+                <h3 className="mt-4 text-[15px] font-bold text-ink">No orders yet</h3>
                 <p className="mt-1.5 text-[13px] font-medium text-muted-foreground">Your first Rebesta order will appear here.</p>
                 <a className="carrot-grad mt-5 inline-flex h-11 items-center rounded-full px-7 text-[14px] font-bold text-white shadow-[0_8px_20px_rgba(232,71,12,0.35)] transition hover:brightness-[1.05]" href="/shop">Start shopping</a>
               </div>

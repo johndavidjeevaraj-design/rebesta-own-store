@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ShopView } from "@/components/shop-view";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/greens" },
   title: "Fresh Greens & Keerai Delivered in Hosur | Rebesta Fresh",
   description: "Keerai and leafy greens picked this morning — farm-fresh delivery across Hosur.",
 };

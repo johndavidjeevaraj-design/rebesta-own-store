@@ -102,23 +102,29 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
         <div className="flex flex-1 flex-col px-0.5 pt-3">
           <a href={`/products/${product.handle}`} className="block">
             <h3 className="line-clamp-2 min-h-[2.35em] text-[14px] font-semibold leading-snug tracking-tight text-ink">{product.title}</h3>
-            <p className="mt-0.5 text-[11px] font-semibold text-muted-foreground">{pack.label}</p>
+            {!packs && <p className="mt-0.5 text-[11px] font-semibold text-muted-foreground">{pack.label}</p>}
           </a>
 
           {packs && (
             <div className="mt-1.5 flex flex-wrap gap-1">
-              {packs.map((v) => (
-                <button
-                  key={v.id}
-                  type="button"
-                  onClick={(e) => { e.preventDefault(); setPackId(v.id); }}
-                  className={`rounded-full border px-2.5 py-[3px] text-[11px] font-bold transition ${
-                    v.id === pack.id ? "border-leaf bg-mint text-forest" : "border-line bg-white text-muted-foreground hover:border-leaf/50"
-                  }`}
-                >
-                  {v.label}
-                </button>
-              ))}
+              {packs.map((v) => {
+                const on = v.id === pack.id;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); setPackId(v.id); }}
+                    aria-pressed={on}
+                    className={`rounded-full border px-2.5 py-[3px] text-[11px] font-bold transition active:scale-95 ${
+                      on
+                        ? "border-leaf bg-leaf text-white shadow-[0_2px_8px_rgba(11,124,49,0.28)]"
+                        : "border-line bg-white text-muted-foreground hover:border-leaf/50 hover:text-ink"
+                    }`}
+                  >
+                    {v.label}
+                  </button>
+                );
+              })}
             </div>
           )}
 

@@ -470,6 +470,7 @@ router.post('/orders/:id/pay', async (req, res) => {
     const order = getOrder(String(req.params.id || '').toUpperCase());
     if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
     if (String(order.paymentMethod || '') !== 'online') return res.status(400).json({ ok: false, error: 'This order is not an online payment order' });
+    if (String(order.status || '').toUpperCase() === 'CANCELLED') return res.status(400).json({ ok: false, error: 'This order was cancelled' });
     if (String(order.paymentStatus || '').toUpperCase() === 'PAID') return res.status(400).json({ ok: false, error: 'This order is already paid' });
     if (!cashfreeEnabled()) return res.status(503).json({ ok: false, error: 'Online payment is not configured yet' });
     const sessionId = String(order.paymentSessionId || '');
@@ -490,6 +491,7 @@ router.post('/orders/:id/upi-qr', async (req, res) => {
     const order = getOrder(String(req.params.id || '').toUpperCase());
     if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
     if (String(order.paymentMethod || '') !== 'online') return res.status(400).json({ ok: false, error: 'This order is not an online payment order' });
+    if (String(order.status || '').toUpperCase() === 'CANCELLED') return res.status(400).json({ ok: false, error: 'This order was cancelled' });
     if (String(order.paymentStatus || '').toUpperCase() === 'PAID') return res.status(400).json({ ok: false, error: 'This order is already paid' });
     if (!cashfreeEnabled()) return res.status(503).json({ ok: false, error: 'Online payment is not configured yet' });
     const qr = await createUpiQr(order);

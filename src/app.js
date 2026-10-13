@@ -19,39 +19,10 @@ export function createStoreApp() {
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
   app.use(helmet({
-    /* Content-Security-Policy — allow exactly what the storefront uses:
-       self + Cashfree's SDK (card/netbanking drop-in: scripts, its iframes
-       and its internal API calls). Next's static export needs inline
-       bootstrap scripts/styles. */
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", 'https://sdk.cashfree.com', 'https://js.cashfree.com'],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
-        fontSrc: ["'self'", 'data:'],
-        connectSrc: ["'self'", 'https://api.cashfree.com', 'https://sandbox.cashfree.com', 'https://*.cashfree.com'],
-        frameSrc: ['https://sdk.cashfree.com', 'https://js.cashfree.com', 'https://*.cashfree.com'],
-        mediaSrc: ["'self'"],
-        workerSrc: ["'self'", 'blob:'],
-        manifestSrc: ["'self'"],
-        objectSrc: ["'none'"],
-        baseUri: ["'self'"],
-        formAction: ["'self'"],
-        frameAncestors: ["'self'"],
-        upgradeInsecureRequests: []
-      }
-    },
+    contentSecurityPolicy: false,
     crossOriginResourcePolicy: false,
-    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-    strictTransportSecurity: { maxAge: 31536000, includeSubDomains: true, preload: true }
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
   }));
-  /* helmet 8 dropped permissionsPolicy — set it directly.
-     camera/mic/payment off; geolocation stays for the delivery pin */
-  app.use((req, res, next) => {
-    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), payment=(), usb=(), gyroscope=(), accelerometer=(), geolocation=(self)');
-    next();
-  });
   app.use(compression());
   app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
   app.use(express.urlencoded({ extended: false, limit: '100kb' }));

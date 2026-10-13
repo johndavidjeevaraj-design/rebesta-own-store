@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { InfoShell } from "@/components/info-shell";
 
 export const metadata: Metadata = {
-  alternates: { canonical: "/terms" },
   title: "Terms of Use | Rebesta Fresh",
   description: "The simple rules that keep our farm-to-door service fair for everyone.",
 };

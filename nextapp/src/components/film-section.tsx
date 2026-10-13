@@ -10,59 +10,19 @@ export function FilmSection() {
   const vidRef = useRef<HTMLVideoElement | null>(null);
   const [muted, setMuted] = useState(true);
 
-  /* performance: the film is 2MB — never download it during initial page
-     load (audit bots and first paint never pay for it). We only START
-     watching for the section once the visitor actually scrolls into the
-     page — early layout shift makes pure intersection unreliable. */
   useEffect(() => {
     const v = vidRef.current;
     if (!v) return;
-    const FILM = "/assets/brand/rebesta-film.mp4";
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let attached = false;
-    let watching = false;
-    const attach = () => {
-      if (attached) return;
-      attached = true;
-      v.src = FILM;
-      /* preload="none" stays for the initial page; once we're intentionally
-         loading, switch to auto or the browser keeps deferring the fetch */
-      v.preload = "auto";
-      v.load();
-      if (!reduced) v.play().catch(() => {});
-      lazy.disconnect();
-    };
-    const lazy = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) attach(); },
-      { rootMargin: "300px 0px" }
-    );
-    const engage = () => {
-      if (watching || window.scrollY < 200) return;
-      watching = true;
-      lazy.observe(v);
-      cleanupEngage();
-    };
-    const cleanupEngage = () => {
-      window.removeEventListener("scroll", engage);
-      window.removeEventListener("touchmove", engage);
-      window.removeEventListener("wheel", engage);
-      window.removeEventListener("keydown", engage);
-    };
-    window.addEventListener("scroll", engage, { passive: true });
-    window.addEventListener("touchmove", engage, { passive: true });
-    window.addEventListener("wheel", engage, { passive: true });
-    window.addEventListener("keydown", engage);
-    if (reduced) return () => { cleanupEngage(); lazy.disconnect(); };
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const io = new IntersectionObserver(
       ([e]) => {
-        if (!attached) return;
         if (e.isIntersecting) v.play().catch(() => {});
         else v.pause();
       },
       { threshold: 0.35 }
     );
     io.observe(v);
-    return () => { cleanupEngage(); lazy.disconnect(); io.disconnect(); };
+    return () => io.disconnect();
   }, []);
 
   const toggle = () => {
@@ -100,11 +60,12 @@ export function FilmSection() {
             <video
               ref={vidRef}
               className="block w-full cursor-pointer"
+              src="/assets/brand/rebesta-film.mp4"
               poster="/assets/brand/rebesta-film-poster.jpg"
               muted
               loop
               playsInline
-              preload="none"
+              preload="metadata"
               onClick={toggle}
             />
             <button

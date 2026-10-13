@@ -864,7 +864,7 @@ export function CartView() {
             {/* complete your basket */}
             {products.length > 0 && (
               <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }} className="mt-4 rounded-3xl border border-line bg-white p-5 shadow-soft">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Complete your basket</h3>
+                <h4 className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Complete your basket</h4>
                 <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1">
                   {ADD_TABS.map((t) => (
                     <button
@@ -921,7 +921,7 @@ export function CartView() {
             {/* savings corner */}
             {coupons && coupons.length > 0 && (
               <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mt-4 rounded-3xl border border-line bg-white p-5 shadow-soft">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Savings corner</h3>
+                <h4 className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Savings corner</h4>
                 {!coupon && (
                   <>
                     <button

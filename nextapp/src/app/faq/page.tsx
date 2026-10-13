@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { InfoShell } from "@/components/info-shell";
 
 export const metadata: Metadata = {
-  alternates: { canonical: "/faq" },
   title: "FAQ — Delivery, Slots, COD & Coupons | Rebesta Fresh",
   description: "Everything customers ask us on WhatsApp, answered in one place — areas, slots, charges, COD, coupons and more.",
 };

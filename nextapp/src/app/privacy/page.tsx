@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { InfoShell } from "@/components/info-shell";
 
 export const metadata: Metadata = {
-  alternates: { canonical: "/privacy" },
   title: "Privacy Policy | Rebesta Fresh",
   description: "We collect the minimum data needed to put vegetables at your door — and nothing else.",
 };

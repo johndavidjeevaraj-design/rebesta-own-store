@@ -171,10 +171,9 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
                       initial={{ scale: 1.4 }}
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 600, damping: 20 }}
-                      className="flex items-baseline gap-1 whitespace-nowrap text-[15px] font-bold tabular-nums"
+                      className="text-[15px] font-bold tabular-nums"
                     >
                       {qty}
-                      <span className="hidden text-[10px] font-bold uppercase tracking-wider text-white/85 min-[420px]:inline">in basket</span>
                     </motion.span>
                     <button
                       type="button"

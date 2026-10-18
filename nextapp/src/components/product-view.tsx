@@ -6,6 +6,7 @@ import { Link2, MapPin, Star, Truck, X } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ProductCard } from "@/components/product-card";
+import { LikeButton } from "@/components/like-button";
 import { useToast } from "@/components/toaster";
 import { useVariantQty } from "@/lib/hooks";
 import { addToCart, api, money, Product, pushRecent, defaultVariant, lineVariantId } from "@/lib/store";
@@ -214,6 +215,7 @@ export function ProductView({ handle }: { handle: string }) {
                     decoding="async"
                   />
                 </motion.button>
+                <LikeButton handle={product.handle} size={38} className="right-3 top-3" />
                 {discount > 0 && (
                   <motion.span
                     initial={{ scale: 0, rotate: -12 }}

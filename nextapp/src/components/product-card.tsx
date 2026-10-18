@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Product, money, setCartQty, defaultVariant } from "@/lib/store";
 import { useVariantQty } from "@/lib/hooks";
 import { useToast } from "./toaster";
+import { LikeButton } from "./like-button";
 
 /* fly-to-basket: a little photo of the veg flies from the card into the
    header basket icon — the classic delightful "it's in my basket" moment */
@@ -72,6 +73,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
           soldOut ? "opacity-75" : ""
         }`}
       >
+        <LikeButton handle={product.handle} />
         <a href={`/products/${product.handle}`} className="block">
           <div className="relative aspect-square overflow-hidden rounded-[14px] bg-[#f5f5f7]">
             {/* eslint-disable-next-line @next/next/no-img-element */}

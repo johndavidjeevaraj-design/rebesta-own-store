@@ -11,7 +11,9 @@
     versions: null,
     knownOrderIds: new Set(),
     orderFilter: { status: '', search: '' },
-    productSearch: ''
+    productSearch: '',
+    productCategory: '',
+    showCategories: false
   };
   const $ = selector => document.querySelector(selector);
   const statuses = ['PENDING_PAYMENT', 'PLACED', 'CONFIRMED', 'PACKING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'PAYMENT_FAILED', 'PAID_NEEDS_REVIEW'];
@@ -435,7 +437,7 @@
     const wrap = $('[data-products-table]');
     wrap.innerHTML = '';
 
-    /* toolbar: instant search + live count + add button right where you work */
+    /* toolbar: instant search + category filter + manage + add */
     const bar = document.createElement('div');
     bar.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px';
     const search = document.createElement('input');
@@ -443,16 +445,23 @@
     search.value = state.productSearch || '';
     search.setAttribute('aria-label', 'Search products');
     search.placeholder = '🔍 Search products — name, category…';
-    search.style.cssText = 'flex:1 1 220px;min-height:40px;border:1px solid #cbd8c5;border-radius:10px;padding:6px 12px;background:#fff;font-size:.95rem;font-family:inherit';
+    search.style.cssText = 'flex:1 1 200px;min-height:40px;border:1px solid #cbd8c5;border-radius:10px;padding:6px 12px;background:#fff;font-size:.95rem;font-family:inherit';
+    const catSelect = document.createElement('select');
+    catSelect.setAttribute('aria-label', 'Filter by category');
+    catSelect.style.cssText = 'flex:0 1 auto;min-height:40px;border:1px solid #cbd8c5;border-radius:10px;padding:6px 10px;background:#fff;font-size:.9rem;font-family:inherit;max-width:46vw';
     const countLabel = document.createElement('span');
     countLabel.style.cssText = 'font-size:.82rem;font-weight:700;color:var(--muted,#6b7a66);white-space:nowrap';
+    const manageBtn = document.createElement('button');
+    manageBtn.type = 'button';
+    manageBtn.className = 'button ghost small';
+    manageBtn.style.cssText = 'white-space:nowrap';
     const addBtn = document.createElement('button');
     addBtn.type = 'button';
     addBtn.className = 'button small';
     addBtn.style.cssText = 'background:linear-gradient(135deg,#2ecb66 0%,#17b34e 45%,#0faa46 100%);color:#fff;border:none;border-radius:999px;padding:10px 18px;font-weight:700;cursor:pointer;box-shadow:0 6px 16px rgba(11,124,49,.35);white-space:nowrap';
     addBtn.textContent = '➕ Add product';
     addBtn.addEventListener('click', () => openProductEditor());
-    bar.append(search, countLabel, addBtn);
+    bar.append(search, catSelect, countLabel, manageBtn, addBtn);
 
     const table = document.createElement('table');
     table.className = 'admin-table';
@@ -481,6 +490,7 @@
     for (const p of state.products) {
       const tr = document.createElement('tr');
       tr.dataset.search = `${p.title} ${p.handle} ${p.category}`.toLowerCase();
+      tr.dataset.category = String(p.category || '').trim();
       tr.innerHTML = `
         <td class="prod-cell"><img class="prod-thumb" src="${p.image || '/assets/brand/basket.jpg'}" alt="" loading="lazy"><div><strong>${p.title}</strong><br><span>${p.handle}</span></div></td>
         <td></td>
@@ -549,21 +559,104 @@
     }
     wrap.appendChild(table);
 
-    /* wire the search: filters rows instantly, remembers the query across
-       re-renders (save/add/remove rebuild the table) */
+    /* category dropdown + counts */
+    const catCounts = new Map();
+    for (const p of state.products) {
+      const c = String(p.category || '').trim() || '(no category)';
+      catCounts.set(c, (catCounts.get(c) || 0) + 1);
+    }
+    catSelect.innerHTML = '';
+    const allOpt = document.createElement('option');
+    allOpt.value = '';
+    allOpt.textContent = `All categories (${state.products.length})`;
+    catSelect.appendChild(allOpt);
+    for (const c of [...catCounts.keys()].sort((a, b) => a.localeCompare(b))) {
+      const o = document.createElement('option');
+      o.value = c;
+      o.textContent = `${c} (${catCounts.get(c)})`;
+      catSelect.appendChild(o);
+    }
+    catSelect.value = state.productCategory || '';
+
+    /* manage-categories panel: rename or merge in one tap */
+    const catPanel = document.createElement('div');
+    catPanel.hidden = !state.showCategories;
+    catPanel.style.cssText = 'margin-bottom:12px;border:1px solid #dde7d8;border-radius:14px;padding:14px;background:#f6faf4';
+    const catTitle = document.createElement('strong');
+    catTitle.textContent = '🏷 Categories';
+    catTitle.style.cssText = 'display:block;margin-bottom:4px;color:#074015';
+    const catHint = document.createElement('small');
+    catHint.style.cssText = 'display:block;color:var(--muted,#6b7a66);margin-bottom:8px';
+    catHint.textContent = 'Rename a category to fix a spelling, or type an existing name to merge two into one. New categories are created by typing the name in any product\u2019s editor. Your shop chips update instantly.';
+    catPanel.append(catTitle, catHint);
+    const renameCategory = async (from, to) => {
+      const toCount = catCounts.get(to) || 0;
+      const msg = toCount
+        ? `Merge "${from}" into "${to}"?\n\nAll ${catCounts.get(from)} product(s) move to "${to}".`
+        : `Rename "${from}" to "${to}"?\n\n${catCounts.get(from)} product(s) update instantly on the store.`;
+      if (!window.confirm(msg)) return;
+      try {
+        const r = await api('/api/admin/categories/rename', { method: 'POST', body: JSON.stringify({ from, to }) });
+        RFS.toast(`🏷 ${r.moved} product(s) moved to "${to}"`, 'success');
+        state.productCategory = '';
+        await renderProducts();
+        refreshDashboard();
+      } catch (error) { RFS.toast(error.message || 'Could not rename', 'error'); }
+    };
+    for (const c of [...catCounts.keys()].sort((a, b) => catCounts.get(b) - catCounts.get(a))) {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 0;border-bottom:1px dashed #dde7d8';
+      const name = document.createElement('strong');
+      name.textContent = c;
+      name.style.cssText = 'min-width:150px;font-size:.9rem';
+      const n = document.createElement('span');
+      n.textContent = `${catCounts.get(c)} product${catCounts.get(c) > 1 ? 's' : ''}`;
+      n.style.cssText = 'font-size:.78rem;color:var(--muted,#6b7a66)';
+      const inp = document.createElement('input');
+      inp.placeholder = 'New name…';
+      inp.maxLength = 60;
+      inp.style.cssText = 'flex:1 1 150px;min-height:36px;border:1px solid #cbd8c5;border-radius:9px;padding:4px 10px;background:#fff;font-size:.88rem;font-family:inherit';
+      const go = document.createElement('button');
+      go.type = 'button';
+      go.className = 'button ghost small';
+      go.textContent = '✓ Apply';
+      go.addEventListener('click', () => {
+        const to = inp.value.trim();
+        if (!to) return RFS.toast('Type a new name first', 'error');
+        renameCategory(c, to);
+      });
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') go.click(); });
+      row.append(name, n, inp, go);
+      catPanel.appendChild(row);
+    }
+    const updateManageBtn = () => { manageBtn.textContent = state.showCategories ? '🏷 Hide categories' : '🏷 Categories'; };
+    updateManageBtn();
+    manageBtn.addEventListener('click', () => {
+      state.showCategories = !state.showCategories;
+      catPanel.hidden = !state.showCategories;
+      updateManageBtn();
+    });
+
+    /* wire the search + category filter: rows filter instantly, and both the
+       query and the chosen category survive re-renders (save/add/remove) */
     const applyProductSearch = () => {
       const q = search.value.trim().toLowerCase();
+      const cat = catSelect.value;
       state.productSearch = search.value;
+      state.productCategory = cat;
       let shown = 0;
       for (const tr of body.children) {
-        const hit = !q || tr.dataset.search.includes(q);
+        const hit = (!q || tr.dataset.search.includes(q)) && (!cat || tr.dataset.category === cat);
         tr.style.display = hit ? '' : 'none';
         if (hit) shown++;
       }
-      countLabel.textContent = q ? `${shown} of ${state.products.length} products` : `${state.products.length} products`;
+      const filtering = Boolean(q || cat);
+      countLabel.textContent = filtering ? `${shown} of ${state.products.length} products` : `${state.products.length} products`;
     };
     search.addEventListener('input', applyProductSearch);
+    catSelect.addEventListener('change', applyProductSearch);
     wrap.insertBefore(bar, table);
+    wrap.insertBefore(catPanel, table);
     applyProductSearch();
   }
 

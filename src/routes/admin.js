@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { config } from '../config.js';
 import { rateLimit } from '../lib/rateLimit.js';
-import { loadProducts, loadSettings, loadPartners, savePartners, readOrders, saveOrders, updateOrderStatus, updateProduct, createProduct, deleteProduct, saveSettings, createBackup, awardLoyalty, awardReferral, dataVersions, loadSubscriptions, saveSubscriptions, getSubscription, cashSummary, recordCashReceived, loadReviews, setReviewApproval, deleteReview } from '../lib/store.js';
+import { loadProducts, saveProducts, loadSettings, loadPartners, savePartners, readOrders, saveOrders, updateOrderStatus, updateProduct, createProduct, deleteProduct, saveSettings, createBackup, awardLoyalty, awardReferral, dataVersions, loadSubscriptions, saveSubscriptions, getSubscription, cashSummary, recordCashReceived, loadReviews, setReviewApproval, deleteReview } from '../lib/store.js';
 import { createPartner, updatePartner, deletePartner, publicPartner, freshPositions, haversineKm, etaMinutesFromKm, partnerScore } from '../lib/partners.js';
 import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
 import { publicSubscription } from '../lib/subscriptions.js';
@@ -67,6 +67,28 @@ router.post('/products', (req, res) => {
     res.status(201).json({ ok: true, product });
   } catch (error) {
     res.status(error.status || 400).json({ ok: false, error: error.message || 'Could not create the product' });
+  }
+});
+
+/* Rename (or merge) a category across the whole catalog in one atomic write.
+   Customers see the change instantly — shop chips derive from the catalog. */
+router.post('/categories/rename', (req, res) => {
+  try {
+    const from = String(req.body?.from || '').trim();
+    const to = String(req.body?.to || '').trim();
+    if (!from || !to) return res.status(400).json({ ok: false, error: 'Both the current and new category names are required' });
+    if (from === to) return res.status(400).json({ ok: false, error: 'That is already the name' });
+    const products = loadProducts();
+    let moved = 0;
+    for (const p of products) {
+      if (String(p.category || '').trim() === from) { p.category = to; moved++; }
+    }
+    if (!moved) return res.status(404).json({ ok: false, error: `No products use the category "${from}"` });
+    saveProducts(products);
+    console.log(JSON.stringify({ event: 'category.renamed', from, to, moved }));
+    res.json({ ok: true, moved, to });
+  } catch (error) {
+    res.status(error.status || 500).json({ ok: false, error: error.message || 'Could not rename the category' });
   }
 });
 

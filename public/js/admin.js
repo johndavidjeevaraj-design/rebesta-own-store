@@ -465,7 +465,7 @@
 
     const table = document.createElement('table');
     table.className = 'admin-table';
-    table.innerHTML = '<thead><tr><th>Product</th><th>Category</th><th>Unit</th><th>Price ₹</th><th>Stock</th><th>Visibility</th><th>Photo</th><th>Save</th><th></th></tr></thead><tbody></tbody>';
+    table.innerHTML = '<thead><tr><th>Product</th><th>Category</th><th>Quantities</th><th>Price ₹</th><th>Stock</th><th>Visibility</th><th>Photo</th><th>Save</th><th></th></tr></thead><tbody></tbody>';
     const body = table.querySelector('tbody');
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -487,31 +487,6 @@
       finally { fileInput.value = ''; }
     }
 
-    /* per-product unit selector — what the customer can pick on the product
-       page. "1 kg +250/500" is the auto size ladder; whole items (cauliflower,
-       cabbage…) should use "1 piece" or "1 kg whole only" so nobody can order
-       an impossible 250 g cut. */
-    const UNIT_OPTIONS = [
-      ['auto:1 kg', '1 kg · +250/500 g'],
-      ['whole:1 kg', '1 kg · whole only'],
-      ['500 g', '500 g'],
-      ['250 g', '250 g'],
-      ['100 g', '100 g'],
-      ['2 kg', '2 kg'],
-      ['5 kg', '5 kg'],
-      ['1 piece', '1 piece'],
-      ['2 pieces', '2 pieces'],
-      ['1 bunch', '1 bunch'],
-      ['1 pack', '1 pack'],
-      ['1 box', '1 box']
-    ];
-    const unitValueFor = p => {
-      const explicit = Array.isArray(p.variants) ? p.variants : null;
-      if (explicit && explicit.length === 1 && explicit[0].label === '1 kg') return 'whole:1 kg';
-      if (String(p.unitLabel || '').trim() === '1 kg' && !explicit) return 'auto:1 kg';
-      return String(p.unitLabel || '1 kg').trim();
-    };
-
     for (const p of state.products) {
       const tr = document.createElement('tr');
       tr.dataset.search = `${p.title} ${p.handle} ${p.category}`.toLowerCase();
@@ -528,26 +503,17 @@
         <td></td>
       `;
       tr.children[1].textContent = p.category;
-      /* unit dropdown (keeps a custom current value selectable) */
+      /* quantities button — opens the per-product quantity picker */
       const unitTd = tr.children[2];
-      const unitSel = document.createElement('select');
-      unitSel.setAttribute('aria-label', `Unit for ${p.title}`);
-      unitSel.style.cssText = 'border:1px solid #cbd8c5;border-radius:8px;padding:5px 6px;background:#fff;font-size:.8rem;font-family:inherit;max-width:150px';
-      const currentUnit = unitValueFor(p);
-      for (const [val, label] of UNIT_OPTIONS) {
-        const o = document.createElement('option');
-        o.value = val;
-        o.textContent = label;
-        unitSel.appendChild(o);
-      }
-      if (!UNIT_OPTIONS.some(([val]) => val === currentUnit)) {
-        const o = document.createElement('option');
-        o.value = currentUnit;
-        o.textContent = `${currentUnit} (current)`;
-        unitSel.appendChild(o);
-      }
-      unitSel.value = currentUnit;
-      unitTd.appendChild(unitSel);
+      const unitsBtn = document.createElement('button');
+      unitsBtn.className = 'button ghost small';
+      unitsBtn.type = 'button';
+      unitsBtn.dataset.units = '1';
+      unitsBtn.title = 'Choose the quantities customers can order';
+      unitsBtn.style.cssText = 'max-width:170px;white-space:normal;line-height:1.3;text-align:left';
+      unitsBtn.textContent = unitsSummary(p);
+      unitTd.appendChild(unitsBtn);
+      unitsBtn.addEventListener('click', () => openUnitsEditor(p));
       tr.querySelector('[data-photo]').addEventListener('click', () => {
         fileInput.dataset.handle = p.handle;
         fileInput.click();
@@ -587,28 +553,36 @@
       tr.lastElementChild.appendChild(delBtn);
       const [price, stock, active] = tr.querySelectorAll('input');
       tr.querySelectorAll('button').forEach(btn => {
-        if (btn.hasAttribute('data-photo') || btn.hasAttribute('data-edit') || btn.hasAttribute('data-remove')) return;
+        if (btn.hasAttribute('data-photo') || btn.hasAttribute('data-edit') || btn.hasAttribute('data-remove') || btn.hasAttribute('data-units')) return;
         btn.addEventListener('click', async () => {
           /* NOTE: use the closed-over btn — event.currentTarget is null after
              the first await, which left the button stuck at "Saving…" forever */
           RFS.setBusy(btn, true, 'Saving…');
-          /* translate the unit choice into a patch:
-             auto size ladder / whole-only / plain single unit */
-          const uv = unitSel.value;
-          let unitPatch;
-          if (uv === 'auto:1 kg') unitPatch = { unitLabel: '1 kg', variants: null };
-          else if (uv === 'whole:1 kg') unitPatch = { unitLabel: '1 kg', variants: [{ id: '1kg', label: '1 kg', priceInr: Number(price.value), default: true }] };
-          else unitPatch = { unitLabel: uv, variants: null };
+          const newPrice = Number(price.value);
+          const patch = { priceInr: newPrice, stock: Number(stock.value), active: active.checked };
+          /* base price changed → rescale pinned quantity prices with it */
+          const ex = explicitVariants(p);
+          let rescaled = false;
+          if (ex && Number.isFinite(newPrice) && Math.abs(newPrice - Number(p.priceInr)) > 1e-9) {
+            const baseV = ex.find(v => v.default) || ex[0];
+            const basePrice = Number(baseV && baseV.priceInr);
+            const ratio = basePrice > 0 ? newPrice / basePrice : 1;
+            if (Number.isFinite(ratio) && ratio > 0) {
+              patch.variants = ex.map(v => ({ id: v.id, label: v.label, priceInr: Math.max(1, Math.round(Number(v.priceInr) * ratio)), default: v === baseV }));
+              rescaled = true;
+            }
+          }
           try {
             await api(`/api/admin/products/${encodeURIComponent(p.handle)}`, {
               method: 'PATCH',
-              body: JSON.stringify({ priceInr: Number(price.value), stock: Number(stock.value), active: active.checked, ...unitPatch })
+              body: JSON.stringify(patch)
             });
-            RFS.toast(`${p.title} updated${uv !== currentUnit ? ' — unit: ' + (unitSel.selectedOptions[0]?.textContent || uv) : ''}`);
+            RFS.toast(`${p.title} updated${rescaled ? ' — quantity prices rescaled to the new base price' : ''}`);
+            if (rescaled) await renderProducts();
             refreshDashboard();
           } catch (error) { RFS.toast(error.message, 'error'); }
           finally { RFS.setBusy(btn, false); }
-          });
+        });
       });
       body.appendChild(tr);
     }
@@ -1182,6 +1156,245 @@
     renderLowStock();
     renderSales();
     detectLowStock();
+  }
+
+
+  /* ============ ⚖ Per-product quantity picker ============ */
+
+  /* per-product quantities — what the customer can pick on the product page.
+     Auto = the site's size ladder (250/500 g + 1 kg, or 1/2/3 bunch for leafy
+     greens). Anything else pins the exact list: tick every quantity you
+     actually sell (whole items → pieces/bunches, no impossible 250 g cuts). */
+  const QUANTITIES = [
+    { id: '100g', label: '100 g', grams: 100 },
+    { id: '250g', label: '250 g', grams: 250 },
+    { id: '500g', label: '500 g', grams: 500 },
+    { id: '1kg', label: '1 kg', grams: 1000 },
+    { id: '2kg', label: '2 kg', grams: 2000 },
+    { id: '5kg', label: '5 kg', grams: 5000 },
+    { id: '1piece', label: '1 piece', count: 1 },
+    { id: '2pieces', label: '2 pieces', count: 2 },
+    { id: '3pieces', label: '3 pieces', count: 3 },
+    { id: '1bunch', label: '1 bunch', count: 1, bunch: true },
+    { id: '2bunch', label: '2 bunches', count: 2, bunch: true },
+    { id: '3bunch', label: '3 bunches', count: 3, bunch: true },
+    { id: '1pack', label: '1 pack' },
+    { id: '1box', label: '1 box' }
+  ];
+  const explicitVariants = p => (Array.isArray(p.variants) && p.variants.length ? p.variants : null);
+  const unitsSummary = p => {
+    const ex = explicitVariants(p);
+    if (ex) return ex.map(v => v.label).join(' + ');
+    const unit = String(p.unitLabel || '').trim();
+    const category = String(p.category || '');
+    if (category === 'Leafy Greens') return '⚡ 1/2/3 bunch';
+    if (/^\s*1\s*kg$/i.test(unit) && !/box|kit|combo/i.test(category)) return '⚡ 250/500 g + 1 kg';
+    return '⚡ ' + (unit || '1 unit');
+  };
+
+  function openUnitsEditor(product) {
+    const category = String(product.category || '');
+    const unit = String(product.unitLabel || '').trim();
+    const ex = Array.isArray(product.variants) && product.variants.length ? product.variants : null;
+    const isLeafy = category === 'Leafy Greens';
+    /* what "Auto" means for this product: already-auto keeps its unit;
+       pinned products guess the natural ladder from what's pinned
+       (bunches → bunch ladder, any gram/kg → 250/500 g + 1 kg,
+       pieces/packs only → that single unit — never re-add 250 g cuts
+       to a whole item) */
+    let autoUnit;
+    if (!ex) autoUnit = isLeafy ? '1 bunch' : (unit || '1 unit');
+    else {
+      const labels = ex.map(v => String(v.label || ''));
+      autoUnit = labels.some(l => /bunch/i.test(l)) ? '1 bunch'
+        : labels.some(l => /(^|\s)(g|kg)$/i.test(l)) ? '1 kg'
+        : (labels[0] || '1 kg');
+    }
+    const ladder = isLeafy ? ['1 bunch', '2 bunches', '3 bunches'] : (autoUnit === '1 kg' ? ['250 g', '500 g', '1 kg'] : [autoUnit]);
+    const base = Math.round(Number(product.priceInr || 0) * 100) / 100;
+    /* mirror of the site's auto-ladder math (store.js productVariants) */
+    const autoPrice = label => {
+      if (isLeafy) { const b = Math.max(5, Math.ceil(base * 0.25)); return label === '1 bunch' ? b : label === '2 bunches' ? b * 2 : b * 3; }
+      if (autoUnit === '1 kg') {
+        if (label === '250 g') return Math.max(1, Math.round(base * 0.25));
+        if (label === '500 g') return Math.max(1, Math.round(base * 0.5));
+      }
+      return base;
+    };
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(18,25,16,.55);z-index:700;display:flex;align-items:center;justify-content:center;padding:14px';
+    const panel = document.createElement('div');
+    panel.style.cssText = 'background:#fff;border-radius:18px;max-width:440px;width:100%;max-height:88vh;overflow:auto;padding:18px;box-shadow:0 18px 50px rgba(18,25,16,.35)';
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+    const onKey = e => { if (e.key === 'Escape') close(); };
+    const close = () => { document.removeEventListener('keydown', onKey); overlay.remove(); };
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', onKey);
+
+    const head = document.createElement('strong');
+    head.style.cssText = 'font-size:1.05rem;display:block';
+    head.textContent = `⚖ ${product.title}`;
+    const sub = document.createElement('div');
+    sub.style.cssText = 'color:#5b6b55;font-size:.85rem;margin:4px 0 12px';
+    sub.textContent = `Tick every quantity customers can order. Prices auto-fill from ₹${base} — you can edit each one.`;
+    panel.append(head, sub);
+
+    let auto = !ex;
+    const autoBtn = document.createElement('button');
+    autoBtn.type = 'button';
+    autoBtn.className = 'button small';
+    autoBtn.style.cssText = 'display:block;width:100%;margin-bottom:12px';
+    const autoText = isLeafy ? '⚡ Auto — 1 + 2 + 3 bunch' : (autoUnit === '1 kg' ? '⚡ Auto — 250 g + 500 g + 1 kg' : `⚡ Auto — ${autoUnit}`);
+    const syncAutoBtn = () => {
+      autoBtn.textContent = auto ? `${autoText}  ✓ on` : autoText;
+      autoBtn.style.background = auto ? '#e3f2e1' : '';
+      autoBtn.style.borderColor = auto ? '#1e4620' : '';
+    };
+    autoBtn.addEventListener('click', () => {
+      auto = true;
+      for (const r of rows) {
+        r.cb.checked = ladder.includes(r.q.label);
+        r.dirty = false;
+        r.price.value = r.cb.checked ? autoPrice(r.q.label) : '';
+        r.price.style.display = r.cb.checked ? '' : 'none';
+      }
+      syncAutoBtn(); syncSummary();
+    });
+    panel.appendChild(autoBtn);
+
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px';
+    panel.appendChild(grid);
+
+    /* standard quantities + any custom labels already pinned on the product */
+    const defs = QUANTITIES.slice();
+    for (const v of (ex || [])) if (!defs.some(q => q.label === v.label)) defs.push({ id: v.id, label: v.label, custom: true });
+
+    const rows = defs.map(q => {
+      const row = document.createElement('label');
+      row.style.cssText = 'border:1px solid #dde7d8;border-radius:12px;padding:8px;display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.88rem;background:#fbfdfa';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.style.cssText = 'accent-color:#1e4620;width:17px;height:17px;flex:none';
+      const name = document.createElement('span');
+      name.textContent = q.label;
+      name.style.cssText = 'flex:1';
+      const price = document.createElement('input');
+      price.type = 'number';
+      price.min = '1';
+      price.step = '0.5';
+      price.placeholder = '₹';
+      price.setAttribute('aria-label', `Price for ${q.label}`);
+      price.style.cssText = 'width:62px;padding:4px 5px;border:1px solid #cbd8c5;border-radius:8px;font-size:.82rem;font-family:inherit';
+      row.append(cb, name, price);
+      grid.appendChild(row);
+      return { q, cb, price, dirty: false };
+    });
+
+    /* recompute auto prices for untouched rows (largest ticked weight = base;
+       bunches follow the site's bunch math — a bunch is a quarter of base) */
+    const syncPrices = () => {
+      const checked = rows.filter(r => r.cb.checked);
+      const grams = checked.map(r => r.q.grams).filter(Boolean);
+      const gMax = grams.length ? Math.max(...grams) : 0;
+      for (const r of rows) {
+        if (!r.cb.checked || r.dirty) continue;
+        if (r.q.grams) r.price.value = Math.max(1, Math.round(base * (r.q.grams / (gMax || r.q.grams))));
+        else if (r.q.bunch) r.price.value = Math.max(5, Math.ceil(base * 0.25)) * r.q.count;
+        else if (r.q.count) r.price.value = Math.max(1, Math.round(base * r.q.count));
+        else r.price.value = Math.max(1, Math.round(base));
+      }
+    };
+    const summary = document.createElement('div');
+    summary.style.cssText = 'font-size:.85rem;color:#2c382b;border-top:1px solid #eef2ec;padding-top:10px;margin-bottom:12px;min-height:20px';
+    panel.appendChild(summary);
+    const syncSummary = () => {
+      if (auto) { summary.textContent = 'Customers see (auto): ' + ladder.map(l => `${l} ₹${autoPrice(l)}`).join(' · '); return; }
+      const on = rows.filter(r => r.cb.checked);
+      summary.textContent = on.length
+        ? 'Customers see: ' + on.map(r => `${r.q.label} ₹${r.price.value || '?'}`).join(' · ')
+        : 'Nothing ticked — tick at least one quantity, or use Auto';
+    };
+
+    for (const r of rows) {
+      r.cb.addEventListener('change', () => {
+        if (r.cb.checked && rows.filter(x => x.cb.checked).length > 8) {
+          r.cb.checked = false;
+          RFS.toast('Up to 8 quantities per product', 'error');
+          return;
+        }
+        auto = false;
+        syncAutoBtn();
+        r.price.style.display = r.cb.checked ? '' : 'none';
+        syncPrices();
+        syncSummary();
+      });
+      r.price.addEventListener('input', () => { r.dirty = true; syncSummary(); });
+    }
+
+    /* initial state: pinned quantities, or the auto ladder pre-ticked */
+    if (ex) {
+      for (const r of rows) {
+        const v = ex.find(x => x.label === r.q.label);
+        if (v) {
+          r.cb.checked = true;
+          r.price.value = Math.round(Number(v.priceInr) * 100) / 100;
+          r.dirty = true; /* pinned prices are deliberate — never auto-overwrite */
+        }
+      }
+    } else {
+      for (const r of rows) if (ladder.includes(r.q.label)) { r.cb.checked = true; r.price.value = autoPrice(r.q.label); }
+    }
+    for (const r of rows) if (!r.cb.checked) r.price.style.display = 'none';
+    syncAutoBtn();
+    syncSummary();
+
+    const foot = document.createElement('div');
+    foot.style.cssText = 'display:flex;gap:10px;justify-content:flex-end';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'button ghost small';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.addEventListener('click', close);
+    const saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.className = 'button small';
+    saveBtn.style.background = 'linear-gradient(135deg,#2e7d32,#1e4620)';
+    saveBtn.style.color = '#fff';
+    saveBtn.textContent = '✓ Save quantities';
+    saveBtn.addEventListener('click', async () => {
+      let patch;
+      if (auto) {
+        patch = { unitLabel: autoUnit, variants: null };
+      } else {
+        const on = rows.filter(r => r.cb.checked);
+        if (!on.length) { RFS.toast('Tick at least one quantity (or use Auto)', 'error'); return; }
+        /* default = largest weight; else the smallest count; else first */
+        const withG = on.filter(r => r.q.grams);
+        const top = withG.length
+          ? withG.reduce((a, b) => (b.q.grams > a.q.grams ? b : a))
+          : (on.some(r => r.q.count) ? on.filter(r => r.q.count).reduce((a, b) => (b.q.count < a.q.count ? b : a)) : on[0]);
+        patch = {
+          unitLabel: top.q.label,
+          variants: on.map(r => ({ id: r.q.id, label: r.q.label, priceInr: Math.max(1, Math.round((Number(r.price.value) || 1) * 100) / 100), default: r === top }))
+        };
+      }
+      RFS.setBusy(saveBtn, true, 'Saving…');
+      try {
+        await api(`/api/admin/products/${encodeURIComponent(product.handle)}`, { method: 'PATCH', body: JSON.stringify(patch) });
+        RFS.toast(`${product.title}: ${auto ? 'auto sizes' : patch.variants.map(v => v.label).join(' + ')}`, 'success');
+        close();
+        await renderProducts();
+        refreshDashboard();
+      } catch (error) {
+        RFS.toast(error.message, 'error');
+        RFS.setBusy(saveBtn, false);
+      }
+    });
+    foot.append(cancelBtn, saveBtn);
+    panel.appendChild(foot);
   }
 
 

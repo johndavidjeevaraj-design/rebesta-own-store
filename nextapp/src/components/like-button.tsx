@@ -45,6 +45,8 @@ export function LikeButton({
       localStorage.setItem(LIKE_KEY, JSON.stringify(all));
     } catch {}
     if (next) setBurst((b) => b + 1);
+    /* let other views (account favourites list) react instantly */
+    try { window.dispatchEvent(new CustomEvent("rebesta:likes-changed")); } catch {}
   };
 
   return (

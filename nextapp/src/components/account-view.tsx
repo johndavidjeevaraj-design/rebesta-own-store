@@ -1,9 +1,86 @@
 "use client";
 
-import { useEffect } from "react";
-import { LogOut, ShoppingBasket } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Heart, LogOut, ShoppingBasket } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { ProductCard } from "@/components/product-card";
+import { InstallButton } from "@/components/install-button";
+import { api, Product } from "@/lib/store";
+
+const LIKE_KEY = "rebesta_own_likes_v1";
+
+function readLikes(): string[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(LIKE_KEY) || "{}");
+    return v && typeof v === "object" ? Object.keys(v) : [];
+  } catch {
+    return [];
+  }
+}
+
+/* ❤️ Favourites — every product the customer liked on the shop/product pages.
+   Device-local (no account needed), updates live when hearts are toggled. */
+function FavouritesSection() {
+  const [products, setProducts] = useState<Product[] | null>(null);
+  const [liked, setLiked] = useState<string[]>([]);
+
+  useEffect(() => {
+    setLiked(readLikes());
+    api("/api/products")
+      .then((d: any) => setProducts(d.products || []))
+      .catch(() => setProducts([]));
+    const sync = () => setLiked(readLikes());
+    window.addEventListener("rebesta:likes-changed", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("rebesta:likes-changed", sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
+  const favs = useMemo(
+    () => (products || []).filter((p) => liked.includes(p.handle)),
+    [products, liked]
+  );
+  const loading = products === null && liked.length > 0;
+
+  return (
+    <div className="mt-9">
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Saved</h2>
+      <h3 className="mt-2 flex items-center gap-2 font-display text-[21px] font-bold tracking-tight text-ink">
+        Your favourites
+        <Heart size={16} className="fill-carrot text-carrot" />
+      </h3>
+
+      {loading ? (
+        <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div className="aspect-[3/4] animate-pulse rounded-[20px] bg-[#f5f5f7]" />
+          <div className="aspect-[3/4] animate-pulse rounded-[20px] bg-[#f5f5f7]" />
+        </div>
+      ) : favs.length > 0 ? (
+        <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
+          {favs.map((p, i) => (
+            <ProductCard key={p.handle} product={p} index={i} />
+          ))}
+        </div>
+      ) : (
+        <div className="mt-5 rounded-[28px] bg-[#f5f5f7] p-10 text-center">
+          <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-white text-ink shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
+            <Heart size={22} strokeWidth={1.8} />
+          </span>
+          <h3 className="mt-4 text-[15px] font-bold text-ink">No favourites yet</h3>
+          <p className="mx-auto mt-1.5 max-w-[240px] text-[13px] font-medium text-muted-foreground">
+            Tap the heart on any product and it will wait for you here.
+          </p>
+          <a className="fresh-grad mt-5 inline-flex h-11 items-center rounded-full px-7 text-[14px] font-bold text-white shadow-[0_8px_20px_rgba(11,124,49,0.35)] transition hover:brightness-[1.05] active:scale-[0.98]" href="/shop">
+            Browse vegetables
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* Account page — static island driven by /js/auth.js:
    /api/auth/me → profile card + verified chip + sign out, /api/auth/orders → order cards. */
@@ -52,7 +129,13 @@ export function AccountView() {
                 </button>
               </div>
             </div>
+          </div>
 
+          {/* ❤️ favourites — works with or without an account */}
+          <FavouritesSection />
+
+          {/* orders (signed-in only — auth.js fills these) */}
+          <div data-account-view hidden>
             <div className="mt-9">
               <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">History</h2>
               <h3 className="mt-2 font-display text-[21px] font-bold tracking-tight text-ink">Your orders</h3>
@@ -66,6 +149,11 @@ export function AccountView() {
                 <a className="carrot-grad mt-5 inline-flex h-11 items-center rounded-full px-7 text-[14px] font-bold text-white shadow-[0_8px_20px_rgba(232,71,12,0.35)] transition hover:brightness-[1.05]" href="/shop">Start shopping</a>
               </div>
             </div>
+          </div>
+
+          {/* install app — only shows when the browser allows it */}
+          <div className="mt-9">
+            <InstallButton />
           </div>
         </section>
       </main>

@@ -17,14 +17,14 @@ function loadLeaflet(): Promise<any> {
           const css = document.createElement("link");
           css.id = "leaflet-css";
           css.rel = "stylesheet";
-          css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+          css.href = "/assets/vendor/leaflet/leaflet.css"; /* self-hosted: CSP blocks unpkg, map never rendered */
           document.head.appendChild(css);
         }
         const js: any = document.querySelector("#leaflet-js");
         if (js) { js.addEventListener("load", () => { (window as any).__rebestaLeaflet = (window as any).L; resolve((window as any).L); }); js.addEventListener("error", reject); return; }
         const script = document.createElement("script");
         script.id = "leaflet-js";
-        script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+        script.src = "/assets/vendor/leaflet/leaflet.js";
         script.onload = () => { (window as any).__rebestaLeaflet = (window as any).L; resolve((window as any).L); };
         script.onerror = () => reject(new Error("map failed to load"));
         document.head.appendChild(script);

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import LenisProvider from "@/components/lenis-provider";
 import { ToastProvider } from "@/components/toaster";
+import { ChatWidget } from "@/components/chat-widget";
 import { PwaRegister } from "@/components/pwa-register";
 
 const SITE_URL = 'https://rebestafresh.in';
@@ -84,7 +85,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="font-sans antialiased">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STORE_SCHEMA) }} />
         <LenisProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <ToastProvider>
+            {children}
+            <ChatWidget />
+          </ToastProvider>
         </LenisProvider>
         <PwaRegister />
       </body>

@@ -5,6 +5,7 @@ import path from 'node:path';
 import { config } from '../config.js';
 import { rateLimit } from '../lib/rateLimit.js';
 import { loadProducts, saveProducts, loadSettings, loadPartners, savePartners, readOrders, saveOrders, updateOrderStatus, updateProduct, createProduct, deleteProduct, saveSettings, createBackup, awardLoyalty, awardReferral, dataVersions, loadSubscriptions, saveSubscriptions, getSubscription, cashSummary, recordCashReceived, loadReviews, setReviewApproval, deleteReview } from '../lib/store.js';
+import { readSupportQueries } from '../lib/support.js';
 import { createPartner, updatePartner, deletePartner, publicPartner, freshPositions, haversineKm, etaMinutesFromKm, partnerScore } from '../lib/partners.js';
 import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
 import { publicSubscription } from '../lib/subscriptions.js';
@@ -127,9 +128,17 @@ router.delete('/products/:handle', (req, res) => {
 router.get('/settings', (req, res) => {
   const settings = loadSettings();
   const smtpSafe = settings.smtp ? { ...settings.smtp, pass: settings.smtp.pass ? '********' : '' } : undefined;
+  const supportSafe = settings.support ? { ...settings.support, aiKey: settings.support.aiKey ? '********' : '' } : undefined;
   const cf = loadCashfreeConfig() || {};
-  res.json({ ok: true, settings: { ...settings, smtp: smtpSafe }, payuServerKeys: payuEnabled(), mailReady: mailerReady(),
+  res.json({ ok: true, settings: { ...settings, smtp: smtpSafe, support: supportSafe }, payuServerKeys: payuEnabled(), mailReady: mailerReady(), supportReady: Boolean(settings.support?.enabled !== false && settings.support?.aiKey),
     cashfree: { mode: cf.mode || null, hasAppId: Boolean(cf.appId), hasSecretKey: Boolean(cf.secretKey), enabled: cashfreeEnabled() } });
+});
+
+/* 💬 customer queries that were escalated to a human ("tickets") */
+router.get('/support-queries', (req, res) => {
+  const all = readSupportQueries();
+  const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+  res.json({ ok: true, queries: all.slice(0, 30), todayCount: all.filter(q => new Date(q.at).getTime() > dayAgo).length, total: all.length });
 });
 
 router.patch('/settings', (req, res) => {
@@ -162,6 +171,14 @@ router.patch('/settings', (req, res) => {
         d.tiers = tiers;
       }
       if (Array.isArray(patch.delivery.slots)) d.slots = patch.delivery.slots;
+    }
+    if (patch.support) {
+      const current = settings.support || (settings.support = {});
+      const sup = patch.support;
+      if (sup.enabled !== undefined) current.enabled = Boolean(sup.enabled);
+      if (sup.model !== undefined) current.model = String(sup.model).trim().slice(0, 40) || 'gemini-2.0-flash';
+      if (sup.clearKey) delete current.aiKey;
+      else if (typeof sup.aiKey === 'string' && sup.aiKey && sup.aiKey !== '(saved)') current.aiKey = sup.aiKey.trim().slice(0, 200);
     }
     if (patch.business) {
       const current = settings.business || (settings.business = {});

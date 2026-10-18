@@ -7,6 +7,7 @@ import { router as publicRouter } from './routes/public.js';
 import { router as adminRouter } from './routes/admin.js';
 import { router as partnerRouter } from './routes/partner.js';
 import { router as authRouter } from './routes/auth.js';
+import supportRouter from './routes/support.js';
 import { publicCatalog } from './lib/store.js';
 import { rateLimit } from './lib/rateLimit.js';
 import { startSubscriptionScheduler } from './lib/subscriptions.js';
@@ -77,8 +78,10 @@ ${productUrls}
   app.use('/api/quote', rateLimit({ windowMs: 60_000, max: 90, message: 'Too many delivery-quote attempts. Please wait one minute.' }));
   app.use('/api/orders', rateLimit({ windowMs: 60_000, max: 30, message: 'Too many order requests. Please wait one minute.' }));
   app.use('/api/coupon', rateLimit({ windowMs: 60_000, max: 20, message: 'Too many coupon attempts. Please wait one minute.' }));
+  app.use('/api/support', rateLimit({ windowMs: 60_000, max: 20, message: 'You are chatting too fast — give the assistant a moment!' }));
   app.use('/api/auth', authRouter);
   app.use('/api', publicRouter);
+  app.use('/api/support', supportRouter);
   app.use('/api/admin', adminRouter);
   app.use('/api/partner', partnerRouter);
   /* checkout page retired 2026-10-07 — /cart is the one-page checkout now */

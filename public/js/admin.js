@@ -130,6 +130,96 @@
       <div class="metric"><strong>${data.metrics.liveProducts}</strong><span>live products</span></div>
       <div class="metric"><strong>${data.metrics.lowStock}</strong><span>low stock</span></div>
     `;
+    renderSupportQueries(panel);
+  }
+
+  /* 💬 customer queries escalated from the chat widget ("tickets") */
+  async function renderSupportQueries(panel) {
+    let card = panel.querySelector('[data-support-queries]');
+    if (!card) {
+      card = document.createElement('div');
+      card.dataset.supportQueries = '1';
+      card.style.cssText = 'margin-top:14px;border:1px solid #dde7d8;border-radius:14px;padding:14px;background:#f6faf4';
+      panel.appendChild(card);
+    }
+    card.innerHTML = '<p style="margin:0;color:var(--muted,#5b6b55);font-size:.8rem">💬 Loading customer queries…</p>';
+    let data = null;
+    try { data = await api('/api/admin/support-queries'); } catch { /* dashboard still works without it */ }
+    if (!data) { card.remove(); return; }
+    const wa = String((state.settings?.business?.whatsapp) || '918438765119').replace(/\D/g, '');
+    const rows = (data.queries || []).slice(0, 10).map(q => {
+      const when = new Date(q.at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+      const digits = String(q.phone || '').replace(/\D/g, '');
+      const reply = digits ? `https://wa.me/${digits}` : `https://wa.me/${wa}`;
+      return `<div style="display:flex;gap:10px;align-items:center;justify-content:space-between;padding:9px 0;border-top:1px solid #e4ecdf;font-size:.82rem">
+        <div style="min-width:0;flex:1"><strong>${when}</strong> · <span style="color:#2c382b">${String(q.message || '(no message)').replace(/</g, '&lt;').slice(0, 120)}</span></div>
+        <a class="button ghost small" style="flex:none" href="${reply}" target="_blank" rel="noopener">💬 Reply</a>
+      </div>`;
+    }).join('');
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <strong>💬 Customer queries</strong>
+        <span class="badge orange" style="font-size:.7rem">${data.todayCount} today</span>
+      </div>
+      <p style="margin:0 0 4px;color:var(--muted,#5b6b55);font-size:.78rem">Customers the chat assistant sent to you on WhatsApp.</p>
+      ${rows || '<p style="margin:8px 0 0;font-size:.82rem">No open queries — the assistant is handling everything 👍</p>'}`;
+  }
+
+  /* 💬 AI customer support — own card (Cashfree-keys style), saved separately */
+  function renderSupportCard(data) {
+    const form = $('[data-settings-form]');
+    if (!form) return;
+    let card = document.querySelector('[data-support-card]');
+    if (!card) {
+      card = document.createElement('div');
+      card.dataset.supportCard = '1';
+      card.style.cssText = 'margin-top:16px;border:1px solid #dde7d8;border-radius:14px;padding:16px;background:#f6faf4';
+      card.innerHTML = `
+        <strong>💬 AI customer support</strong>
+        <p style="margin:6px 0 10px;color:var(--muted,#5b6b55);font-size:.8rem">
+          The chat bubble on your site answers customers instantly — order status, delivery charges, areas, timings, refunds.
+          Add a <strong>free</strong> Google Gemini key for full AI answers (aistudio.google.com → Get API key). Without a key it still answers common questions and hands customers to your WhatsApp.
+        </p>
+        <label style="display:flex;align-items:center;gap:8px;font-size:.85rem;margin-bottom:10px">
+          <input type="checkbox" name="supportEnabled" style="accent-color:#1e4620;width:17px;height:17px"> Chat assistant ON
+        </label>
+        <div style="display:grid;gap:8px;grid-template-columns:1fr 1fr">
+          <label style="font-size:.78rem;display:block">Gemini API key
+            <input name="supportAiKey" type="password" placeholder="paste free key from aistudio.google.com" autocomplete="new-password" style="width:100%;margin-top:3px;padding:8px;border:1px solid #cbd8c5;border-radius:8px;font-family:inherit;font-size:.8rem">
+          </label>
+          <label style="font-size:.78rem;display:block">Model
+            <input name="supportModel" placeholder="gemini-2.0-flash" style="width:100%;margin-top:3px;padding:8px;border:1px solid #cbd8c5;border-radius:8px;font-family:inherit;font-size:.8rem">
+          </label>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:10px">
+          <button class="button small" type="button" data-ai-save style="background:linear-gradient(135deg,#2e7d32,#1e4620);color:#fff">💾 Save support settings</button>
+          <small data-ai-status style="color:var(--muted,#5b6b55)"></small>
+        </div>`;
+      form.insertAdjacentElement('afterend', card);
+      card.querySelector('[data-ai-save]').addEventListener('click', async () => {
+        const status = card.querySelector('[data-ai-status]');
+        const keyInput = card.querySelector('[name=supportAiKey]');
+        const patch = {
+          enabled: card.querySelector('[name=supportEnabled]').checked,
+          model: card.querySelector('[name=supportModel]').value.trim(),
+          aiKey: keyInput.value.trim()
+        };
+        if (status) status.textContent = 'Saving…';
+        try {
+          await api('/api/admin/settings', { method: 'PATCH', body: JSON.stringify({ support: patch }) });
+          if (status) status.textContent = '✅ Saved';
+          keyInput.value = '';
+          await renderSettings();
+        } catch (error) { if (status) status.textContent = '⚠️ ' + (error.message || 'Could not save'); }
+      });
+    }
+    const sup = (data.settings && data.settings.support) || {};
+    card.querySelector('[name=supportEnabled]').checked = sup.enabled !== false;
+    card.querySelector('[name=supportModel]').value = sup.model || 'gemini-2.0-flash';
+    card.querySelector('[name=supportAiKey]').value = '';
+    card.querySelector('[name=supportAiKey]').placeholder = sup.aiKey ? '(saved — retype to change)' : 'paste free key from aistudio.google.com';
+    const status = card.querySelector('[data-ai-status]');
+    if (status) status.textContent = data.supportReady ? '✅ AI answers active (Gemini)' : 'ℹ️ Basic mode — works without a key, add one for full AI answers';
   }
 
   function setField(name, value) {
@@ -182,6 +272,7 @@
   async function renderSettings() {
     const data = await api('/api/admin/settings');
     state.settings = data.settings;
+    renderSupportCard(data);
     const content = data.settings.content || {};
     const business = data.settings.business || {};
     const delivery = data.settings.delivery || {};

@@ -8,7 +8,7 @@
      changes, so assets must self-heal instead of being served frozen.
    - API calls: always live (stock and prices must be real-time)
 */
-const CACHE = 'rebesta-shell-v22';
+const CACHE = 'rebesta-shell-v23';
 const SHELL = [
   '/',
   '/css/styles.css',

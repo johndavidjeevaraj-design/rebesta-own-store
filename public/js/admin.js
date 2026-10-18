@@ -465,7 +465,7 @@
 
     const table = document.createElement('table');
     table.className = 'admin-table';
-    table.innerHTML = '<thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Visibility</th><th>Photo</th><th>Save</th><th></th></tr></thead><tbody></tbody>';
+    table.innerHTML = '<thead><tr><th>Product</th><th>Category</th><th>Unit</th><th>Price ₹</th><th>Stock</th><th>Visibility</th><th>Photo</th><th>Save</th><th></th></tr></thead><tbody></tbody>';
     const body = table.querySelector('tbody');
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -487,12 +487,38 @@
       finally { fileInput.value = ''; }
     }
 
+    /* per-product unit selector — what the customer can pick on the product
+       page. "1 kg +250/500" is the auto size ladder; whole items (cauliflower,
+       cabbage…) should use "1 piece" or "1 kg whole only" so nobody can order
+       an impossible 250 g cut. */
+    const UNIT_OPTIONS = [
+      ['auto:1 kg', '1 kg · +250/500 g'],
+      ['whole:1 kg', '1 kg · whole only'],
+      ['500 g', '500 g'],
+      ['250 g', '250 g'],
+      ['100 g', '100 g'],
+      ['2 kg', '2 kg'],
+      ['5 kg', '5 kg'],
+      ['1 piece', '1 piece'],
+      ['2 pieces', '2 pieces'],
+      ['1 bunch', '1 bunch'],
+      ['1 pack', '1 pack'],
+      ['1 box', '1 box']
+    ];
+    const unitValueFor = p => {
+      const explicit = Array.isArray(p.variants) ? p.variants : null;
+      if (explicit && explicit.length === 1 && explicit[0].label === '1 kg') return 'whole:1 kg';
+      if (String(p.unitLabel || '').trim() === '1 kg' && !explicit) return 'auto:1 kg';
+      return String(p.unitLabel || '1 kg').trim();
+    };
+
     for (const p of state.products) {
       const tr = document.createElement('tr');
       tr.dataset.search = `${p.title} ${p.handle} ${p.category}`.toLowerCase();
       tr.dataset.category = String(p.category || '').trim();
       tr.innerHTML = `
         <td class="prod-cell"><img class="prod-thumb" src="${p.image || '/assets/brand/basket.jpg'}" alt="" loading="lazy"><div><strong>${p.title}</strong><br><span>${p.handle}</span></div></td>
+        <td></td>
         <td></td>
         <td><input class="small-input" type="number" min="0" step="0.01" value="${p.priceInr}"></td>
         <td><input class="small-input" type="number" min="0" step="1" value="${p.stock}"></td>
@@ -502,6 +528,26 @@
         <td></td>
       `;
       tr.children[1].textContent = p.category;
+      /* unit dropdown (keeps a custom current value selectable) */
+      const unitTd = tr.children[2];
+      const unitSel = document.createElement('select');
+      unitSel.setAttribute('aria-label', `Unit for ${p.title}`);
+      unitSel.style.cssText = 'border:1px solid #cbd8c5;border-radius:8px;padding:5px 6px;background:#fff;font-size:.8rem;font-family:inherit;max-width:150px';
+      const currentUnit = unitValueFor(p);
+      for (const [val, label] of UNIT_OPTIONS) {
+        const o = document.createElement('option');
+        o.value = val;
+        o.textContent = label;
+        unitSel.appendChild(o);
+      }
+      if (!UNIT_OPTIONS.some(([val]) => val === currentUnit)) {
+        const o = document.createElement('option');
+        o.value = currentUnit;
+        o.textContent = `${currentUnit} (current)`;
+        unitSel.appendChild(o);
+      }
+      unitSel.value = currentUnit;
+      unitTd.appendChild(unitSel);
       tr.querySelector('[data-photo]').addEventListener('click', () => {
         fileInput.dataset.handle = p.handle;
         fileInput.click();
@@ -542,17 +588,26 @@
       const [price, stock, active] = tr.querySelectorAll('input');
       tr.querySelectorAll('button').forEach(btn => {
         if (btn.hasAttribute('data-photo') || btn.hasAttribute('data-edit') || btn.hasAttribute('data-remove')) return;
-        btn.addEventListener('click', async event => {
-          RFS.setBusy(event.currentTarget, true, 'Saving…');
+        btn.addEventListener('click', async () => {
+          /* NOTE: use the closed-over btn — event.currentTarget is null after
+             the first await, which left the button stuck at "Saving…" forever */
+          RFS.setBusy(btn, true, 'Saving…');
+          /* translate the unit choice into a patch:
+             auto size ladder / whole-only / plain single unit */
+          const uv = unitSel.value;
+          let unitPatch;
+          if (uv === 'auto:1 kg') unitPatch = { unitLabel: '1 kg', variants: null };
+          else if (uv === 'whole:1 kg') unitPatch = { unitLabel: '1 kg', variants: [{ id: '1kg', label: '1 kg', priceInr: Number(price.value), default: true }] };
+          else unitPatch = { unitLabel: uv, variants: null };
           try {
             await api(`/api/admin/products/${encodeURIComponent(p.handle)}`, {
               method: 'PATCH',
-              body: JSON.stringify({ priceInr: Number(price.value), stock: Number(stock.value), active: active.checked })
+              body: JSON.stringify({ priceInr: Number(price.value), stock: Number(stock.value), active: active.checked, ...unitPatch })
             });
-            RFS.toast(`${p.title} updated`);
+            RFS.toast(`${p.title} updated${uv !== currentUnit ? ' — unit: ' + (unitSel.selectedOptions[0]?.textContent || uv) : ''}`);
             refreshDashboard();
           } catch (error) { RFS.toast(error.message, 'error'); }
-          finally { RFS.setBusy(event.currentTarget, false); }
+          finally { RFS.setBusy(btn, false); }
           });
       });
       body.appendChild(tr);

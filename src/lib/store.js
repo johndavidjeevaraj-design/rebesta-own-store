@@ -147,6 +147,29 @@ export function updateProduct(handle, patch) {
   if (patch.description !== undefined) p.description = String(patch.description || '').trim().slice(0, 1500);
   if (patch.category !== undefined) p.category = String(patch.category || 'Seasonal').trim().slice(0, 60) || 'Seasonal';
   if (patch.unitLabel !== undefined) p.unitLabel = String(patch.unitLabel || '1 kg').trim().slice(0, 30) || '1 kg';
+  /* explicit variant list — the shop owner's per-product unit control.
+     null/[] clears it (auto 250/500/1kg ladder returns for "1 kg" products);
+     a single-entry array pins one unit (e.g. whole items: 1 kg only, no 250 g) */
+  if (patch.variants !== undefined) {
+    if (patch.variants === null || (Array.isArray(patch.variants) && patch.variants.length === 0)) {
+      delete p.variants;
+    } else if (Array.isArray(patch.variants)) {
+      const list = patch.variants.slice(0, 8).map(v => ({
+        id: String(v.id || 'v').slice(0, 30),
+        label: String(v.label || '').trim().slice(0, 30),
+        priceInr: Math.round(Number(v.priceInr || 0) * 100) / 100,
+        default: Boolean(v.default)
+      })).filter(v => v.label && Number.isFinite(v.priceInr) && v.priceInr >= 0);
+      if (list.length) {
+        if (!list.some(v => v.default)) list[0].default = true;
+        p.variants = list;
+      } else {
+        delete p.variants;
+      }
+    } else {
+      throw new Error('Variants must be a list');
+    }
+  }
   if (patch.active !== undefined) p.active = Boolean(patch.active);
   if (patch.featured !== undefined) p.featured = Boolean(patch.featured);
   if (patch.image !== undefined) {

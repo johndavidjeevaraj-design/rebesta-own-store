@@ -10,7 +10,8 @@
     mapTimer: null,
     versions: null,
     knownOrderIds: new Set(),
-    orderFilter: { status: '', search: '' }
+    orderFilter: { status: '', search: '' },
+    productSearch: ''
   };
   const $ = selector => document.querySelector(selector);
   const statuses = ['PENDING_PAYMENT', 'PLACED', 'CONFIRMED', 'PACKING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'PAYMENT_FAILED', 'PAID_NEEDS_REVIEW'];
@@ -433,6 +434,26 @@
     state.products = data.products;
     const wrap = $('[data-products-table]');
     wrap.innerHTML = '';
+
+    /* toolbar: instant search + live count + add button right where you work */
+    const bar = document.createElement('div');
+    bar.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px';
+    const search = document.createElement('input');
+    search.type = 'search';
+    search.value = state.productSearch || '';
+    search.setAttribute('aria-label', 'Search products');
+    search.placeholder = '🔍 Search products — name, category…';
+    search.style.cssText = 'flex:1 1 220px;min-height:40px;border:1px solid #cbd8c5;border-radius:10px;padding:6px 12px;background:#fff;font-size:.95rem;font-family:inherit';
+    const countLabel = document.createElement('span');
+    countLabel.style.cssText = 'font-size:.82rem;font-weight:700;color:var(--muted,#6b7a66);white-space:nowrap';
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'button small';
+    addBtn.style.cssText = 'background:linear-gradient(135deg,#2ecb66 0%,#17b34e 45%,#0faa46 100%);color:#fff;border:none;border-radius:999px;padding:10px 18px;font-weight:700;cursor:pointer;box-shadow:0 6px 16px rgba(11,124,49,.35);white-space:nowrap';
+    addBtn.textContent = '➕ Add product';
+    addBtn.addEventListener('click', () => openProductEditor());
+    bar.append(search, countLabel, addBtn);
+
     const table = document.createElement('table');
     table.className = 'admin-table';
     table.innerHTML = '<thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Visibility</th><th>Photo</th><th>Save</th><th></th></tr></thead><tbody></tbody>';
@@ -459,6 +480,7 @@
 
     for (const p of state.products) {
       const tr = document.createElement('tr');
+      tr.dataset.search = `${p.title} ${p.handle} ${p.category}`.toLowerCase();
       tr.innerHTML = `
         <td class="prod-cell"><img class="prod-thumb" src="${p.image || '/assets/brand/basket.jpg'}" alt="" loading="lazy"><div><strong>${p.title}</strong><br><span>${p.handle}</span></div></td>
         <td></td>
@@ -526,6 +548,23 @@
       body.appendChild(tr);
     }
     wrap.appendChild(table);
+
+    /* wire the search: filters rows instantly, remembers the query across
+       re-renders (save/add/remove rebuild the table) */
+    const applyProductSearch = () => {
+      const q = search.value.trim().toLowerCase();
+      state.productSearch = search.value;
+      let shown = 0;
+      for (const tr of body.children) {
+        const hit = !q || tr.dataset.search.includes(q);
+        tr.style.display = hit ? '' : 'none';
+        if (hit) shown++;
+      }
+      countLabel.textContent = q ? `${shown} of ${state.products.length} products` : `${state.products.length} products`;
+    };
+    search.addEventListener('input', applyProductSearch);
+    wrap.insertBefore(bar, table);
+    applyProductSearch();
   }
 
   /* Client-side photo compression — keeps uploads small on mobile data */

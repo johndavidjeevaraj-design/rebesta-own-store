@@ -182,10 +182,10 @@ export function ChatWidget() {
                 rel="noopener noreferrer"
                 onClick={escalate}
                 aria-label="Continue with a person on WhatsApp"
-                className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-[#f2f2f7] px-3 text-[12px] font-semibold text-[#1d1d1f] transition hover:bg-[#e9e9ee] active:scale-[0.97]"
+                title="Continue with a person on WhatsApp"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#f2f2f7] text-[#25a85a] transition hover:bg-[#e9e9ee] active:scale-[0.97]"
               >
-                <span className="text-[#25a85a]"><WhatsAppIcon size={15} /></span>
-                WhatsApp
+                <WhatsAppIcon size={17} />
               </a>
               <button
                 ref={closeRef}

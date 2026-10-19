@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import LenisProvider from "@/components/lenis-provider";
 import { ToastProvider } from "@/components/toaster";
-import { ChatWidget } from "@/components/chat-widget";
+import { StorefrontChatWidget } from "@/components/storefront-chat-widget";
 import { PwaRegister } from "@/components/pwa-register";
 
 const SITE_URL = 'https://rebestafresh.in';
@@ -87,7 +87,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <LenisProvider>
           <ToastProvider>
             {children}
-            <ChatWidget />
+            <StorefrontChatWidget />
           </ToastProvider>
         </LenisProvider>
         <PwaRegister />

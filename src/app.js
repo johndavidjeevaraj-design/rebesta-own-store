@@ -118,7 +118,7 @@ ${productUrls}
   app.get('/order-success', v3WithFallback('order-success'));
   app.get('/track', v3WithFallback('track'));
   app.get('/subscriptions', v3WithFallback('subscriptions'));
-  app.get('/partner', (req, res) => res.sendFile('partner.html', { root: config.publicDir }));
+  app.get('/partner', v3WithFallback('partner'));
 
   /* the service worker must NEVER sit in an HTTP cache — a browser that
      can't fetch fresh sw.js bytes never updates or retires a stale worker,

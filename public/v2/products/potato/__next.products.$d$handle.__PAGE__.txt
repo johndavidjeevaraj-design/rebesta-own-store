@@ -1,50 +1,51 @@
 1:"$Sreact.fragment"
 2:"/v2/_next/static/chunks/3_tqb6z99k4ts.js"
-3:"/v2/_next/static/chunks/0pvj9ltbk_5ty.js"
+3:"/v2/_next/static/chunks/15wx4_dke16yi.js"
 4:"/v2/_next/static/chunks/3uvgz8xx2rjz3.js"
-5:"/v2/_next/static/chunks/2f2kzbvkba20h.js"
+5:"/v2/_next/static/chunks/43rb7hmhb4ccy.js"
 6:I[96402,["$2","$3","$4","$5"],"default"]
 7:I[54272,["$2","$3","$4","$5"],"ToastProvider"]
 8:I[7253,["$2","$3","$4","$5"],"default"]
 9:I[50530,["$2","$3","$4","$5"],"default"]
-a:I[76292,["$2","$3","$4","$5"],"ChatWidget"]
-b:I[64101,["$2","$3","$4","$5"],"PwaRegister"]
-14:"/v2/_next/static/chunks/0x2_83m1t0jun.js"
-15:"/v2/_next/static/chunks/452yn8culsozu.js"
-16:I[21757,["$2","$3","$4","$5","$14","$15"],"ProductView"]
-17:I[30416,["$2","$3","$4","$5"],"OutletBoundary"]
-18:"$Sreact.suspense"
-1b:"ViewportBoundary"
-1c:I[30416,["$2","$3","$4","$5"],"$1b"]
-1d:"MetadataBoundary"
-1e:I[30416,["$2","$3","$4","$5"],"$1d"]
+a:"StorefrontChatWidget"
+b:I[38222,["$2","$3","$4","$5"],"$a"]
+c:I[64101,["$2","$3","$4","$5"],"PwaRegister"]
+15:"/v2/_next/static/chunks/0x2_83m1t0jun.js"
+16:"/v2/_next/static/chunks/3j6nhym58jiyk.js"
+17:I[21757,["$2","$3","$4","$5","$15","$16"],"ProductView"]
+18:I[30416,["$2","$3","$4","$5"],"OutletBoundary"]
+19:"$Sreact.suspense"
+1c:"ViewportBoundary"
+1d:I[30416,["$2","$3","$4","$5"],"$1c"]
+1e:"MetadataBoundary"
+1f:I[30416,["$2","$3","$4","$5"],"$1e"]
 :HL["/v2/_next/static/chunks/1k-897caq_u31.css","style"]
-d:X
-10:X
-10:C
-13:[["children",{"s":"__PAGE__","h":160,"d":{"r":["$","$1","c",{"children":[["$","$L16",null,{"handle":"potato"}],[["$","script","script-0",{"src":"/v2/_next/static/chunks/0x2_83m1t0jun.js","async":true}],["$","script","script-1",{"src":"/v2/_next/static/chunks/452yn8culsozu.js","async":true}]],["$","$L17",null,{"children":["$","$18",null,{"name":"Next.MetadataOutlet","children":"$@19"}]}]]}],"p":"$@1a","v":null,"s":"$d"}}]]
-11:[["children",{"s":{"n":"handle","t":"d","k":"potato","s":[]},"h":65632,"d":{"r":["$","$1","c",{"children":[null,["$","$L8",null,{"parallelRouterKey":"children","template":["$","$L9",null,{}]}]]}],"p":"$@12","v":"$10","s":"$d"},"c":"$Q13"}]]
-e:[["children",{"s":"products","h":131168,"d":{"r":["$","$1","c",{"children":[null,["$","$L8",null,{"parallelRouterKey":"children","template":["$","$L9",null,{}]}]]}],"p":"$@f","v":"$10","s":"$d"},"c":"$Q11"}]]
-0:{"t":{"t":{"s":"","h":131152,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/v2/_next/static/chunks/1k-897caq_u31.css","precedence":"next"}],["$","script","script-0",{"src":"/v2/_next/static/chunks/3_tqb6z99k4ts.js","async":true}],["$","script","script-1",{"src":"/v2/_next/static/chunks/0pvj9ltbk_5ty.js","async":true}],["$","script","script-2",{"src":"/v2/_next/static/chunks/3uvgz8xx2rjz3.js","async":true}],["$","script","script-3",{"src":"/v2/_next/static/chunks/2f2kzbvkba20h.js","async":true}]],["$","html",null,{"lang":"en","children":["$","body",null,{"className":"font-sans antialiased","children":[["$","script",null,{"type":"application/ld+json","dangerouslySetInnerHTML":{"__html":"{\"@context\":\"https://schema.org\",\"@type\":\"GroceryStore\",\"name\":\"Rebesta Fresh\",\"url\":\"https://rebestafresh.in\",\"logo\":\"https://rebestafresh.in/assets/brand/logo-orange-leaf.png\",\"image\":\"https://rebestafresh.in/assets/brand/hero.jpg\",\"description\":\"Farm-fresh vegetables delivered every morning across Hosur. Live stock, fair prices, cash on delivery and UPI.\",\"telephone\":\"+918438765119\",\"priceRange\":\"₹\",\"address\":{\"@type\":\"PostalAddress\",\"addressLocality\":\"Hosur\",\"addressRegion\":\"Tamil Nadu\",\"postalCode\":\"635109\",\"addressCountry\":\"IN\"},\"geo\":{\"@type\":\"GeoCoordinates\",\"latitude\":12.7409,\"longitude\":77.8253},\"openingHoursSpecification\":{\"@type\":\"OpeningHoursSpecification\",\"dayOfWeek\":[\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\",\"Saturday\",\"Sunday\"],\"opens\":\"06:00\",\"closes\":\"20:00\"},\"sameAs\":[\"https://wa.me/918438765119\"]}"}}],["$","$L6",null,{"children":["$","$L7",null,{"children":[["$","$L8",null,{"parallelRouterKey":"children","template":["$","$L9",null,{}],"notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]]}],["$","$La",null,{}]]}]}],["$","$Lb",null,{}]]}]}]]}],"p":"$@c","v":null,"s":"$d"},"c":"$Qe"},"h":{"r":["$","$1","h",{"children":[null,["$","$L1c",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#032c13"}]]}],["$","$L1e",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$18",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Potato — Rebesta Fresh"}],["$","meta","1",{"name":"description","content":"Potato — ₹35 / 1 kg. Fresh, farm-picked Potato (Urulaikkai / Aloo), sourced daily from trusted growers and hand-picked for quality. Cleaned, graded and packed with care for your kitchen.\n\nSold as: 1 kg · Category: Root Vegetables\n\nStorage: keep in a cool, dry place or refrigerate. Best enjoyed withi"}],["$","meta","2",{"name":"application-name","content":"Rebesta Fresh"}],["$","link","3",{"rel":"manifest","href":"/manifest.json"}],["$","meta","4",{"name":"robots","content":"index, follow"}],["$","link","5",{"rel":"canonical","href":"https://rebestafresh.in/products/potato"}],["$","meta","6",{"name":"mobile-web-app-capable","content":"yes"}],["$","meta","7",{"name":"apple-mobile-web-app-title","content":"Rebesta Fresh"}],["$","meta","8",{"name":"apple-mobile-web-app-status-bar-style","content":"default"}],["$","meta","9",{"property":"og:title","content":"Potato — Rebesta Fresh"}],"$L1f","$L20","$L21","$L22","$L23","$L24","$L25","$L26","$L27","$L28","$L29"]}]}],null]}],null]}],"p":"$@2a","v":null,"s":"$d"}},"a":"$@2b","u":"$@2c","b":"1Dlskfgjb_IjvVcx-LKeE"}
-2d:I[67932,["$2","$3","$4","$5"],"IconMark"]
-19:null
-1f:["$","meta","10",{"property":"og:description","content":"Potato at ₹35/1 kg — fresh from farms, delivered in Hosur."}]
-20:["$","meta","11",{"property":"og:image","content":"https://rebestafresh.in/assets/products/potato.jpg"}]
-21:["$","meta","12",{"name":"twitter:card","content":"summary_large_image"}]
-22:["$","meta","13",{"name":"twitter:title","content":"Rebesta Fresh — Farm-Fresh Vegetables Delivered in Hosur"}]
-23:["$","meta","14",{"name":"twitter:description","content":"Live stock, fair prices, exact-pin morning delivery across Hosur. Free delivery over ₹500."}]
-24:["$","meta","15",{"name":"twitter:image","content":"https://rebestafresh.in/assets/brand/hero.jpg"}]
-25:["$","link","16",{"rel":"icon","href":"/favicon.ico?favicon.117ezoe8m31dk.ico","sizes":"48x48","type":"image/x-icon"}]
-26:["$","link","17",{"rel":"icon","href":"/assets/brand/icon-r-192.png","sizes":"192x192","type":"image/png"}]
-27:["$","link","18",{"rel":"icon","href":"/assets/brand/icon-r-512.png","sizes":"512x512","type":"image/png"}]
-28:["$","link","19",{"rel":"apple-touch-icon","href":"/assets/brand/icon-r-180.png","sizes":"180x180","type":"image/png"}]
-29:["$","$L2d","20",{}]
-d:300
-2c:true
-d:C
-2b:0
-12:"$undefined"
-f:"$undefined"
-c:"$undefined"
-2a:"$undefined"
-1a:"$undefined"
+e:X
+11:X
+11:C
+14:[["children",{"s":"__PAGE__","h":160,"d":{"r":["$","$1","c",{"children":[["$","$L17",null,{"handle":"potato"}],[["$","script","script-0",{"src":"/v2/_next/static/chunks/0x2_83m1t0jun.js","async":true}],["$","script","script-1",{"src":"/v2/_next/static/chunks/3j6nhym58jiyk.js","async":true}]],["$","$L18",null,{"children":["$","$19",null,{"name":"Next.MetadataOutlet","children":"$@1a"}]}]]}],"p":"$@1b","v":null,"s":"$e"}}]]
+12:[["children",{"s":{"n":"handle","t":"d","k":"potato","s":[]},"h":65632,"d":{"r":["$","$1","c",{"children":[null,["$","$L8",null,{"parallelRouterKey":"children","template":["$","$L9",null,{}]}]]}],"p":"$@13","v":"$11","s":"$e"},"c":"$Q14"}]]
+f:[["children",{"s":"products","h":131168,"d":{"r":["$","$1","c",{"children":[null,["$","$L8",null,{"parallelRouterKey":"children","template":["$","$L9",null,{}]}]]}],"p":"$@10","v":"$11","s":"$e"},"c":"$Q12"}]]
+0:{"t":{"t":{"s":"","h":131152,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/v2/_next/static/chunks/1k-897caq_u31.css","precedence":"next"}],["$","script","script-0",{"src":"/v2/_next/static/chunks/3_tqb6z99k4ts.js","async":true}],["$","script","script-1",{"src":"/v2/_next/static/chunks/15wx4_dke16yi.js","async":true}],["$","script","script-2",{"src":"/v2/_next/static/chunks/3uvgz8xx2rjz3.js","async":true}],["$","script","script-3",{"src":"/v2/_next/static/chunks/43rb7hmhb4ccy.js","async":true}]],["$","html",null,{"lang":"en","children":["$","body",null,{"className":"font-sans antialiased","children":[["$","script",null,{"type":"application/ld+json","dangerouslySetInnerHTML":{"__html":"{\"@context\":\"https://schema.org\",\"@type\":\"GroceryStore\",\"name\":\"Rebesta Fresh\",\"url\":\"https://rebestafresh.in\",\"logo\":\"https://rebestafresh.in/assets/brand/logo-orange-leaf.png\",\"image\":\"https://rebestafresh.in/assets/brand/hero.jpg\",\"description\":\"Farm-fresh vegetables delivered every morning across Hosur. Live stock, fair prices, cash on delivery and UPI.\",\"telephone\":\"+918438765119\",\"priceRange\":\"₹\",\"address\":{\"@type\":\"PostalAddress\",\"addressLocality\":\"Hosur\",\"addressRegion\":\"Tamil Nadu\",\"postalCode\":\"635109\",\"addressCountry\":\"IN\"},\"geo\":{\"@type\":\"GeoCoordinates\",\"latitude\":12.7409,\"longitude\":77.8253},\"openingHoursSpecification\":{\"@type\":\"OpeningHoursSpecification\",\"dayOfWeek\":[\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\",\"Saturday\",\"Sunday\"],\"opens\":\"06:00\",\"closes\":\"20:00\"},\"sameAs\":[\"https://wa.me/918438765119\"]}"}}],["$","$L6",null,{"children":["$","$L7",null,{"children":[["$","$L8",null,{"parallelRouterKey":"children","template":["$","$L9",null,{}],"notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]]}],["$","$Lb",null,{}]]}]}],["$","$Lc",null,{}]]}]}]]}],"p":"$@d","v":null,"s":"$e"},"c":"$Qf"},"h":{"r":["$","$1","h",{"children":[null,["$","$L1d",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#032c13"}]]}],["$","$L1f",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$19",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Potato — Rebesta Fresh"}],["$","meta","1",{"name":"description","content":"Potato — ₹35 / 1 kg. Fresh, farm-picked Potato (Urulaikkai / Aloo), sourced daily from trusted growers and hand-picked for quality. Cleaned, graded and packed with care for your kitchen.\n\nSold as: 1 kg · Category: Root Vegetables\n\nStorage: keep in a cool, dry place or refrigerate. Best enjoyed withi"}],["$","meta","2",{"name":"application-name","content":"Rebesta Fresh"}],["$","link","3",{"rel":"manifest","href":"/manifest.json"}],["$","meta","4",{"name":"robots","content":"index, follow"}],["$","link","5",{"rel":"canonical","href":"https://rebestafresh.in/products/potato"}],["$","meta","6",{"name":"mobile-web-app-capable","content":"yes"}],["$","meta","7",{"name":"apple-mobile-web-app-title","content":"Rebesta Fresh"}],["$","meta","8",{"name":"apple-mobile-web-app-status-bar-style","content":"default"}],["$","meta","9",{"property":"og:title","content":"Potato — Rebesta Fresh"}],"$L20","$L21","$L22","$L23","$L24","$L25","$L26","$L27","$L28","$L29","$L2a"]}]}],null]}],null]}],"p":"$@2b","v":null,"s":"$e"}},"a":"$@2c","u":"$@2d","b":"eBMR7dqAKgHWAI-5FOnsY"}
+2e:I[67932,["$2","$3","$4","$5"],"IconMark"]
+1a:null
+20:["$","meta","10",{"property":"og:description","content":"Potato at ₹35/1 kg — fresh from farms, delivered in Hosur."}]
+21:["$","meta","11",{"property":"og:image","content":"https://rebestafresh.in/assets/products/potato.jpg"}]
+22:["$","meta","12",{"name":"twitter:card","content":"summary_large_image"}]
+23:["$","meta","13",{"name":"twitter:title","content":"Rebesta Fresh — Farm-Fresh Vegetables Delivered in Hosur"}]
+24:["$","meta","14",{"name":"twitter:description","content":"Live stock, fair prices, exact-pin morning delivery across Hosur. Free delivery over ₹500."}]
+25:["$","meta","15",{"name":"twitter:image","content":"https://rebestafresh.in/assets/brand/hero.jpg"}]
+26:["$","link","16",{"rel":"icon","href":"/favicon.ico?favicon.117ezoe8m31dk.ico","sizes":"48x48","type":"image/x-icon"}]
+27:["$","link","17",{"rel":"icon","href":"/assets/brand/icon-r-192.png","sizes":"192x192","type":"image/png"}]
+28:["$","link","18",{"rel":"icon","href":"/assets/brand/icon-r-512.png","sizes":"512x512","type":"image/png"}]
+29:["$","link","19",{"rel":"apple-touch-icon","href":"/assets/brand/icon-r-180.png","sizes":"180x180","type":"image/png"}]
+2a:["$","$L2e","20",{}]
+e:300
+2d:true
+e:C
+2c:0
+13:"$undefined"
+10:"$undefined"
+d:"$undefined"
+2b:"$undefined"
+1b:"$undefined"

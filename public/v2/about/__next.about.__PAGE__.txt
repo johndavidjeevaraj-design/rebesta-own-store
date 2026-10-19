@@ -1,65 +1,66 @@
 1:"$Sreact.fragment"
 2:"/v2/_next/static/chunks/3_tqb6z99k4ts.js"
-3:"/v2/_next/static/chunks/0pvj9ltbk_5ty.js"
+3:"/v2/_next/static/chunks/15wx4_dke16yi.js"
 4:"/v2/_next/static/chunks/3uvgz8xx2rjz3.js"
-5:"/v2/_next/static/chunks/2f2kzbvkba20h.js"
+5:"/v2/_next/static/chunks/43rb7hmhb4ccy.js"
 6:I[96402,["$2","$3","$4","$5"],"default"]
 7:I[54272,["$2","$3","$4","$5"],"ToastProvider"]
 8:I[7253,["$2","$3","$4","$5"],"default"]
 9:I[50530,["$2","$3","$4","$5"],"default"]
-a:I[76292,["$2","$3","$4","$5"],"ChatWidget"]
-b:I[64101,["$2","$3","$4","$5"],"PwaRegister"]
-12:"/v2/_next/static/chunks/3i48dv8p936uu.js"
-13:"/v2/_next/static/chunks/452yn8culsozu.js"
-14:I[92996,["$2","$3","$4","$5","$12","$13"],"InfoShell"]
-21:"ViewportBoundary"
-22:I[30416,["$2","$3","$4","$5"],"$21"]
-23:"MetadataBoundary"
-24:I[30416,["$2","$3","$4","$5"],"$23"]
-25:"$Sreact.suspense"
+a:"StorefrontChatWidget"
+b:I[38222,["$2","$3","$4","$5"],"$a"]
+c:I[64101,["$2","$3","$4","$5"],"PwaRegister"]
+13:"/v2/_next/static/chunks/3i48dv8p936uu.js"
+14:"/v2/_next/static/chunks/3j6nhym58jiyk.js"
+15:I[92996,["$2","$3","$4","$5","$13","$14"],"InfoShell"]
+22:"ViewportBoundary"
+23:I[30416,["$2","$3","$4","$5"],"$22"]
+24:"MetadataBoundary"
+25:I[30416,["$2","$3","$4","$5"],"$24"]
+26:"$Sreact.suspense"
 :HL["/v2/_next/static/chunks/1k-897caq_u31.css","style"]
-d:X
-10:X
-10:C
-11:[["children",{"s":"__PAGE__","h":160,"d":{"r":["$","$1","c",{"children":[["$","$L14",null,{"eyebrow":"Our story","title":"Farm fresh, from Hosur to your kitchen","subtitle":"We started Rebesta Fresh with one simple belief: every family in Hosur deserves vegetables that were in the ground yesterday.","children":[["$","p",null,{"children":[["$","strong",null,{"children":"We buy direct from farmers around Hosur and Denkanikottai."}]," No cold storage, no middle mandi, no waxed produce. Vegetables are harvested, sorted by hand the same evening, and at your door the next morning — usually within 12 hours of harvest."]}],["$","h3",null,{"children":"What makes us different"}],["$","ul",null,{"children":[["$","li",null,{"children":[["$","strong",null,{"children":"Honest weight."}]," You pay for the exact weight you order — we weigh again at packing and add a little extra, never less."]}],["$","li",null,{"children":[["$","strong",null,{"children":"Fixed morning slots."}]," Choose 7–9 AM or 9–11 AM. Your vegetables arrive before lunch, not at random evening hours."]}],["$","li",null,{"children":["$L15"," Based on your map pin distance from our hub — shown before you pay. Free above ₹500."]}],"$L16","$L17"]}],"$L18","$L19","$L1a","$L1b","$L1c"]}],["$L1d","$L1e"],"$L1f"]}],"p":"$@20","v":null,"s":"$d"}}]]
-e:[["children",{"s":"about","h":96,"d":{"r":["$","$1","c",{"children":[null,["$","$L8",null,{"parallelRouterKey":"children","template":["$","$L9",null,{}]}]]}],"p":"$@f","v":"$10","s":"$d"},"c":"$Q11"}]]
-0:{"t":{"t":{"s":"","h":80,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/v2/_next/static/chunks/1k-897caq_u31.css","precedence":"next"}],["$","script","script-0",{"src":"/v2/_next/static/chunks/3_tqb6z99k4ts.js","async":true}],["$","script","script-1",{"src":"/v2/_next/static/chunks/0pvj9ltbk_5ty.js","async":true}],["$","script","script-2",{"src":"/v2/_next/static/chunks/3uvgz8xx2rjz3.js","async":true}],["$","script","script-3",{"src":"/v2/_next/static/chunks/2f2kzbvkba20h.js","async":true}]],["$","html",null,{"lang":"en","children":["$","body",null,{"className":"font-sans antialiased","children":[["$","script",null,{"type":"application/ld+json","dangerouslySetInnerHTML":{"__html":"{\"@context\":\"https://schema.org\",\"@type\":\"GroceryStore\",\"name\":\"Rebesta Fresh\",\"url\":\"https://rebestafresh.in\",\"logo\":\"https://rebestafresh.in/assets/brand/logo-orange-leaf.png\",\"image\":\"https://rebestafresh.in/assets/brand/hero.jpg\",\"description\":\"Farm-fresh vegetables delivered every morning across Hosur. Live stock, fair prices, cash on delivery and UPI.\",\"telephone\":\"+918438765119\",\"priceRange\":\"₹\",\"address\":{\"@type\":\"PostalAddress\",\"addressLocality\":\"Hosur\",\"addressRegion\":\"Tamil Nadu\",\"postalCode\":\"635109\",\"addressCountry\":\"IN\"},\"geo\":{\"@type\":\"GeoCoordinates\",\"latitude\":12.7409,\"longitude\":77.8253},\"openingHoursSpecification\":{\"@type\":\"OpeningHoursSpecification\",\"dayOfWeek\":[\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\",\"Saturday\",\"Sunday\"],\"opens\":\"06:00\",\"closes\":\"20:00\"},\"sameAs\":[\"https://wa.me/918438765119\"]}"}}],["$","$L6",null,{"children":["$","$L7",null,{"children":[["$","$L8",null,{"parallelRouterKey":"children","template":["$","$L9",null,{}],"notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]]}],["$","$La",null,{}]]}]}],["$","$Lb",null,{}]]}]}]]}],"p":"$@c","v":null,"s":"$d"},"c":"$Qe"},"h":{"r":["$","$1","h",{"children":[null,["$","$L22",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#032c13"}]]}],["$","$L24",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$25",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"About Us — Farm-Fresh Vegetables from Hosur | Rebesta Fresh"}],["$","meta","1",{"name":"description","content":"We buy direct from farmers around Hosur and Denkanikottai — harvested, hand-sorted and delivered to your door the next morning."}],["$","meta","2",{"name":"application-name","content":"Rebesta Fresh"}],["$","link","3",{"rel":"manifest","href":"/manifest.json"}],["$","meta","4",{"name":"robots","content":"index, follow"}],["$","link","5",{"rel":"canonical","href":"https://rebestafresh.in/about"}],["$","meta","6",{"name":"mobile-web-app-capable","content":"yes"}],["$","meta","7",{"name":"apple-mobile-web-app-title","content":"Rebesta Fresh"}],["$","meta","8",{"name":"apple-mobile-web-app-status-bar-style","content":"default"}],["$","meta","9",{"property":"og:title","content":"Rebesta Fresh — Farm-Fresh Vegetables Delivered in Hosur"}],["$","meta","10",{"property":"og:description","content":"Live stock, fair prices, exact-pin morning delivery across Hosur. Cash on delivery & UPI. Free delivery over ₹500."}],"$L26","$L27","$L28","$L29","$L2a","$L2b","$L2c","$L2d","$L2e","$L2f","$L30","$L31","$L32","$L33","$L34","$L35"]}]}],null]}],null]}],"p":"$@36","v":null,"s":"$d"}},"a":"$@37","u":"$@38","b":"1Dlskfgjb_IjvVcx-LKeE"}
-39:I[66918,["$2","$3","$4","$5","$12","$13"],"FssaiLine"]
-3a:I[30416,["$2","$3","$4","$5"],"OutletBoundary"]
-3c:I[67932,["$2","$3","$4","$5"],"IconMark"]
-15:["$","strong",null,{"children":"Transparent delivery fee."}]
-16:["$","li",null,{"children":[["$","strong",null,{"children":"Cash on delivery."}]," Inspect the bag, then pay. Simple."]}]
-17:["$","li",null,{"children":[["$","strong",null,{"children":"Freshness promise."}]," Anything not fresh? Photo on WhatsApp and we replace or refund — no questions, no forms."]}]
-18:["$","h3",null,{"children":"Where we deliver"}]
-19:["$","p",null,{"children":"All of Hosur town and nearby areas up to a 9 km road radius from our hub. Enter your map pin at checkout to confirm exact eligibility and delivery fee."}]
-1a:["$","h3",null,{"children":"Talk to us"}]
-1b:["$","p",null,{"children":["WhatsApp is the fastest way to reach us: ",["$","a",null,{"href":"https://wa.me/918438765119","children":"+91 84387 65119"}],". Whether it’s a special vegetable request, a bulk order for a function, or feedback — we reply the same day."]}]
-1c:["$","$L39",null,{}]
-1d:["$","script","script-0",{"src":"/v2/_next/static/chunks/3i48dv8p936uu.js","async":true}]
-1e:["$","script","script-1",{"src":"/v2/_next/static/chunks/452yn8culsozu.js","async":true}]
-1f:["$","$L3a",null,{"children":["$","$25",null,{"name":"Next.MetadataOutlet","children":"$@3b"}]}]
-26:["$","meta","11",{"property":"og:url","content":"https://rebestafresh.in"}]
-27:["$","meta","12",{"property":"og:site_name","content":"Rebesta Fresh"}]
-28:["$","meta","13",{"property":"og:image","content":"https://rebestafresh.in/assets/brand/hero.jpg"}]
-29:["$","meta","14",{"property":"og:image:width","content":"1376"}]
-2a:["$","meta","15",{"property":"og:image:height","content":"768"}]
-2b:["$","meta","16",{"property":"og:image:alt","content":"Fresh vegetables from Rebesta Fresh"}]
-2c:["$","meta","17",{"property":"og:type","content":"website"}]
-2d:["$","meta","18",{"name":"twitter:card","content":"summary_large_image"}]
-2e:["$","meta","19",{"name":"twitter:title","content":"Rebesta Fresh — Farm-Fresh Vegetables Delivered in Hosur"}]
-2f:["$","meta","20",{"name":"twitter:description","content":"Live stock, fair prices, exact-pin morning delivery across Hosur. Free delivery over ₹500."}]
-30:["$","meta","21",{"name":"twitter:image","content":"https://rebestafresh.in/assets/brand/hero.jpg"}]
-31:["$","link","22",{"rel":"icon","href":"/favicon.ico?favicon.117ezoe8m31dk.ico","sizes":"48x48","type":"image/x-icon"}]
-32:["$","link","23",{"rel":"icon","href":"/assets/brand/icon-r-192.png","sizes":"192x192","type":"image/png"}]
-33:["$","link","24",{"rel":"icon","href":"/assets/brand/icon-r-512.png","sizes":"512x512","type":"image/png"}]
-34:["$","link","25",{"rel":"apple-touch-icon","href":"/assets/brand/icon-r-180.png","sizes":"180x180","type":"image/png"}]
-35:["$","$L3c","26",{}]
-d:300
-3b:null
-38:true
-d:C
-37:0
-f:"$undefined"
-c:"$undefined"
-36:"$undefined"
-20:"$undefined"
+e:X
+11:X
+11:C
+12:[["children",{"s":"__PAGE__","h":160,"d":{"r":["$","$1","c",{"children":[["$","$L15",null,{"eyebrow":"Our story","title":"Farm fresh, from Hosur to your kitchen","subtitle":"We started Rebesta Fresh with one simple belief: every family in Hosur deserves vegetables that were in the ground yesterday.","children":[["$","p",null,{"children":[["$","strong",null,{"children":"We buy direct from farmers around Hosur and Denkanikottai."}]," No cold storage, no middle mandi, no waxed produce. Vegetables are harvested, sorted by hand the same evening, and at your door the next morning — usually within 12 hours of harvest."]}],["$","h3",null,{"children":"What makes us different"}],["$","ul",null,{"children":[["$","li",null,{"children":[["$","strong",null,{"children":"Honest weight."}]," You pay for the exact weight you order — we weigh again at packing and add a little extra, never less."]}],["$","li",null,{"children":[["$","strong",null,{"children":"Fixed morning slots."}]," Choose 7–9 AM or 9–11 AM. Your vegetables arrive before lunch, not at random evening hours."]}],["$","li",null,{"children":["$L16"," Based on your map pin distance from our hub — shown before you pay. Free above ₹500."]}],"$L17","$L18"]}],"$L19","$L1a","$L1b","$L1c","$L1d"]}],["$L1e","$L1f"],"$L20"]}],"p":"$@21","v":null,"s":"$e"}}]]
+f:[["children",{"s":"about","h":96,"d":{"r":["$","$1","c",{"children":[null,["$","$L8",null,{"parallelRouterKey":"children","template":["$","$L9",null,{}]}]]}],"p":"$@10","v":"$11","s":"$e"},"c":"$Q12"}]]
+0:{"t":{"t":{"s":"","h":80,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/v2/_next/static/chunks/1k-897caq_u31.css","precedence":"next"}],["$","script","script-0",{"src":"/v2/_next/static/chunks/3_tqb6z99k4ts.js","async":true}],["$","script","script-1",{"src":"/v2/_next/static/chunks/15wx4_dke16yi.js","async":true}],["$","script","script-2",{"src":"/v2/_next/static/chunks/3uvgz8xx2rjz3.js","async":true}],["$","script","script-3",{"src":"/v2/_next/static/chunks/43rb7hmhb4ccy.js","async":true}]],["$","html",null,{"lang":"en","children":["$","body",null,{"className":"font-sans antialiased","children":[["$","script",null,{"type":"application/ld+json","dangerouslySetInnerHTML":{"__html":"{\"@context\":\"https://schema.org\",\"@type\":\"GroceryStore\",\"name\":\"Rebesta Fresh\",\"url\":\"https://rebestafresh.in\",\"logo\":\"https://rebestafresh.in/assets/brand/logo-orange-leaf.png\",\"image\":\"https://rebestafresh.in/assets/brand/hero.jpg\",\"description\":\"Farm-fresh vegetables delivered every morning across Hosur. Live stock, fair prices, cash on delivery and UPI.\",\"telephone\":\"+918438765119\",\"priceRange\":\"₹\",\"address\":{\"@type\":\"PostalAddress\",\"addressLocality\":\"Hosur\",\"addressRegion\":\"Tamil Nadu\",\"postalCode\":\"635109\",\"addressCountry\":\"IN\"},\"geo\":{\"@type\":\"GeoCoordinates\",\"latitude\":12.7409,\"longitude\":77.8253},\"openingHoursSpecification\":{\"@type\":\"OpeningHoursSpecification\",\"dayOfWeek\":[\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\",\"Saturday\",\"Sunday\"],\"opens\":\"06:00\",\"closes\":\"20:00\"},\"sameAs\":[\"https://wa.me/918438765119\"]}"}}],["$","$L6",null,{"children":["$","$L7",null,{"children":[["$","$L8",null,{"parallelRouterKey":"children","template":["$","$L9",null,{}],"notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]]}],["$","$Lb",null,{}]]}]}],["$","$Lc",null,{}]]}]}]]}],"p":"$@d","v":null,"s":"$e"},"c":"$Qf"},"h":{"r":["$","$1","h",{"children":[null,["$","$L23",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#032c13"}]]}],["$","$L25",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$26",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"About Us — Farm-Fresh Vegetables from Hosur | Rebesta Fresh"}],["$","meta","1",{"name":"description","content":"We buy direct from farmers around Hosur and Denkanikottai — harvested, hand-sorted and delivered to your door the next morning."}],["$","meta","2",{"name":"application-name","content":"Rebesta Fresh"}],["$","link","3",{"rel":"manifest","href":"/manifest.json"}],["$","meta","4",{"name":"robots","content":"index, follow"}],["$","link","5",{"rel":"canonical","href":"https://rebestafresh.in/about"}],["$","meta","6",{"name":"mobile-web-app-capable","content":"yes"}],["$","meta","7",{"name":"apple-mobile-web-app-title","content":"Rebesta Fresh"}],["$","meta","8",{"name":"apple-mobile-web-app-status-bar-style","content":"default"}],["$","meta","9",{"property":"og:title","content":"Rebesta Fresh — Farm-Fresh Vegetables Delivered in Hosur"}],["$","meta","10",{"property":"og:description","content":"Live stock, fair prices, exact-pin morning delivery across Hosur. Cash on delivery & UPI. Free delivery over ₹500."}],"$L27","$L28","$L29","$L2a","$L2b","$L2c","$L2d","$L2e","$L2f","$L30","$L31","$L32","$L33","$L34","$L35","$L36"]}]}],null]}],null]}],"p":"$@37","v":null,"s":"$e"}},"a":"$@38","u":"$@39","b":"eBMR7dqAKgHWAI-5FOnsY"}
+3a:I[66918,["$2","$3","$4","$5","$13","$14"],"FssaiLine"]
+3b:I[30416,["$2","$3","$4","$5"],"OutletBoundary"]
+3d:I[67932,["$2","$3","$4","$5"],"IconMark"]
+16:["$","strong",null,{"children":"Transparent delivery fee."}]
+17:["$","li",null,{"children":[["$","strong",null,{"children":"Cash on delivery."}]," Inspect the bag, then pay. Simple."]}]
+18:["$","li",null,{"children":[["$","strong",null,{"children":"Freshness promise."}]," Anything not fresh? Photo on WhatsApp and we replace or refund — no questions, no forms."]}]
+19:["$","h3",null,{"children":"Where we deliver"}]
+1a:["$","p",null,{"children":"All of Hosur town and nearby areas up to a 9 km road radius from our hub. Enter your map pin at checkout to confirm exact eligibility and delivery fee."}]
+1b:["$","h3",null,{"children":"Talk to us"}]
+1c:["$","p",null,{"children":["WhatsApp is the fastest way to reach us: ",["$","a",null,{"href":"https://wa.me/918438765119","children":"+91 84387 65119"}],". Whether it’s a special vegetable request, a bulk order for a function, or feedback — we reply the same day."]}]
+1d:["$","$L3a",null,{}]
+1e:["$","script","script-0",{"src":"/v2/_next/static/chunks/3i48dv8p936uu.js","async":true}]
+1f:["$","script","script-1",{"src":"/v2/_next/static/chunks/3j6nhym58jiyk.js","async":true}]
+20:["$","$L3b",null,{"children":["$","$26",null,{"name":"Next.MetadataOutlet","children":"$@3c"}]}]
+27:["$","meta","11",{"property":"og:url","content":"https://rebestafresh.in"}]
+28:["$","meta","12",{"property":"og:site_name","content":"Rebesta Fresh"}]
+29:["$","meta","13",{"property":"og:image","content":"https://rebestafresh.in/assets/brand/hero.jpg"}]
+2a:["$","meta","14",{"property":"og:image:width","content":"1376"}]
+2b:["$","meta","15",{"property":"og:image:height","content":"768"}]
+2c:["$","meta","16",{"property":"og:image:alt","content":"Fresh vegetables from Rebesta Fresh"}]
+2d:["$","meta","17",{"property":"og:type","content":"website"}]
+2e:["$","meta","18",{"name":"twitter:card","content":"summary_large_image"}]
+2f:["$","meta","19",{"name":"twitter:title","content":"Rebesta Fresh — Farm-Fresh Vegetables Delivered in Hosur"}]
+30:["$","meta","20",{"name":"twitter:description","content":"Live stock, fair prices, exact-pin morning delivery across Hosur. Free delivery over ₹500."}]
+31:["$","meta","21",{"name":"twitter:image","content":"https://rebestafresh.in/assets/brand/hero.jpg"}]
+32:["$","link","22",{"rel":"icon","href":"/favicon.ico?favicon.117ezoe8m31dk.ico","sizes":"48x48","type":"image/x-icon"}]
+33:["$","link","23",{"rel":"icon","href":"/assets/brand/icon-r-192.png","sizes":"192x192","type":"image/png"}]
+34:["$","link","24",{"rel":"icon","href":"/assets/brand/icon-r-512.png","sizes":"512x512","type":"image/png"}]
+35:["$","link","25",{"rel":"apple-touch-icon","href":"/assets/brand/icon-r-180.png","sizes":"180x180","type":"image/png"}]
+36:["$","$L3d","26",{}]
+e:300
+3c:null
+39:true
+e:C
+38:0
+10:"$undefined"
+d:"$undefined"
+37:"$undefined"
+21:"$undefined"

@@ -58,28 +58,50 @@ export function ProductView({ handle }: { handle: string }) {
   const inCart = useVariantQty(product || ({ handle } as Product), selectedPack(product).id);
 
   useEffect(() => {
+    if (!handle) return;
+    let cancelled = false;
     (async () => {
       try {
         const data = await api(`/api/products/${encodeURIComponent(handle)}`);
+        if (cancelled) return;
         setProduct(data.product);
         pushRecent(handle);
         const list = await api("/api/products");
+        if (cancelled) return;
         setAll(((list.products || []) as Product[]).filter((p) => p.active !== false));
         try {
           const rv = await api(`/api/reviews?product=${encodeURIComponent(handle)}`);
-          setReviews(rv.reviews || []);
+          if (!cancelled) setReviews(rv.reviews || []);
         } catch {
           /* reviews optional */
         }
       } catch (e: any) {
-        setNotFound(e?.message || "Product not found");
+        if (!cancelled) setNotFound(e?.message || "Product not found");
       }
     })();
+    return () => { cancelled = true; };
   }, [handle]);
 
-  /* SEO — JSON-LD with the live price/stock (title/OG come from build-time metadata) */
+  /* Live product metadata keeps the generic Next fallback as useful as a
+     statically generated product page, including title, canonical and JSON-LD. */
   useEffect(() => {
     if (!product) return;
+    const title = `${product.title} — Rebesta Fresh`;
+    const description = `${product.title} — ₹${product.priceInr} / ${product.unitLabel}. ${product.description || ""}`.slice(0, 300);
+    const imageUrl = new URL(product.image, location.origin).href;
+    const canonicalUrl = `${location.origin}/products/${encodeURIComponent(product.handle)}`;
+    document.title = title;
+    const setMeta = (selector: string, content: string) => {
+      document.head.querySelector(selector)?.setAttribute("content", content);
+    };
+    setMeta('meta[name="description"]', description);
+    setMeta('meta[property="og:title"]', title);
+    setMeta('meta[property="og:description"]', `${product.title} at ₹${product.priceInr}/${product.unitLabel} — fresh from farms, delivered in Hosur.`);
+    setMeta('meta[property="og:type"]', "product");
+    setMeta('meta[property="og:image"]', imageUrl);
+    setMeta('meta[name="twitter:title"]', title);
+    setMeta('meta[name="twitter:description"]', description);
+    setMeta('meta[name="twitter:image"]', imageUrl);
     document.getElementById("rfs-jsonld")?.remove();
     const script = document.createElement("script");
     script.id = "rfs-jsonld";
@@ -89,7 +111,7 @@ export function ProductView({ handle }: { handle: string }) {
       "@type": "Product",
       name: product.title,
       description: product.description,
-      image: [new URL(product.image, location.origin).href],
+      image: [imageUrl],
       sku: product.sku,
       brand: { "@type": "Brand", name: "Rebesta Fresh" },
       offers: {
@@ -97,7 +119,7 @@ export function ProductView({ handle }: { handle: string }) {
         priceCurrency: "INR",
         price: product.priceInr,
         availability: product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-        url: `${location.origin}/products/${encodeURIComponent(product.handle)}`,
+        url: canonicalUrl,
       },
     });
     document.head.appendChild(script);

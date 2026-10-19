@@ -146,13 +146,18 @@ ${productUrls}
   }));
   /* one auth page: number + OTP decides sign-in vs new account — /signup is legacy */
   app.get('/signup', (req, res) => res.redirect(302, '/login' + (req.query.phone ? `?phone=${encodeURIComponent(String(req.query.phone))}` : '')));
-  /* product pages: v3 export when this build knows the product, else the
-     previous product page (so products added after a build still render) */
+  /* product pages: serve their static Next export when available; otherwise
+     use the Next-built live-data shell for products added after the last build.
+     Keep the Vite page as a final rollback fallback until the Next shell is
+     verified in production. */
   app.get('/products/:handle', (req, res) => {
     const handle = String(req.params.handle || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80);
     if (!handle) return res.status(404).sendFile('404.html', { root: config.publicDir });
     res.sendFile(`v2/products/${handle}.html`, { root: config.publicDir }, (err) => {
-      if (err) res.sendFile('product.html', { root: config.publicDir });
+      if (!err) return;
+      res.sendFile('v2/product-fallback.html', { root: config.publicDir }, (fallbackError) => {
+        if (fallbackError) res.sendFile('product.html', { root: config.publicDir });
+      });
     });
   });
 

@@ -4,8 +4,8 @@ import type { Metadata } from "next";
 import { ProductView } from "@/components/product-view";
 
 /* Static export — one page per product, generated from the catalog at build
-   time. Products added after a build still work: Express falls back to the
-   previous product page for handles without a v2 export. */
+   time. Products added later use the shared Next-built product fallback shell
+   served by Express, which loads live details from the product API. */
 export const dynamicParams = false;
 
 function loadCatalog(): any[] {

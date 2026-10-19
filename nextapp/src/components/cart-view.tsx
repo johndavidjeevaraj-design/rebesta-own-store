@@ -11,6 +11,7 @@ import { useToast } from "@/components/toaster";
 import { useCartLines, useSavedLocation } from "@/lib/hooks";
 import { startCashfreeDropin, startUpiApp, startUpiQr } from "@/lib/cashfree-client";
 import { addToCart, api, money, Product, saveCart, setCartQty, defaultVariant, lineVariantId } from "@/lib/store";
+import { bindCheckoutAuthFlow } from "@/lib/auth-flow";
 
 /* ================= keys + constants (identical to the old checkout) ================= */
 const ADDR_KEY = "rebesta_checkout_addr_v1";
@@ -171,11 +172,9 @@ export function CartView() {
   const [locSheetOpen, setLocSheetOpen] = useState(false);
 
   const authFormRef = useRef<HTMLFormElement>(null);
-  const authBound = useRef(false);
   const afterLoginRef = useRef<(() => void) | null>(null);
   const quoteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const otpSdkLoaded = useRef(false);
 
   const count = lines.reduce((s, l) => s + l.qty, 0);
   const subtotal = useMemo(() => {
@@ -233,6 +232,28 @@ export function CartView() {
   useEffect(() => {
     meRef.current = me;
   }, [me]);
+  useEffect(() => {
+    if (!authOpen) return;
+    const form = authFormRef.current;
+    if (!form) return;
+    return bindCheckoutAuthFlow(form, {
+      onSuccess: async () => {
+        let fresh: Customer | null = null;
+        try {
+          fresh = (await api("/api/auth/me")).customer || null;
+        } catch {
+          fresh = null;
+        }
+        setMe(fresh);
+        meRef.current = fresh;
+        setAuthOpen(false);
+        toast(`Welcome, ${(fresh?.name || "friend").split(" ")[0]}! 🌿`);
+        const next = afterLoginRef.current;
+        afterLoginRef.current = null;
+        if (typeof next === "function") next();
+      },
+    });
+  }, [authOpen, toast]);
   useEffect(() => {
     setPayLabel(`Pay ${money(total)}`);
   }, [total]);
@@ -455,74 +476,10 @@ export function CartView() {
     return () => { dead = true; };
   }, [cfPay]);
 
-  /* ---------- login sheet: reuse the battle-tested /js/auth.js flow ---------- */
-  function loadOtpSdk() {
-    if (otpSdkLoaded.current || (window as any).initSendOTP) return;
-    otpSdkLoaded.current = true;
-    const config = {
-      widgetId: "366a65687644323637363131",
-      tokenAuth: "571380TgZrH8gvzsiK6aa8dedbP1",
-      exposeMethods: true,
-      success: (data: unknown) => {
-        (window as any).__otpWidgetSuccess = data;
-      },
-      failure: (error: unknown) => {
-        (window as any).__otpWidgetFailure = error;
-      },
-    };
-    const urls = ["https://verify.msg91.com/otp-provider.js", "https://verify.phone91.com/otp-provider.js"];
-    let i = 0;
-    (function attempt() {
-      const s = document.createElement("script");
-      s.src = urls[i];
-      s.async = true;
-      s.dataset.otpSdk = "1";
-      s.onload = () => {
-        if (typeof (window as any).initSendOTP === "function") {
-          try {
-            (window as any).initSendOTP(config);
-          } catch (e) {
-            (window as any).__otpWidgetFailure = e;
-          }
-        }
-      };
-      s.onerror = () => {
-        i += 1;
-        if (i < urls.length) attempt();
-      };
-      document.head.appendChild(s);
-    })();
-  }
+  /* The login sheet uses the shared Next-bundled OTP flow. */
   function openAuthSheet(afterLogin?: () => void) {
     afterLoginRef.current = afterLogin || null;
     setAuthOpen(true);
-    loadOtpSdk();
-    const s = document.createElement("script");
-    s.src = "/js/auth.js?v=20261012b";
-    s.async = true;
-    s.onload = () => {
-      const RFSAuth = (window as any).RFSAuth;
-      if (!RFSAuth || authBound.current || !authFormRef.current) return;
-      authBound.current = true;
-      RFSAuth.bindFlow(authFormRef.current, {
-        onSuccess: async () => {
-          let fresh: Customer | null = null;
-          try {
-            fresh = (await api("/api/auth/me")).customer || null;
-          } catch {
-            fresh = null;
-          }
-          setMe(fresh);
-          meRef.current = fresh;
-          setAuthOpen(false);
-          toast(`Welcome, ${(fresh?.name || "friend").split(" ")[0]}! 🌿`);
-          const next = afterLoginRef.current;
-          afterLoginRef.current = null;
-          if (typeof next === "function") next();
-        },
-      });
-    };
-    document.head.appendChild(s);
   }
 
   /* ---------- place order ---------- */
@@ -1240,7 +1197,7 @@ export function CartView() {
         </p>
       </PortalSheet>
 
-      {/* phone login sheet — island bound by /js/auth.js (RFSAuth.bindFlow) */}
+      {/* phone login sheet — Next-bundled shared OTP flow */}
       <PortalSheet open={authOpen} onClose={() => setAuthOpen(false)} label="Login">
         <form className="auth-form" data-bp-flow noValidate ref={authFormRef}>
           <div className="mb-6 pr-10">

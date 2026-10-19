@@ -310,7 +310,7 @@ html.lenis body {
   line-height: 1.68;
 }
 
-/* ---- checkout: OTP login island (markup bound by the existing /js/auth.js) ---- */
+/* ---- checkout: Next-bundled OTP login flow ---- */
 .auth-step[hidden] {
   display: none;
 }

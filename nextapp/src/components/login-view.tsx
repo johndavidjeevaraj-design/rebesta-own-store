@@ -1,40 +1,19 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { bindLoginPage } from "@/lib/auth-flow";
 
-/* Static island driven by /js/auth.js (RFSAuth): number → code → (new? name),
-   password fallback, MSG91 widget + captcha, OTP-availability check and the
-   /account redirect after success. The markup must stay static — auth.js binds
-   to the data-* hooks once at load. Styling lives in the scoped block below. */
+/* The login form keeps its established markup and styling, while its event flow
+   and MSG91 integration are bundled with the Next app (not /js/auth.js). */
 export function LoginView() {
+  const authRoot = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    /* MSG91 OTP widget (captcha renders into #otp-captcha) */
-    if (!document.querySelector("script[data-otp-sdk]") && !(window as any).initSendOTP) {
-      const config = {
-        widgetId: "366a65687644323637363131",
-        tokenAuth: "571380TgZrH8gvzsiK6aa8dedbP1",
-        exposeMethods: true,
-        success: (data: unknown) => { (window as any).__otpWidgetSuccess = data; },
-        failure: (error: unknown) => { (window as any).__otpWidgetFailure = error; },
-      };
-      const urls = ["https://verify.msg91.com/otp-provider.js", "https://verify.phone91.com/otp-provider.js"];
-      let i = 0;
-      (function attempt() {
-        const s = document.createElement("script");
-        s.src = urls[i]; s.async = true; s.dataset.otpSdk = "1";
-        s.onload = () => { if (typeof (window as any).initSendOTP === "function") { try { (window as any).initSendOTP(config); } catch (e) { (window as any).__otpWidgetFailure = e; } } };
-        s.onerror = () => { i += 1; if (i < urls.length) attempt(); };
-        document.head.appendChild(s);
-      })();
-    }
-    /* the page flow itself */
-    if (!document.querySelector("script[data-auth-page]")) {
-      const s = document.createElement("script");
-      s.src = "/js/auth.js?v=20261013"; s.async = true; s.dataset.authPage = "1";
-      document.head.appendChild(s);
-    }
+    const root = authRoot.current;
+    if (!root) return;
+    return bindLoginPage(root);
   }, []);
 
   return (
@@ -42,7 +21,7 @@ export function LoginView() {
       <SiteHeader />
       <main className="pb-20">
         <section className="mx-auto max-w-md px-4 pt-14 sm:pt-20">
-          <div className="auth-card rounded-[28px] border border-line bg-white p-7 shadow-[0_4px_24px_rgba(0,0,0,0.06)] sm:p-9" data-auth-card>
+          <div ref={authRoot} className="auth-card rounded-[28px] border border-line bg-white p-7 shadow-[0_4px_24px_rgba(0,0,0,0.06)] sm:p-9" data-auth-card>
             <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 22c5-3.5 8-7.5 8-11.5C20 6 16.5 3 12 3S4 6 4 10.5C4 14.5 7 18.5 12 22Z" stroke="currentColor" strokeWidth="2.4"/><path d="M12 22V9M12 12l3-2M12 15l-2.6-1.8" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/></svg>
               Welcome
@@ -173,7 +152,7 @@ export function LoginView() {
         </section>
       </main>
 
-      {/* scoped styles for everything auth.js generates or toggles */}
+      {/* scoped styles for the Next auth flow and its generated OTP inputs */}
       <style>{`
         .btn-main { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; height:52px; border-radius:9999px;
           background-image:linear-gradient(135deg,#2ecb66 0%,#17b34e 45%,#0faa46 100%); color:#fff; font-size: 14px; font-weight:700; cursor:pointer; border:none;

@@ -1,63 +1,64 @@
 1:"$Sreact.fragment"
-2:"/v2/_next/static/chunks/3u0cofhf6zqui.js"
-3:"/v2/_next/static/chunks/0b_lu7xow3ikx.js"
+2:"/v2/_next/static/chunks/3_tqb6z99k4ts.js"
+3:"/v2/_next/static/chunks/3j7iqgj9y2j4y.js"
 4:"/v2/_next/static/chunks/3uvgz8xx2rjz3.js"
-5:I[96402,["$2","$3","$4"],"default"]
-6:I[54272,["$2","$3","$4"],"ToastProvider"]
-7:I[7253,["$2","$3","$4"],"default"]
-8:I[50530,["$2","$3","$4"],"default"]
-9:I[76292,["$2","$3","$4"],"ChatWidget"]
-a:I[64101,["$2","$3","$4"],"PwaRegister"]
-11:"/v2/_next/static/chunks/2tp_3da847_c9.js"
-12:"/v2/_next/static/chunks/452yn8culsozu.js"
-13:I[92996,["$2","$3","$4","$11","$12"],"InfoShell"]
-20:"ViewportBoundary"
-21:I[30416,["$2","$3","$4"],"$20"]
-22:"MetadataBoundary"
-23:I[30416,["$2","$3","$4"],"$22"]
-24:"$Sreact.suspense"
-:HL["/v2/_next/static/chunks/1012y79r1nrnh.css","style"]
-c:X
-f:X
-f:C
-10:[["children",{"s":"__PAGE__","h":160,"d":{"r":["$","$1","c",{"children":[["$","$L13",null,{"eyebrow":"Questions","title":"Frequently asked questions","subtitle":"Everything customers ask us on WhatsApp, answered in one place.","children":["$","div",null,{"className":"faq-list","children":[["$","details","Which areas do you deliver to?",{"children":[["$","summary",null,{"children":"Which areas do you deliver to?"}],["$","p",null,{"children":"All of Hosur town plus nearby areas within a 9 km road radius of our hub. Drop your map pin at checkout — we confirm eligibility and show your exact delivery fee before you pay."}]]}],["$","details","What are the delivery slots?",{"children":[["$","summary",null,{"children":"What are the delivery slots?"}],["$","p",null,{"children":["Two fixed morning slots every day: ",["$","strong",null,{"children":"7–9 AM"}]," and ",["$","strong",null,{"children":"9–11 AM"}],". Order by 9 PM the previous night for next-morning delivery."]}]]}],["$","details","What are the delivery charges?",{"children":[["$","summary",null,{"children":"What are the delivery charges?"}],["$","p",null,{"children":["Based on distance from our hub — shown live at checkout once you drop your pin. Delivery is ","$L14","."]}]]}],"$L15","$L16","$L17","$L18","$L19","$L1a","$L1b"]}]}],["$L1c","$L1d"],"$L1e"]}],"p":"$@1f","v":null,"s":"$c"}}]]
-d:[["children",{"s":"faq","h":96,"d":{"r":["$","$1","c",{"children":[null,["$","$L7",null,{"parallelRouterKey":"children","template":["$","$L8",null,{}]}]]}],"p":"$@e","v":"$f","s":"$c"},"c":"$Q10"}]]
-0:{"t":{"t":{"s":"","h":80,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/v2/_next/static/chunks/1012y79r1nrnh.css","precedence":"next"}],["$","script","script-0",{"src":"/v2/_next/static/chunks/3u0cofhf6zqui.js","async":true}],["$","script","script-1",{"src":"/v2/_next/static/chunks/0b_lu7xow3ikx.js","async":true}],["$","script","script-2",{"src":"/v2/_next/static/chunks/3uvgz8xx2rjz3.js","async":true}]],["$","html",null,{"lang":"en","children":["$","body",null,{"className":"font-sans antialiased","children":[["$","script",null,{"type":"application/ld+json","dangerouslySetInnerHTML":{"__html":"{\"@context\":\"https://schema.org\",\"@type\":\"GroceryStore\",\"name\":\"Rebesta Fresh\",\"url\":\"https://rebestafresh.in\",\"logo\":\"https://rebestafresh.in/assets/brand/logo-orange-leaf.png\",\"image\":\"https://rebestafresh.in/assets/brand/hero.jpg\",\"description\":\"Farm-fresh vegetables delivered every morning across Hosur. Live stock, fair prices, cash on delivery and UPI.\",\"telephone\":\"+918438765119\",\"priceRange\":\"₹\",\"address\":{\"@type\":\"PostalAddress\",\"addressLocality\":\"Hosur\",\"addressRegion\":\"Tamil Nadu\",\"postalCode\":\"635109\",\"addressCountry\":\"IN\"},\"geo\":{\"@type\":\"GeoCoordinates\",\"latitude\":12.7409,\"longitude\":77.8253},\"openingHoursSpecification\":{\"@type\":\"OpeningHoursSpecification\",\"dayOfWeek\":[\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\",\"Saturday\",\"Sunday\"],\"opens\":\"06:00\",\"closes\":\"20:00\"},\"sameAs\":[\"https://wa.me/918438765119\"]}"}}],["$","$L5",null,{"children":["$","$L6",null,{"children":[["$","$L7",null,{"parallelRouterKey":"children","template":["$","$L8",null,{}],"notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]]}],["$","$L9",null,{}]]}]}],["$","$La",null,{}]]}]}]]}],"p":"$@b","v":null,"s":"$c"},"c":"$Qd"},"h":{"r":["$","$1","h",{"children":[null,["$","$L21",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#032c13"}]]}],["$","$L23",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$24",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"FAQ — Delivery, Slots, COD & Coupons | Rebesta Fresh"}],["$","meta","1",{"name":"description","content":"Everything customers ask us on WhatsApp, answered in one place — areas, slots, charges, COD, coupons and more."}],["$","meta","2",{"name":"application-name","content":"Rebesta Fresh"}],["$","link","3",{"rel":"manifest","href":"/manifest.json"}],["$","meta","4",{"name":"robots","content":"index, follow"}],["$","link","5",{"rel":"canonical","href":"https://rebestafresh.in/faq"}],["$","meta","6",{"name":"mobile-web-app-capable","content":"yes"}],["$","meta","7",{"name":"apple-mobile-web-app-title","content":"Rebesta Fresh"}],["$","meta","8",{"name":"apple-mobile-web-app-status-bar-style","content":"default"}],["$","meta","9",{"property":"og:title","content":"Rebesta Fresh — Farm-Fresh Vegetables Delivered in Hosur"}],["$","meta","10",{"property":"og:description","content":"Live stock, fair prices, exact-pin morning delivery across Hosur. Cash on delivery & UPI. Free delivery over ₹500."}],"$L25","$L26","$L27","$L28","$L29","$L2a","$L2b","$L2c","$L2d","$L2e","$L2f","$L30","$L31","$L32","$L33","$L34"]}]}],null]}],null]}],"p":"$@35","v":null,"s":"$c"}},"a":"$@36","u":"$@37","b":"tlsCsQK5yE3mkqgDbJJiB"}
-38:I[30416,["$2","$3","$4"],"OutletBoundary"]
-3a:I[67932,["$2","$3","$4"],"IconMark"]
-14:["$","strong",null,{"children":"free on baskets above ₹500"}]
-15:["$","details","Is Cash on Delivery available?",{"children":[["$","summary",null,{"children":"Is Cash on Delivery available?"}],["$","p",null,{"children":"Yes! COD is our default payment method across all serviceable areas. Online payment via UPI/cards is also available at checkout."}]]}]
-16:["$","details","How do coupons and reward codes work?",{"children":[["$","summary",null,{"children":"How do coupons and reward codes work?"}],["$","p",null,{"children":"Enter the code in the coupon box at checkout. Discount applies instantly. Loyalty (LOY-…) and referral (REF-…) codes are single-use, personal reward coupons tied to your orders."}]]}]
-17:["$","details","How do loyalty rewards work?",{"children":[["$","summary",null,{"children":"How do loyalty rewards work?"}],["$","p",null,{"children":"Every delivered order earns you a LOY coupon worth about 2% of your basket — usable on your next order. It appears on the Track page after delivery."}]]}]
-18:["$","details","How does the referral programme work?",{"children":[["$","summary",null,{"children":"How does the referral programme work?"}],["$","p",null,{"children":["Share your registered mobile number with a friend. They enter it in the referral box at checkout on their first order — when that order is delivered, you ",["$","em",null,{"children":"both"}]," get a ₹50 REF coupon."]}]]}]
-19:["$","details","Can I cancel my order?",{"children":[["$","summary",null,{"children":"Can I cancel my order?"}],["$","p",null,{"children":"Yes — COD orders can be cancelled from the Track page until we start packing (usually early morning of delivery). After that, WhatsApp us and we'll help."}]]}]
-1a:["$","details","What if vegetables are not fresh?",{"children":[["$","summary",null,{"children":"What if vegetables are not fresh?"}],["$","p",null,{"children":"Send a photo on WhatsApp the same day — we replace the item on your next delivery or refund it. That's our freshness promise."}]]}]
-1b:["$","details","Do you take bulk or function orders?",{"children":[["$","summary",null,{"children":"Do you take bulk or function orders?"}],["$","p",null,{"children":["Yes! WhatsApp us at ",["$","a",null,{"href":"https://wa.me/918438765119","children":"+91 84387 65119"}]," at least 2 days ahead for bulk vegetables, marriages and functions."]}]]}]
-1c:["$","script","script-0",{"src":"/v2/_next/static/chunks/2tp_3da847_c9.js","async":true}]
-1d:["$","script","script-1",{"src":"/v2/_next/static/chunks/452yn8culsozu.js","async":true}]
-1e:["$","$L38",null,{"children":["$","$24",null,{"name":"Next.MetadataOutlet","children":"$@39"}]}]
-25:["$","meta","11",{"property":"og:url","content":"https://rebestafresh.in"}]
-26:["$","meta","12",{"property":"og:site_name","content":"Rebesta Fresh"}]
-27:["$","meta","13",{"property":"og:image","content":"https://rebestafresh.in/assets/brand/hero.jpg"}]
-28:["$","meta","14",{"property":"og:image:width","content":"1376"}]
-29:["$","meta","15",{"property":"og:image:height","content":"768"}]
-2a:["$","meta","16",{"property":"og:image:alt","content":"Fresh vegetables from Rebesta Fresh"}]
-2b:["$","meta","17",{"property":"og:type","content":"website"}]
-2c:["$","meta","18",{"name":"twitter:card","content":"summary_large_image"}]
-2d:["$","meta","19",{"name":"twitter:title","content":"Rebesta Fresh — Farm-Fresh Vegetables Delivered in Hosur"}]
-2e:["$","meta","20",{"name":"twitter:description","content":"Live stock, fair prices, exact-pin morning delivery across Hosur. Free delivery over ₹500."}]
-2f:["$","meta","21",{"name":"twitter:image","content":"https://rebestafresh.in/assets/brand/hero.jpg"}]
-30:["$","link","22",{"rel":"icon","href":"/favicon.ico?favicon.117ezoe8m31dk.ico","sizes":"48x48","type":"image/x-icon"}]
-31:["$","link","23",{"rel":"icon","href":"/assets/brand/icon-r-192.png","sizes":"192x192","type":"image/png"}]
-32:["$","link","24",{"rel":"icon","href":"/assets/brand/icon-r-512.png","sizes":"512x512","type":"image/png"}]
-33:["$","link","25",{"rel":"apple-touch-icon","href":"/assets/brand/icon-r-180.png","sizes":"180x180","type":"image/png"}]
-34:["$","$L3a","26",{}]
-c:300
-39:null
-37:true
-c:C
-36:0
-e:"$undefined"
-b:"$undefined"
-35:"$undefined"
-1f:"$undefined"
+5:"/v2/_next/static/chunks/0b_lu7xow3ikx.js"
+6:I[96402,["$2","$3","$4","$5"],"default"]
+7:I[54272,["$2","$3","$4","$5"],"ToastProvider"]
+8:I[7253,["$2","$3","$4","$5"],"default"]
+9:I[50530,["$2","$3","$4","$5"],"default"]
+a:I[76292,["$2","$3","$4","$5"],"ChatWidget"]
+b:I[64101,["$2","$3","$4","$5"],"PwaRegister"]
+12:"/v2/_next/static/chunks/2tp_3da847_c9.js"
+13:"/v2/_next/static/chunks/452yn8culsozu.js"
+14:I[92996,["$2","$3","$4","$5","$12","$13"],"InfoShell"]
+21:"ViewportBoundary"
+22:I[30416,["$2","$3","$4","$5"],"$21"]
+23:"MetadataBoundary"
+24:I[30416,["$2","$3","$4","$5"],"$23"]
+25:"$Sreact.suspense"
+:HL["/v2/_next/static/chunks/31ulqt08x7u8d.css","style"]
+d:X
+10:X
+10:C
+11:[["children",{"s":"__PAGE__","h":160,"d":{"r":["$","$1","c",{"children":[["$","$L14",null,{"eyebrow":"Questions","title":"Frequently asked questions","subtitle":"Everything customers ask us on WhatsApp, answered in one place.","children":["$","div",null,{"className":"faq-list","children":[["$","details","Which areas do you deliver to?",{"children":[["$","summary",null,{"children":"Which areas do you deliver to?"}],["$","p",null,{"children":"All of Hosur town plus nearby areas within a 9 km road radius of our hub. Drop your map pin at checkout — we confirm eligibility and show your exact delivery fee before you pay."}]]}],["$","details","What are the delivery slots?",{"children":[["$","summary",null,{"children":"What are the delivery slots?"}],["$","p",null,{"children":["Two fixed morning slots every day: ",["$","strong",null,{"children":"7–9 AM"}]," and ",["$","strong",null,{"children":"9–11 AM"}],". Order by 9 PM the previous night for next-morning delivery."]}]]}],["$","details","What are the delivery charges?",{"children":[["$","summary",null,{"children":"What are the delivery charges?"}],["$","p",null,{"children":["Based on distance from our hub — shown live at checkout once you drop your pin. Delivery is ","$L15","."]}]]}],"$L16","$L17","$L18","$L19","$L1a","$L1b","$L1c"]}]}],["$L1d","$L1e"],"$L1f"]}],"p":"$@20","v":null,"s":"$d"}}]]
+e:[["children",{"s":"faq","h":96,"d":{"r":["$","$1","c",{"children":[null,["$","$L8",null,{"parallelRouterKey":"children","template":["$","$L9",null,{}]}]]}],"p":"$@f","v":"$10","s":"$d"},"c":"$Q11"}]]
+0:{"t":{"t":{"s":"","h":80,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/v2/_next/static/chunks/31ulqt08x7u8d.css","precedence":"next"}],["$","script","script-0",{"src":"/v2/_next/static/chunks/3_tqb6z99k4ts.js","async":true}],["$","script","script-1",{"src":"/v2/_next/static/chunks/3j7iqgj9y2j4y.js","async":true}],["$","script","script-2",{"src":"/v2/_next/static/chunks/3uvgz8xx2rjz3.js","async":true}],["$","script","script-3",{"src":"/v2/_next/static/chunks/0b_lu7xow3ikx.js","async":true}]],["$","html",null,{"lang":"en","children":["$","body",null,{"className":"font-sans antialiased","children":[["$","script",null,{"type":"application/ld+json","dangerouslySetInnerHTML":{"__html":"{\"@context\":\"https://schema.org\",\"@type\":\"GroceryStore\",\"name\":\"Rebesta Fresh\",\"url\":\"https://rebestafresh.in\",\"logo\":\"https://rebestafresh.in/assets/brand/logo-orange-leaf.png\",\"image\":\"https://rebestafresh.in/assets/brand/hero.jpg\",\"description\":\"Farm-fresh vegetables delivered every morning across Hosur. Live stock, fair prices, cash on delivery and UPI.\",\"telephone\":\"+918438765119\",\"priceRange\":\"₹\",\"address\":{\"@type\":\"PostalAddress\",\"addressLocality\":\"Hosur\",\"addressRegion\":\"Tamil Nadu\",\"postalCode\":\"635109\",\"addressCountry\":\"IN\"},\"geo\":{\"@type\":\"GeoCoordinates\",\"latitude\":12.7409,\"longitude\":77.8253},\"openingHoursSpecification\":{\"@type\":\"OpeningHoursSpecification\",\"dayOfWeek\":[\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\",\"Saturday\",\"Sunday\"],\"opens\":\"06:00\",\"closes\":\"20:00\"},\"sameAs\":[\"https://wa.me/918438765119\"]}"}}],["$","$L6",null,{"children":["$","$L7",null,{"children":[["$","$L8",null,{"parallelRouterKey":"children","template":["$","$L9",null,{}],"notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]]}],["$","$La",null,{}]]}]}],["$","$Lb",null,{}]]}]}]]}],"p":"$@c","v":null,"s":"$d"},"c":"$Qe"},"h":{"r":["$","$1","h",{"children":[null,["$","$L22",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#032c13"}]]}],["$","$L24",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$25",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"FAQ — Delivery, Slots, COD & Coupons | Rebesta Fresh"}],["$","meta","1",{"name":"description","content":"Everything customers ask us on WhatsApp, answered in one place — areas, slots, charges, COD, coupons and more."}],["$","meta","2",{"name":"application-name","content":"Rebesta Fresh"}],["$","link","3",{"rel":"manifest","href":"/manifest.json"}],["$","meta","4",{"name":"robots","content":"index, follow"}],["$","link","5",{"rel":"canonical","href":"https://rebestafresh.in/faq"}],["$","meta","6",{"name":"mobile-web-app-capable","content":"yes"}],["$","meta","7",{"name":"apple-mobile-web-app-title","content":"Rebesta Fresh"}],["$","meta","8",{"name":"apple-mobile-web-app-status-bar-style","content":"default"}],["$","meta","9",{"property":"og:title","content":"Rebesta Fresh — Farm-Fresh Vegetables Delivered in Hosur"}],["$","meta","10",{"property":"og:description","content":"Live stock, fair prices, exact-pin morning delivery across Hosur. Cash on delivery & UPI. Free delivery over ₹500."}],"$L26","$L27","$L28","$L29","$L2a","$L2b","$L2c","$L2d","$L2e","$L2f","$L30","$L31","$L32","$L33","$L34","$L35"]}]}],null]}],null]}],"p":"$@36","v":null,"s":"$d"}},"a":"$@37","u":"$@38","b":"4XH6RwM9xODxNbd5wXLP4"}
+39:I[30416,["$2","$3","$4","$5"],"OutletBoundary"]
+3b:I[67932,["$2","$3","$4","$5"],"IconMark"]
+15:["$","strong",null,{"children":"free on baskets above ₹500"}]
+16:["$","details","Is Cash on Delivery available?",{"children":[["$","summary",null,{"children":"Is Cash on Delivery available?"}],["$","p",null,{"children":"Yes! COD is our default payment method across all serviceable areas. Online payment via UPI/cards is also available at checkout."}]]}]
+17:["$","details","How do coupons and reward codes work?",{"children":[["$","summary",null,{"children":"How do coupons and reward codes work?"}],["$","p",null,{"children":"Enter the code in the coupon box at checkout. Discount applies instantly. Loyalty (LOY-…) and referral (REF-…) codes are single-use, personal reward coupons tied to your orders."}]]}]
+18:["$","details","How do loyalty rewards work?",{"children":[["$","summary",null,{"children":"How do loyalty rewards work?"}],["$","p",null,{"children":"Every delivered order earns you a LOY coupon worth about 2% of your basket — usable on your next order. It appears on the Track page after delivery."}]]}]
+19:["$","details","How does the referral programme work?",{"children":[["$","summary",null,{"children":"How does the referral programme work?"}],["$","p",null,{"children":["Share your registered mobile number with a friend. They enter it in the referral box at checkout on their first order — when that order is delivered, you ",["$","em",null,{"children":"both"}]," get a ₹50 REF coupon."]}]]}]
+1a:["$","details","Can I cancel my order?",{"children":[["$","summary",null,{"children":"Can I cancel my order?"}],["$","p",null,{"children":"Yes — COD orders can be cancelled from the Track page until we start packing (usually early morning of delivery). After that, WhatsApp us and we'll help."}]]}]
+1b:["$","details","What if vegetables are not fresh?",{"children":[["$","summary",null,{"children":"What if vegetables are not fresh?"}],["$","p",null,{"children":"Send a photo on WhatsApp the same day — we replace the item on your next delivery or refund it. That's our freshness promise."}]]}]
+1c:["$","details","Do you take bulk or function orders?",{"children":[["$","summary",null,{"children":"Do you take bulk or function orders?"}],["$","p",null,{"children":["Yes! WhatsApp us at ",["$","a",null,{"href":"https://wa.me/918438765119","children":"+91 84387 65119"}]," at least 2 days ahead for bulk vegetables, marriages and functions."]}]]}]
+1d:["$","script","script-0",{"src":"/v2/_next/static/chunks/2tp_3da847_c9.js","async":true}]
+1e:["$","script","script-1",{"src":"/v2/_next/static/chunks/452yn8culsozu.js","async":true}]
+1f:["$","$L39",null,{"children":["$","$25",null,{"name":"Next.MetadataOutlet","children":"$@3a"}]}]
+26:["$","meta","11",{"property":"og:url","content":"https://rebestafresh.in"}]
+27:["$","meta","12",{"property":"og:site_name","content":"Rebesta Fresh"}]
+28:["$","meta","13",{"property":"og:image","content":"https://rebestafresh.in/assets/brand/hero.jpg"}]
+29:["$","meta","14",{"property":"og:image:width","content":"1376"}]
+2a:["$","meta","15",{"property":"og:image:height","content":"768"}]
+2b:["$","meta","16",{"property":"og:image:alt","content":"Fresh vegetables from Rebesta Fresh"}]
+2c:["$","meta","17",{"property":"og:type","content":"website"}]
+2d:["$","meta","18",{"name":"twitter:card","content":"summary_large_image"}]
+2e:["$","meta","19",{"name":"twitter:title","content":"Rebesta Fresh — Farm-Fresh Vegetables Delivered in Hosur"}]
+2f:["$","meta","20",{"name":"twitter:description","content":"Live stock, fair prices, exact-pin morning delivery across Hosur. Free delivery over ₹500."}]
+30:["$","meta","21",{"name":"twitter:image","content":"https://rebestafresh.in/assets/brand/hero.jpg"}]
+31:["$","link","22",{"rel":"icon","href":"/favicon.ico?favicon.117ezoe8m31dk.ico","sizes":"48x48","type":"image/x-icon"}]
+32:["$","link","23",{"rel":"icon","href":"/assets/brand/icon-r-192.png","sizes":"192x192","type":"image/png"}]
+33:["$","link","24",{"rel":"icon","href":"/assets/brand/icon-r-512.png","sizes":"512x512","type":"image/png"}]
+34:["$","link","25",{"rel":"apple-touch-icon","href":"/assets/brand/icon-r-180.png","sizes":"180x180","type":"image/png"}]
+35:["$","$L3b","26",{}]
+d:300
+3a:null
+38:true
+d:C
+37:0
+f:"$undefined"
+c:"$undefined"
+36:"$undefined"
+20:"$undefined"

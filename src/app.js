@@ -21,18 +21,30 @@ export function createStoreApp() {
   app.set('trust proxy', 1);
   app.use(helmet({
     /* Content-Security-Policy — allow exactly what the storefront uses:
-       self + Cashfree's SDK (card/netbanking drop-in: scripts, its iframes
-       and its internal API calls). Next's static export needs inline
+       self + Cashfree (payments) + MSG91 OTP widget (hcaptcha/recaptcha
+       + verify/control endpoints). Next's static export needs inline
        bootstrap scripts/styles. */
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", 'https://sdk.cashfree.com', 'https://js.cashfree.com'],
-        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'", "'unsafe-inline'",
+          'https://sdk.cashfree.com', 'https://js.cashfree.com',
+          'https://verify.msg91.com', 'https://verify.phone91.com', 'https://control.msg91.com', 'https://*.msg91.com',
+          'https://js.hcaptcha.com', 'https://hcaptcha.com', 'https://*.hcaptcha.com',
+          'https://www.google.com', 'https://www.gstatic.com',
+          'https://cdnjs.cloudflare.com', 'https://pass.hostnsoft.com'],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com', 'https://fonts.googleapis.com', 'https://*.hcaptcha.com'],
         imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
-        fontSrc: ["'self'", 'data:'],
-        connectSrc: ["'self'", 'https://api.cashfree.com', 'https://sandbox.cashfree.com', 'https://*.cashfree.com'],
-        frameSrc: ['https://sdk.cashfree.com', 'https://js.cashfree.com', 'https://*.cashfree.com'],
+        fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
+        connectSrc: ["'self'",
+          'https://api.cashfree.com', 'https://sandbox.cashfree.com', 'https://*.cashfree.com',
+          'https://verify.msg91.com', 'https://verify.phone91.com', 'https://control.msg91.com', 'https://*.msg91.com', 'https://api.msg91.com',
+          'https://hcaptcha.com', 'https://*.hcaptcha.com', 'https://www.google.com',
+          'https://pass.hostnsoft.com', 'https://passbknd.hostnsoft.com',
+          'https://api.db-ip.com', 'https://ip-api.com', 'https://ipinfo.io'],
+        frameSrc: ['https://sdk.cashfree.com', 'https://js.cashfree.com', 'https://*.cashfree.com',
+          'https://verify.msg91.com', 'https://verify.phone91.com', 'https://*.msg91.com',
+          'https://hcaptcha.com', 'https://*.hcaptcha.com', 'https://www.google.com'],
         mediaSrc: ["'self'"],
         workerSrc: ["'self'", 'blob:'],
         manifestSrc: ["'self'"],

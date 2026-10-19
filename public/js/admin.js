@@ -553,10 +553,13 @@
     addBtn.textContent = '➕ Add product';
     addBtn.addEventListener('click', () => openProductEditor());
     bar.append(search, catSelect, countLabel, manageBtn, addBtn);
+    const homeOrderHint = document.createElement('p');
+    homeOrderHint.style.cssText = 'margin:-4px 0 10px;font-size:.78rem;color:var(--muted,#6b7a66)';
+    homeOrderHint.textContent = 'Choose a position and click Save. 1st is the large hero card; 2nd and 3rd are the side cards. Auto fills open positions; a filled slot clears to Auto, while moving a pinned product swaps positions.';
 
     const table = document.createElement('table');
     table.className = 'admin-table';
-    table.innerHTML = '<thead><tr><th>Product</th><th>Category</th><th>Quantities</th><th>Price ₹</th><th>Stock</th><th>Visibility</th><th>Photo</th><th>Save</th><th></th></tr></thead><tbody></tbody>';
+    table.innerHTML = '<thead><tr><th>Product</th><th>Home position</th><th>Category</th><th>Quantities</th><th>Price ₹</th><th>Stock</th><th>Visibility</th><th>Photo</th><th>Save</th><th></th></tr></thead><tbody></tbody>';
     const body = table.querySelector('tbody');
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -584,6 +587,7 @@
       tr.dataset.category = String(p.category || '').trim();
       tr.innerHTML = `
         <td class="prod-cell"><img class="prod-thumb" src="${p.image || '/assets/brand/basket.jpg'}" alt="" loading="lazy"><div><strong>${p.title}</strong><br><span>${p.handle}</span></div></td>
+        <td data-home-order-cell></td>
         <td></td>
         <td></td>
         <td><input class="small-input" type="number" min="0" step="0.01" value="${p.priceInr}"></td>
@@ -593,9 +597,22 @@
         <td><button class="button ghost small" type="button">Save</button></td>
         <td></td>
       `;
-      tr.children[1].textContent = p.category;
+      const homeOrderSelect = document.createElement('select');
+      homeOrderSelect.dataset.homeOrder = '1';
+      homeOrderSelect.setAttribute('aria-label', `Homepage position for ${p.title}`);
+      homeOrderSelect.title = '1st is the large hero card; 2nd and 3rd are the side cards.';
+      homeOrderSelect.style.cssText = 'min-width:94px;min-height:36px;border:1px solid #cbd8c5;border-radius:9px;padding:4px 7px;background:#fff;font-size:.82rem;font-family:inherit';
+      for (const [value, label] of [['', 'Auto'], ['1', '1st'], ['2', '2nd'], ['3', '3rd']]) {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        homeOrderSelect.appendChild(option);
+      }
+      homeOrderSelect.value = [1, 2, 3].includes(Number(p.homeOrder)) ? String(p.homeOrder) : '';
+      tr.querySelector('[data-home-order-cell]').appendChild(homeOrderSelect);
+      tr.children[2].textContent = p.category;
       /* quantities button — opens the per-product quantity picker */
-      const unitTd = tr.children[2];
+      const unitTd = tr.children[3];
       const unitsBtn = document.createElement('button');
       unitsBtn.className = 'button ghost small';
       unitsBtn.type = 'button';
@@ -650,7 +667,10 @@
              the first await, which left the button stuck at "Saving…" forever */
           RFS.setBusy(btn, true, 'Saving…');
           const newPrice = Number(price.value);
-          const patch = { priceInr: newPrice, stock: Number(stock.value), active: active.checked };
+          const currentHomeOrder = [1, 2, 3].includes(Number(p.homeOrder)) ? Number(p.homeOrder) : null;
+          const nextHomeOrder = homeOrderSelect.value ? Number(homeOrderSelect.value) : null;
+          const homeOrderChanged = currentHomeOrder !== nextHomeOrder;
+          const patch = { priceInr: newPrice, stock: Number(stock.value), active: active.checked, homeOrder: nextHomeOrder };
           /* base price changed → rescale pinned quantity prices with it */
           const ex = explicitVariants(p);
           let rescaled = false;
@@ -668,8 +688,8 @@
               method: 'PATCH',
               body: JSON.stringify(patch)
             });
-            RFS.toast(`${p.title} updated${rescaled ? ' — quantity prices rescaled to the new base price' : ''}`);
-            if (rescaled) await renderProducts();
+            RFS.toast(`${p.title} updated${rescaled ? ' — quantity prices rescaled to the new base price' : ''}${homeOrderChanged ? ' — homepage position saved' : ''}`);
+            if (rescaled || homeOrderChanged) await renderProducts();
             refreshDashboard();
           } catch (error) { RFS.toast(error.message, 'error'); }
           finally { RFS.setBusy(btn, false); }
@@ -777,6 +797,7 @@
     catSelect.addEventListener('change', applyProductSearch);
     wrap.insertBefore(bar, table);
     wrap.insertBefore(catPanel, table);
+    wrap.insertBefore(homeOrderHint, table);
     applyProductSearch();
   }
 

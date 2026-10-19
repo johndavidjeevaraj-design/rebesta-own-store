@@ -14,7 +14,7 @@ import { ProductCard } from "@/components/product-card";
 import { LocationSheet } from "@/components/location-sheet";
 import Reveal from "@/components/reveal";
 import FarmStory from "@/components/farm-story";
-import { api, Product, Settings } from "@/lib/store";
+import { api, orderHomepageProducts, Product, Settings } from "@/lib/store";
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -41,10 +41,11 @@ export default function Home() {
   const active = useMemo(() => products.filter((p) => p.active !== false), [products]);
   const featured = useMemo(
     () =>
-      active
-        .filter((p) => p.stock > 0)
-        .sort((a, b) => Number(b.featured || 0) - Number(a.featured || 0) || a.priceInr - b.priceInr)
-        .slice(0, 8),
+      orderHomepageProducts(
+        active
+          .filter((p) => p.stock > 0)
+          .sort((a, b) => Number(b.featured || 0) - Number(a.featured || 0) || a.priceInr - b.priceInr)
+      ).slice(0, 8),
     [active]
   );
   const categories = useMemo(() => {

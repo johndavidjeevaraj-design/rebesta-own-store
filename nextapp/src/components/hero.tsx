@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ArrowRight } from "lucide-react";
-import { Product, Settings, money } from "@/lib/store";
+import { orderHomepageProducts, Product, Settings, money } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { AddButton } from "@/components/add-button";
 
@@ -20,7 +20,7 @@ export function Hero({ products, settings }: { products: Product[]; settings: Se
   const maxKm = settings?.delivery?.maxRoadKm ?? 9;
   const liveCount = products.filter((p) => p.active !== false && p.stock > 0).length;
 
-  const cards = products.filter((p) => p.active !== false && p.stock > 0 && p.image).slice(0, 3);
+  const cards = orderHomepageProducts(products.filter((p) => p.active !== false && p.stock > 0 && p.image)).slice(0, 3);
   const hero = cards[0];
   const minis = cards.slice(1, 3);
 

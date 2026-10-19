@@ -112,12 +112,37 @@ export function publicCatalog({ includeInactive = false } = {}) {
       weightGrams: p.weightGrams || 1000,
       stock: p.stock,
       featured: Boolean(p.featured),
+      homeOrder: Number.isInteger(p.homeOrder) && p.homeOrder >= 1 && p.homeOrder <= 3 ? p.homeOrder : null,
       variants: productVariants(p)
     }));
 }
 
 export function getProduct(handle) {
   return loadProducts().find(p => p.handle === String(handle || '').trim());
+}
+
+function normalizeHomeOrder(value) {
+  if (value === null || value === undefined || String(value).trim() === '') return null;
+  const order = Number(value);
+  if (!Number.isInteger(order) || order < 1 || order > 3) throw new Error('Home position must be Auto, 1, 2 or 3');
+  return order;
+}
+
+function assignHomeOrder(products, product, value) {
+  const nextOrder = normalizeHomeOrder(value);
+  if (nextOrder === null) {
+    delete product.homeOrder;
+    return;
+  }
+  const previousOrder = Number.isInteger(product.homeOrder) && product.homeOrder >= 1 && product.homeOrder <= 3
+    ? product.homeOrder
+    : null;
+  const occupied = products.find(other => other !== product && Number(other.homeOrder) === nextOrder);
+  if (occupied) {
+    if (previousOrder === null) delete occupied.homeOrder;
+    else occupied.homeOrder = previousOrder;
+  }
+  product.homeOrder = nextOrder;
 }
 
 export function updateProduct(handle, patch) {
@@ -172,6 +197,7 @@ export function updateProduct(handle, patch) {
   }
   if (patch.active !== undefined) p.active = Boolean(patch.active);
   if (patch.featured !== undefined) p.featured = Boolean(patch.featured);
+  if (patch.homeOrder !== undefined) assignHomeOrder(products, p, patch.homeOrder);
   if (patch.image !== undefined) {
     const image = String(patch.image || '').trim();
     if (image && !/^\/[A-Za-z0-9._\-\/]+$/.test(image)) throw new Error('Image path must be a site-relative URL');
@@ -218,6 +244,7 @@ export function createProduct(payload = {}) {
     active: true,
     createdAt: new Date().toISOString()
   };
+  if (payload.homeOrder !== undefined) assignHomeOrder(products, product, payload.homeOrder);
   products.unshift(product);
   saveProducts(products);
   return product;

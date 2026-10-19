@@ -14,7 +14,7 @@ export default function Admin() {
     for (const src of [
       'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
       '/js/store.js?v=20261006s16',
-      '/js/admin.js?v=20261019a'
+      '/js/admin.js?v=20261019b'
     ]) {
       const s = document.createElement('script');
       s.src = src; s.async = false; s.dataset.adminPage = '1';

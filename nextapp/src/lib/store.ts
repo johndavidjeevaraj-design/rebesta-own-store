@@ -15,6 +15,7 @@ export interface Product {
   stock: number;
   active: boolean;
   featured?: boolean;
+  homeOrder?: number | null;
   description?: string;
   tags?: string[];
   sku?: string;
@@ -46,6 +47,23 @@ export const money = (value: number): string =>
     currency: "INR",
     maximumFractionDigits: Number(value) % 1 ? 2 : 0,
   }).format(Number(value) || 0);
+
+/* Explicit slots stay in place; unassigned products fill any open slots, then follow. */
+export function orderHomepageProducts<T extends { homeOrder?: number | null }>(products: T[]): T[] {
+  const pinned = new Map<number, T>();
+  const automatic: T[] = [];
+  for (const product of products) {
+    const order = Number(product.homeOrder);
+    if (Number.isInteger(order) && order >= 1 && order <= 3 && !pinned.has(order)) pinned.set(order, product);
+    else automatic.push(product);
+  }
+  const ordered: T[] = [];
+  for (let slot = 1; slot <= 3; slot++) {
+    const product = pinned.get(slot) || automatic.shift();
+    if (product) ordered.push(product);
+  }
+  return [...ordered, ...automatic];
+}
 
 export async function api<T = any>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(path, {

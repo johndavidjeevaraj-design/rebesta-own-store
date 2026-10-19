@@ -14,7 +14,7 @@ export default function Admin() {
     for (const src of [
       'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
       '/js/store.js?v=20261006s16',
-      '/js/admin.js?v=20261007a'
+      '/js/admin.js?v=20261019a'
     ]) {
       const s = document.createElement('script');
       s.src = src; s.async = false; s.dataset.adminPage = '1';
@@ -86,7 +86,7 @@ export default function Admin() {
                           <option value="DELIVERED">Delivered</option>
                           <option value="CANCELLED">Cancelled</option>
                         </select>
-                        <input data-order-search type="search" placeholder="Search ID, name, phone…" style={{ minWidth: '180px' }} />
+                        <input data-order-search type="search" placeholder="Search orders or coupon…" style={{ minWidth: '180px' }} />
                       </div>
                     </div>
                     <div className="admin-table-wrap" data-orders-table data-admin-panel></div>

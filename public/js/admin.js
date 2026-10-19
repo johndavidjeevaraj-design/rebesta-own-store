@@ -811,7 +811,7 @@
         return false;
       }
       if (q) {
-        const hay = `${o.id} ${o.customer?.name || ''} ${o.customer?.phone || ''} ${o.address?.area || ''}`.toLowerCase();
+        const hay = `${o.id} ${o.customer?.name || ''} ${o.customer?.phone || ''} ${o.address?.area || ''} ${o.couponCode || ''}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -832,7 +832,7 @@
     }
     const table = document.createElement('table');
     table.className = 'admin-table';
-    table.innerHTML = '<thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Delivery</th><th>Partner</th><th>Total</th><th>Status</th></tr></thead><tbody></tbody>';
+    table.innerHTML = '<thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Delivery</th><th>Partner</th><th>Total</th><th>Coupon</th><th>Status</th></tr></thead><tbody></tbody>';
     const body = table.querySelector('tbody');
     for (const order of shown) {
       const tr = document.createElement('tr');
@@ -847,8 +847,30 @@
         <td><strong>${order.slot?.label || ''}</strong><br><span>${addr}</span><br><span>${order.location ? `Pin: ${order.location.lat}, ${order.location.lng}` : ''}</span></td>
         <td data-partner-cell></td>
         <td><strong>${RFS.money(order.totalInr)}</strong><br><span>${order.paymentMethod.toUpperCase()} · ${order.paymentStatus.replaceAll('_', ' ').toLowerCase()}</span>${order.paymentMethod === 'cod' && order.paymentStatus === 'PAY_ON_DELIVERY' && !['DELIVERED', 'CANCELLED'].includes(order.status) ? '<br><button class="button ghost small" type="button" data-mark-cash>💵 Mark cash received</button>' : ''}</td>
+        <td data-coupon-cell style="min-width:105px"></td>
         <td><select class="status-select"></select></td>
       `;
+      const couponCell = tr.querySelector('[data-coupon-cell]');
+      const appliedCoupon = String(order.couponCode || '').trim();
+      const couponSavings = Number(order.discountInr || 0);
+      if (appliedCoupon) {
+        const badge = document.createElement('span');
+        badge.className = 'badge green';
+        badge.textContent = appliedCoupon;
+        badge.title = 'Coupon applied to this order';
+        couponCell.appendChild(badge);
+        if (Number.isFinite(couponSavings) && couponSavings > 0) {
+          const saving = document.createElement('span');
+          saving.style.cssText = 'display:block;margin-top:5px;color:#0d8736;font-size:.72rem;font-weight:800;white-space:nowrap';
+          saving.textContent = `−${RFS.money(couponSavings)} saved`;
+          couponCell.appendChild(saving);
+        }
+      } else {
+        const none = document.createElement('span');
+        none.style.color = 'var(--muted)';
+        none.textContent = '—';
+        couponCell.appendChild(none);
+      }
       tr.querySelector('[data-wa-nudge]')?.addEventListener('click', () => {
         const phone = String(order.customer?.phone || '').replace(/\D/g, '');
         const first = String(order.customer?.name || '').split(' ')[0] || 'there';

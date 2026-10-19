@@ -5,14 +5,14 @@ import { AnimatePresence, motion } from "motion/react";
 import { ArrowUpRight, Leaf, MessageCircle, Send, X } from "lucide-react";
 import { api } from "@/lib/store";
 
-/* Rebesta Support — a quiet, native-feeling chat surface for the storefront.
+/* Rubi — Rebesta Fresh’s quiet, native-feeling support chat for the storefront.
    Answers come from /api/support/chat; WhatsApp remains one tap away. */
 
 type Msg = { role: "user" | "assistant"; content: string };
 const CHAT_KEY = "rebesta_chat_history";
 const GREETING: Msg = {
   role: "assistant",
-  content: "Hi! I’m Rebesta’s assistant. Ask about an order, delivery or refunds — and tap WhatsApp anytime to reach the shop.",
+  content: "Hi! I’m Rubi, your Rebesta assistant. Ask about an order, delivery or refunds — or tap WhatsApp anytime to reach the shop.",
 };
 const QUICK = [
   "Where is my order?",
@@ -163,7 +163,7 @@ export function ChatWidget() {
             transition={{ type: "spring", stiffness: 380, damping: 32 }}
             className="fixed bottom-[calc(76px+env(safe-area-inset-bottom))] right-3 z-[60] flex h-[min(62vh,540px)] max-h-[calc(100dvh-100px)] w-[calc(100vw-24px)] max-w-[420px] flex-col overflow-hidden rounded-[28px] border border-black/[0.07] bg-white/95 shadow-[0_28px_80px_rgba(0,0,0,0.20)] ring-1 ring-white/80 backdrop-blur-2xl md:bottom-6 md:right-6 md:h-[min(72vh,620px)] md:w-[400px]"
             role="dialog"
-            aria-label="Rebesta support chat"
+            aria-label="Rubi support chat"
           >
             {/* Apple-like, calm title bar; green stays as a restrained brand accent. */}
             <div className="flex shrink-0 items-center gap-3 border-b border-black/[0.06] bg-white/85 px-4 py-3 backdrop-blur-xl">
@@ -171,9 +171,9 @@ export function ChatWidget() {
                 <Leaf size={19} strokeWidth={2.1} aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[14px] font-semibold tracking-[-0.01em] text-[#1d1d1f]">Rebesta Support</p>
+                <p className="truncate text-[14px] font-semibold tracking-[-0.01em] text-[#1d1d1f]">Rubi</p>
                 <p className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-[#6e6e73]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#34c759]" /> Assistant · online now
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#34c759]" /> Rebesta Fresh · online now
                 </p>
               </div>
               <a
@@ -227,7 +227,7 @@ export function ChatWidget() {
                 ))}
 
                 {typing && (
-                  <div className="flex items-end gap-2" role="status" aria-label="Rebesta is typing">
+                  <div className="flex items-end gap-2" role="status" aria-label="Rubi is typing">
                     <span className="mb-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#e8f7ed] text-[#0d8736]" aria-hidden="true">
                       <Leaf size={14} strokeWidth={2.2} />
                     </span>
@@ -275,7 +275,7 @@ export function ChatWidget() {
                     event.currentTarget.style.height = `${Math.min(event.currentTarget.scrollHeight, 96)}px`;
                   }}
                   onKeyDown={onComposerKeyDown}
-                  placeholder="Message Rebesta…"
+                  placeholder="Message Rubi…"
                   maxLength={500}
                   rows={1}
                   aria-label="Your message"
@@ -290,7 +290,6 @@ export function ChatWidget() {
                   <Send size={16} strokeWidth={2.3} />
                 </button>
               </div>
-              <p className="px-2 pt-1.5 text-[10px] leading-4 text-[#8e8e93]">Return to send · Shift + Return for a new line</p>
             </form>
           </motion.div>
         )}
@@ -301,7 +300,7 @@ export function ChatWidget() {
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Chat with Rebesta"
+        aria-label="Chat with Rubi"
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-hidden={open}

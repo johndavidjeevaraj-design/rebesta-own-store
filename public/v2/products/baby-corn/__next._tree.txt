@@ -1,5 +1,5 @@
-:HL["/v2/_next/static/chunks/31ulqt08x7u8d.css","style"]
+:HL["/v2/_next/static/chunks/3ey1zpnp3ng8f.css","style"]
 3:[["children",{"s":"__PAGE__","h":160}]]
 2:[["children",{"s":{"n":"handle","t":"d","k":"baby-corn","s":[]},"h":65632,"c":"$Q3"}]]
 1:[["children",{"s":"products","h":131168,"c":"$Q2"}]]
-0:{"b":"4XH6RwM9xODxNbd5wXLP4","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}
+0:{"b":"-4ipbzywlZBcOIgWEfQCm","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}

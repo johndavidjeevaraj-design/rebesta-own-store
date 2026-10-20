@@ -113,6 +113,7 @@ ${productUrls}
       if (err) res.sendFile(`${page}.html`, { root: config.publicDir });
     });
   };
+  app.get('/admin', v3WithFallback('admin'));
   app.get('/login', v3WithFallback('login'));
   app.get('/account', v3WithFallback('account'));
   app.get('/order-success', v3WithFallback('order-success'));

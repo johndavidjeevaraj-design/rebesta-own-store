@@ -6,6 +6,6 @@ import { ChatWidget } from "@/components/chat-widget";
 /* Customer support chat is storefront-only; keep it off staff tools. */
 export function StorefrontChatWidget() {
   const pathname = usePathname();
-  if (pathname === "/partner" || pathname.startsWith("/partner/")) return null;
+  if (["/partner", "/admin"].some((route) => pathname === route || pathname.startsWith(`${route}/`))) return null;
   return <ChatWidget />;
 }

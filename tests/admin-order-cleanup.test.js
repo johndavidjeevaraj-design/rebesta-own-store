@@ -60,6 +60,7 @@ test('fake-order cleanup previews exact originals, blocks unsafe/stale cases, an
   assert.equal(preview.body.keepCount, 3);
   assert.equal(preview.body.removeCount, 2);
   assert.equal(preview.body.canDelete, true);
+  assert.deepEqual(preview.body.preservedByName.map(entry => entry.name), ['Naveen Vishor N', 'Chithra', 'Hasini']);
   assert.deepEqual(preview.body.preservedByName.map(entry => entry.count), [1, 1, 1]);
   assert.deepEqual(preview.body.kept.map(order => order.id), ['original-naveen', 'original-chithra', 'original-hasini']);
   assert.deepEqual(preview.body.removed.map(order => order.id), ['fake-1', 'fake-2']);
@@ -83,7 +84,7 @@ test('fake-order cleanup previews exact originals, blocks unsafe/stale cases, an
   const unsafePreview = await requestCleanup('preview');
   assert.equal(unsafePreview.body.canDelete, false);
   assert.equal(unsafePreview.body.previewToken, undefined);
-  assert.match(unsafePreview.body.issues.join(' '), /Naveen Vishor: expected exactly one/i);
+  assert.match(unsafePreview.body.issues.join(' '), /Naveen Vishor N: expected exactly one/i);
   assert.equal(JSON.parse(fs.readFileSync(path.join(dataDir, 'orders.json'), 'utf8')).length, 4);
 
   // Fresh valid preview => backup first, then exactly the three named originals remain.
@@ -103,4 +104,26 @@ test('fake-order cleanup previews exact originals, blocks unsafe/stale cases, an
   const reusedToken = await requestCleanup('commit', { body: { previewToken: finalPreview.body.previewToken } });
   assert.equal(reusedToken.status, 409);
   assert.equal(JSON.parse(fs.readFileSync(path.join(dataDir, 'orders.json'), 'utf8')).length, 3);
+});
+
+test('Naveen Vishor N and Naveen Vishor are aliases for one keeper; both orders block deletion', async () => {
+  const withMiddleInitial = originalOrders();
+  withMiddleInitial[0].customer.name = 'Naveen Vishor N';
+  saveFixture(withMiddleInitial);
+
+  const preview = await requestCleanup('preview');
+  assert.equal(preview.body.canDelete, true);
+  assert.deepEqual(preview.body.preservedByName.map(entry => entry.name), ['Naveen Vishor N', 'Chithra', 'Hasini']);
+  assert.deepEqual(preview.body.preservedByName.map(entry => entry.count), [1, 1, 1]);
+  assert.deepEqual(preview.body.kept.map(order => order.id), ['original-naveen', 'original-chithra', 'original-hasini']);
+
+  saveFixture([
+    ...withMiddleInitial,
+    { id: 'duplicate-naveen-alias', customer: { name: 'Naveen Vishor' }, status: 'PLACED' }
+  ]);
+  const duplicatePreview = await requestCleanup('preview');
+  assert.equal(duplicatePreview.body.canDelete, false);
+  assert.equal(duplicatePreview.body.previewToken, undefined);
+  assert.match(duplicatePreview.body.issues.join(' '), /Naveen Vishor N: expected exactly one/i);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(dataDir, 'orders.json'), 'utf8')).length, 6);
 });

@@ -40,9 +40,11 @@ function adminOnly(req, res, next) {
 router.use(adminOnly);
 
 const ORDER_CLEANUP_ORIGINALS = [
-  { key: 'naveen vishor', label: 'Naveen Vishor' },
-  { key: 'chithra', label: 'Chithra' },
-  { key: 'hasini', label: 'Hasini' }
+  // Treat the newly supplied middle initial as the canonical display name;
+  // the shorter name remains an alias for the same single keeper order.
+  { keys: ['naveen vishor', 'naveen vishor n'], label: 'Naveen Vishor N' },
+  { keys: ['chithra'], label: 'Chithra' },
+  { keys: ['hasini'], label: 'Hasini' }
 ];
 const ORDER_CLEANUP_TOKEN_TTL_MS = 5 * 60 * 1000;
 
@@ -60,13 +62,14 @@ function summarizeCleanupOrder(order) {
 }
 
 function analyzeOrderCleanup(orders) {
-  const counts = new Map(ORDER_CLEANUP_ORIGINALS.map(original => [original.key, 0]));
+  const counts = new Map(ORDER_CLEANUP_ORIGINALS.map(original => [original.label, 0]));
   const kept = [];
   const removed = [];
   for (const order of orders) {
     const key = normalizeOrderCustomerName(order?.customer?.name);
-    if (counts.has(key)) {
-      counts.set(key, counts.get(key) + 1);
+    const original = ORDER_CLEANUP_ORIGINALS.find(item => item.keys.includes(key));
+    if (original) {
+      counts.set(original.label, counts.get(original.label) + 1);
       kept.push(order);
     } else {
       removed.push(order);
@@ -74,7 +77,7 @@ function analyzeOrderCleanup(orders) {
   }
   const preservedByName = ORDER_CLEANUP_ORIGINALS.map(original => ({
     name: original.label,
-    count: counts.get(original.key)
+    count: counts.get(original.label)
   }));
   const issues = preservedByName
     .filter(item => item.count !== 1)

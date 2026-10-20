@@ -141,6 +141,7 @@ export function CartView() {
   const loc = useSavedLocation();
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoaded, setProductsLoaded] = useState(false);
   const byHandle = useMemo(() => new Map(products.map((p) => [p.handle, p])), [products]);
   const [me, setMe] = useState<Customer | null>(null);
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -198,7 +199,8 @@ export function CartView() {
     (async () => {
       try {
         const [productsData, meData] = await Promise.all([api("/api/products"), api("/api/auth/me").catch(() => null)]);
-        setProducts(productsData.products || []);
+        setProducts(Array.isArray(productsData.products) ? productsData.products : []);
+        setProductsLoaded(true);
         setMe(meData?.customer || null);
         try {
           setOnlineEnabled(Boolean((await api("/api/settings"))?.payments?.onlineEnabled));
@@ -226,6 +228,16 @@ export function CartView() {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /* A removed catalogue item can linger in a customer's local basket. Prune
+     this explicitly retired handle once the live catalogue has loaded, so it
+     cannot silently block checkout with a stale quote line. */
+  useEffect(() => {
+    if (!productsLoaded || !lines.some((line) => line.handle === "mushroom-milky")) return;
+    if (products.some((product) => product.handle === "mushroom-milky")) return;
+    saveCart(lines.filter((line) => line.handle !== "mushroom-milky"));
+    toast("Milky Mushroom was removed from your basket because it is no longer in the catalogue.", "error");
+  }, [productsLoaded, products, lines, toast]);
 
   useEffect(() => {
     if (onlineEnabled) setPayApp(isDesktop ? "upi" : "gpay");
@@ -281,6 +293,12 @@ export function CartView() {
       setQuoteError("");
       return null;
     }
+    if (!productsLoaded) {
+      const message = "Please wait while we check the current catalogue.";
+      setQuote(null);
+      setQuoteError(message);
+      return { eligible: false, message };
+    }
     const saved = (loc || null) as any;
     try {
       const data = await api("/api/quote", {
@@ -317,12 +335,13 @@ export function CartView() {
     quoteTimer.current = setTimeout(refreshQuote, 280);
   }
   useEffect(() => {
+    if (!productsLoaded) return;
     scheduleQuote();
     return () => {
       if (quoteTimer.current) clearTimeout(quoteTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lines, pin, loc]);
+  }, [productsLoaded, lines, pin, loc]);
 
   /* ---------- coupons ---------- */
   async function applyCoupon(code: string, quiet = false) {
@@ -774,7 +793,34 @@ export function CartView() {
                 <AnimatePresence initial={false}>
                   {lines.map((item) => {
                     const p = byHandle.get(item.handle);
-                    if (!p) return null;
+                    if (!p) {
+                      const title = item.handle === "mushroom-milky"
+                        ? "Milky Mushroom"
+                        : item.handle.split(/[-_]/).filter(Boolean).map((part) => part[0].toUpperCase() + part.slice(1)).join(" ");
+                      return (
+                        <motion.div
+                          key={`${item.handle}:${item.variant || "d"}`}
+                          layout
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, x: -40, height: 0 }}
+                          className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/70 p-3"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <b className="block truncate text-[13px] font-bold text-ink">{title || "Unavailable product"}</b>
+                            <small className="text-[11px] font-semibold text-muted-foreground">No longer in the catalogue · remove to continue</small>
+                          </div>
+                          <button
+                            type="button"
+                            aria-label={`Remove unavailable ${title || "product"}`}
+                            onClick={() => setCartQty(item.handle, 0, item.variant || "")}
+                            className="rounded-full border border-amber-300 bg-white px-3 py-1.5 text-[11px] font-bold text-ink-2 transition hover:bg-amber-100"
+                          >
+                            Remove
+                          </button>
+                        </motion.div>
+                      );
+                    }
                     const pack = p.variants?.find((x) => x.id === lineVariantId(p, item)) || defaultVariant(p);
                     const multi = Boolean(p.variants && p.variants.length > 1);
                     const compare = !multi && Number(p.compareAtInr || 0) > Number(p.priceInr || 0) ? Number(p.compareAtInr) : 0;

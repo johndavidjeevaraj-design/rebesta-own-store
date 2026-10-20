@@ -1649,31 +1649,6 @@
     "seoDescription": "Fresh, farm-picked Button Mushroom, sourced daily from trusted growers and hand-picked for quality. Cleaned, graded and packed with care for your kitc"
   },
   {
-    "handle": "mushroom-milky",
-    "baseHandle": "mushroom-milky",
-    "title": "Milky Mushroom",
-    "variantTitle": "",
-    "description": "Fresh, farm-picked Milky Mushroom, sourced daily from trusted growers and hand-picked for quality. Cleaned, graded and packed with care for your kitchen.\n\nSold as: 1 pack (200 g) · Category: Mushrooms\n\nStorage: keep in a cool, dry place or refrigerate. Best enjoyed within 3-4 days of delivery.",
-    "vendor": "Rebesta Fresh",
-    "category": "Mushrooms",
-    "tags": [
-      "Fresh Vegetables",
-      "Mushrooms",
-      "Vegetables"
-    ],
-    "sku": "VEG-MU-005",
-    "priceInr": 80,
-    "compareAtInr": null,
-    "image": "/assets/products/mushroom-milky.jpg",
-    "unitLabel": "1 kg",
-    "weightGrams": 1000,
-    "stock": 100,
-    "active": true,
-    "featured": false,
-    "seoTitle": "Milky Mushroom",
-    "seoDescription": "Fresh, farm-picked Milky Mushroom, sourced daily from trusted growers and hand-picked for quality. Cleaned, graded and packed with care for your kitch"
-  },
-  {
     "handle": "mushroom-oyster",
     "baseHandle": "mushroom-oyster",
     "title": "Oyster Mushroom",

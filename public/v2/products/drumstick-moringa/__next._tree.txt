@@ -1,5 +1,5 @@
-:HL["/v2/_next/static/chunks/300gv91085ysi.css","style"]
+:HL["/v2/_next/static/chunks/2okbzdgdsk44_.css","style"]
 3:[["children",{"s":"__PAGE__","h":160}]]
 2:[["children",{"s":{"n":"handle","t":"d","k":"drumstick-moringa","s":[]},"h":65632,"c":"$Q3"}]]
 1:[["children",{"s":"products","h":131168,"c":"$Q2"}]]
-0:{"b":"VYjdn1Aoi03RQPA8b0ThC","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}
+0:{"b":"-I7NeW7VjVqm7yvAqsmCk","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}

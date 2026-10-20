@@ -7,5 +7,6 @@ import { ChatWidget } from "@/components/chat-widget";
 export function StorefrontChatWidget() {
   const pathname = usePathname();
   if (["/partner", "/admin"].some((route) => pathname === route || pathname.startsWith(`${route}/`))) return null;
-  return <ChatWidget />;
+  const avoidCheckoutBar = pathname === "/cart" || pathname.startsWith("/cart/");
+  return <ChatWidget avoidCheckoutBar={avoidCheckoutBar} />;
 }

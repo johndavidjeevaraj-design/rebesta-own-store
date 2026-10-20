@@ -46,7 +46,13 @@ function MessageText({ text }: { text: string }) {
   );
 }
 
-export function ChatWidget() {
+export function ChatWidget({ avoidCheckoutBar = false }: { avoidCheckoutBar?: boolean }) {
+  const panelDock = avoidCheckoutBar
+    ? "bottom-[calc(152px+env(safe-area-inset-bottom))] md:bottom-24"
+    : "bottom-[calc(76px+env(safe-area-inset-bottom))] md:bottom-6";
+  const launcherDock = avoidCheckoutBar
+    ? "bottom-[calc(164px+env(safe-area-inset-bottom))] md:bottom-24"
+    : "bottom-24 md:bottom-6";
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [typing, setTyping] = useState(false);
@@ -161,7 +167,7 @@ export function ChatWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 18, scale: 0.97 }}
             transition={{ type: "spring", stiffness: 380, damping: 32 }}
-            className="fixed bottom-[calc(76px+env(safe-area-inset-bottom))] right-3 z-[60] flex h-[min(62vh,540px)] max-h-[calc(100dvh-100px)] w-[calc(100vw-24px)] max-w-[420px] flex-col overflow-hidden rounded-[28px] border border-black/[0.07] bg-white/95 shadow-[0_28px_80px_rgba(0,0,0,0.20)] ring-1 ring-white/80 backdrop-blur-2xl md:bottom-6 md:right-6 md:h-[min(72vh,620px)] md:w-[400px]"
+            className={`fixed ${panelDock} right-3 z-[60] flex h-[min(62vh,540px)] max-h-[calc(100dvh-100px)] w-[calc(100vw-24px)] max-w-[420px] flex-col overflow-hidden rounded-[28px] border border-black/[0.07] bg-white/95 shadow-[0_28px_80px_rgba(0,0,0,0.20)] ring-1 ring-white/80 backdrop-blur-2xl md:right-6 md:h-[min(72vh,620px)] md:w-[400px]`}
             role="dialog"
             aria-label="Rubi support chat"
           >
@@ -310,7 +316,7 @@ export function ChatWidget() {
         transition={{ type: "spring", stiffness: 400, damping: 24, delay: open ? 0 : 0.35 }}
         whileHover={open ? undefined : { scale: 1.04 }}
         whileTap={open ? undefined : { scale: 0.92 }}
-        className={`fresh-grad fixed bottom-24 right-4 z-[60] grid h-14 w-14 place-items-center rounded-full text-white shadow-[0_10px_28px_rgba(11,124,49,0.38)] md:bottom-6 md:right-6 ${open ? "pointer-events-none" : "cursor-pointer"}`}
+        className={`fresh-grad fixed ${launcherDock} right-4 z-[60] grid h-14 w-14 place-items-center rounded-full text-white shadow-[0_10px_28px_rgba(11,124,49,0.38)] md:right-6 ${open ? "pointer-events-none" : "cursor-pointer"}`}
       >
         <span className="absolute right-0.5 top-0.5 h-3 w-3 rounded-full border-2 border-white bg-[#34c759]" aria-hidden="true" />
         <MessageCircle size={23} strokeWidth={2.2} aria-hidden="true" />

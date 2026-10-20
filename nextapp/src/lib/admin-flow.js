@@ -1826,6 +1826,120 @@ export function bindAdminPage(root) {
     }));
   }
 
+  function appendCleanupOrderList(container, label, orders) {
+    const details = document.createElement('details');
+    details.style.cssText = 'margin:8px 0;border:1px solid #e2e8df;border-radius:10px;padding:8px 10px';
+    const summary = document.createElement('summary');
+    summary.style.cssText = 'cursor:pointer;font-weight:700';
+    summary.textContent = `${label} (${orders.length})`;
+    const list = document.createElement('ul');
+    list.style.cssText = 'margin:8px 0 0;padding-left:22px;max-height:260px;overflow:auto';
+    for (const order of orders) {
+      const item = document.createElement('li');
+      item.style.cssText = 'padding:2px 0;font-size:.84rem;overflow-wrap:anywhere';
+      item.textContent = [order.id, order.name, order.status, order.placedAt].filter(Boolean).join(' · ');
+      list.appendChild(item);
+    }
+    details.append(summary, list);
+    container.appendChild(details);
+  }
+
+  async function reloadAdminOrdersAfterCleanup() {
+    state.orders = (await api('/api/admin/orders')).orders || [];
+    state.knownOrderIds = new Set(state.orders.map(order => order.id));
+    await refreshPartners();
+    renderOrders();
+    renderRecent();
+    renderSales();
+    renderSlotUsage();
+    renderLowStock();
+    await Promise.all([refreshDashboard(), renderCashPanel(), renderSubs()]);
+    refreshTracking();
+  }
+
+  function wireFakeOrderCleanup() {
+    const previewButton = $('[data-order-cleanup-preview]');
+    const result = $('[data-order-cleanup-result]');
+    if (!previewButton || !result) return;
+    previewButton.addEventListener('click', async () => {
+      result.hidden = false;
+      result.replaceChildren();
+      setBusy(previewButton, true, 'Scanning orders…');
+      try {
+        const preview = await api('/api/admin/orders/cleanup/preview', { method: 'POST', body: JSON.stringify({}) });
+        const summary = document.createElement('p');
+        summary.style.cssText = 'margin:8px 0;font-weight:700';
+        summary.textContent = `Found ${Number(preview.totalCount) || 0} orders. Keep ${Number(preview.keepCount) || 0} original orders; remove ${Number(preview.removeCount) || 0} others.`;
+        result.appendChild(summary);
+        const matching = document.createElement('p');
+        matching.style.cssText = 'margin:4px 0;font-size:.86rem';
+        matching.textContent = `Original-name matches: ${(Array.isArray(preview.preservedByName) ? preview.preservedByName : []).map(item => `${item.name}: ${Number(item.count) || 0}`).join(' · ')}`;
+        result.appendChild(matching);
+        appendCleanupOrderList(result, 'Original orders to keep', Array.isArray(preview.kept) ? preview.kept : []);
+        appendCleanupOrderList(result, 'Orders to remove', Array.isArray(preview.removed) ? preview.removed : []);
+
+        if (!preview.canDelete) {
+          const notice = document.createElement('p');
+          notice.className = `alert ${preview.removeCount ? 'error' : 'info'}`;
+          notice.style.margin = '8px 0 0';
+          notice.textContent = preview.issues?.length
+            ? `Nothing was changed. Cleanup is blocked: ${preview.issues.join('; ')}`
+            : 'No other orders were found to remove.';
+          result.appendChild(notice);
+          return;
+        }
+
+        const confirmLabel = document.createElement('label');
+        confirmLabel.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin:12px 0;font-size:.88rem;font-weight:700';
+        const reviewed = document.createElement('input');
+        reviewed.type = 'checkbox';
+        reviewed.style.cssText = 'margin-top:3px;flex:none';
+        const reviewText = document.createElement('span');
+        reviewText.textContent = `I reviewed the list and confirm the ${Number(preview.removeCount)} listed orders are fake.`;
+        confirmLabel.append(reviewed, reviewText);
+        result.appendChild(confirmLabel);
+
+        const commitButton = document.createElement('button');
+        commitButton.type = 'button';
+        commitButton.className = 'button danger small';
+        commitButton.textContent = `Delete ${Number(preview.removeCount)} fake orders`;
+        commitButton.disabled = true;
+        reviewed.addEventListener('change', () => { commitButton.disabled = !reviewed.checked; });
+        commitButton.addEventListener('click', async () => {
+          if (!reviewed.checked || !window.confirm(`Permanently remove ${Number(preview.removeCount)} orders? The three original orders will be kept, and a private backup will be saved first.`)) return;
+          setBusy(commitButton, true, 'Backing up and removing…');
+          let completed;
+          try {
+            completed = await api('/api/admin/orders/cleanup/commit', {
+              method: 'POST', body: JSON.stringify({ previewToken: preview.previewToken })
+            });
+          } catch (error) {
+            toast(error.message || 'Could not remove fake orders', 'error');
+            commitButton.disabled = false;
+            commitButton.textContent = 'Preview expired — run preview again';
+            return;
+          }
+          let refreshFailed = false;
+          try { await reloadAdminOrdersAfterCleanup(); } catch { refreshFailed = true; }
+          const done = document.createElement('p');
+          done.className = 'alert success';
+          done.style.margin = '8px 0 0';
+          done.textContent = `Removed ${Number(completed.removedCount) || 0} fake orders. Kept ${Number(completed.keptCount) || 0} originals. Backup saved privately as ${String(completed.backupName || 'orders backup')}.${refreshFailed ? ' Press Refresh data if the visible order list has not updated.' : ''}`;
+          result.replaceChildren(done);
+          toast(`Removed ${Number(completed.removedCount) || 0} fake orders; backup saved.`, 'success');
+        });
+        result.appendChild(commitButton);
+      } catch (error) {
+        const notice = document.createElement('p');
+        notice.className = 'alert error';
+        notice.textContent = error.message || 'Could not preview the orders';
+        result.appendChild(notice);
+      } finally {
+        setBusy(previewButton, false);
+      }
+    });
+  }
+
   function renderPacking() {
     const dateInput = $('[data-packing-date]');
     const slotSelect = $('[data-packing-slot]');
@@ -1867,6 +1981,7 @@ export function bindAdminPage(root) {
         </div>
       </div>`;
   }
+  wireFakeOrderCleanup();
   $('[data-packing-date]')?.addEventListener('change', renderPacking);
   $('[data-packing-slot]')?.addEventListener('change', renderPacking);
   $('[data-packing-print]')?.addEventListener('click', () => {

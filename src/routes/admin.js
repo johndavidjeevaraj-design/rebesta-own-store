@@ -39,6 +39,78 @@ function adminOnly(req, res, next) {
 
 router.use(adminOnly);
 
+const ORDER_CLEANUP_ORIGINALS = [
+  { key: 'naveen vishor', label: 'Naveen Vishor' },
+  { key: 'chithra', label: 'Chithra' },
+  { key: 'hasini', label: 'Hasini' }
+];
+const ORDER_CLEANUP_TOKEN_TTL_MS = 5 * 60 * 1000;
+
+function normalizeOrderCustomerName(value) {
+  return String(value ?? '').normalize('NFKC').trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function summarizeCleanupOrder(order) {
+  return {
+    id: String(order?.id || '(missing ID)').slice(0, 100),
+    name: String(order?.customer?.name || '(no customer name)').slice(0, 120),
+    status: String(order?.status || 'UNKNOWN').slice(0, 40),
+    placedAt: String(order?.placedAt || '').slice(0, 64)
+  };
+}
+
+function analyzeOrderCleanup(orders) {
+  const counts = new Map(ORDER_CLEANUP_ORIGINALS.map(original => [original.key, 0]));
+  const kept = [];
+  const removed = [];
+  for (const order of orders) {
+    const key = normalizeOrderCustomerName(order?.customer?.name);
+    if (counts.has(key)) {
+      counts.set(key, counts.get(key) + 1);
+      kept.push(order);
+    } else {
+      removed.push(order);
+    }
+  }
+  const preservedByName = ORDER_CLEANUP_ORIGINALS.map(original => ({
+    name: original.label,
+    count: counts.get(original.key)
+  }));
+  const issues = preservedByName
+    .filter(item => item.count !== 1)
+    .map(item => `${item.name}: expected exactly one original order, found ${item.count}`);
+  return { kept, removed, preservedByName, issues, canDelete: issues.length === 0 && removed.length > 0 };
+}
+
+function orderCleanupDigest(orders) {
+  return crypto.createHash('sha256').update(JSON.stringify(orders)).digest('hex');
+}
+
+function createOrderCleanupToken(orders) {
+  const payload = Buffer.from(JSON.stringify({
+    digest: orderCleanupDigest(orders),
+    expiresAt: Date.now() + ORDER_CLEANUP_TOKEN_TTL_MS,
+    nonce: crypto.randomBytes(12).toString('hex')
+  })).toString('base64url');
+  const signature = crypto.createHmac('sha256', String(config.adminKey)).update(payload).digest('base64url');
+  return `${payload}.${signature}`;
+}
+
+function verifyOrderCleanupToken(token) {
+  try {
+    const rawToken = String(token || '');
+    if (rawToken.length > 2048) return null;
+    const [payload, suppliedSignature, extra] = rawToken.split('.');
+    if (!payload || !suppliedSignature || extra !== undefined) return null;
+    const expected = crypto.createHmac('sha256', String(config.adminKey)).update(payload).digest();
+    const supplied = Buffer.from(suppliedSignature, 'base64url');
+    if (expected.length !== supplied.length || !crypto.timingSafeEqual(expected, supplied)) return null;
+    const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    if (typeof decoded.digest !== 'string' || !Number.isFinite(decoded.expiresAt) || decoded.expiresAt < Date.now()) return null;
+    return decoded;
+  } catch { return null; }
+}
+
 router.get('/dashboard', (req, res) => {
   const orders = readOrders();
   const products = loadProducts();
@@ -296,6 +368,56 @@ router.get('/orders', (req, res) => {
   let orders = readOrders();
   if (status) orders = orders.filter(o => o.status === status);
   res.json({ ok: true, orders });
+});
+
+router.post('/orders/cleanup/preview', (req, res) => {
+  const orders = readOrders();
+  if (!Array.isArray(orders)) return res.status(500).json({ ok: false, error: 'Order data is not a valid list' });
+  const analysis = analyzeOrderCleanup(orders);
+  const response = {
+    ok: true,
+    totalCount: orders.length,
+    keepCount: analysis.kept.length,
+    removeCount: analysis.removed.length,
+    preservedByName: analysis.preservedByName,
+    issues: analysis.issues,
+    canDelete: analysis.canDelete,
+    kept: analysis.kept.map(summarizeCleanupOrder),
+    removed: analysis.removed.map(summarizeCleanupOrder)
+  };
+  if (analysis.canDelete) response.previewToken = createOrderCleanupToken(orders);
+  res.json(response);
+});
+
+router.post('/orders/cleanup/commit', (req, res) => {
+  let backupName = '';
+  try {
+    const claims = verifyOrderCleanupToken(req.body?.previewToken);
+    if (!claims) return res.status(409).json({ ok: false, error: 'Preview expired or invalid. Run the preview again.' });
+    const orders = readOrders();
+    if (!Array.isArray(orders)) return res.status(500).json({ ok: false, error: 'Order data is not a valid list' });
+    if (orderCleanupDigest(orders) !== claims.digest) {
+      return res.status(409).json({ ok: false, error: 'Orders changed since the preview. Nothing was deleted; preview again.' });
+    }
+    const analysis = analyzeOrderCleanup(orders);
+    if (!analysis.canDelete) return res.status(409).json({ ok: false, error: 'The original orders no longer match the safe cleanup rule. Nothing was deleted.' });
+
+    const backupDirectory = path.join(config.dataDir, 'backups');
+    fs.mkdirSync(backupDirectory, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    backupName = `orders-before-fake-cleanup-${stamp}-${crypto.randomBytes(4).toString('hex')}.json`;
+    const ordersFile = path.join(config.dataDir, 'orders.json');
+    const backupPath = path.join(backupDirectory, backupName);
+    if (fs.existsSync(ordersFile)) fs.copyFileSync(ordersFile, backupPath, fs.constants.COPYFILE_EXCL);
+    else fs.writeFileSync(backupPath, JSON.stringify(orders, null, 2), { flag: 'wx', mode: 0o600 });
+    try { fs.chmodSync(backupPath, 0o600); } catch {}
+
+    saveOrders(analysis.kept);
+    console.log(JSON.stringify({ event: 'admin.orders.fake_cleanup', keptCount: analysis.kept.length, removedCount: analysis.removed.length, backupName }));
+    res.json({ ok: true, keptCount: analysis.kept.length, removedCount: analysis.removed.length, kept: analysis.kept.map(summarizeCleanupOrder), backupName });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message || 'Could not remove fake orders', backupName });
+  }
 });
 
 router.patch('/orders/:id/status', (req, res) => {

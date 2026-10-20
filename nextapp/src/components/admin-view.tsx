@@ -106,6 +106,16 @@ export function AdminView() {
 
                 {/* ============ ORDERS ============ */}
                 <section data-tab="orders" hidden>
+                  <section className="shop-panel" data-order-cleanup-panel style={{ marginBottom: '20px', border: '1px solid #f1c9c4' }}>
+                    <div className="section-head" style={{ marginBottom: '10px', flexWrap: 'wrap', gap: '10px' }}>
+                      <div>
+                        <h2 style={{ marginBottom: '5px' }}>🧹 Remove fake orders</h2>
+                        <p className="section-subtitle" style={{ fontSize: '.88rem' }}>Keep exactly one order for each original customer — Naveen Vishor, Chithra, and Hasini. Other orders are listed for review. Nothing is removed until you confirm, and a private server backup is made first. If any original name is missing or duplicated, cleanup is blocked.</p>
+                      </div>
+                      <button className="button danger" type="button" data-order-cleanup-preview>Preview cleanup</button>
+                    </div>
+                    <div data-order-cleanup-result aria-live="polite" hidden></div>
+                  </section>
                   <section className="shop-panel" style={{ marginBottom: '20px' }}>
                     <div className="section-head" style={{ marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
                       <h2>Orders</h2>

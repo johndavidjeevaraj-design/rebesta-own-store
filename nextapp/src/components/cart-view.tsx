@@ -144,6 +144,7 @@ export function CartView() {
   const byHandle = useMemo(() => new Map(products.map((p) => [p.handle, p])), [products]);
   const [me, setMe] = useState<Customer | null>(null);
   const [quote, setQuote] = useState<Quote | null>(null);
+  const [quoteError, setQuoteError] = useState("");
   const [tip, setTip] = useState(0);
   const [coupon, setCoupon] = useState<Coupon | null>(null);
   const [coupons, setCoupons] = useState<Coupon[] | null>(null);
@@ -277,6 +278,7 @@ export function CartView() {
   async function refreshQuote(): Promise<Quote | null> {
     if (!lines.length) {
       setQuote(null);
+      setQuoteError("");
       return null;
     }
     const saved = (loc || null) as any;
@@ -289,16 +291,25 @@ export function CartView() {
           address: { pincode: /^\d{6}$/.test(pin) ? pin : "" },
         }),
       });
-      setQuote(data.quote || null);
-      const q: Quote | null = data.quote || null;
+      const q: Quote | null = data?.quote || null;
+      if (!q) {
+        const message = "Delivery service returned no quote. Please try again.";
+        setQuote(null);
+        setQuoteError(message);
+        return { eligible: false, message };
+      }
+      setQuoteError("");
+      setQuote(q);
       if (coupon && subtotal < Number(coupon.minOrderInr || 0)) {
         toast(`Coupon ${coupon.code} removed — basket is below ${money(Number(coupon.minOrderInr || 0))}`, "error");
         removeCoupon();
       }
       return q;
-    } catch {
+    } catch (error: any) {
+      const message = String(error?.message || "Could not calculate delivery");
       setQuote(null);
-      return null;
+      setQuoteError(message);
+      return { eligible: false, message };
     }
   }
   function scheduleQuote() {
@@ -1025,15 +1036,19 @@ export function CartView() {
                     </div>
                     <span className="rounded-full bg-black/[0.06] px-2 py-0.5 text-[10px] font-bold tracking-wide text-muted-foreground">COMING SOON</span>
                   </div>
-                  <motion.p key={JSON.stringify(quote)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3.5 flex items-center gap-1.5 text-[13px] font-bold text-ink-2">
-                    <Truck13 />{" "}
-                    {quote && !eligible
-                      ? quote.message || "We cannot deliver to this area yet."
-                      : eligible
-                        ? quote!.freeApplied
-                          ? `Free delivery applied · ${quote!.distanceKm ? quote!.distanceKm + " road km" : "Hosur"}`
-                          : `Delivery ${money(Number(quote!.deliveryFeeInr || 0))} · ${quote!.distanceKm ? quote!.distanceKm + " road km from the hub" : "local morning delivery"}`
-                        : "Set your delivery location to check availability."}
+                  <motion.p key={JSON.stringify([quote, quoteError])} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3.5 flex items-start gap-1.5 text-[13px] font-bold text-ink-2">
+                    <Truck13 />
+                    <span className="min-w-0 break-words">
+                      {quoteError
+                        ? `Delivery check failed: ${quoteError}`
+                        : quote && !eligible
+                          ? quote.message || "We cannot deliver to this area yet."
+                          : eligible
+                            ? quote!.freeApplied
+                              ? `Free delivery applied · ${quote!.distanceKm ? quote!.distanceKm + " road km" : "Hosur"}`
+                              : `Delivery ${money(Number(quote!.deliveryFeeInr || 0))} · ${quote!.distanceKm ? quote!.distanceKm + " road km from the hub" : "local morning delivery"}`
+                            : "Set your delivery location to check availability."}
+                    </span>
                   </motion.p>
                 </div>
               )}

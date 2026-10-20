@@ -6,6 +6,7 @@ export function bindAdminPage(root) {
     key: localStorage.getItem('rebesta_admin_key') || '',
     products: [],
     orders: [],
+    pendingPayments: [],
     settings: null,
     partners: [],
     map: null,
@@ -19,7 +20,7 @@ export function bindAdminPage(root) {
     showCategories: false
   };
   const $ = selector => root.querySelector(selector);
-  const statuses = ['PENDING_PAYMENT', 'PLACED', 'CONFIRMED', 'PACKING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'PAYMENT_FAILED', 'PAID_NEEDS_REVIEW'];
+  const statuses = ['PLACED', 'CONFIRMED', 'PACKING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'PAID_NEEDS_REVIEW'];
   const DEFAULT_TIERS = [
     { min: 0, max: 1, label: '0–1 km', feeInr: 20 },
     { min: 1, max: 3, label: '1–3 km', feeInr: 30 },
@@ -119,16 +120,17 @@ export function bindAdminPage(root) {
   function renderSales() {
     const panel = $('[data-sales-panel]');
     if (!panel) return;
-    const paid = state.orders.filter(o => o.status !== 'CANCELLED');
-    const revenue = paid.reduce((sum, o) => sum + Number(o.totalInr || 0), 0);
-    const avg = paid.length ? revenue / paid.length : 0;
+    const received = state.orders.filter(o => o.status !== 'CANCELLED');
+    const salesOrders = received.filter(o => String(o.paymentStatus || '').toUpperCase() !== 'REFUNDED');
+    const revenue = salesOrders.reduce((sum, o) => sum + Number(o.totalInr || 0), 0);
+    const avg = salesOrders.length ? revenue / salesOrders.length : 0;
     const days = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date(); d.setUTCDate(d.getUTCDate() - i);
       days.push(d.toISOString().slice(0, 10));
     }
     const perDay = days.map((day, i) => {
-      const dayOrders = paid.filter(o => String(o.placedAt || '').startsWith(day));
+      const dayOrders = salesOrders.filter(o => String(o.placedAt || '').startsWith(day));
       return {
         label: new Date(day + 'T00:00:00Z').toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'UTC' }),
         today: i === 6,
@@ -144,7 +146,7 @@ export function bindAdminPage(root) {
         <span class="day">${d.label}</span>
       </div>`).join('');
     const tally = new Map();
-    for (const o of paid) for (const item of o.items || []) {
+    for (const o of salesOrders) for (const item of o.items || []) {
       const row = tally.get(item.title) || { units: 0, revenue: 0 };
       row.units += Number(item.qty || 0);
       row.revenue += Number(item.lineTotalInr || 0);
@@ -162,7 +164,7 @@ export function bindAdminPage(root) {
           <div class="sales-totals">
             <div><strong>${money(revenue)}</strong><span>revenue (all time)</span></div>
             <div><strong>${money(avg)}</strong><span>avg order value</span></div>
-            <div><strong>${paid.length}</strong><span>orders</span></div>
+            <div><strong>${received.length}</strong><span>received orders</span></div>
           </div>
         </div>
         <div>
@@ -901,6 +903,27 @@ export function bindAdminPage(root) {
     });
   }
 
+  function renderPendingPayments() {
+    const wrap = $('[data-pending-orders-table]');
+    const count = $('[data-pending-payments-count]');
+    if (!wrap) return;
+    const pending = Array.isArray(state.pendingPayments) ? state.pendingPayments : [];
+    if (count) count.textContent = String(pending.length);
+    if (!pending.length) {
+      wrap.innerHTML = '<div class="empty-state"><h3>No pending payments</h3><p>Unpaid online attempts will appear here until payment is verified or the attempt is closed.</p></div>';
+      return;
+    }
+    const rows = pending.map(order => {
+      const items = (Array.isArray(order.items) ? order.items : []).map(item => `${esc(item.title)} × ${Number(item.qty) || 0}`).join(', ');
+      const status = String(order.status || '').toUpperCase();
+      const paymentStatus = String(order.paymentStatus || '').replaceAll('_', ' ').toLowerCase();
+      const attempt = status === 'PAYMENT_FAILED' ? 'Payment failed' : status === 'CANCELLED' ? 'Cancelled before payment' : 'Awaiting payment';
+      const placed = order.placedAt ? new Date(order.placedAt).toLocaleString('en-IN') : '—';
+      return `<tr><td><strong>${esc(order.id)}</strong><br><small>${esc(placed)}</small></td><td><strong>${esc(order.customer?.name || '')}</strong><br><span>${esc(order.customer?.phone || '')}</span></td><td>${items || '—'}</td><td><span class="badge ${status === 'PAYMENT_FAILED' ? 'gray' : 'orange'}">${esc(attempt)}</span><br><small>${esc(paymentStatus || 'pending')}</small></td><td><strong>${money(order.totalInr)}</strong></td></tr>`;
+    }).join('');
+    wrap.innerHTML = `<table class="admin-table"><thead><tr><th>Attempt</th><th>Customer</th><th>Basket</th><th>Payment status</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
   async function renderOrders() {
     const wrap = $('[data-orders-table]');
     wrap.innerHTML = '';
@@ -1242,7 +1265,10 @@ export function bindAdminPage(root) {
   function renderSlotUsage() {
     const panel = $('[data-slots-panel]');
     if (!panel) return;
-    const active = state.orders.filter(o => !['CANCELLED', 'PAYMENT_FAILED'].includes(o.status));
+    const active = [
+      ...state.orders.filter(o => !['CANCELLED', 'PAYMENT_FAILED'].includes(o.status)),
+      ...(state.pendingPayments || []).filter(o => String(o.status || '').toUpperCase() === 'PENDING_PAYMENT')
+    ];
     const upcoming = active.map(o => o.deliveryDate?.iso).filter(Boolean).sort().find(d => d >= new Date().toISOString().slice(0, 10));
     if (!upcoming) { panel.innerHTML = ''; return; }
     const settings = state.settings || {};
@@ -1262,7 +1288,7 @@ export function bindAdminPage(root) {
     panel.innerHTML = `
       <h2>📅 Slot capacity <span class="badge green">next delivery day</span></h2>
       <div class="slot-meter-grid">${meters}</div>
-      <p class="summary-note">Caps per morning slot (change in Settings). Customers cannot over-book a full slot.</p>`;
+      <p class="summary-note">Caps per morning slot (change in Settings). Pending online attempts hold a slot until payment succeeds or the attempt is closed; only received orders appear on packing lists.</p>`;
   }
 
   /* ============ Tabs ============ */
@@ -1322,10 +1348,19 @@ export function bindAdminPage(root) {
     const v = data.versions || {};
     if (!state.versions) { state.versions = v; return; }
     if (v.orders !== state.versions.orders) {
-      try { state.orders = (await api('/api/admin/orders')).orders; } catch { return; }
+      try {
+        const [received, pending] = await Promise.all([
+          api('/api/admin/orders?view=received'),
+          api('/api/admin/orders?view=pending')
+        ]);
+        state.orders = received.orders || [];
+        state.pendingPayments = pending.orders || [];
+      } catch { return; }
       detectNewOrders();
       renderOrders();
+      renderPendingPayments();
       renderRecent();
+      renderSales();
       refreshDashboard();
       renderPacking();
       renderSlotUsage();
@@ -1344,8 +1379,18 @@ export function bindAdminPage(root) {
 
   async function refreshAll() {
     await refreshDashboard();
-    try { state.orders = (await api('/api/admin/orders')).orders; } catch { state.orders = state.orders || []; }
-    await Promise.all([renderSettings(), renderProducts(), renderOrders(), refreshPartners()]);
+    try {
+      const [received, pending] = await Promise.all([
+        api('/api/admin/orders?view=received'),
+        api('/api/admin/orders?view=pending')
+      ]);
+      state.orders = received.orders || [];
+      state.pendingPayments = pending.orders || [];
+    } catch {
+      state.orders = state.orders || [];
+      state.pendingPayments = state.pendingPayments || [];
+    }
+    await Promise.all([renderSettings(), renderProducts(), renderOrders(), renderPendingPayments(), refreshPartners()]);
     detectNewOrders();
     renderRecent();
     wireOrderFilters();
@@ -1845,10 +1890,16 @@ export function bindAdminPage(root) {
   }
 
   async function reloadAdminOrdersAfterCleanup() {
-    state.orders = (await api('/api/admin/orders')).orders || [];
+    const [received, pending] = await Promise.all([
+      api('/api/admin/orders?view=received'),
+      api('/api/admin/orders?view=pending')
+    ]);
+    state.orders = received.orders || [];
+    state.pendingPayments = pending.orders || [];
     state.knownOrderIds = new Set(state.orders.map(order => order.id));
     await refreshPartners();
     renderOrders();
+    renderPendingPayments();
     renderRecent();
     renderSales();
     renderSlotUsage();

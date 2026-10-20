@@ -14,6 +14,7 @@ import {
   buildCart,
   addOrder,
   getOrder,
+  claimOrderConfirmationNotice,
   setOrderPaymentSession,
   maskCustomer,
   markPayuPayment,
@@ -64,6 +65,19 @@ function normalizeAddress(input = {}) {
     lng: input.lng ?? input.longitude,
     mapLabel: String(input.mapLabel || input.label || '').trim()
   };
+}
+
+function dispatchOrderConfirmation(orderId) {
+  let order;
+  try { order = claimOrderConfirmationNotice(orderId); } catch (error) {
+    console.error('Could not claim order confirmation', orderId, error.message);
+    return false;
+  }
+  if (!order) return false;
+  const paidOnline = String(order.paymentMethod || '').toLowerCase() === 'online';
+  void Promise.resolve().then(() => orderPlacedEmails(order)).catch(error => console.error('Order email failed', order.id, error.message));
+  void Promise.resolve().then(() => notifyOrderConfirmed(order, { paid: paidOnline })).catch(error => console.error('Order SMS failed', order.id, error.message));
+  return true;
 }
 
 router.get('/settings', (req, res) => {
@@ -293,7 +307,6 @@ router.post('/orders', async (req, res) => {
       source: 'own-store-web'
     });
     if (couponCode) markCouponUsed(couponCode);
-    orderPlacedEmails(order);
 
     const settings = loadSettings();
     const whatsappDigits = String(settings.business?.whatsapp || '918438765119').replace(/\D/g, '');
@@ -313,7 +326,7 @@ router.post('/orders', async (req, res) => {
       }
     }
 
-    if (!payment) notifyOrderConfirmed(order, { paid: false }).catch(() => {});
+    if (!payment) void dispatchOrderConfirmation(order.id);
     res.status(201).json({
       ok: true,
       order: maskCustomer(order),
@@ -337,6 +350,7 @@ async function payuCallback(req, res) {
       mode: payload.mode || '',
       raw: payload
     });
+    if (result.success) void dispatchOrderConfirmation(order.id);
     return res.redirect(303, `/order-success?id=${encodeURIComponent(order.id)}&payment=${result.success ? 'paid' : 'failed'}`);
   } catch (error) {
     console.error(JSON.stringify({ event: 'payu.callback.error', error: String(error?.message || error).slice(0, 500) }));
@@ -456,7 +470,7 @@ router.get('/payments/cashfree/callback', async (req, res) => {
       provider: 'cashfree',
       raw: cfOrder
     });
-    if (paid) notifyOrderConfirmed(order, { paid: true }).catch(() => {});
+    if (paid) void dispatchOrderConfirmation(order.id);
     return res.redirect(303, `/order-success?id=${encodeURIComponent(order.id)}&payment=${paid ? 'paid' : 'failed'}`);
   } catch (error) {
     console.error(JSON.stringify({ event: 'cashfree.callback.error', order: orderId, error: String(error?.message || error).slice(0, 500) }));
@@ -471,7 +485,7 @@ router.post('/orders/:id/pay', async (req, res) => {
     if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
     if (String(order.paymentMethod || '') !== 'online') return res.status(400).json({ ok: false, error: 'This order is not an online payment order' });
     if (String(order.status || '').toUpperCase() === 'CANCELLED') return res.status(400).json({ ok: false, error: 'This order was cancelled' });
-    if (String(order.paymentStatus || '').toUpperCase() === 'PAID') return res.status(400).json({ ok: false, error: 'This order is already paid' });
+    if (['PAID', 'PAID_ONLINE'].includes(String(order.paymentStatus || '').toUpperCase())) return res.status(400).json({ ok: false, error: 'This order is already paid' });
     if (!cashfreeEnabled()) return res.status(503).json({ ok: false, error: 'Online payment is not configured yet' });
     const sessionId = String(order.paymentSessionId || '');
     if (!sessionId) return res.status(409).json({ ok: false, error: 'This order has no payment session left — please place the order again.' });
@@ -492,7 +506,7 @@ router.post('/orders/:id/upi-qr', async (req, res) => {
     if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
     if (String(order.paymentMethod || '') !== 'online') return res.status(400).json({ ok: false, error: 'This order is not an online payment order' });
     if (String(order.status || '').toUpperCase() === 'CANCELLED') return res.status(400).json({ ok: false, error: 'This order was cancelled' });
-    if (String(order.paymentStatus || '').toUpperCase() === 'PAID') return res.status(400).json({ ok: false, error: 'This order is already paid' });
+    if (['PAID', 'PAID_ONLINE'].includes(String(order.paymentStatus || '').toUpperCase())) return res.status(400).json({ ok: false, error: 'This order is already paid' });
     if (!cashfreeEnabled()) return res.status(503).json({ ok: false, error: 'Online payment is not configured yet' });
     const qr = await createUpiQr(order);
     return res.json({ ok: true, orderId: order.id, qr: qr.qr, apps: qr.apps || {} });
@@ -508,7 +522,10 @@ router.get('/orders/:id/verify-payment', async (req, res) => {
   try {
     const order = getOrder(String(req.params.id || '').toUpperCase());
     if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
-    if (String(order.paymentStatus || '').toUpperCase() === 'PAID') return res.json({ ok: true, paid: true });
+    if (['PAID', 'PAID_ONLINE'].includes(String(order.paymentStatus || '').toUpperCase())) {
+      void dispatchOrderConfirmation(order.id);
+      return res.json({ ok: true, paid: true });
+    }
     if (String(order.paymentMethod || '') !== 'online') return res.json({ ok: true, paid: false });
     const cfOrder = await getCashfreeOrder(order.id);
     const paid = String(cfOrder?.order_status || '').toUpperCase() === 'PAID';
@@ -521,7 +538,7 @@ router.get('/orders/:id/verify-payment', async (req, res) => {
         provider: 'cashfree',
         raw: cfOrder
       });
-      notifyOrderConfirmed(order, { paid: true }).catch(() => {});
+      void dispatchOrderConfirmation(order.id);
     }
     return res.json({ ok: true, paid });
   } catch (e) {

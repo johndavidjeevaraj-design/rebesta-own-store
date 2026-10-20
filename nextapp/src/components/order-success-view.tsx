@@ -18,6 +18,12 @@ interface Order {
   history: { status: string; at: string }[];
 }
 
+function isConfirmedOrder(order: Pick<Order, "paymentMethod" | "paymentStatus">) {
+  const method = String(order.paymentMethod || "").toLowerCase();
+  const payment = String(order.paymentStatus || "").toUpperCase();
+  return method === "cod" || (method === "online" && ["PAID", "PAID_ONLINE"].includes(payment));
+}
+
 export function OrderSuccessView() {
   const params = typeof window !== "undefined"
     ? new URLSearchParams(window.location.search)
@@ -89,7 +95,7 @@ export function OrderSuccessView() {
         /* remember for 'Repeat last order' on the empty basket page */
         const o = data.order as Order;
         try {
-          if (Array.isArray(o.items) && o.items.length && o.paymentStatus !== "FAILED") {
+          if (Array.isArray(o.items) && o.items.length && isConfirmedOrder(o)) {
             localStorage.setItem("rebesta_last_order", JSON.stringify({
               id: o.id, at: Date.now(),
               items: o.items.map((i) => ({ handle: i.handle, qty: Number(i.qty) || 1 })).filter((i: any) => i.handle),
@@ -98,7 +104,7 @@ export function OrderSuccessView() {
         } catch { /* silent */ }
         /* anonymous GA purchase event (no-ops unless GA is configured) */
         try {
-          if (typeof (window as any).gtag === "function" && o.paymentStatus !== "FAILED") {
+          if (typeof (window as any).gtag === "function" && isConfirmedOrder(o)) {
             const key = `ga-purchase-${o.id}`;
             let seen = false;
             try { seen = Boolean(sessionStorage.getItem(key)); sessionStorage.setItem(key, "1"); } catch { /* private mode */ }
@@ -141,7 +147,7 @@ export function OrderSuccessView() {
   }
 
   const badge = (() => {
-    if (paymentState === "paid" || (order && order.paymentStatus === "PAID")) return { text: "Payment verified", tone: "leaf" as const, title: "Payment received. Your vegetables are locked." };
+    if (paymentState === "paid" || (order && ["PAID", "PAID_ONLINE"].includes(String(order.paymentStatus || "").toUpperCase()))) return { text: "Payment verified", tone: "leaf" as const, title: "Payment received. Your vegetables are locked." };
     if (paymentState === "failed" || (order && order.paymentStatus === "FAILED")) return { text: "Payment not completed", tone: "orange" as const, title: "Payment was not completed." };
     if (order && order.paymentMethod === "online" && order.paymentStatus === "PENDING") return { text: "Payment pending", tone: "orange" as const, title: "We are waiting for payment verification." };
     return { text: "Order received", tone: "leaf" as const, title: "Your vegetables are locked." };

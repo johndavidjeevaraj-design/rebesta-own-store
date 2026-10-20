@@ -2,7 +2,7 @@ import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from '../config.js';
-import { readOrders, saveOrders, updateOrderStatus, awardLoyalty, awardReferral, loadSettings } from '../lib/store.js';
+import { readOrders, saveOrders, updateOrderStatus, awardLoyalty, awardReferral, loadSettings, isOrderReceived } from '../lib/store.js';
 import { verifyPartnerToken, findPartnerByPhone, partnerToken, hashPin, publicPartner, recordPosition, partnerScore } from '../lib/partners.js';
 import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
 import { planRoute } from '../lib/route.js';
@@ -64,7 +64,7 @@ router.get('/session', partnerOnly, (req, res) => {
 
 /* Tiny version stamp — the app polls this (10s) and only reloads orders when it changes */
 router.get('/version', partnerOnly, (req, res) => {
-  const mine = readOrders().filter(o => o.assignedPartnerId === req.partner.id);
+  const mine = readOrders().filter(o => o.assignedPartnerId === req.partner.id && isOrderReceived(o));
   const active = mine.filter(o => !['DELIVERED', 'CANCELLED'].includes(o.status));
   const newest = mine.reduce((max, o) => (String(o.updatedAt || '') > max ? String(o.updatedAt || '') : max), '');
   res.json({ ok: true, v: `${mine.length}:${active.length}:${newest}` });
@@ -73,7 +73,7 @@ router.get('/version', partnerOnly, (req, res) => {
 /* Orders assigned to this partner: active work first, then today's completed */
 router.get('/orders', partnerOnly, (req, res) => {
   const mine = readOrders()
-    .filter(o => o.assignedPartnerId === req.partner.id)
+    .filter(o => o.assignedPartnerId === req.partner.id && isOrderReceived(o))
     .sort((a, b) => String(a.slot?.startHour ?? 0) - String(b.slot?.startHour ?? 0) || String(a.placedAt).localeCompare(String(b.placedAt)));
   const active = mine.filter(o => !['DELIVERED', 'CANCELLED'].includes(o.status));
   const doneToday = mine.filter(o => o.status === 'DELIVERED' && String(o.updatedAt || '').startsWith(todayIST()));
@@ -85,7 +85,7 @@ router.get('/orders', partnerOnly, (req, res) => {
 router.patch('/orders/:id/status', partnerOnly, (req, res) => {
   try {
     const mine = readOrders();
-    const order = mine.find(o => o.id === req.params.id && o.assignedPartnerId === req.partner.id);
+    const order = mine.find(o => o.id === req.params.id && o.assignedPartnerId === req.partner.id && isOrderReceived(o));
     if (!order) return res.status(404).json({ ok: false, error: 'Order not assigned to you' });
     const status = String(req.body?.status || '').toUpperCase();
     if (!['OUT_FOR_DELIVERY', 'DELIVERED'].includes(status)) {
@@ -122,7 +122,7 @@ router.patch('/orders/:id/status', partnerOnly, (req, res) => {
 router.post('/orders/:id/problem', partnerOnly, (req, res) => {
   try {
     const mine = readOrders();
-    const order = mine.find(o => o.id === req.params.id && o.assignedPartnerId === req.partner.id);
+    const order = mine.find(o => o.id === req.params.id && o.assignedPartnerId === req.partner.id && isOrderReceived(o));
     if (!order) return res.status(404).json({ ok: false, error: 'Order not assigned to you' });
     const note = String(req.body?.note || '').trim().slice(0, 300);
     if (note.length < 3) return res.status(400).json({ ok: false, error: 'Write a short note about what happened' });
@@ -148,7 +148,7 @@ router.post('/position', partnerOnly, (req, res) => {
 /* 🧭 Smart route: auto-sorts today's stops into the shortest morning route */
 router.get('/route', partnerOnly, async (req, res) => {
   try {
-    const mine = readOrders().filter(o => o.assignedPartnerId === req.partner.id);
+    const mine = readOrders().filter(o => o.assignedPartnerId === req.partner.id && isOrderReceived(o));
     const active = mine.filter(o => !['DELIVERED', 'CANCELLED'].includes(o.status) && o.location && Number.isFinite(Number(o.location.lat)));
     if (!active.length) return res.json({ ok: true, route: { ordered: [], totalKm: 0, mapsUrl: null, stops: 0 } });
     const delivery = loadSettings().delivery || {};
@@ -195,7 +195,7 @@ const DELIVERY_UPLOAD_DIR = path.join(config.dataDir, 'uploads', 'delivery');
 router.post('/orders/:id/photo', partnerOnly, (req, res) => {
   try {
     const orders = readOrders();
-    const order = orders.find(o => o.id === req.params.id && o.assignedPartnerId === req.partner.id);
+    const order = orders.find(o => o.id === req.params.id && o.assignedPartnerId === req.partner.id && isOrderReceived(o));
     if (!order) return res.status(404).json({ ok: false, error: 'Order not assigned to you' });
     if (!['OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.status)) {
       return res.status(409).json({ ok: false, error: 'Add the photo while delivering (after collecting the order)' });

@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from '../config.js';
-import { readOrders, loadProducts, loadSubscriptions, loadSettings, istDay, cashSummary } from './store.js';
+import { readOrders, isOrderReceived, loadProducts, loadSubscriptions, loadSettings, istDay, cashSummary } from './store.js';
 import { sendMail, mailerReady, notifyAddress } from './mailer.js';
 
 const IST_MIN = 5 * 60 + 30;
@@ -38,13 +38,13 @@ export function buildMorningDigest(now = new Date()) {
   const todayIso = istTodayIso(now);
   const yesterdayIso = istDaysAgoIso(now, 1);
 
-  const orders = readOrders();
+  const orders = readOrders().filter(isOrderReceived);
   const placedYesterday = orders.filter(o => istDay(o.placedAt) === yesterdayIso);
-  const revenueYesterday = placedYesterday.filter(o => o.status !== 'CANCELLED').reduce((s, o) => s + Number(o.totalInr || 0), 0);
+  const revenueYesterday = placedYesterday.filter(o => o.status !== 'CANCELLED' && String(o.paymentStatus || '').toUpperCase() !== 'REFUNDED').reduce((s, o) => s + Number(o.totalInr || 0), 0);
   const codYesterday = placedYesterday.filter(o => o.paymentMethod === 'cod').length;
   const deliveredYesterday = orders.filter(o => o.status === 'DELIVERED' && o.deliveryDate?.iso === yesterdayIso);
 
-  const todayOrders = orders.filter(o => o.deliveryDate?.iso === todayIso && !['DELIVERED', 'CANCELLED'].includes(o.status));
+  const todayOrders = orders.filter(o => o.deliveryDate?.iso === todayIso && !['DELIVERED', 'CANCELLED'].includes(o.status) && String(o.paymentStatus || '').toUpperCase() !== 'REFUNDED');
   const bySlot = {};
   for (const o of todayOrders) {
     const label = o.slot?.label || o.slot?.id || 'slot TBD';

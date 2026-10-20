@@ -110,18 +110,27 @@ export function AdminView() {
                     <div className="section-head" style={{ marginBottom: '10px', flexWrap: 'wrap', gap: '10px' }}>
                       <div>
                         <h2 style={{ marginBottom: '5px' }}>🧹 Remove fake orders</h2>
-                        <p className="section-subtitle" style={{ fontSize: '.88rem' }}>Keep exactly one order for each original customer — Naveen Vishor, Chithra, and Hasini. Other orders are listed for review. Nothing is removed until you confirm, and a private server backup is made first. If any original name is missing or duplicated, cleanup is blocked.</p>
+                        <p className="section-subtitle" style={{ fontSize: '.88rem' }}>Keep exactly one order for each original customer — Naveen Vishor N (including the Naveen Vishor alias), Chithra, and Hasini. Other orders are listed for review. Nothing is removed until you confirm, and a private server backup is made first. If any original name is missing or duplicated, cleanup is blocked.</p>
                       </div>
                       <button className="button danger" type="button" data-order-cleanup-preview>Preview cleanup</button>
                     </div>
                     <div data-order-cleanup-result aria-live="polite" hidden></div>
                   </section>
+                  <section className="shop-panel" data-pending-payments-panel style={{ marginBottom: '20px' }}>
+                    <div className="section-head" style={{ marginBottom: '10px', flexWrap: 'wrap', gap: '10px' }}>
+                      <div>
+                        <h2>⏳ Pending online payments <span className="badge orange" data-pending-payments-count>0</span></h2>
+                        <p className="section-subtitle" style={{ fontSize: '.88rem' }}>Unpaid or failed online attempts stay here until payment is verified. They are not counted as received orders, sales, packing jobs, or new-order alerts.</p>
+                      </div>
+                    </div>
+                    <div className="admin-table-wrap" data-pending-orders-table data-admin-panel></div>
+                  </section>
                   <section className="shop-panel" style={{ marginBottom: '20px' }}>
                     <div className="section-head" style={{ marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
-                      <h2>Orders</h2>
+                      <h2>Received orders</h2>
                       <div className="orders-filter">
                         <select data-order-status-filter>
-                          <option value="">All statuses</option>
+                          <option value="">All received orders</option>
                           <option value="ACTIVE">Active only</option>
                           <option value="PLACED">Placed</option>
                           <option value="CONFIRMED">Confirmed</option>

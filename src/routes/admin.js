@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { config } from '../config.js';
 import { rateLimit } from '../lib/rateLimit.js';
-import { loadProducts, saveProducts, loadSettings, loadPartners, savePartners, readOrders, saveOrders, updateOrderStatus, updateProduct, createProduct, deleteProduct, saveSettings, createBackup, awardLoyalty, awardReferral, dataVersions, loadSubscriptions, saveSubscriptions, getSubscription, cashSummary, recordCashReceived, loadReviews, setReviewApproval, deleteReview } from '../lib/store.js';
+import { loadProducts, saveProducts, loadSettings, loadPartners, savePartners, readOrders, saveOrders, updateOrderStatus, updateProduct, createProduct, deleteProduct, saveSettings, createBackup, awardLoyalty, awardReferral, dataVersions, loadSubscriptions, saveSubscriptions, getSubscription, cashSummary, recordCashReceived, loadReviews, setReviewApproval, deleteReview, isOrderReceived, isPendingPaymentOrder } from '../lib/store.js';
 import { readSupportQueries } from '../lib/support.js';
 import { createPartner, updatePartner, deletePartner, publicPartner, freshPositions, haversineKm, etaMinutesFromKm, partnerScore } from '../lib/partners.js';
 import { statusChangedEmail, rewardCouponEmail } from '../lib/mailer.js';
@@ -115,16 +115,18 @@ function verifyOrderCleanupToken(token) {
 }
 
 router.get('/dashboard', (req, res) => {
-  const orders = readOrders();
+  const receivedOrders = readOrders().filter(isOrderReceived);
   const products = loadProducts();
   const today = new Date().toISOString().slice(0, 10);
-  const activeOrders = orders.filter(o => !['DELIVERED', 'CANCELLED'].includes(o.status));
+  const activeOrders = receivedOrders.filter(o => !['DELIVERED', 'CANCELLED'].includes(String(o.status || '').toUpperCase()) && String(o.paymentStatus || '').toUpperCase() !== 'REFUNDED');
+  const todayOrders = receivedOrders.filter(o => o.placedAt?.startsWith(today) && String(o.status || '').toUpperCase() !== 'CANCELLED');
+  const revenueOrders = todayOrders.filter(o => String(o.paymentStatus || '').toUpperCase() !== 'REFUNDED');
   res.json({
     ok: true,
     metrics: {
-      ordersToday: orders.filter(o => o.placedAt?.startsWith(today)).length,
+      ordersToday: todayOrders.length,
       activeOrders: activeOrders.length,
-      revenueTodayInr: orders.filter(o => o.placedAt?.startsWith(today) && o.status !== 'CANCELLED').reduce((s, o) => s + Number(o.totalInr || 0), 0),
+      revenueTodayInr: revenueOrders.reduce((s, o) => s + Number(o.totalInr || 0), 0),
       liveProducts: products.filter(p => p.active).length,
       lowStock: products.filter(p => p.active && p.stock <= 10).length
     }
@@ -368,8 +370,9 @@ router.patch('/settings', (req, res) => {
 
 router.get('/orders', (req, res) => {
   const status = String(req.query.status || '').toUpperCase();
-  let orders = readOrders();
-  if (status) orders = orders.filter(o => o.status === status);
+  const view = String(req.query.view || 'received').toLowerCase();
+  let orders = readOrders().filter(view === 'pending' ? isPendingPaymentOrder : isOrderReceived);
+  if (status) orders = orders.filter(o => String(o.status || '').toUpperCase() === status);
   res.json({ ok: true, orders });
 });
 
@@ -454,6 +457,15 @@ router.patch('/orders/:id/payment', (req, res) => {
     const orders = readOrders();
     const order = orders.find(o => o.id === req.params.id);
     if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
+    if (paymentStatus === 'PAID_ONLINE' && (order.paymentMethod !== 'online' || !['PAID_ONLINE', 'PAID'].includes(String(order.paymentStatus || '').toUpperCase()))) {
+      return res.status(409).json({ ok: false, error: 'Online payment can only be marked paid after gateway verification' });
+    }
+    if (order.paymentMethod === 'online' && ['PAY_ON_DELIVERY', 'PAID_CASH_ON_DELIVERY', 'CANCELLED_NO_CHARGE'].includes(paymentStatus)) {
+      return res.status(400).json({ ok: false, error: 'Cash payment statuses are only valid for COD orders' });
+    }
+    if (paymentStatus === 'REFUNDED' && !['PAID_ONLINE', 'PAID'].includes(String(order.paymentStatus || '').toUpperCase())) {
+      return res.status(409).json({ ok: false, error: 'Only a verified paid order can be marked refunded' });
+    }
     order.paymentStatus = paymentStatus;
     order.updatedAt = new Date().toISOString();
     order.history.push({ status: order.status, at: order.updatedAt, note: `Payment marked ${paymentStatus}` });
@@ -569,7 +581,7 @@ router.post('/products/:handle/photo', (req, res) => {
 
 /* ================= Delivery partners ================= */
 
-const ACTIVE_STATUSES = ['PLACED', 'CONFIRMED', 'PACKING', 'OUT_FOR_DELIVERY', 'PENDING_PAYMENT'];
+const ACTIVE_STATUSES = ['PLACED', 'CONFIRMED', 'PACKING', 'OUT_FOR_DELIVERY'];
 
 router.get('/partners', (req, res) => {
   const partners = loadPartners();

@@ -108,7 +108,7 @@ export function orderPlacedEmails(order) {
       <p style="margin:0 0 4px;color:#333;font-size:13px">Hi ${esc(order.customer?.name || 'there')}, your order <strong>${order.id}</strong> is in.</p>
       ${itemsTable(order)}
       <p style="margin:10px 0 0;color:#333;font-size:13px"><strong>Delivery:</strong> ${slotText}<br>
-      <strong>Payment:</strong> ${order.paymentMethod === 'cod' ? 'Cash on delivery' : 'Online (PayU)'}<br>
+      <strong>Payment:</strong> ${order.paymentMethod === 'cod' ? 'Cash on delivery' : 'Online payment verified'}<br>
       <strong>Saving this ID:</strong> ${order.id} + your phone number lets you track it anytime.</p>`
   });
   // To the shop owner
@@ -120,7 +120,7 @@ export function orderPlacedEmails(order) {
       <p style="margin:0;color:#333;font-size:13px"><strong>${esc(order.customer?.name)}</strong> · ${order.customer?.phone}<br>
       ${esc(order.address?.line1)}, ${esc(order.address?.area || '')} ${esc(order.address?.pincode || '')}</p>
       ${itemsTable(order)}
-      <p style="margin:10px 0 0;color:#333;font-size:13px"><strong>Slot:</strong> ${slotText} · <strong>Payment:</strong> ${order.paymentMethod === 'cod' ? 'COD' : 'Online'}</p>
+      <p style="margin:10px 0 0;color:#333;font-size:13px"><strong>Slot:</strong> ${slotText} · <strong>Payment:</strong> ${order.paymentMethod === 'cod' ? 'COD' : 'Online — verified paid'}</p>
       <p style="margin:10px 0 0"><a href="${config.appUrl}/admin" style="display:inline-block;background:#0d8736;color:#fff;text-decoration:none;font-size:13px;font-weight:700;padding:10px 18px;border-radius:9px">Open admin dashboard</a></p>`
   });
 }

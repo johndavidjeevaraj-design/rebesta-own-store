@@ -298,6 +298,24 @@ export function readOrders() {
   return readJson(files.orders, []);
 }
 
+export function isOrderReceived(order) {
+  const method = String(order?.paymentMethod || '').toLowerCase();
+  const status = String(order?.status || '').toUpperCase();
+  const paymentStatus = String(order?.paymentStatus || '').toUpperCase();
+  if (method === 'online') return ['PAID_ONLINE', 'PAID', 'REFUNDED'].includes(paymentStatus);
+  if (method === 'cod') return true;
+  return !['PENDING_PAYMENT', 'PAYMENT_FAILED'].includes(status);
+}
+
+export function isPendingPaymentOrder(order) {
+  const method = String(order?.paymentMethod || '').toLowerCase();
+  const status = String(order?.status || '').toUpperCase();
+  const paymentStatus = String(order?.paymentStatus || '').toUpperCase();
+  if (method === 'cod') return false;
+  if (method === 'online') return !['PAID_ONLINE', 'PAID', 'REFUNDED'].includes(paymentStatus);
+  return ['PENDING_PAYMENT', 'PAYMENT_FAILED'].includes(status);
+}
+
 export function saveOrders(orders) {
   writeJson(files.orders, orders);
   return orders;
@@ -492,7 +510,7 @@ export function addOrder(order) {
     paymentStatus: isOnline ? 'PENDING' : 'PAY_ON_DELIVERY',
     placedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    history: [{ status: isOnline ? 'PENDING_PAYMENT' : 'PLACED', at: new Date().toISOString(), note: isOnline ? 'Awaiting PayU payment' : 'Order received' }],
+    history: [{ status: isOnline ? 'PENDING_PAYMENT' : 'PLACED', at: new Date().toISOString(), note: isOnline ? 'Awaiting verified online payment' : 'Order received' }],
     ...order
   };
   const orders = readOrders();
@@ -517,6 +535,26 @@ export function getOrder(id) {
   return readOrders().find(o => o.id === String(id || '').trim().toUpperCase());
 }
 
+/* Claim the one-time confirmation notification only after the order is truly
+   received: COD after placement, online after verified payment. */
+export function claimOrderConfirmationNotice(id) {
+  const orders = readOrders();
+  const order = orders.find(o => o.id === String(id || '').trim().toUpperCase());
+  if (!order || order.confirmationNoticeClaimedAt) return null;
+
+  const method = String(order.paymentMethod || '').toLowerCase();
+  const status = String(order.status || '').toUpperCase();
+  const paymentStatus = String(order.paymentStatus || '').toUpperCase();
+  const confirmed = method === 'online'
+    ? ['PAID_ONLINE', 'PAID'].includes(paymentStatus)
+    : method === 'cod' && !['PENDING_PAYMENT', 'PAYMENT_FAILED', 'CANCELLED'].includes(status);
+  if (!confirmed) return null;
+
+  order.confirmationNoticeClaimedAt = new Date().toISOString();
+  saveOrders(orders);
+  return order;
+}
+
 /* Remember a Cashfree payment session on the order so later flows (QR sheet,
    retry payment) can REUSE it — Cashfree's create-order API 409s if called
    twice with the same order id, so re-creating is never an option. */
@@ -536,6 +574,9 @@ export function updateOrderStatus(id, status, note = '') {
   const orders = readOrders();
   const order = orders.find(o => o.id === id);
   if (!order) return null;
+  if (String(order.paymentMethod || '').toLowerCase() === 'online' && !['PAID_ONLINE', 'PAID', 'REFUNDED'].includes(String(order.paymentStatus || '').toUpperCase()) && status !== 'CANCELLED' && status !== order.status) {
+    throw Object.assign(new Error('Online orders stay pending until payment is verified'), { status: 409 });
+  }
 
   const products = loadProducts();
   const adjustStock = direction => {
@@ -567,7 +608,7 @@ export function markPayuPayment(id, { success, reference, mode, raw, provider })
   const orders = readOrders();
   const order = orders.find(o => o.id === id);
   if (!order) return null;
-  if (order.paymentStatus === 'PAID_ONLINE') return order;
+  if (['PAID_ONLINE', 'PAID', 'REFUNDED'].includes(String(order.paymentStatus || '').toUpperCase())) return order;
 
   const products = loadProducts();
   const label = provider === 'cashfree' ? 'Cashfree' : 'PayU';
@@ -577,11 +618,11 @@ export function markPayuPayment(id, { success, reference, mode, raw, provider })
     order.paidAt = new Date().toISOString();
     order.paymentReference = reference || '';
     order.paymentMode = mode || '';
-    order.status = order.status === 'PENDING_PAYMENT' ? 'PLACED' : order.status;
-    if (order.status === 'CANCELLED') {
+    if (['CANCELLED', 'PAYMENT_FAILED'].includes(order.status)) {
       order.status = 'PAID_NEEDS_REVIEW';
-      order.history.push({ status: 'PAID_NEEDS_REVIEW', at: order.updatedAt, note: 'Paid after an earlier cancellation; reconcile stock/refund manually' });
+      order.history.push({ status: 'PAID_NEEDS_REVIEW', at: order.updatedAt, note: 'Payment verified after cancellation/failure; reconcile stock or refund manually' });
     } else {
+      order.status = order.status === 'PENDING_PAYMENT' ? 'PLACED' : order.status;
       order.history.push({ status: 'PLACED', at: new Date().toISOString(), note: `${label} payment verified` });
     }
   } else {

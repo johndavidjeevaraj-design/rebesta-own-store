@@ -502,9 +502,13 @@ export function CartView() {
       setLocSheetOpen(true);
       return;
     }
-    let currentQuote = quote || (await refreshQuote());
-    if (!currentQuote?.eligible) {
-      toast(currentQuote?.message || "We cannot deliver to this area yet", "error");
+    const currentQuote = quote || (await refreshQuote());
+    if (!currentQuote) {
+      toast("Could not check delivery availability — please try again in a moment", "error");
+      return;
+    }
+    if (!currentQuote.eligible) {
+      toast(currentQuote.message || "We cannot deliver to this area yet", "error");
       return;
     }
     if (!meRef.current) {
@@ -1145,7 +1149,8 @@ export function CartView() {
               <motion.button
                 type="button"
                 whileTap={{ scale: 0.97 }}
-                disabled={!eligible || payBusy}
+                disabled={payBusy}
+                title={eligible ? undefined : "Tap to check delivery availability and continue"}
                 onClick={placeOrder}
                 className="fresh-grad shrink-0 rounded-full px-8 py-3.5 text-[15px] font-bold text-white shadow-[0_8px_20px_rgba(11,124,49,0.35)] transition hover:brightness-[1.05] active:scale-[0.98] disabled:bg-line-2 disabled:bg-none disabled:text-muted-foreground disabled:shadow-none"
               >

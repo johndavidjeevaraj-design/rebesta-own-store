@@ -851,7 +851,8 @@ export function CartView() {
                             ) : null}
                           </div>
                         </div>
-                        <Step handle={item.handle} qty={item.qty} variant={lineVariantId(p, item)} />
+                        {/* Use the exact stored key: lineVariantId is only a display fallback for legacy variant-less cart lines. */}
+                        <Step handle={item.handle} qty={item.qty} variant={item.variant || ""} />
                       </motion.div>
                     );
                   })}

@@ -1,5 +1,5 @@
-:HL["/v2/_next/static/chunks/1-k5wir7qdl6j.css","style"]
+:HL["/v2/_next/static/chunks/24fygsr28iyh8.css","style"]
 3:[["children",{"s":"__PAGE__","h":160}]]
 2:[["children",{"s":{"n":"handle","t":"d","k":"snake-gourd","s":[]},"h":65632,"c":"$Q3"}]]
 1:[["children",{"s":"products","h":131168,"c":"$Q2"}]]
-0:{"b":"UXx4VaxcPo4sgNh167-Db","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}
+0:{"b":"hd5sWpdG-3by8mSaOQveD","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}

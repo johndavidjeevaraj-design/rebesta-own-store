@@ -4,7 +4,7 @@
    normal order from the subscription (current prices + stock), which then flows
    through the usual confirm → pack → assign → deliver pipeline. */
 import crypto from 'node:crypto';
-import { loadSubscriptions, saveSubscriptions, buildCart, addOrder, loadSettings } from './store.js';
+import { loadSubscriptions, saveSubscriptions, buildCart, addOrder, loadSettings, getPackagingFeePercent, calculatePackagingFeeInr } from './store.js';
 import { haversineKm, feeForQuote } from './delivery.js';
 import { orderPlacedEmails } from './mailer.js';
 
@@ -110,13 +110,16 @@ export function publicSubscription(sub) {
 
 function buildSubscriptionOrder(sub) {
   const cart = buildCart((sub.items || []).map(i => ({ handle: i.handle, qty: i.qty })));
-  const delivery = loadSettings().delivery || {};
+  const settings = loadSettings();
+  const delivery = settings.delivery || {};
   const hub = { lat: Number(delivery.hubLat), lng: Number(delivery.hubLng) };
   const distanceKm = Math.round(haversineKm(hub, sub.location) * 1.25 * 100) / 100;
   const fee = feeForQuote(distanceKm, cart.subtotalInr, delivery);
   const slotDef = (delivery.slots || []).find(s => s.id === sub.slotId) || (delivery.slots || [])[0] || { id: 'am1', label: '7:00 AM – 9:00 AM', startHour: 7, endHour: 9 };
   const date = deliveryDateLabel(sub.nextRunOn);
-  const total = Math.round((cart.subtotalInr + fee.deliveryFeeInr) * 100) / 100;
+  const packagingFeePercent = getPackagingFeePercent(settings);
+  const packagingFeeInr = calculatePackagingFeeInr(cart.subtotalInr, settings);
+  const total = Math.round((cart.subtotalInr + packagingFeeInr + fee.deliveryFeeInr) * 100) / 100;
   return addOrder({
     customer: { name: sub.name, phone: sub.phone, email: sub.email || '' },
     address: sub.address,
@@ -124,6 +127,8 @@ function buildSubscriptionOrder(sub) {
     subtotalInr: cart.subtotalInr,
     discountInr: 0,
     couponCode: '',
+    packagingFeePercent,
+    packagingFeeInr,
     deliveryFeeInr: fee.deliveryFeeInr,
     totalInr: total,
     distanceKm,

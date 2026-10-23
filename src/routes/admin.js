@@ -249,6 +249,14 @@ router.patch('/settings', (req, res) => {
       }
       if (Array.isArray(patch.delivery.slots)) d.slots = patch.delivery.slots;
     }
+    if (patch.packagingFee) {
+      const percent = Number(patch.packagingFee.percent);
+      if (!Number.isFinite(percent) || percent < 0 || percent > 100) {
+        return res.status(400).json({ ok: false, error: 'Packaging fee percentage must be between 0 and 100' });
+      }
+      const current = settings.packagingFee || (settings.packagingFee = {});
+      current.percent = Math.round(percent * 100) / 100;
+    }
     if (patch.support) {
       const current = settings.support || (settings.support = {});
       const sup = patch.support;
@@ -295,10 +303,15 @@ router.patch('/settings', (req, res) => {
           const type = c.type === 'percent' ? 'percent' : 'flat';
           const value = Number(c.value);
           const minOrderInr = Math.max(0, Number(c.minOrderInr) || 0);
+          const maxRaw = c.maxOrderInr;
+          const maxOrderInr = maxRaw === '' || maxRaw === null || maxRaw === undefined ? 0 : Number(maxRaw);
           if (!code || !Number.isFinite(value) || value <= 0) throw new Error(`Coupon ${code || '(blank)'} has invalid values`);
+          if (!Number.isFinite(maxOrderInr) || maxOrderInr < 0) throw new Error(`Coupon ${code}: maximum basket must be zero or a positive amount`);
+          if (maxOrderInr > 0 && maxOrderInr < minOrderInr) throw new Error(`Coupon ${code}: maximum basket cannot be below the minimum basket`);
           if (type === 'percent' && value > 90) throw new Error(`Coupon ${code}: percent off cannot exceed 90`);
           if (type === 'flat' && value > 10000) throw new Error(`Coupon ${code}: flat off cannot exceed \u20B910000`);
           const couponOut = { code, type, value, minOrderInr, active: c.active !== false };
+          if (maxOrderInr > 0) couponOut.maxOrderInr = Math.round(maxOrderInr * 100) / 100;
           if (c.expiresAt && !Number.isNaN(new Date(c.expiresAt).getTime())) couponOut.expiresAt = new Date(c.expiresAt).toISOString();
           if (c.maxUses && Number.isFinite(Number(c.maxUses)) && Number(c.maxUses) > 0) {
             couponOut.maxUses = Math.round(Number(c.maxUses));
@@ -479,7 +492,7 @@ router.patch('/orders/:id/payment', (req, res) => {
 router.get('/orders.csv', (req, res) => {
   const orders = readOrders();
   const cell = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
-  const head = ['Order ID', 'Placed At', 'Customer', 'Phone', 'Address', 'Items', 'Subtotal INR', 'Discount INR', 'Coupon', 'Delivery Fee INR', 'Total INR', 'Payment', 'Payment Status', 'Order Status', 'Slot', 'Delivery Date'];
+  const head = ['Order ID', 'Placed At', 'Customer', 'Phone', 'Address', 'Items', 'Subtotal INR', 'Discount INR', 'Coupon', 'Packaging Fee INR', 'Packaging Rate %', 'Delivery Fee INR', 'Total INR', 'Payment', 'Payment Status', 'Order Status', 'Slot', 'Delivery Date'];
   const rows = orders.map(o => [
     o.id,
     o.placedAt,
@@ -490,6 +503,8 @@ router.get('/orders.csv', (req, res) => {
     o.subtotalInr,
     o.discountInr || 0,
     o.couponCode || '',
+    o.packagingFeeInr || 0,
+    o.packagingFeePercent || 0,
     o.deliveryFeeInr,
     o.totalInr,
     o.paymentMethod,

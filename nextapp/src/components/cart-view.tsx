@@ -32,6 +32,7 @@ interface Coupon {
   code: string;
   discountInr: number;
   minOrderInr?: number;
+  maxOrderInr?: number;
   type: string;
   value: number;
 }
@@ -42,6 +43,8 @@ interface QuoteSlot {
 interface Quote {
   eligible: boolean;
   deliveryFeeInr?: number;
+  packagingFeePercent?: number;
+  packagingFeeInr?: number;
   freeApplied?: boolean;
   distanceKm?: number;
   message?: string;
@@ -189,10 +192,20 @@ export function CartView() {
     }
     return sum;
   }, [lines, byHandle]);
-  const savings = (coupon ? Number(coupon.discountInr || 0) : 0) + (quote?.freeApplied ? Number(quote.deliveryFeeInr || 0) : 0);
+  const couponDiscountInr = useMemo(() => {
+    if (!coupon) return 0;
+    const minOrderInr = Number(coupon.minOrderInr || 0);
+    const maxOrderInr = Number(coupon.maxOrderInr || 0);
+    if (subtotal < minOrderInr || (maxOrderInr > 0 && subtotal > maxOrderInr)) return 0;
+    const raw = coupon.type === "percent" ? subtotal * Number(coupon.value || 0) / 100 : Number(coupon.value || 0);
+    return Math.max(0, Math.min(Math.round(raw), Math.round(subtotal)));
+  }, [coupon, subtotal]);
+  const packagingFeePercent = Number(quote?.packagingFeePercent || 0);
+  const packagingFeeInr = Number(quote?.packagingFeeInr || 0);
+  const savings = couponDiscountInr + (quote?.freeApplied ? Number(quote.deliveryFeeInr || 0) : 0);
   const eligible = Boolean(quote?.eligible);
   const fee = eligible ? Number(quote?.deliveryFeeInr || 0) : null;
-  const total = Math.max(0, Math.round(subtotal + (fee || 0) + tip - (coupon ? Number(coupon.discountInr || 0) : 0)));
+  const total = Math.max(0, Math.round((subtotal + packagingFeeInr + (fee || 0) + tip - couponDiscountInr) * 100) / 100);
 
   /* ---------- init ---------- */
   useEffect(() => {
@@ -319,7 +332,10 @@ export function CartView() {
       setQuoteError("");
       setQuote(q);
       if (coupon && subtotal < Number(coupon.minOrderInr || 0)) {
-        toast(`Coupon ${coupon.code} removed — basket is below ${money(Number(coupon.minOrderInr || 0))}`, "error");
+        toast(`Coupon ${coupon.code} removed — merchandise subtotal is below ${money(Number(coupon.minOrderInr || 0))}`, "error");
+        removeCoupon();
+      } else if (coupon && Number(coupon.maxOrderInr || 0) > 0 && subtotal > Number(coupon.maxOrderInr || 0)) {
+        toast(`Coupon ${coupon.code} removed — it is valid only up to ${money(Number(coupon.maxOrderInr || 0))} merchandise subtotal`, "error");
         removeCoupon();
       }
       return q;
@@ -349,7 +365,7 @@ export function CartView() {
     if (!code) return;
     if (!quiet) setCouponMsg({ text: "Checking…", error: false });
     try {
-      const data = await api("/api/coupon/check", { method: "POST", body: JSON.stringify({ code, subtotalInr: subtotal }) });
+      const data = await api("/api/coupon/check", { method: "POST", body: JSON.stringify({ code, items: lines }) });
       setCoupon(data.coupon);
       writePref(COUPON_KEY, { code: data.coupon.code });
       if (!quiet) toast(`Coupon ${data.coupon.code} applied — you save ${money(data.coupon.discountInr)} 🎉`);
@@ -615,7 +631,12 @@ export function CartView() {
   const addrLine = addr1.trim() ? `Home | ${addr1.trim()}, ${area}${pin.trim() ? " " + pin.trim() : ""}` : "Home | Add delivery address";
   const couponDesc = (c: Coupon) => {
     const off = c.type === "percent" ? `${Number(c.value)}% off` : `${money(Number(c.value))} off`;
-    return c.minOrderInr ? `${off} on orders above ${money(Number(c.minOrderInr))}` : `${off} on any order`;
+    const min = Number(c.minOrderInr || 0);
+    const max = Number(c.maxOrderInr || 0);
+    if (max > 0 && min > 0) return `${off} on merchandise baskets from ${money(min)} to ${money(max)}`;
+    if (max > 0) return `${off} on merchandise baskets up to ${money(max)}`;
+    if (min > 0) return `${off} on merchandise baskets from ${money(min)}`;
+    return `${off} on any order`;
   };
   const railPicks = useMemo(() => {
     const inCart = new Map(lines.map((i) => [`${i.handle}:${i.variant || ""}`, i.qty]));
@@ -1032,7 +1053,7 @@ export function CartView() {
                       className="mt-3 flex items-center gap-3 rounded-2xl border border-leaf/40 bg-mint px-3.5 py-3"
                     >
                       <span className="min-w-0 flex-1 text-[13px] font-bold text-forest">
-                        🎟 {money(Number(coupon.discountInr) || 0)} saved with &lsquo;{coupon.code}&rsquo; <span className="ml-1 rounded-full bg-leaf px-2 py-0.5 text-[10px] font-bold text-white">✓ Applied</span>
+                        🎟 {money(couponDiscountInr)} saved with &lsquo;{coupon.code}&rsquo; <span className="ml-1 rounded-full bg-leaf px-2 py-0.5 text-[10px] font-bold text-white">✓ Applied</span>
                       </span>
                       <button type="button" aria-label="Remove coupon" onClick={removeCoupon} className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-muted-foreground shadow-sm transition hover:text-carrot">
                         ✕
@@ -1155,9 +1176,21 @@ export function CartView() {
                       {savings > 0 && <p className="mb-2 text-center text-[13px] font-bold text-leaf">{money(savings)} saved on the total!</p>}
                       <div className="grid gap-1.5 text-[13px] font-bold text-ink-2">
                         <div className="flex justify-between">
-                          <span>Item Total</span>
+                          <span>Merchandise subtotal</span>
                           <span>{money(subtotal)}</span>
                         </div>
+                        {couponDiscountInr > 0 && coupon && (
+                          <div className="flex justify-between text-leaf">
+                            <span>Coupon {coupon.code}</span>
+                            <span>−{money(couponDiscountInr)}</span>
+                          </div>
+                        )}
+                        {quote && packagingFeePercent > 0 && (
+                          <div className="flex justify-between">
+                            <span>Packaging fee ({packagingFeePercent}%)</span>
+                            <span>{money(packagingFeeInr)}</span>
+                          </div>
+                        )}
                         <div className="flex justify-between">
                           <span>
                             Delivery Fee{eligible && quote?.distanceKm ? <small className="ml-1 text-[12px] text-muted-foreground">| {Number(quote.distanceKm).toFixed(1)} kms</small> : null}

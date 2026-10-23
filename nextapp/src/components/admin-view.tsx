@@ -218,13 +218,23 @@ export function AdminView() {
                       <div className="field"><label htmlFor="freeOverInr">Basket value for free delivery</label><input id="freeOverInr" name="freeOverInr" inputMode="decimal" /></div>
                       <div className="field"><label htmlFor="slotCapacity">Orders per morning slot (capacity cap)</label><input id="slotCapacity" name="slotCapacity" inputMode="numeric" placeholder="25" /><small>Full slots are hidden at checkout — never over-promise a morning.</small></div>
                       <div className="field wide">
+                        <div style={{ border: '1px solid var(--line)', borderRadius: '16px', padding: '16px', background: 'var(--cream)' }}>
+                          <h3 style={{ margin: '0 0 5px' }}>📦 Packaging fee</h3>
+                          <p style={{ margin: '0 0 12px', color: 'var(--muted)', fontSize: '.84rem' }}>A percentage of the original merchandise subtotal. It is added after coupon discounts and does not count toward coupon eligibility. Set 0% to keep it off.</p>
+                          <div className="field" style={{ maxWidth: '260px', marginBottom: 0 }}>
+                            <label htmlFor="packagingFeePercent">Packaging fee (%)</label>
+                            <input id="packagingFeePercent" name="packagingFeePercent" type="number" min="0" max="100" step="0.01" inputMode="decimal" placeholder="0" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="field wide">
                         <div className="section-head" style={{ margin: '16px 0 12px' }}>
-                          <div><strong style={{ color: 'var(--forest-2)' }}>🎟 Coupon codes</strong><br /><small style={{ color: 'var(--muted)' }}>Customers apply these at checkout. Flat ₹ off or % off, with an optional minimum basket.</small></div>
+                          <div><strong style={{ color: 'var(--forest-2)' }}>🎟 Coupon codes</strong><br /><small style={{ color: 'var(--muted)' }}>Customers apply these at checkout. Flat ₹ off or % off, with optional minimum and maximum merchandise subtotals.</small></div>
                           <button className="button ghost small" type="button" data-add-coupon>+ Add coupon</button>
                         </div>
                         <div className="admin-table-wrap" style={{ borderRadius: '16px' }}>
-                          <table className="admin-table coupons-table" style={{ minWidth: '620px' }}>
-                            <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Min basket ₹</th><th>Active</th><th></th></tr></thead>
+                          <table className="admin-table coupons-table" style={{ minWidth: '740px' }}>
+                            <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Min merchandise ₹</th><th>Max merchandise ₹</th><th>Active</th><th></th></tr></thead>
                             <tbody data-coupon-body></tbody>
                           </table>
                         </div>

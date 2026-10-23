@@ -302,6 +302,7 @@ export function bindAdminPage(root) {
         <td><select class="coupon-type small-input"><option value="flat">Flat ₹</option><option value="percent">% off</option></select></td>
         <td><input type="number" class="coupon-value small-input" min="1" step="1"></td>
         <td><input type="number" class="coupon-min small-input" min="0" step="1"></td>
+        <td><input type="number" class="coupon-max small-input" min="0" step="1" placeholder="No cap" title="Leave blank or use 0 for no maximum"></td>
         <td><label><input type="checkbox" class="coupon-active" checked> Live</label></td>
         <td><button type="button" class="button ghost small" data-remove-coupon>✕</button></td>
       `;
@@ -309,6 +310,7 @@ export function bindAdminPage(root) {
       tr.querySelector('.coupon-type').value = c.type === 'percent' ? 'percent' : 'flat';
       tr.querySelector('.coupon-value').value = Number(c.value || 0);
       tr.querySelector('.coupon-min').value = Number(c.minOrderInr || 0);
+      tr.querySelector('.coupon-max').value = Number(c.maxOrderInr || 0) || '';
       tr.querySelector('.coupon-active').checked = c.active !== false;
       tr.querySelector('[data-remove-coupon]').addEventListener('click', () => { tr.remove(); toast('Row removed — Save settings to apply'); });
       body.appendChild(tr);
@@ -348,6 +350,7 @@ export function bindAdminPage(root) {
     setField('maxRoadKm', delivery.maxRoadKm);
     setField('freeOverInr', delivery.freeOverInr);
     setField('slotCapacity', delivery.slotCapacity ?? 25);
+    setField('packagingFeePercent', data.settings.packagingFee?.percent ?? 0);
     renderTierRows(delivery.tiers?.length ? delivery.tiers : DEFAULT_TIERS);
     renderCouponRows(Array.isArray(state.settings.promotions?.coupons) ? state.settings.promotions.coupons : []);
     setField('fssai', business.fssai);
@@ -422,9 +425,12 @@ export function bindAdminPage(root) {
       type: row.querySelector('.coupon-type').value,
       value: Number(row.querySelector('.coupon-value').value),
       minOrderInr: Number(row.querySelector('.coupon-min').value) || 0,
+      maxOrderInr: Number(row.querySelector('.coupon-max').value) || 0,
       active: row.querySelector('.coupon-active').checked
     })).filter(c => String(c.code || '').trim());
     const numberOr = (name, fallback) => { const raw = value(name); const num = Number(raw); return raw !== '' && Number.isFinite(num) ? num : fallback; };
+    const packagingFeePercent = numberOr('packagingFeePercent', 0);
+    if (packagingFeePercent < 0 || packagingFeePercent > 100) throw new Error('Packaging fee must be between 0% and 100%');
     const testimonials = [...root.querySelectorAll('[data-testimonial-body] tr')].map(row => ({
       name: row.querySelector('.t-name').value.trim(),
       area: row.querySelector('.t-area').value.trim(),
@@ -432,6 +438,7 @@ export function bindAdminPage(root) {
       rating: Number(row.querySelector('.t-rating').value) || 5
     })).filter(t => t.name && t.text);
     return {
+      packagingFee: { percent: packagingFeePercent },
       promotions: {
         coupons,
         loyalty: {
@@ -513,9 +520,10 @@ export function bindAdminPage(root) {
       type: row.querySelector('.coupon-type').value,
       value: row.querySelector('.coupon-value').value,
       minOrderInr: row.querySelector('.coupon-min').value,
+      maxOrderInr: row.querySelector('.coupon-max').value,
       active: row.querySelector('.coupon-active').checked
     }));
-    existing.push({ code: '', type: 'flat', value: 50, minOrderInr: 399, active: true });
+    existing.push({ code: '', type: 'flat', value: 50, minOrderInr: 399, maxOrderInr: 0, active: true });
     renderCouponRows(existing);
     const rows = root.querySelectorAll('[data-coupon-body] tr');
     rows[rows.length - 1]?.querySelector('.coupon-code')?.focus();
@@ -959,7 +967,7 @@ export function bindAdminPage(root) {
         <td>${itemText}</td>
         <td><strong>${slotLabel}</strong><br><span>${addr}</span><br><span>${esc(locationText)}</span></td>
         <td data-partner-cell></td>
-        <td><strong>${money(order.totalInr)}</strong><br><span>${paymentMethod} · ${paymentStatus}</span>${order.paymentMethod === 'cod' && order.paymentStatus === 'PAY_ON_DELIVERY' && !['DELIVERED', 'CANCELLED'].includes(order.status) ? '<br><button class="button ghost small" type="button" data-mark-cash>💵 Mark cash received</button>' : ''}</td>
+        <td><strong>${money(order.totalInr)}</strong>${Number(order.packagingFeeInr) > 0 ? `<br><small>Packaging ${money(order.packagingFeeInr)}</small>` : ''}<br><span>${paymentMethod} · ${paymentStatus}</span>${order.paymentMethod === 'cod' && order.paymentStatus === 'PAY_ON_DELIVERY' && !['DELIVERED', 'CANCELLED'].includes(order.status) ? '<br><button class="button ghost small" type="button" data-mark-cash>💵 Mark cash received</button>' : ''}</td>
         <td data-coupon-cell style="min-width:105px"></td>
         <td><select class="status-select"></select></td>
       `;

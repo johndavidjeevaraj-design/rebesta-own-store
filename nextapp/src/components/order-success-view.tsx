@@ -13,7 +13,7 @@ import { startCashfreeDropin, startUpiApp, startUpiQr } from "@/lib/cashfree-cli
 interface OrderItem { handle: string; title: string; qty: number; unitLabel: string; image: string; lineTotalInr: number; priceInr: number }
 interface Order {
   id: string; status: string; paymentStatus: string; paymentMethod: string;
-  subtotalInr: number; discountInr: number; couponCode?: string; deliveryFeeInr: number; tipInr: number;
+  subtotalInr: number; discountInr: number; couponCode?: string; packagingFeeInr?: number; packagingFeePercent?: number; deliveryFeeInr: number; tipInr: number;
   distanceKm?: number; totalInr: number; items: OrderItem[]; slot?: { label: string }; deliveryDate?: { label: string };
   history: { status: string; at: string }[];
 }
@@ -238,6 +238,11 @@ export function OrderSuccessView() {
                   {Number(order.discountInr) > 0 && (
                     <div className="flex items-center justify-between py-1 text-[13px] font-semibold text-leaf">
                       <span>Coupon {order.couponCode || ""}</span><span className="tabular-nums">−{money(order.discountInr)}</span>
+                    </div>
+                  )}
+                  {Number(order.packagingFeeInr) > 0 && (
+                    <div className="flex items-center justify-between py-1 text-[13px] font-medium text-muted-foreground">
+                      <span>Packaging fee{Number(order.packagingFeePercent) > 0 ? ` (${Number(order.packagingFeePercent)}%)` : ""}</span><span className="tabular-nums">{money(Number(order.packagingFeeInr) || 0)}</span>
                     </div>
                   )}
                   <div className="flex items-center justify-between py-1 text-[13px] font-medium text-muted-foreground">

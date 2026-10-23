@@ -73,7 +73,9 @@ const itemsTable = order => `
     <td style="padding:7px 6px;border-bottom:1px solid #eef2ea;color:#8b988f;text-align:right">× ${i.qty}</td>
     <td style="padding:7px 0;border-bottom:1px solid #eef2ea;font-weight:700;text-align:right;white-space:nowrap">${money(i.priceInr * i.qty)}</td>
   </tr>`).join('')}
+  ${Number(order.subtotalInr) > 0 ? `<tr><td colspan="2" style="padding:7px 0;color:#8b988f">Merchandise subtotal</td><td style="padding:7px 0;text-align:right;font-weight:700">${money(order.subtotalInr)}</td></tr>` : ''}
   ${Number(order.discountInr) > 0 ? `<tr><td colspan="2" style="padding:7px 0;color:#0d8736;font-weight:600">Coupon ${order.couponCode || ''}</td><td style="padding:7px 0;color:#0d8736;font-weight:700;text-align:right">−${money(order.discountInr)}</td></tr>` : ''}
+  ${Number(order.packagingFeePercent) > 0 ? `<tr><td colspan="2" style="padding:7px 0;color:#8b988f">Packaging fee (${Number(order.packagingFeePercent)}%)</td><td style="padding:7px 0;text-align:right;font-weight:700">${money(order.packagingFeeInr)}</td></tr>` : ''}
   <tr><td style="padding:7px 0;color:#8b988f">Delivery</td><td></td><td style="padding:7px 0;text-align:right;font-weight:700">${Number(order.deliveryFeeInr) > 0 ? money(order.deliveryFeeInr) : 'FREE'}</td></tr>
   ${Number(order.tipInr) > 0 ? `<tr><td style="padding:7px 0;color:#8b988f">Delivery tip</td><td></td><td style="padding:7px 0;text-align:right;font-weight:700">${money(order.tipInr)}</td></tr>` : ''}
   <tr><td style="padding:10px 0;font-size:15px;font-weight:800">Total</td><td></td><td style="padding:10px 0;text-align:right;font-size:15px;font-weight:800;color:#0d8736">${money(order.totalInr)}</td></tr>

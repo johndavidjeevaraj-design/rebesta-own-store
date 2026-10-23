@@ -22,6 +22,8 @@ import {
   cancelOrderPublic,
   slotUsageFor,
   slotCapacity,
+  getPackagingFeePercent,
+  calculatePackagingFeeInr,
   getSubscription,
   loadSubscriptions,
   saveSubscriptions,
@@ -93,6 +95,9 @@ router.get('/settings', (req, res) => {
       freeOverInr: settings.delivery?.freeOverInr,
       tiers: settings.delivery?.tiers,
       slots: settings.delivery?.slots
+    },
+    packagingFee: {
+      percent: getPackagingFeePercent(settings)
     },
     payments: {
       codEnabled: Boolean(settings.payments?.cod),
@@ -184,6 +189,9 @@ router.post('/quote', async (req, res) => {
     const cart = buildCart(req.body?.items || []);
     const address = normalizeAddress(req.body?.address || {});
     const quote = await quoteDelivery({ cart, location: req.body?.location || {}, address });
+    const settings = loadSettings();
+    quote.packagingFeePercent = getPackagingFeePercent(settings);
+    quote.packagingFeeInr = calculatePackagingFeeInr(cart.subtotalInr, settings);
     // Slot capacity: never over-promise a morning
     const capacity = slotCapacity();
     const usage = slotUsageFor(quote.deliveryDate.iso);
@@ -208,14 +216,25 @@ router.get('/coupon/list', (req, res) => {
 router.post('/coupon/check', (req, res) => {
   try {
     const coupon = findCoupon(req.body?.code);
-    const subtotal = Number(req.body?.subtotalInr || 0);
     if (!coupon) return res.status(400).json({ ok: false, error: 'That coupon code is not valid' });
+    // Current clients send item lines so the preview uses server-side prices;
+    // older clients may still send a subtotal, but order creation always rebuilds it.
+    const subtotal = Array.isArray(req.body?.items)
+      ? buildCart(req.body.items).subtotalInr
+      : Number(req.body?.subtotalInr || 0);
+    if (!Number.isFinite(subtotal) || subtotal < 0) {
+      return res.status(400).json({ ok: false, error: 'Merchandise subtotal is invalid' });
+    }
     const minOrderInr = Number(coupon.minOrderInr || 0);
+    const maxOrderInr = Number(coupon.maxOrderInr || 0);
     if (subtotal < minOrderInr) {
       return res.status(400).json({ ok: false, error: `Add items worth ${'\u20B9'}${minOrderInr - subtotal} more to use ${coupon.code} (min basket ${'\u20B9'}${minOrderInr})` });
     }
+    if (maxOrderInr > 0 && subtotal > maxOrderInr) {
+      return res.status(400).json({ ok: false, error: `${coupon.code} is valid only when the merchandise subtotal is ${'\u20B9'}${maxOrderInr} or less` });
+    }
     const discountInr = couponDiscount(coupon, subtotal);
-    res.json({ ok: true, coupon: { code: coupon.code, type: coupon.type, value: Number(coupon.value || 0), minOrderInr, discountInr } });
+    res.json({ ok: true, coupon: { code: coupon.code, type: coupon.type, value: Number(coupon.value || 0), minOrderInr, maxOrderInr, discountInr } });
   } catch (error) {
     flattenError(res, error, 'Could not check coupon');
   }
@@ -267,14 +286,24 @@ router.post('/orders', async (req, res) => {
     if (!['cod', 'online'].includes(paymentMethod)) throw Object.assign(new Error('Choose a valid payment method'), { status: 400 });
 
     const deliveryFee = Number(quote.deliveryFeeInr || 0);
+    const packagingFeePercent = getPackagingFeePercent(settingsNow);
+    const packagingFeeInr = calculatePackagingFeeInr(cart.subtotalInr, settingsNow);
     let discountInr = 0;
     let couponCode = '';
     if (req.body?.couponCode) {
       const coupon = findCoupon(req.body.couponCode);
       if (!coupon) throw Object.assign(new Error('Coupon code is not valid'), { status: 400 });
+      const minOrderInr = Number(coupon.minOrderInr || 0);
+      const maxOrderInr = Number(coupon.maxOrderInr || 0);
+      if (cart.subtotalInr < minOrderInr) {
+        throw Object.assign(new Error(`Coupon ${coupon.code} needs a minimum merchandise subtotal of ${'\u20B9'}${minOrderInr}`), { status: 400 });
+      }
+      if (maxOrderInr > 0 && cart.subtotalInr > maxOrderInr) {
+        throw Object.assign(new Error(`${coupon.code} is valid only when the merchandise subtotal is ${'\u20B9'}${maxOrderInr} or less`), { status: 400 });
+      }
       discountInr = couponDiscount(coupon, cart.subtotalInr);
       if (!discountInr) {
-        throw Object.assign(new Error(`Coupon ${coupon.code} needs a minimum basket of ${'\u20B9'}${Number(coupon.minOrderInr || 0)}`), { status: 400 });
+        throw Object.assign(new Error(`Coupon ${coupon.code} does not apply to this merchandise subtotal`), { status: 400 });
       }
       couponCode = coupon.code;
     }
@@ -284,7 +313,7 @@ router.post('/orders', async (req, res) => {
       if (!referredBy) throw Object.assign(new Error('Referral phone number looks invalid'), { status: 400 });
       if (referredBy === customer.phone) throw Object.assign(new Error('Referral phone cannot be your own number'), { status: 400 });
     }
-    const total = Math.round((cart.subtotalInr - discountInr + deliveryFee + tipInr) * 100) / 100;
+    const total = Math.round((cart.subtotalInr - discountInr + packagingFeeInr + deliveryFee + tipInr) * 100) / 100;
     const order = addOrder({
       customer,
       address,
@@ -292,6 +321,8 @@ router.post('/orders', async (req, res) => {
       subtotalInr: cart.subtotalInr,
       discountInr,
       couponCode,
+      packagingFeePercent,
+      packagingFeeInr,
       deliveryFeeInr: deliveryFee,
       tipInr,
       totalInr: total,
@@ -311,7 +342,7 @@ router.post('/orders', async (req, res) => {
     const settings = loadSettings();
     const whatsappDigits = String(settings.business?.whatsapp || '918438765119').replace(/\D/g, '');
     const lines = order.items.map(item => `• ${item.title} × ${item.qty} — ₹${item.lineTotalInr}`).join('\n');
-    const message = `Rebesta Fresh order ${order.id}\n\n${lines}\n\nSubtotal: ₹${order.subtotalInr}${discountInr ? `\nCoupon ${couponCode}: −₹${discountInr}` : ''}\nDelivery: ₹${order.deliveryFeeInr}${tipInr ? `\nDelivery tip: ₹${tipInr}` : ''}\nTotal: ₹${order.totalInr}\nName: ${order.customer.name}\nPhone: ${order.customer.phone}\nDelivery: ${order.slot.label} (${order.deliveryDate.label})\nAddress: ${address.line1}, ${address.area || ''}, ${address.city} ${address.pincode}\nExact pin: ${quote.location.lat}, ${quote.location.lng}`;
+    const message = `Rebesta Fresh order ${order.id}\n\n${lines}\n\nSubtotal: ₹${order.subtotalInr}${discountInr ? `\nCoupon ${couponCode}: −₹${discountInr}` : ''}${packagingFeeInr ? `\nPackaging fee (${packagingFeePercent}%): ₹${packagingFeeInr}` : ''}\nDelivery: ₹${order.deliveryFeeInr}${tipInr ? `\nDelivery tip: ₹${tipInr}` : ''}\nTotal: ₹${order.totalInr}\nName: ${order.customer.name}\nPhone: ${order.customer.phone}\nDelivery: ${order.slot.label} (${order.deliveryDate.label})\nAddress: ${address.line1}, ${address.area || ''}, ${address.city} ${address.pincode}\nExact pin: ${quote.location.lat}, ${quote.location.lng}`;
     const whatsappUrl = `https://api.whatsapp.com/send/?phone=${whatsappDigits}&text=${encodeURIComponent(message)}`;
     let payment = null;
     if (paymentMethod === 'online') {

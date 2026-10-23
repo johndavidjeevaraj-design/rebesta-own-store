@@ -56,6 +56,20 @@ export function loadSettings() {
   return readJson(files.settings, {});
 }
 
+export function getPackagingFeePercent(settings = loadSettings()) {
+  const percent = Number(settings?.packagingFee?.percent ?? 0);
+  return Number.isFinite(percent) && percent >= 0 && percent <= 100
+    ? Math.round(percent * 100) / 100
+    : 0;
+}
+
+export function calculatePackagingFeeInr(subtotalInr, settings = loadSettings()) {
+  const subtotal = Number(subtotalInr);
+  if (!Number.isFinite(subtotal) || subtotal <= 0) return 0;
+  const fee = subtotal * getPackagingFeePercent(settings) / 100;
+  return Math.round((fee + Number.EPSILON) * 100) / 100;
+}
+
 export function saveSettings(settings) {
   writeJson(files.settings, settings);
   return settings;
@@ -657,6 +671,8 @@ export function maskCustomer(order) {
     subtotalInr: o.subtotalInr,
     discountInr: o.discountInr || 0,
     couponCode: o.couponCode || '',
+    packagingFeeInr: o.packagingFeeInr || 0,
+    packagingFeePercent: o.packagingFeePercent || 0,
     deliveryFeeInr: o.deliveryFeeInr,
     tipInr: o.tipInr || 0,
     totalInr: o.totalInr,
@@ -706,7 +722,7 @@ export function listPublicCoupons() {
     .filter(c => !c.expiresAt || new Date(c.expiresAt) > now)
     .filter(c => !c.maxUses || Number(c.usedCount || 0) < Number(c.maxUses))
     .slice(0, 6)
-    .map(c => ({ code: c.code, type: c.type, value: Number(c.value || 0), minOrderInr: Number(c.minOrderInr || 0) }));
+    .map(c => ({ code: c.code, type: c.type, value: Number(c.value || 0), minOrderInr: Number(c.minOrderInr || 0), maxOrderInr: Number(c.maxOrderInr || 0) }));
 }
 
 export function markCouponUsed(code) {
@@ -878,7 +894,9 @@ export function writeAutoBackup() {
 export function couponDiscount(coupon, subtotalInr) {
   if (!coupon) return 0;
   const subtotal = Number(subtotalInr || 0);
-  if (subtotal < Number(coupon.minOrderInr || 0)) return 0;
+  const minOrderInr = Number(coupon.minOrderInr || 0);
+  const maxOrderInr = Number(coupon.maxOrderInr || 0);
+  if (subtotal < minOrderInr || (maxOrderInr > 0 && subtotal > maxOrderInr)) return 0;
   const raw = coupon.type === 'percent' ? subtotal * Number(coupon.value || 0) / 100 : Number(coupon.value || 0);
   return Math.max(0, Math.min(Math.round(raw), Math.round(subtotal)));
 }

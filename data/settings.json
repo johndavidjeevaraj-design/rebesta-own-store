@@ -70,6 +70,9 @@
       }
     ]
   },
+  "packagingFee": {
+    "percent": 0
+  },
   "payments": {
     "cod": true,
     "payuEnabled": true
@@ -133,6 +136,14 @@
         "type": "percent",
         "value": 10,
         "minOrderInr": 599,
+        "active": true
+      },
+      {
+        "code": "FIRST50",
+        "type": "percent",
+        "value": 50,
+        "minOrderInr": 0,
+        "maxOrderInr": 399,
         "active": true
       }
     ],

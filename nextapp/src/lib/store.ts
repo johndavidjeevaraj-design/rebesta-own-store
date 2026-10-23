@@ -33,6 +33,7 @@ export interface Settings {
   business?: { name?: string; whatsapp?: string; phoneDisplay?: string; city?: string; fssai?: string };
   content?: { homeBadge?: string; homeTitle?: string; homeSubtitle?: string; deliveryNoteTitle?: string; deliveryNoteText?: string; deliveryNoteButton?: string };
   delivery?: { maxRoadKm?: number; freeOverInr?: number };
+  packagingFee?: { percent?: number };
   payments?: { codEnabled?: boolean; onlineEnabled?: boolean };
 }
 

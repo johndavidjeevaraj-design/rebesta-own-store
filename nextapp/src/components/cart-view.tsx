@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { Banknote, ChevronRight, CreditCard, Home, Lock, MapPin, Plus, QrCode, ReceiptText, ShieldCheck, Tag, X } from "lucide-react";
+import { Banknote, Camera, ChevronRight, CreditCard, Home, Lock, MapPin, Plus, QrCode, ReceiptText, ShieldCheck, Tag, X } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { LocationSheet } from "@/components/location-sheet";
@@ -153,6 +153,8 @@ export function CartView() {
   const [seg, setSeg] = useState<"delivery" | "tip" | "instructions">("delivery");
   const [payApp, setPayApp] = useState("cod");
   const [onlineEnabled, setOnlineEnabled] = useState(false);
+  const [marketingSettings, setMarketingSettings] = useState<{ instagramUrl: string; whatsappOptInEnabled: boolean }>({ instagramUrl: "", whatsappOptInEnabled: false });
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const [pmOpen, setPmOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const meRef = useRef<Customer | null>(null);
@@ -203,7 +205,12 @@ export function CartView() {
         setProductsLoaded(true);
         setMe(meData?.customer || null);
         try {
-          setOnlineEnabled(Boolean((await api("/api/settings"))?.payments?.onlineEnabled));
+          const siteSettings = await api("/api/settings");
+          setOnlineEnabled(Boolean(siteSettings?.payments?.onlineEnabled));
+          setMarketingSettings({
+            instagramUrl: String(siteSettings?.marketing?.instagramUrl || ""),
+            whatsappOptInEnabled: siteSettings?.marketing?.whatsappOptInEnabled !== false,
+          });
         } catch {
           /* settings optional */
         }
@@ -568,6 +575,7 @@ export function CartView() {
       slotId: slot.id,
       paymentMethod: payApp === "cod" ? "cod" : "online",
       tipInr: Number(tip || 0),
+      marketingWhatsAppOptIn: marketingSettings.whatsappOptInEnabled && marketingConsent,
     };
     if (coupon) payload.couponCode = coupon.code;
     if (Number.isFinite(saved.lat)) payload.location = { lat: saved.lat, lng: saved.lng };
@@ -1134,6 +1142,26 @@ export function CartView() {
                 />
               )}
             </motion.section>
+
+            {(marketingSettings.instagramUrl || marketingSettings.whatsappOptInEnabled) && (
+              <section className="mt-4 rounded-3xl border border-carrot/20 bg-white p-5 shadow-soft">
+                <h3 className="text-[13px] font-bold text-ink">Stay in touch with Rebesta Fresh</h3>
+                {marketingSettings.instagramUrl && (
+                  <a href={marketingSettings.instagramUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-full bg-carrot/10 px-4 py-2 text-[13px] font-bold text-[#c8400f] transition hover:bg-carrot/15">
+                    <Camera size={16} /> Follow us on Instagram
+                  </a>
+                )}
+                {marketingSettings.whatsappOptInEnabled && (
+                  <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-line bg-cream/60 p-3.5">
+                    <input type="checkbox" checked={marketingConsent} onChange={(event) => setMarketingConsent(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-[#ff5b20]" />
+                    <span className="text-[12px] font-semibold leading-5 text-ink-2">
+                      <strong className="block text-[13px] text-ink">Send me daily WhatsApp marketing messages</strong>
+                      Optional and separate from order updates. You can unsubscribe at any time.
+                    </span>
+                  </label>
+                )}
+              </section>
+            )}
 
             {/* bill */}
             <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }} className="mt-4 rounded-3xl border border-line bg-white shadow-soft">

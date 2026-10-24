@@ -287,6 +287,129 @@ export function bindAdminPage(root) {
     if (status) status.textContent = data.supportReady ? '✅ AI answers active (Gemini)' : 'ℹ️ Basic mode — works without a key, add one for full AI answers';
   }
 
+  /* 📣 Opt-in marketing controls live separately from general site settings.
+     The scheduler remains paused until an approved provider template is ready. */
+  async function renderMarketingCard() {
+    const form = $('[data-settings-form]');
+    if (!form) return;
+    let card = root.querySelector('[data-marketing-card]');
+    if (!card) {
+      card = document.createElement('section');
+      card.dataset.marketingCard = '1';
+      card.className = 'shop-panel';
+      card.style.cssText = 'margin-top:16px;border:1px solid #f3d5c3;border-radius:16px;padding:18px;background:#fffaf6';
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
+          <div><h3 style="margin:0 0 5px;color:#8f3514">📣 Customer reviews, Instagram &amp; daily WhatsApp</h3>
+            <p style="margin:0 0 12px;color:var(--muted,#5b6b55);font-size:.82rem">Marketing opt-in is optional and unchecked by default. Only opted-in customers are eligible. Daily sends start paused and require an approved WhatsApp Marketing template.</p>
+          </div>
+          <span class="badge orange" data-marketing-count>0 opted in</span>
+        </div>
+        <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+          <label style="font-size:.8rem">Instagram profile URL or @handle
+            <input name="marketingInstagramUrl" maxlength="200" placeholder="https://www.instagram.com/yourprofile/" style="width:100%;margin-top:4px;padding:9px;border:1px solid #e4cbbd;border-radius:9px;font:inherit">
+          </label>
+          <label style="font-size:.8rem">Daily send time (India time)
+            <input name="marketingSendTime" type="time" style="width:100%;margin-top:4px;padding:9px;border:1px solid #e4cbbd;border-radius:9px;font:inherit">
+          </label>
+        </div>
+        <label style="display:block;margin:12px 0;font-size:.82rem"><input type="checkbox" name="marketingCollectOptIns" style="margin-right:8px;accent-color:#ff5b20"> Show unchecked WhatsApp opt-in at checkout and after delivery</label>
+        <label style="display:block;font-size:.8rem">Daily message copy (fills approved template variable {{1}})
+          <textarea name="marketingMessage" maxlength="1024" rows="3" placeholder="Write the daily marketing message here; no message is sent until enabled." style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px;border:1px solid #e4cbbd;border-radius:9px;font:inherit;resize:vertical"></textarea>
+        </label>
+        <div style="margin-top:14px;padding:12px;border:1px solid #f0dfd4;border-radius:12px;background:white">
+          <strong style="font-size:.86rem">WhatsApp provider connection (MSG91)</strong>
+          <p style="margin:4px 0 10px;color:var(--muted,#5b6b55);font-size:.76rem">The provider template must already be approved as a Marketing template and contain body variables {{1}} (message) and {{2}} (unsubscribe link). API keys are stored server-side and never shown back.</p>
+          <div style="display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+            <label style="font-size:.76rem">Connected WhatsApp number (91 + 10 digits)<input name="marketingIntegratedNumber" maxlength="15" placeholder="91XXXXXXXXXX" style="width:100%;margin-top:4px;padding:8px;border:1px solid #e4cbbd;border-radius:8px;font:inherit"></label>
+            <label style="font-size:.76rem">Approved template name<input name="marketingTemplateName" maxlength="100" placeholder="daily_marketing" style="width:100%;margin-top:4px;padding:8px;border:1px solid #e4cbbd;border-radius:8px;font:inherit"></label>
+            <label style="font-size:.76rem">Template language<input name="marketingLanguage" maxlength="10" placeholder="en" style="width:100%;margin-top:4px;padding:8px;border:1px solid #e4cbbd;border-radius:8px;font:inherit"></label>
+            <label style="font-size:.76rem">MSG91 auth key<input name="marketingAuthKey" type="password" autocomplete="new-password" placeholder="not configured" style="width:100%;margin-top:4px;padding:8px;border:1px solid #e4cbbd;border-radius:8px;font:inherit"></label>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
+            <button class="button ghost small" type="button" data-marketing-provider-save>Save provider</button>
+            <small data-marketing-provider-status style="color:var(--muted,#5b6b55)"></small>
+          </div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:.84rem;font-weight:700;color:#8f3514"><input type="checkbox" name="marketingEnabled" style="accent-color:#ff5b20;width:17px;height:17px"> Enable daily WhatsApp sends</label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
+          <button class="button orange small" type="button" data-marketing-settings-save>Save marketing settings</button>
+          <small data-marketing-save-status style="color:var(--muted,#5b6b55)"></small>
+        </div>`;
+      form.insertAdjacentElement('afterend', card);
+      card.querySelector('[data-marketing-settings-save]').addEventListener('click', async () => {
+        const status = card.querySelector('[data-marketing-save-status]');
+        const button = card.querySelector('[data-marketing-settings-save]');
+        const field = name => card.querySelector(`[name="${name}"]`);
+        if (status) status.textContent = 'Saving…';
+        setBusy(button, true, 'Saving…');
+        try {
+          const data = await api('/api/admin/marketing', { method: 'PATCH', body: JSON.stringify({
+            instagramUrl: field('marketingInstagramUrl').value.trim(),
+            collectOptIns: field('marketingCollectOptIns').checked,
+            sendTimeIst: field('marketingSendTime').value,
+            messageTemplate: field('marketingMessage').value.trim(),
+            enabled: field('marketingEnabled').checked
+          }) });
+          if (status) status.textContent = data.marketing.whatsapp.enabled ? '✅ Daily sends enabled' : '✅ Saved — daily sends remain paused';
+          await renderMarketingCard();
+        } catch (error) {
+          if (status) status.textContent = '⚠️ ' + (error.message || 'Could not save');
+        } finally { setBusy(button, false); }
+      });
+      card.querySelector('[data-marketing-provider-save]').addEventListener('click', async () => {
+        const status = card.querySelector('[data-marketing-provider-status]');
+        const button = card.querySelector('[data-marketing-provider-save]');
+        const field = name => card.querySelector(`[name="${name}"]`);
+        if (status) status.textContent = 'Saving…';
+        setBusy(button, true, 'Saving…');
+        try {
+          const data = await api('/api/admin/marketing/provider', { method: 'POST', body: JSON.stringify({
+            integratedNumber: field('marketingIntegratedNumber').value.trim(),
+            templateName: field('marketingTemplateName').value.trim(),
+            language: field('marketingLanguage').value.trim() || 'en',
+            authKey: field('marketingAuthKey').value.trim()
+          }) });
+          field('marketingAuthKey').value = '';
+          if (status) status.textContent = data.provider.configured ? '✅ Provider configured — campaign stays paused until you enable it' : 'Saved, but not ready yet; complete the number, template and key.';
+          await renderMarketingCard();
+        } catch (error) {
+          if (status) status.textContent = '⚠️ ' + (error.message || 'Could not save provider');
+        } finally { setBusy(button, false); }
+      });
+    }
+
+    let data;
+    try { data = await api('/api/admin/marketing'); }
+    catch (error) {
+      const status = card.querySelector('[data-marketing-provider-status]');
+      if (status) status.textContent = error.message || 'Could not load marketing settings';
+      return;
+    }
+    const marketing = data.marketing || {};
+    const wa = marketing.whatsapp || {};
+    const provider = data.provider || {};
+    const contacts = data.contacts || {};
+    const field = name => card.querySelector(`[name="${name}"]`);
+    field('marketingInstagramUrl').value = marketing.instagramUrl || '';
+    field('marketingSendTime').value = wa.sendTimeIst || '';
+    field('marketingCollectOptIns').checked = wa.collectOptIns !== false;
+    field('marketingMessage').value = wa.messageTemplate || '';
+    field('marketingEnabled').checked = wa.enabled === true;
+    field('marketingEnabled').disabled = provider.configured !== true;
+    field('marketingIntegratedNumber').value = provider.integratedNumber || '';
+    field('marketingTemplateName').value = provider.templateName || '';
+    field('marketingLanguage').value = provider.language || 'en';
+    field('marketingAuthKey').value = '';
+    field('marketingAuthKey').placeholder = provider.hasAuthKey ? '(saved — leave blank to keep)' : 'not configured';
+    const providerStatus = card.querySelector('[data-marketing-provider-status]');
+    if (providerStatus) providerStatus.textContent = provider.configured
+      ? `✅ Provider/template ready (${provider.templateName}, ${provider.integratedNumber})`
+      : '⏸ Not configured — no daily messages will be sent.';
+    const count = card.querySelector('[data-marketing-count]');
+    if (count) count.textContent = `${Number(contacts.optedIn) || 0} opted in · ${Number(contacts.optedOut) || 0} opted out`;
+  }
+
   function setField(name, value) {
     const input = root.querySelector(`[data-settings-form] [name="${name}"]`);
     if (input) input.value = value ?? '';
@@ -338,6 +461,7 @@ export function bindAdminPage(root) {
     const data = await api('/api/admin/settings');
     state.settings = data.settings;
     renderSupportCard(data);
+    await renderMarketingCard();
     const content = data.settings.content || {};
     const business = data.settings.business || {};
     const delivery = data.settings.delivery || {};
@@ -1371,7 +1495,8 @@ export function bindAdminPage(root) {
     if (v.subscriptions !== state.versions.subscriptions) { renderSubs(); }
     if (v.settings !== state.versions.settings) {
       const form = root.querySelector('[data-settings-form]');
-      const editing = form && form.contains(document.activeElement);
+      const marketingCard = root.querySelector('[data-marketing-card]');
+      const editing = Boolean((form && form.contains(document.activeElement)) || (marketingCard && marketingCard.contains(document.activeElement)));
       if (!editing) await renderSettings();
     }
     state.versions = v;

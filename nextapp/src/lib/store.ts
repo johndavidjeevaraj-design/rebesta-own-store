@@ -34,6 +34,7 @@ export interface Settings {
   content?: { homeBadge?: string; homeTitle?: string; homeSubtitle?: string; deliveryNoteTitle?: string; deliveryNoteText?: string; deliveryNoteButton?: string };
   delivery?: { maxRoadKm?: number; freeOverInr?: number };
   payments?: { codEnabled?: boolean; onlineEnabled?: boolean };
+  marketing?: { instagramUrl?: string; whatsappOptInEnabled?: boolean };
 }
 
 export const CART_KEY = "rebesta_own_cart_v1";

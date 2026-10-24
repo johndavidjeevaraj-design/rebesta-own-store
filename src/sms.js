@@ -49,6 +49,119 @@ export function loadSmsConfig() {
   try { return JSON.parse(fs.readFileSync(SMS_CONFIG_FILE, 'utf8')); } catch { return null; }
 }
 
+/* Safe status only — never return the WhatsApp API key to the Admin UI. */
+export function getMarketingWhatsAppConfigStatus() {
+  const configNow = loadSmsConfig() || {};
+  const marketing = configNow.whatsapp?.marketing || {};
+  const integratedNumber = String(marketing.integratedNumber || '').replace(/\D/g, '');
+  const templateName = String(marketing.templateName || '').trim();
+  const authKey = String(marketing.authkey || configNow.whatsapp?.authkey || configNow.authKey || '').trim();
+  const configured = /^91[6-9]\d{9}$/.test(integratedNumber)
+    && /^[a-z0-9_]{1,100}$/.test(templateName)
+    && Boolean(authKey);
+  return {
+    configured,
+    integratedNumber: /^91[6-9]\d{9}$/.test(integratedNumber) ? integratedNumber : '',
+    templateName: /^[a-z0-9_]{1,100}$/.test(templateName) ? templateName : '',
+    language: String(marketing.language || 'en').slice(0, 10),
+    hasAuthKey: Boolean(authKey)
+  };
+}
+
+/* Save only the marketing-template connection, preserving OTP/order-message
+   credentials and settings in data/sms-config.json. Blank authKey retains the
+   stored key; the key is never returned by the status endpoint. */
+export function saveMarketingWhatsAppConfig(input = {}) {
+  const current = loadSmsConfig() || {};
+  const body = input || {};
+  if (body.clear === true) {
+    if (current.whatsapp) {
+      delete current.whatsapp.marketing;
+      if (!Object.keys(current.whatsapp).length) delete current.whatsapp;
+    }
+  } else {
+    const previous = current.whatsapp?.marketing || {};
+    const next = { ...previous };
+    if (body.integratedNumber !== undefined) {
+      const number = String(body.integratedNumber || '').replace(/\D/g, '');
+      if (number && !/^91[6-9]\d{9}$/.test(number)) throw new Error('WhatsApp number must be 91 followed by a valid 10-digit Indian mobile number.');
+      if (number) next.integratedNumber = number;
+      else delete next.integratedNumber;
+    }
+    if (body.templateName !== undefined) {
+      const templateName = String(body.templateName || '').trim();
+      if (templateName && !/^[a-z0-9_]{1,100}$/.test(templateName)) throw new Error('Template name must use lowercase letters, numbers and underscores.');
+      if (templateName) next.templateName = templateName;
+      else delete next.templateName;
+    }
+    if (body.language !== undefined) {
+      const language = String(body.language || 'en').trim();
+      if (!/^[a-z]{2}(?:_[A-Z]{2})?$/.test(language)) throw new Error('Enter a valid template language code, such as en or en_US.');
+      next.language = language;
+    }
+    const authKey = String(body.authKey || '').trim();
+    if (authKey) next.authkey = authKey.slice(0, 500);
+    if (body.clearAuthKey === true) delete next.authkey;
+    current.whatsapp = { ...(current.whatsapp || {}), marketing: next };
+  }
+  fs.mkdirSync(path.dirname(SMS_CONFIG_FILE), { recursive: true });
+  const temp = `${SMS_CONFIG_FILE}.${process.pid}.${Date.now()}.tmp`;
+  fs.writeFileSync(temp, JSON.stringify(current, null, 2), { mode: 0o600 });
+  fs.renameSync(temp, SMS_CONFIG_FILE);
+  return getMarketingWhatsAppConfigStatus();
+}
+
+/* One approved WhatsApp Marketing template is sent per recipient/day. The
+   provider template must contain {{1}} for the Admin-authored copy and {{2}}
+   for the one-click unsubscribe URL. */
+export async function sendMarketingWhatsAppTemplate(phone, message, unsubscribeUrl) {
+  const configNow = loadSmsConfig() || {};
+  const marketing = configNow.whatsapp?.marketing || {};
+  const status = getMarketingWhatsAppConfigStatus();
+  const digits = String(phone || '').replace(/\D/g, '');
+  const normalized = digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits;
+  if (!status.configured) return { ok: false, reason: 'not-configured' };
+  if (!/^[6-9]\d{9}$/.test(normalized)) return { ok: false, reason: 'invalid-phone' };
+  const bodyText = String(message || '').trim();
+  const unsubscribeLink = String(unsubscribeUrl || '').trim();
+  if (!bodyText || bodyText.length > 1024 || !unsubscribeLink || unsubscribeLink.length > 1000) return { ok: false, reason: 'invalid-template-values' };
+  const authkey = String(marketing.authkey || configNow.whatsapp?.authkey || configNow.authKey || '');
+  try {
+    const response = await fetch('https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', authkey },
+      body: JSON.stringify({
+        integrated_number: status.integratedNumber,
+        content_type: 'template',
+        payload: {
+          messaging_product: 'whatsapp',
+          type: 'template',
+          template: {
+            name: status.templateName,
+            language: { code: status.language || 'en', policy: 'deterministic' },
+            to_and_components: [{
+              to: ['91' + normalized],
+              components: {
+                body_1: { type: 'text', value: bodyText },
+                body_2: { type: 'text', value: unsubscribeLink }
+              }
+            }]
+          }
+        }
+      }),
+      signal: AbortSignal.timeout(10_000)
+    });
+    if (!response.ok) {
+      const error = (await response.text().catch(() => '')).slice(0, 240);
+      return { ok: false, reason: `http-${response.status}`, error };
+    }
+    console.log(JSON.stringify({ event: 'whatsapp.marketing.sent', recipientLast4: normalized.slice(-4), template: status.templateName }));
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, reason: 'provider-error', error: String(error?.message || error).slice(0, 200) };
+  }
+}
+
 /* OTP sign-in is only offered when a working sender is configured. */
 export function otpAvailable() {
   const c = loadSmsConfig();

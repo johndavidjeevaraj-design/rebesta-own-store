@@ -12,6 +12,7 @@ import { publicCatalog } from './lib/store.js';
 import { rateLimit } from './lib/rateLimit.js';
 import { startSubscriptionScheduler } from './lib/subscriptions.js';
 import { startDigestScheduler } from './lib/digest.js';
+import { startMarketingScheduler, unsubscribeMarketingToken } from './lib/marketing.js';
 import path from 'node:path';
 import fs from 'node:fs';
 
@@ -91,11 +92,30 @@ ${productUrls}
   app.use('/api/orders', rateLimit({ windowMs: 60_000, max: 30, message: 'Too many order requests. Please wait one minute.' }));
   app.use('/api/coupon', rateLimit({ windowMs: 60_000, max: 20, message: 'Too many coupon attempts. Please wait one minute.' }));
   app.use('/api/support', rateLimit({ windowMs: 60_000, max: 20, message: 'You are chatting too fast — give the assistant a moment!' }));
+  app.use('/api/marketing', rateLimit({ windowMs: 60_000, max: 20, message: 'Too many marketing preference changes. Please wait a moment.' }));
   app.use('/api/auth', authRouter);
   app.use('/api', publicRouter);
   app.use('/api/support', supportRouter);
   app.use('/api/admin', adminRouter);
   app.use('/api/partner', partnerRouter);
+
+  /* A signed, one-purpose link from each marketing message lets a recipient
+     confirm opt-out without exposing their phone number or creating an account. */
+  app.get('/unsubscribe', (req, res) => {
+    const token = String(req.query.token || '').slice(0, 2048);
+    if (!/^[A-Za-z0-9._-]+$/.test(token)) {
+      return res.status(400).type('html').send('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Unsubscribe</title><body style="margin:0;background:#fff8f3;font:16px system-ui;color:#24211f"><main style="max-width:480px;margin:12vh auto;padding:28px"><h1>Invalid unsubscribe link</h1><p>Please use the link in your Rebesta Fresh WhatsApp message.</p></main></body></html>');
+    }
+    res.set('Cache-Control', 'no-store');
+    res.type('html').send(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Marketing preferences</title><body style="margin:0;background:#fff8f3;font:16px system-ui;color:#24211f"><main style="max-width:480px;margin:10vh auto;padding:28px;background:white;border:1px solid #f0dfd4;border-radius:20px"><h1 style="color:#e95b22">Stop daily marketing messages?</h1><p>Confirm to stop Rebesta Fresh daily WhatsApp marketing messages. Order and delivery updates are managed separately.</p><form method="post" action="/unsubscribe"><input type="hidden" name="token" value="${token}"><button style="border:0;border-radius:999px;background:#ff5b20;color:white;padding:13px 22px;font-weight:700;font-size:15px">Unsubscribe</button></form></main></body></html>`);
+  });
+  app.post('/unsubscribe', (req, res) => {
+    const result = unsubscribeMarketingToken(req.body?.token);
+    res.set('Cache-Control', 'no-store');
+    if (!result.ok) return res.status(400).type('html').send('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Unsubscribe</title><body style="margin:0;background:#fff8f3;font:16px system-ui;color:#24211f"><main style="max-width:480px;margin:12vh auto;padding:28px"><h1>Link not recognized</h1><p>This unsubscribe link could not be verified. Please contact Rebesta Fresh for help.</p></main></body></html>');
+    res.type('html').send('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Unsubscribed</title><body style="margin:0;background:#fff8f3;font:16px system-ui;color:#24211f"><main style="max-width:480px;margin:12vh auto;padding:28px;background:white;border:1px solid #f0dfd4;border-radius:20px"><h1 style="color:#e95b22">You’re unsubscribed</h1><p>You will no longer receive daily Rebesta Fresh WhatsApp marketing messages.</p></main></body></html>');
+  });
+
   /* checkout page retired 2026-10-07 — /cart is the one-page checkout now */
   app.get(['/checkout', '/checkout.html'], (req, res) => res.redirect(302, '/cart'));
 
@@ -177,6 +197,7 @@ ${productUrls}
   /* 🔁 Weekly subscription engine — runs at boot + every 15 minutes */
   startSubscriptionScheduler();
   startDigestScheduler();
+  startMarketingScheduler();
 
   app.use('/api', (req, res) => res.status(404).json({ ok: false, error: 'API route not found' }));
   app.use((req, res) => {

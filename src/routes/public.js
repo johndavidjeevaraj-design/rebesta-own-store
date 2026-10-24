@@ -35,6 +35,7 @@ import { createPayuPayment, validatePayuResponse } from '../lib/payu.js';
 import { cashfreeEnabled, createCashfreePayment, createUpiQr, getCashfreeOrder } from '../lib/cashfree.js';
 import { findPartnerById, getPosition, haversineKm, etaMinutesFromKm } from '../lib/partners.js';
 import { createSubscriptionFromOrder, publicSubscription } from '../lib/subscriptions.js';
+import { getPublicMarketingSettings, isMarketingOptedIn, subscribeMarketingContact, subscribeFromConfirmedOrder, unsubscribeMarketingContact } from '../lib/marketing.js';
 
 export const router = express.Router();
 
@@ -74,6 +75,11 @@ function dispatchOrderConfirmation(orderId) {
     return false;
   }
   if (!order) return false;
+  // Checkout marketing consent is recorded only after COD placement or verified
+  // online payment has passed the existing confirmation gate.
+  try { subscribeFromConfirmedOrder(order); } catch (error) {
+    console.error(JSON.stringify({ event: 'marketing.checkoutConsent.error', order: order.id, error: String(error?.message || error).slice(0, 160) }));
+  }
   const paidOnline = String(order.paymentMethod || '').toLowerCase() === 'online';
   void Promise.resolve().then(() => orderPlacedEmails(order)).catch(error => console.error('Order email failed', order.id, error.message));
   void Promise.resolve().then(() => notifyOrderConfirmed(order, { paid: paidOnline })).catch(error => console.error('Order SMS failed', order.id, error.message));
@@ -111,6 +117,7 @@ router.get('/settings', (req, res) => {
       referralEnabled: Boolean(settings.promotions?.referral?.enabled),
       referralBonusInr: Number(settings.promotions?.referral?.bonusInr || 0)
     },
+    marketing: getPublicMarketingSettings(),
     requestId: randomSku()
   });
 });
@@ -136,6 +143,41 @@ router.get('/products/:handle', (req, res) => {
   const product = getProduct(req.params.handle);
   if (!product || !product.active) return res.status(404).json({ ok: false, error: 'Product not found' });
   res.json({ ok: true, product: { ...product, variants: productVariants(product) } });
+});
+
+/* ============ Customer marketing preferences (explicit opt-in only) ============ */
+
+router.post('/marketing/opt-in', (req, res) => {
+  try {
+    const orderId = String(req.body?.orderId || '').trim().toUpperCase();
+    const phone = normalizePhone(req.body?.phone);
+    const order = getOrder(orderId);
+    if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
+    if (!phone || String(order.customer?.phone || '').replace(/\D/g, '').endsWith(phone) === false) {
+      return res.status(403).json({ ok: false, error: 'Order ID and phone do not match' });
+    }
+    if (order.status !== 'DELIVERED') return res.status(409).json({ ok: false, error: 'You can join the daily WhatsApp list after delivery' });
+    if (req.body?.consent !== true) return res.status(400).json({ ok: false, error: 'Please confirm consent to receive daily WhatsApp marketing messages' });
+    if (loadSettings().marketing?.whatsapp?.collectOptIns === false) {
+      return res.status(409).json({ ok: false, error: 'Marketing sign-ups are temporarily closed' });
+    }
+    const result = subscribeMarketingContact(phone, { source: 'delivered-track', orderId });
+    res.status(200).json({ ok: true, subscribed: result.active });
+  } catch (error) {
+    flattenError(res, error, 'Could not save your preference');
+  }
+});
+
+router.post('/marketing/opt-out', (req, res) => {
+  const orderId = String(req.body?.orderId || '').trim().toUpperCase();
+  const phone = normalizePhone(req.body?.phone);
+  const order = getOrder(orderId);
+  if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
+  if (!phone || String(order.customer?.phone || '').replace(/\D/g, '').endsWith(phone) === false) {
+    return res.status(403).json({ ok: false, error: 'Order ID and phone do not match' });
+  }
+  const removed = unsubscribeMarketingContact(phone, { source: 'delivered-track' });
+  res.json({ ok: true, subscribed: false, wasSubscribed: removed });
 });
 
 /* ============ Customer reviews (moderated) ============ */
@@ -303,6 +345,7 @@ router.post('/orders', async (req, res) => {
       location: quote.location,
       paymentMethod,
       referredBy,
+      marketingWhatsAppOptIn: req.body?.marketingWhatsAppOptIn === true && settingsNow.marketing?.whatsapp?.collectOptIns !== false,
       notes: String(req.body?.notes || '').trim().slice(0, 500),
       source: 'own-store-web'
     });
@@ -558,6 +601,7 @@ router.get('/orders/:id', (req, res) => {
     orderOut.customer.name = String(orderOut.customer.name).trim().split(/\s+/)[0] + ' •';
   }
   const payload = { ok: true, order: orderOut, phoneVerified: phone ? phoneVerified : null };
+  if (phoneVerified) orderOut.marketingSubscribed = isMarketingOptedIn(order.customer?.phone);
   // Live partner location for the customer while the order is on the road
   if (order.assignedPartnerId && order.status === 'OUT_FOR_DELIVERY') {
     const partner = findPartnerById(order.assignedPartnerId);

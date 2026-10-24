@@ -17,7 +17,7 @@ import { useToast } from "@/components/toaster";
 interface TrackItem { handle: string; title: string; qty: number; unitLabel: string; image: string }
 interface TrackOrder {
   id: string; status: string; items: TrackItem[]; totalInr: number; discountInr: number; couponCode?: string;
-  reviewed?: boolean; deliveryPhoto?: string; location?: { lat: number; lng: number };
+  reviewed?: boolean; marketingSubscribed?: boolean; deliveryPhoto?: string; location?: { lat: number; lng: number };
   deliveryPartner?: { name: string; lat?: number | null; lng?: number | null; pin?: { lat: number; lng: number } | null; etaMinutes?: number; updatedAt?: string } | null;
 }
 interface HistoryOrder {
@@ -92,11 +92,23 @@ export function TrackView() {
   const [reviewText, setReviewText] = useState("");
   const [reviewSent, setReviewSent] = useState(false);
   const [reordering, setReordering] = useState(false);
+  const [marketingSettings, setMarketingSettings] = useState<{ instagramUrl: string; whatsappOptInEnabled: boolean }>({ instagramUrl: "", whatsappOptInEnabled: false });
+  const [marketingConsent, setMarketingConsent] = useState(false);
+  const [marketingBusy, setMarketingBusy] = useState(false);
 
   const mapHostRef = useRef<HTMLDivElement>(null);
   const trackMap = useRef<any>(null);
   const partnerMarker = useRef<any>(null);
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    api("/api/settings").then((settings) => {
+      setMarketingSettings({
+        instagramUrl: String(settings?.marketing?.instagramUrl || ""),
+        whatsappOptInEnabled: settings?.marketing?.whatsappOptInEnabled !== false,
+      });
+    }).catch(() => { /* marketing settings are optional */ });
+  }, []);
 
   /* ---------- live partner map ---------- */
   const renderPartnerLive = useCallback((data: { deliveryPartner?: TrackOrder["deliveryPartner"] }, order: TrackOrder) => {
@@ -150,7 +162,7 @@ export function TrackView() {
     const tick = async () => {
       try {
         const d2 = await api(`/api/orders/${encodeURIComponent(id)}?phone=${encodeURIComponent(resultPhone)}`);
-        if (d2.order) setResult((prev) => (prev && prev.id === id ? { ...prev, deliveryPartner: d2.order.deliveryPartner } : prev));
+        if (d2.order) setResult((prev) => (prev && prev.id === id ? { ...prev, deliveryPartner: d2.order.deliveryPartner, marketingSubscribed: d2.order.marketingSubscribed } : prev));
         renderPartnerLive(d2, { ...result, deliveryPartner: d2.order.deliveryPartner });
       } catch { /* keep last known position */ }
     };
@@ -177,7 +189,7 @@ export function TrackView() {
     if (!id || !ph) { toast("Enter your order ID and mobile number", "error"); return; }
     setResult(null);
     setTrackMsg({ kind: "info", text: "Checking your order…" });
-    setReviewStars(0); setReviewText(""); setReviewSent(false);
+    setReviewStars(0); setReviewText(""); setReviewSent(false); setMarketingConsent(false);
     try {
       const data = await api(`/api/orders/${encodeURIComponent(id)}?phone=${encodeURIComponent(ph)}`);
       if (data.phoneVerified === false) throw new Error("Mobile number does not match this order");
@@ -198,6 +210,31 @@ export function TrackView() {
     } catch (err: any) {
       toast(err?.message || "Could not send review", "error");
     }
+  }
+
+  async function joinMarketing() {
+    if (!result || !marketingConsent || marketingBusy) return;
+    setMarketingBusy(true);
+    try {
+      await api("/api/marketing/opt-in", { method: "POST", body: JSON.stringify({ orderId: result.id, phone: resultPhone, consent: true }) });
+      setResult((prev) => (prev ? { ...prev, marketingSubscribed: true } : prev));
+      setMarketingConsent(false);
+      toast("You’re opted in to daily WhatsApp marketing messages.");
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : "Could not save your marketing preference", "error");
+    } finally { setMarketingBusy(false); }
+  }
+
+  async function leaveMarketing() {
+    if (!result || marketingBusy) return;
+    setMarketingBusy(true);
+    try {
+      await api("/api/marketing/opt-out", { method: "POST", body: JSON.stringify({ orderId: result.id, phone: resultPhone }) });
+      setResult((prev) => (prev ? { ...prev, marketingSubscribed: false } : prev));
+      toast("You’re unsubscribed from daily marketing messages.");
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : "Could not update your marketing preference", "error");
+    } finally { setMarketingBusy(false); }
   }
 
   async function reorder() {
@@ -357,6 +394,37 @@ export function TrackView() {
                   <div className="mt-4 flex items-center gap-2.5 rounded-2xl bg-mint px-5 py-4 text-[14px] font-semibold text-leaf">
                     <CheckCircle2 size={17} /> {result.reviewed ? "Thanks for reviewing this order!" : "Thank you! Your review will appear on the product page once approved."}
                   </div>
+                )}
+                {result.status === "DELIVERED" && (marketingSettings.instagramUrl || marketingSettings.whatsappOptInEnabled || result.marketingSubscribed) && (
+                  <Card className="mt-4 gap-0 rounded-2xl border-carrot/20 bg-white p-5 shadow-[0_1px_6px_rgba(0,0,0,0.04)]">
+                    <p className="text-[14px] font-bold text-ink">Stay connected with Rebesta Fresh</p>
+                    {marketingSettings.instagramUrl && (
+                      <a href={marketingSettings.instagramUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-full bg-carrot/10 px-4 py-2 text-[13px] font-bold text-[#c8400f] transition hover:bg-carrot/15">
+                        <Camera size={16} /> Follow us on Instagram
+                      </a>
+                    )}
+                    {result.marketingSubscribed ? (
+                      <div className="mt-4 rounded-2xl border border-line bg-cream/60 p-3.5">
+                        <p className="text-[12px] font-semibold text-ink-2">You’re opted in to daily WhatsApp marketing messages.</p>
+                        <Button variant="ghost" onClick={leaveMarketing} disabled={marketingBusy} className="mt-2 h-9 rounded-full border border-line bg-white px-4 text-[12px] font-bold text-ink hover:bg-[#f5f5f7]">
+                          {marketingBusy ? "Updating…" : "Unsubscribe from daily messages"}
+                        </Button>
+                      </div>
+                    ) : marketingSettings.whatsappOptInEnabled ? (
+                      <div className="mt-4">
+                        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-line bg-cream/60 p-3.5">
+                          <input type="checkbox" checked={marketingConsent} onChange={(event) => setMarketingConsent(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-[#ff5b20]" />
+                          <span className="text-[12px] font-semibold leading-5 text-ink-2">
+                            <strong className="block text-[13px] text-ink">Send me daily WhatsApp marketing messages</strong>
+                            Optional and separate from order updates. You can unsubscribe at any time.
+                          </span>
+                        </label>
+                        <Button onClick={joinMarketing} disabled={!marketingConsent || marketingBusy} className="mt-3 h-10 w-full rounded-full bg-carrot text-[13px] font-bold text-white hover:brightness-110 disabled:opacity-50">
+                          {marketingBusy ? "Saving…" : "Opt in to daily messages"}
+                        </Button>
+                      </div>
+                    ) : null}
+                  </Card>
                 )}
 
                 <Card className="mt-4 gap-0 rounded-2xl border-line p-5 shadow-[0_1px_6px_rgba(0,0,0,0.04)]">

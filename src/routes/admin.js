@@ -14,6 +14,7 @@ import { payuEnabled } from '../lib/payu.js';
 import { cashfreeEnabled, loadCashfreeConfig, createCashfreePayment } from '../lib/cashfree.js';
 import { mailerReady } from '../lib/mailer.js';
 import { sendMorningDigest } from '../lib/digest.js';
+import { getMarketingSettings, getMarketingAdminSummary, getMarketingProviderStatus, normalizeInstagramUrl } from '../lib/marketing.js';
 
 export const router = express.Router();
 
@@ -365,6 +366,69 @@ router.patch('/settings', (req, res) => {
     res.json({ ok: true, settings });
   } catch (error) {
     res.status(400).json({ ok: false, error: error.message || 'Could not update settings' });
+  }
+});
+
+function marketingAdminPayload() {
+  return {
+    ok: true,
+    marketing: getMarketingSettings(),
+    provider: getMarketingProviderStatus(),
+    contacts: getMarketingAdminSummary()
+  };
+}
+
+router.get('/marketing', (req, res) => {
+  res.json(marketingAdminPayload());
+});
+
+router.patch('/marketing', (req, res) => {
+  try {
+    const body = req.body || {};
+    const settings = loadSettings();
+    const marketing = settings.marketing || (settings.marketing = {});
+    const whatsapp = marketing.whatsapp || (marketing.whatsapp = {});
+
+    if (body.instagramUrl !== undefined) {
+      const normalized = normalizeInstagramUrl(body.instagramUrl);
+      if (normalized === null) throw new Error('Use an Instagram profile URL or @handle.');
+      marketing.instagramUrl = normalized;
+    }
+    if (body.collectOptIns !== undefined) whatsapp.collectOptIns = Boolean(body.collectOptIns);
+    if (body.sendTimeIst !== undefined) {
+      const sendTime = String(body.sendTimeIst || '').trim();
+      if (sendTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(sendTime)) throw new Error('Enter the daily send time in 24-hour HH:MM format (India time).');
+      whatsapp.sendTimeIst = sendTime;
+    }
+    if (body.messageTemplate !== undefined) {
+      const messageTemplate = String(body.messageTemplate || '').trim();
+      if (messageTemplate.length > 1024) throw new Error('Daily message must be 1,024 characters or fewer.');
+      whatsapp.messageTemplate = messageTemplate;
+    }
+    if (body.enabled !== undefined) whatsapp.enabled = Boolean(body.enabled);
+    if (whatsapp.enabled === true) {
+      if (!getMarketingProviderStatus().configured) throw new Error('Daily sending is still paused: configure the WhatsApp provider and approved Marketing template first.');
+      if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(whatsapp.sendTimeIst || ''))) throw new Error('Set a valid daily send time in India time before enabling.');
+      if (!String(whatsapp.messageTemplate || '').trim()) throw new Error('Add the daily message text before enabling.');
+    }
+    saveSettings(settings);
+    res.json(marketingAdminPayload());
+  } catch (error) {
+    res.status(400).json({ ok: false, error: error.message || 'Could not update marketing settings' });
+  }
+});
+
+router.post('/marketing/provider', (req, res) => {
+  try {
+    const provider = saveMarketingWhatsAppConfig(req.body || {});
+    // A provider change always leaves the campaign paused. Admin must
+    // explicitly review settings and re-enable it after testing the template.
+    const settings = loadSettings();
+    if (settings.marketing?.whatsapp) settings.marketing.whatsapp.enabled = false;
+    saveSettings(settings);
+    res.json({ ...marketingAdminPayload(), provider });
+  } catch (error) {
+    res.status(400).json({ ok: false, error: error.message || 'Could not save WhatsApp marketing provider' });
   }
 });
 
@@ -760,7 +824,7 @@ router.get('/version', (req, res) => {
    GET  /api/admin/sms        → current provider status
    POST /api/admin/sms        → save/replace config {provider, ...} or {provider:'none'} to disable
    POST /api/admin/sms/test   → dry-run send with UNSAVED credentials {phone, config:{...}} */
-import { loadSmsConfig, otpAvailable, sendManagedOtp, sendOtpSms, msg91Balance, verifyWidgetToken, clearMcToken, notifyOrderConfirmed } from '../sms.js';
+import { loadSmsConfig, otpAvailable, sendManagedOtp, sendOtpSms, msg91Balance, verifyWidgetToken, clearMcToken, notifyOrderConfirmed, saveMarketingWhatsAppConfig } from '../sms.js';
 
 const SMS_FILE = () => path.join(config.dataDir, 'sms-config.json');
 

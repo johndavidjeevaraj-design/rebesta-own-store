@@ -15,7 +15,8 @@ const files = {
   positions: path.join(dataDir, 'partner-positions.json'),
   subscriptions: path.join(dataDir, 'subscriptions.json'),
   reviews: path.join(dataDir, 'reviews.json'),
-  cashLog: path.join(dataDir, 'cash-log.json')
+  cashLog: path.join(dataDir, 'cash-log.json'),
+  reservationJournal: path.join(dataDir, 'order-reservation-journal.json')
 };
 
 const randomSku = () => crypto.randomBytes(4).toString('hex');
@@ -501,6 +502,26 @@ export function slotCapacity() {
   return Number.isFinite(value) && value >= 1 ? Math.round(value) : 25;
 }
 
+/* Recover the single in-flight order reservation journal before accepting
+   another checkout. A journal is written before inventory changes; product
+   operation IDs make replay safe if a crash happened after stock was saved. */
+export function recoverOrderReservationJournal() {
+  const journal = readJson(files.reservationJournal, null);
+  if (!journal?.order?.id) return { recovered: false };
+  const order = journal.order;
+  const operationId = `order:${order.id}:initial-reservation`;
+  adjustOrderInventory(order, -1, operationId);
+  const orders = readOrders();
+  if (!orders.some(existing => existing.id === order.id)) {
+    orders.unshift(order);
+    saveOrders(orders);
+  }
+  try { fs.unlinkSync(files.reservationJournal); } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+  return { recovered: true, orderId: order.id };
+}
+
 export function addOrder(order) {
   const id = `RB-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
   const isOnline = order.paymentMethod === 'online';
@@ -513,22 +534,91 @@ export function addOrder(order) {
     history: [{ status: isOnline ? 'PENDING_PAYMENT' : 'PLACED', at: new Date().toISOString(), note: isOnline ? 'Awaiting verified online payment' : 'Order received' }],
     ...order
   };
-  const orders = readOrders();
-  orders.unshift(fullOrder);
-
-  // Immediate inventory reservation for a local quick-commerce operation.
+  /* Validate before journalling so a normal stock conflict leaves no recovery
+     record. Aggregate duplicate product lines exactly as the reservation helper
+     does. */
+  recoverOrderReservationJournal();
+  const quantities = new Map();
+  for (const line of fullOrder.items || []) {
+    quantities.set(line.handle, (quantities.get(line.handle) || 0) + Number(line.qty || 0));
+  }
   const products = loadProducts();
-  for (const line of fullOrder.items) {
-    const p = products.find(product => product.handle === line.handle);
-    if (!p || p.stock < line.qty) throw Object.assign(new Error(`${line.title}: stock changed, please retry`), { status: 409 });
+  for (const [handle, qty] of quantities) {
+    const product = products.find(row => row.handle === handle);
+    if (!product || !Number.isInteger(qty) || qty < 1 || product.stock < qty) {
+      throw Object.assign(new Error(`${fullOrder.items.find(line => line.handle === handle)?.title || handle}: stock changed, please retry`), { status: 409 });
+    }
   }
-  for (const line of fullOrder.items) {
-    const p = products.find(product => product.handle === line.handle);
-    p.stock -= line.qty;
+
+  writeJson(files.reservationJournal, { version: 1, order: fullOrder });
+  try {
+    adjustOrderInventory(fullOrder, -1, `order:${id}:initial-reservation`);
+    const orders = readOrders();
+    orders.unshift(fullOrder);
+    saveOrders(orders);
+    fs.unlinkSync(files.reservationJournal);
+    return fullOrder;
+  } catch (error) {
+    /* If inventory was not committed, discard the journal; if its operation
+       marker exists, leave the journal for deterministic recovery at boot. */
+    const current = loadProducts();
+    const committed = quantities.size > 0 && [...quantities.keys()].every(handle =>
+      current.find(product => product.handle === handle)?.inventoryOperationIds?.includes(`order:${id}:initial-reservation`)
+    );
+    if (!committed) {
+      try { fs.unlinkSync(files.reservationJournal); } catch {}
+    }
+    throw error;
   }
-  saveProducts(products);
+}
+
+/* Persist webhook event IDs on the order after the payment state is durable.
+   Payment IDs are provider-generated and unique; bounded history prevents the
+   order JSON from growing without limit. */
+export function hasCashfreeWebhookEvent(id, eventId) {
+  const order = getOrder(id);
+  return Boolean(order && Array.isArray(order.cashfreeWebhookEventIds)
+    && order.cashfreeWebhookEventIds.includes(String(eventId || '')));
+}
+
+export function recordCashfreeWebhookEvent(id, eventId) {
+  const orders = readOrders();
+  const order = orders.find(o => o.id === String(id || '').trim().toUpperCase());
+  if (!order || !eventId) return false;
+  const events = Array.isArray(order.cashfreeWebhookEventIds) ? order.cashfreeWebhookEventIds : [];
+  if (events.includes(String(eventId))) return false;
+  order.cashfreeWebhookEventIds = [...events, String(eventId)].slice(-100);
   saveOrders(orders);
-  return fullOrder;
+  return true;
+}
+
+export function pendingCashfreeOrders({ olderThanMs = 120_000, limit = 25 } = {}) {
+  const now = Date.now();
+  const cutoff = now - Math.max(0, Number(olderThanMs) || 0);
+  const cancelledLookback = 24 * 60 * 60 * 1000;
+  const checkInterval = 5 * 60 * 1000;
+  return readOrders()
+    .filter(order => String(order.paymentMethod || '').toLowerCase() === 'online')
+    .filter(order => new Date(order.placedAt || 0).getTime() <= cutoff)
+    .filter(order => {
+      const paymentStatus = String(order.paymentStatus || '').toUpperCase();
+      if (!['PAID_ONLINE', 'PAID', 'REFUNDED', 'FAILED', 'CANCELLED_NO_CHARGE'].includes(paymentStatus)) return true;
+      const cancelledUnpaid = String(order.status || '').toUpperCase() === 'CANCELLED'
+        && paymentStatus === 'CANCELLED_NO_CHARGE';
+      return cancelledUnpaid
+        && now - new Date(order.placedAt || 0).getTime() <= cancelledLookback
+        && now - new Date(order.cashfreeLastCheckedAt || 0).getTime() >= checkInterval;
+    })
+    .slice(0, Math.max(1, Math.min(100, Number(limit) || 25)));
+}
+
+export function markCashfreeReconciliationChecked(id) {
+  const orders = readOrders();
+  const order = orders.find(row => row.id === String(id || '').trim().toUpperCase());
+  if (!order) return false;
+  order.cashfreeLastCheckedAt = new Date().toISOString();
+  saveOrders(orders);
+  return true;
 }
 
 export function getOrder(id) {
@@ -546,7 +636,7 @@ export function claimOrderConfirmationNotice(id) {
   const status = String(order.status || '').toUpperCase();
   const paymentStatus = String(order.paymentStatus || '').toUpperCase();
   const confirmed = method === 'online'
-    ? ['PAID_ONLINE', 'PAID'].includes(paymentStatus)
+    ? ['PAID_ONLINE', 'PAID'].includes(paymentStatus) && status !== 'PAID_NEEDS_REVIEW'
     : method === 'cod' && !['PENDING_PAYMENT', 'PAYMENT_FAILED', 'CANCELLED'].includes(status);
   if (!confirmed) return null;
 
@@ -568,36 +658,66 @@ export function setOrderPaymentSession(id, sessionId, mode) {
   return order;
 }
 
+/* Exactly-once inventory adjustment marker. The marker is written atomically
+   in the same products.json snapshot as the stock change. If a process crashes
+   after products.json is saved but before orders.json is updated, retrying the
+   same order transition will see the marker and will not adjust stock twice. */
+export function adjustOrderInventory(order, direction, operationId) {
+  if (!order || ![-1, 1].includes(direction) || !operationId) {
+    throw Object.assign(new Error('Invalid inventory adjustment'), { status: 400 });
+  }
+  const quantities = new Map();
+  for (const line of order.items || []) {
+    quantities.set(line.handle, (quantities.get(line.handle) || 0) + Number(line.qty || 0));
+  }
+  const products = loadProducts();
+  const targets = [];
+  for (const [handle, qty] of quantities) {
+    const product = products.find(p => p.handle === handle);
+    if (!product) throw Object.assign(new Error(`Product not found while updating stock: ${handle}`), { status: 409 });
+    if (!Number.isInteger(qty) || qty < 1) throw Object.assign(new Error(`Invalid stock quantity for ${handle}`), { status: 409 });
+    const applied = Array.isArray(product.inventoryOperationIds) && product.inventoryOperationIds.includes(operationId);
+    if (!applied && direction === -1 && product.stock < qty) {
+      throw Object.assign(new Error(`${product.title}: not enough stock to reactivate this order`), { status: 409 });
+    }
+    targets.push({ product, qty, applied });
+  }
+  let changed = false;
+  for (const { product, qty, applied } of targets) {
+    if (applied) continue;
+    product.stock += qty * direction;
+    product.inventoryOperationIds = [...(product.inventoryOperationIds || []), operationId];
+    changed = true;
+  }
+  if (changed) saveProducts(products);
+  return { changed, operationId };
+}
+
 export function updateOrderStatus(id, status, note = '') {
   const allowed = ['PENDING_PAYMENT', 'PLACED', 'CONFIRMED', 'PACKING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'PAYMENT_FAILED', 'PAID_NEEDS_REVIEW'];
   if (!allowed.includes(status)) throw Object.assign(new Error('Invalid order status'), { status: 400 });
   const orders = readOrders();
   const order = orders.find(o => o.id === id);
   if (!order) return null;
-  if (String(order.paymentMethod || '').toLowerCase() === 'online' && !['PAID_ONLINE', 'PAID', 'REFUNDED'].includes(String(order.paymentStatus || '').toUpperCase()) && status !== 'CANCELLED' && status !== order.status) {
+  const onlineUnpaid = String(order.paymentMethod || '').toLowerCase() === 'online'
+    && !['PAID_ONLINE', 'PAID', 'REFUNDED', 'CANCELLED_NO_CHARGE', 'FAILED'].includes(String(order.paymentStatus || '').toUpperCase());
+  if (onlineUnpaid && status !== 'CANCELLED' && status !== order.status) {
     throw Object.assign(new Error('Online orders stay pending until payment is verified'), { status: 409 });
   }
+  if (onlineUnpaid && status === 'CANCELLED' && !/cashfree (rejected|order terminated)/i.test(String(note || ''))) {
+    throw Object.assign(new Error('Terminate the Cashfree payment order before releasing its stock reservation'), { status: 409 });
+  }
 
-  const products = loadProducts();
-  const adjustStock = direction => {
-    for (const line of order.items || []) {
-      const product = products.find(p => p.handle === line.handle);
-      if (!product) throw Object.assign(new Error(`Product not found while updating stock: ${line.handle}`), { status: 409 });
-      if (direction === -1 && product.stock < line.qty) throw Object.assign(new Error(`${product.title}: not enough stock to reactivate this order`), { status: 409 });
-    }
-    for (const line of order.items || []) {
-      const product = products.find(p => p.handle === line.handle);
-      product.stock += (line.qty * direction);
-    }
-    saveProducts(products);
-  };
-
-  if (status === 'CANCELLED' && order.status !== 'CANCELLED') adjustStock(1);
-  if (status !== 'CANCELLED' && order.status === 'CANCELLED') adjustStock(-1);
+  if (status === 'CANCELLED' && order.status !== 'CANCELLED') {
+    adjustOrderInventory(order, 1, `order:${order.id}:status:${order.history.length}:release`);
+  }
+  if (status !== 'CANCELLED' && order.status === 'CANCELLED') {
+    adjustOrderInventory(order, -1, `order:${order.id}:status:${order.history.length}:reserve`);
+  }
 
   order.status = status;
   if (status === 'DELIVERED' && order.paymentMethod === 'cod') order.paymentStatus = 'PAID_CASH_ON_DELIVERY';
-  if (status === 'CANCELLED' && order.paymentMethod === 'cod') order.paymentStatus = 'CANCELLED_NO_CHARGE';
+  if (status === 'CANCELLED' && ['cod', 'online'].includes(String(order.paymentMethod || '').toLowerCase())) order.paymentStatus = 'CANCELLED_NO_CHARGE';
   order.updatedAt = new Date().toISOString();
   order.history.push({ status, at: order.updatedAt, note });
   saveOrders(orders);
@@ -610,7 +730,6 @@ export function markPayuPayment(id, { success, reference, mode, raw, provider })
   if (!order) return null;
   if (['PAID_ONLINE', 'PAID', 'REFUNDED'].includes(String(order.paymentStatus || '').toUpperCase())) return order;
 
-  const products = loadProducts();
   const label = provider === 'cashfree' ? 'Cashfree' : 'PayU';
   order.updatedAt = new Date().toISOString();
   if (success) {
@@ -630,12 +749,7 @@ export function markPayuPayment(id, { success, reference, mode, raw, provider })
     order.paymentReference = reference || '';
     order.paymentMode = mode || '';
     if (order.status === 'PENDING_PAYMENT' || order.status === 'PLACED') {
-      for (const line of order.items || []) {
-        const product = products.find(p => p.handle === line.handle);
-        if (!product) throw Object.assign(new Error(`Product not found while restoring stock: ${line.handle}`), { status: 409 });
-        product.stock += line.qty;
-      }
-      saveProducts(products);
+      adjustOrderInventory(order, 1, `order:${order.id}:payment-failure`);
       order.status = 'PAYMENT_FAILED';
       order.history.push({ status: 'PAYMENT_FAILED', at: new Date().toISOString(), note: `${label} payment failed/cancelled; reserved stock released` });
     }
@@ -816,7 +930,7 @@ export function ordersByPhone(phone) {
 }
 
 /* Customer self-cancellation (COD orders before packing starts). */
-export function cancelOrderPublic(id, phone) {
+export function cancelOrderPublic(id, phone, note = 'Cancelled by customer') {
   const wanted = String(phone || '').replace(/[^0-9]/g, '').slice(-10);
   if (wanted.length !== 10) throw Object.assign(new Error('Enter the phone number used on the order'), { status: 400 });
   const order = getOrder(id);
@@ -827,7 +941,7 @@ export function cancelOrderPublic(id, phone) {
   if (!['PENDING_PAYMENT', 'PLACED', 'CONFIRMED'].includes(order.status)) {
     throw Object.assign(new Error('This order can no longer be cancelled online — it is already being prepared. WhatsApp us and we will help.'), { status: 409 });
   }
-  return updateOrderStatus(id, 'CANCELLED', 'Cancelled by customer');
+  return updateOrderStatus(id, 'CANCELLED', note);
 }
 
 /* --- Cheap change-detection versions for live polling (no full reads) --- */

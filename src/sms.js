@@ -82,12 +82,19 @@ export async function verifyWidgetToken(token) {
       signal: AbortSignal.timeout(10000)
     });
     const data = await res.json().catch(() => ({}));
-    const raw = JSON.stringify(data);
-    console.log(JSON.stringify({ event: 'otp.widgetVerify', status: res.status, body: raw.slice(0, 400) }));
     const ok = res.ok && String(data.type || '').toLowerCase() === 'success';
     const phone = data.mobile || data.phone || data.identifier || data.data?.mobile || data.data?.phone || null;
     const digits = phone ? String(phone).replace(/\D/g, '').slice(-10) : null;
-    return { ok, phone: /^[6-9]\d{9}$/.test(digits || '') ? digits : null, error: ok ? null : (data.message || `HTTP ${res.status}`) };
+    const verifiedPhone = /^[6-9]\d{9}$/.test(digits || '') ? digits : null;
+    /* Never log the raw provider body: it can contain the customer's full phone. */
+    console.log(JSON.stringify({
+      event: 'otp.widgetVerify',
+      status: res.status,
+      type: String(data.type || '').slice(0, 30),
+      hasVerifiedPhone: Boolean(verifiedPhone),
+      responseFields: Object.keys(data).slice(0, 12)
+    }));
+    return { ok, phone: verifiedPhone, error: ok ? null : (data.message || `HTTP ${res.status}`) };
   } catch (error) {
     return { ok: false, error: error.message };
   }
@@ -97,7 +104,7 @@ export async function verifyWidgetToken(token) {
 export async function sendOtpSms(phone, code, cfgOverride) {
   const c = cfgOverride || loadSmsConfig() || {};
   if (c.provider === 'dev') {
-    console.log(JSON.stringify({ event: 'otp.devcode', phone, code }));
+    console.log(JSON.stringify({ event: 'otp.devcode', phoneLast4: String(phone).slice(-4) }));
     return { ok: true, devCode: code };
   }
   if (c.provider === 'msg91') return sendMsg91(c, phone, code);

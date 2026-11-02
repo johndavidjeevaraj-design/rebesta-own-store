@@ -27,23 +27,46 @@ function baseUrl() {
 async function cf(pathname, init = {}) {
   const c = loadCashfreeConfig() || {};
   if (!cashfreeEnabled()) throw new Error('Cashfree credentials are not configured');
-  const res = await fetch(baseUrl() + pathname, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      'x-api-version': API_VERSION,
-      'x-client-id': String(c.appId || ''),
-      'x-client-secret': String(c.secretKey || '')
-    },
-    signal: AbortSignal.timeout(15000)
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const message = data.message || data.error_message || `Cashfree HTTP ${res.status}`;
-    throw new Error(String(message).slice(0, 300));
+
+  const headers = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    'x-api-version': API_VERSION,
+    'x-client-id': String(c.appId || ''),
+    'x-client-secret': String(c.secretKey || ''),
+    ...(init.idempotencyKey ? { 'x-idempotency-key': init.idempotencyKey } : {}),
+    ...(init.headers || {})
+  };
+  const request = { ...init };
+  delete request.idempotencyKey;
+  delete request.headers;
+
+  /* Cashfree documents an idempotency key for Create Order. If a network
+     timeout or 5xx makes the result ambiguous, retry once with the SAME key:
+     Cashfree can replay the original result rather than create a duplicate. */
+  const maxAttempts = init.idempotencyKey ? 2 : 1;
+  let lastError;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const res = await fetch(baseUrl() + pathname, {
+        ...request,
+        headers,
+        signal: AbortSignal.timeout(15000)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const error = new Error(String(data.message || data.error_message || `Cashfree HTTP ${res.status}`).slice(0, 300));
+        error.status = res.status;
+        throw error;
+      }
+      return data;
+    } catch (error) {
+      lastError = error;
+      const retryable = !Number.isFinite(error?.status) || error.status >= 500;
+      if (!retryable || attempt === maxAttempts) throw error;
+    }
   }
-  return data;
+  throw lastError || new Error('Cashfree request failed');
 }
 
 export function onlinePaymentsWanted() {
@@ -56,8 +79,15 @@ export function onlinePaymentsWanted() {
    back to our callback with ?order_id=… when the payment finishes. */
 export async function createCashfreePayment(order) {
   const phone = String(order.customer?.phone || '').replace(/\D/g, '');
+  const idempotencyKey = crypto.createHash('sha256')
+    .update(`rebesta-cashfree-create:${String(order.id || '')}`)
+    .digest('hex');
+  const placedAt = Date.parse(order.placedAt || '');
+  const expiryAt = (Number.isFinite(placedAt) ? placedAt : Date.now()) + 30 * 60 * 1000;
+  if (Date.now() >= expiryAt) throw Object.assign(new Error('This payment session has expired. Please place a new order.'), { status: 409 });
   const data = await cf('/pg/orders', {
     method: 'POST',
+    idempotencyKey,
     body: JSON.stringify({
       order_id: order.id,
       order_amount: Number(Number(order.totalInr || 0).toFixed(2)),
@@ -68,8 +98,10 @@ export async function createCashfreePayment(order) {
         customer_email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(order.customer?.email || '')) ? order.customer.email : 'orders@rebestafresh.in',
         customer_phone: '91' + phone
       },
+      order_expiry_time: new Date(expiryAt).toISOString(),
       order_meta: {
-        return_url: `${config.appUrl}/api/payments/cashfree/callback?order_id={order_id}`
+        return_url: `${config.appUrl}/api/payments/cashfree/callback?order_id={order_id}`,
+        notify_url: `${config.appUrl}/api/payments/cashfree/webhook`
       },
       order_note: 'Rebesta Fresh vegetable order'
     })
@@ -79,9 +111,61 @@ export async function createCashfreePayment(order) {
   return { type: 'cashfree', sessionId: data.payment_session_id, cfOrderId: String(data.cf_order_id || ''), mode };
 }
 
+/* Validate the authoritative Get Order response against our immutable order
+   snapshot. The redirect and client never supply payment amount or currency. */
+export function validateCashfreeOrder(order, providerOrder) {
+  if (!order || !providerOrder || typeof providerOrder !== 'object') return { valid: false, reason: 'missing_order' };
+  if (String(providerOrder.order_id || '') !== String(order.id || '')) return { valid: false, reason: 'order_id_mismatch' };
+  const expected = Number(Number(order.totalInr || 0).toFixed(2));
+  const received = Number(providerOrder.order_amount);
+  if (!Number.isFinite(received) || Math.round(received * 100) !== Math.round(expected * 100)) {
+    return { valid: false, reason: 'amount_mismatch' };
+  }
+  if (String(providerOrder.order_currency || '').toUpperCase() !== 'INR') return { valid: false, reason: 'currency_mismatch' };
+  if (String(providerOrder.order_status || '').toUpperCase() !== 'PAID') return { valid: false, reason: 'not_paid' };
+  return { valid: true };
+}
+
 /* Authoritative status check — never trust the redirect query params. */
 export async function getCashfreeOrder(orderId) {
   return cf('/pg/orders/' + encodeURIComponent(String(orderId || '')));
+}
+
+/* Cashfree webhook signature: Base64(HMAC-SHA256(secret, timestamp + rawBody)).
+   Verify the exact raw request bytes before trusting parsed JSON. */
+export function verifyCashfreeWebhookSignature(signature, timestamp, rawBody, secretKey = (loadCashfreeConfig() || {}).secretKey) {
+  if (!signature || !timestamp || typeof rawBody !== 'string' || !secretKey) return false;
+  let received;
+  try { received = Buffer.from(String(signature), 'base64'); } catch { return false; }
+  if (!received.length) return false;
+  const expected = crypto.createHmac('sha256', String(secretKey))
+    .update(String(timestamp) + rawBody, 'utf8')
+    .digest();
+  return received.length === expected.length && crypto.timingSafeEqual(received, expected);
+}
+
+export async function terminateCashfreeOrder(orderId) {
+  return cf('/pg/orders/' + encodeURIComponent(String(orderId || '')), {
+    method: 'PATCH',
+    body: JSON.stringify({ order_status: 'TERMINATED' })
+  });
+}
+
+export async function getCashfreePayments(orderId) {
+  const result = await cf('/pg/orders/' + encodeURIComponent(String(orderId || '')) + '/payments');
+  return Array.isArray(result) ? result : [];
+}
+
+export function validateCashfreePayment(order, payment) {
+  if (!order || !payment || typeof payment !== 'object') return { valid: false, reason: 'missing_payment' };
+  if (String(payment.order_id || '') !== String(order.id || '')) return { valid: false, reason: 'order_id_mismatch' };
+  if (!String(payment.cf_payment_id || '').trim()) return { valid: false, reason: 'missing_payment_id' };
+  if (String(payment.payment_status || '').toUpperCase() !== 'SUCCESS') return { valid: false, reason: 'payment_not_success' };
+  const expected = Math.round(Number(order.totalInr || 0) * 100);
+  const amount = Number(payment.payment_amount);
+  if (!Number.isFinite(amount) || Math.round(amount * 100) !== expected) return { valid: false, reason: 'payment_amount_mismatch' };
+  if (String(payment.payment_currency || '').toUpperCase() !== 'INR') return { valid: false, reason: 'payment_currency_mismatch' };
+  return { valid: true, paymentId: String(payment.cf_payment_id) };
 }
 
 /* UPI QR — we create the UPI intent via Cashfree's SESSION endpoint (the exact

@@ -8,14 +8,17 @@ import { router as adminRouter } from './routes/admin.js';
 import { router as partnerRouter } from './routes/partner.js';
 import { router as authRouter } from './routes/auth.js';
 import supportRouter from './routes/support.js';
-import { publicCatalog } from './lib/store.js';
+import { publicCatalog, recoverOrderReservationJournal } from './lib/store.js';
 import { rateLimit } from './lib/rateLimit.js';
 import { startSubscriptionScheduler } from './lib/subscriptions.js';
 import { startDigestScheduler } from './lib/digest.js';
+import { startCashfreeReconciliation } from './lib/cashfree-reconciliation.js';
 import path from 'node:path';
 import fs from 'node:fs';
 
 export function createStoreApp() {
+  /* Complete any journalled stock/order write before accepting new traffic. */
+  recoverOrderReservationJournal();
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
@@ -68,6 +71,9 @@ export function createStoreApp() {
   app.use(compression());
   app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
   app.use(express.urlencoded({ extended: false, limit: '100kb' }));
+  /* Preserve exact bytes for Cashfree HMAC verification. This route must be
+     registered before express.json() consumes the request stream. */
+  app.use('/api/payments/cashfree/webhook', express.raw({ type: 'application/json', limit: '1mb' }));
   app.use(express.json({ limit: '1mb', strict: true }));
 
   app.get('/health', (req, res) => {
@@ -177,6 +183,7 @@ ${productUrls}
   /* 🔁 Weekly subscription engine — runs at boot + every 15 minutes */
   startSubscriptionScheduler();
   startDigestScheduler();
+  startCashfreeReconciliation();
 
   app.use('/api', (req, res) => res.status(404).json({ ok: false, error: 'API route not found' }));
   app.use((req, res) => {

@@ -78,6 +78,28 @@ function currentCustomer(req) {
   if (!payload) return null;
   return loadCustomers().find(c => c.id === payload.uid) || null;
 }
+
+/* Sensitive customer self-service requires a server-issued session for a
+   phone number that has actually completed an OTP verification. */
+export function requireVerifiedCustomer(req, res, next) {
+  /* Cookie-authenticated mutations must originate from this site. SameSite=Lax
+     is defence-in-depth, not a substitute for checking Origin on state changes. */
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    const origin = String(req.get('origin') || '');
+    const fetchSite = String(req.get('sec-fetch-site') || '').toLowerCase();
+    let expectedOrigin = '';
+    try { expectedOrigin = new URL(config.appUrl).origin; } catch {}
+    if ((origin && origin !== expectedOrigin) || (!origin && fetchSite === 'cross-site')) {
+      return res.status(403).json({ ok: false, error: 'Cross-origin request blocked.' });
+    }
+  }
+  const customer = currentCustomer(req);
+  if (!customer || customer.phoneVerified !== true) {
+    return res.status(401).json({ ok: false, error: 'Please verify your mobile number and sign in to continue.' });
+  }
+  req.customer = customer;
+  next();
+}
 function setSession(res, req, customer) {
   const token = signToken({ uid: customer.id, iat: Date.now(), exp: Date.now() + SESSION_MS });
   const secure = req.secure || req.headers['x-forwarded-proto'] === 'https' ? '; Secure' : '';
@@ -146,10 +168,10 @@ router.post('/signup/verify', rateLimit({ windowMs: 60 * 60 * 1000, max: 10, mes
   }
 
   const checked = await verifyWidgetToken(token);
-  console.log(JSON.stringify({ event: 'otp.widgetVerify', context: 'signup', ok: checked.ok, verifiedPhone: checked.phone || null }));
+  console.log(JSON.stringify({ event: 'otp.widgetVerify', context: 'signup', ok: checked.ok, hasVerifiedPhone: Boolean(checked.phone) }));
   if (!checked.ok) return res.status(401).json({ ok: false, error: 'Verification failed — please try the code again.' });
-  if (checked.phone && checked.phone !== phone) {
-    console.error(JSON.stringify({ event: 'otp.widgetMismatch', context: 'signup', claimed: phone, verified: checked.phone }));
+  if (!checked.phone || checked.phone !== phone) {
+    console.error(JSON.stringify({ event: 'otp.widgetMismatch', context: 'signup', phoneMatch: false }));
     return res.status(401).json({ ok: false, error: 'Verification failed — please try again.' });
   }
 
@@ -165,7 +187,7 @@ router.post('/signup/verify', rateLimit({ windowMs: 60 * 60 * 1000, max: 10, mes
   customers.push(customer);
   saveCustomers(customers);
   setSession(res, req, customer);
-  console.log(JSON.stringify({ event: 'auth.signupVerified', phone }));
+  console.log(JSON.stringify({ event: 'auth.signupVerified', phoneLast4: phone.slice(-4) }));
   res.json({ ok: true, customer: publicCustomer(customer) });
 });
 
@@ -221,7 +243,7 @@ router.post('/otp/request', rateLimit({ windowMs: 15 * 60 * 1000, max: 10, messa
     const sent = await sendManagedOtp(phone);
     if (!sent.ok) {
       pending.delete(phone);
-      console.error(JSON.stringify({ event: 'otp.sendFailed', phone, error: sent.error }));
+      console.error(JSON.stringify({ event: 'otp.sendFailed', phoneLast4: phone.slice(-4), error: sent.error }));
       return res.status(502).json({ ok: false, error: 'Could not send the SMS right now. Please try again in a minute.' });
     }
     entry.verificationId = sent.verificationId;
@@ -233,7 +255,7 @@ router.post('/otp/request', rateLimit({ windowMs: 15 * 60 * 1000, max: 10, messa
   const sent = await sendOtpSms(phone, code);
   if (!sent.ok) {
     pending.delete(phone);
-    console.error(JSON.stringify({ event: 'otp.sendFailed', phone, error: sent.error }));
+    console.error(JSON.stringify({ event: 'otp.sendFailed', phoneLast4: phone.slice(-4), error: sent.error }));
     return res.status(502).json({ ok: false, error: 'Could not send the SMS right now. Please try again in a minute.' });
   }
   const out = { ok: true, expiresInSeconds: OTP_MS / 1000 };
@@ -258,7 +280,7 @@ router.post('/otp/verify', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, messag
     if (!checked.ok) {
       entry.attempts += 1;
       if (entry.attempts >= OTP_MAX_ATTEMPTS) pending.delete(phone);
-      console.error(JSON.stringify({ event: 'otp.verifyFailed', phone, error: checked.error }));
+      console.error(JSON.stringify({ event: 'otp.verifyFailed', phoneLast4: phone.slice(-4), error: checked.error }));
       return res.status(401).json({ ok: false, error: 'That code didn’t match. Check the SMS and try again.' });
     }
   } else if (otpHash(phone, code) !== entry.hash) {
@@ -268,8 +290,14 @@ router.post('/otp/verify', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, messag
   }
   pending.delete(phone); // one code, one use
 
-  const customer = loadCustomers().find(c => c.phone === phone);
+  const customers = loadCustomers();
+  const customer = customers.find(c => c.phone === phone);
   if (!customer) return res.status(404).json({ ok: false, error: 'No account with this number yet — please create an account first.' });
+  if (!customer.phoneVerified) {
+    customer.phoneVerified = true;
+    customer.phoneVerifiedAt = new Date().toISOString();
+    saveCustomers(customers);
+  }
   setSession(res, req, customer);
   res.json({ ok: true, customer: publicCustomer(customer) });
 });
@@ -285,10 +313,10 @@ router.post('/otp/widget', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, messag
   const customer = loadCustomers().find(c => c.phone === phone);
 
   const checked = await verifyWidgetToken(token);
-  console.log(JSON.stringify({ event: 'otp.widgetVerify', context: customer ? 'signin' : 'signup', ok: checked.ok, verifiedPhone: checked.phone || null }));
+  console.log(JSON.stringify({ event: 'otp.widgetVerify', context: customer ? 'signin' : 'signup', ok: checked.ok, hasVerifiedPhone: Boolean(checked.phone) }));
   if (!checked.ok) return res.status(401).json({ ok: false, error: 'Verification failed — please try the code again.' });
-  if (checked.phone && checked.phone !== phone) {
-    console.error(JSON.stringify({ event: 'otp.widgetMismatch', context: customer ? 'signin' : 'signup', claimed: phone, verified: checked.phone }));
+  if (!checked.phone || checked.phone !== phone) {
+    console.error(JSON.stringify({ event: 'otp.widgetMismatch', context: customer ? 'signin' : 'signup', phoneMatch: false }));
     return res.status(401).json({ ok: false, error: 'Verification failed — please try again.' });
   }
 
@@ -341,7 +369,7 @@ router.post('/otp/complete-signup', rateLimit({ windowMs: 60 * 60 * 1000, max: 1
   customers.push(customer);
   saveCustomers(customers);
   setSession(res, req, customer);
-  console.log(JSON.stringify({ event: 'auth.signupVerified', phone }));
+  console.log(JSON.stringify({ event: 'auth.signupVerified', phoneLast4: phone.slice(-4) }));
   res.json({ ok: true, isNew: true, customer: publicCustomer(customer) });
 });
 
@@ -351,10 +379,8 @@ router.post('/logout', (req, res) => {
 });
 
 /* Order history for the signed-in customer (phone matched server-side — never trusted from the client). */
-router.get('/orders', (req, res) => {
-  const customer = currentCustomer(req);
-  if (!customer) return res.status(401).json({ ok: false, error: 'Please sign in first.' });
-  res.json({ ok: true, orders: ordersByPhone(customer.phone) });
+router.get('/orders', requireVerifiedCustomer, (req, res) => {
+  res.json({ ok: true, orders: ordersByPhone(req.customer.phone) });
 });
 
 export { router };

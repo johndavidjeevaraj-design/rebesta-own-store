@@ -18,6 +18,9 @@ import {
   setOrderPaymentSession,
   maskCustomer,
   markPayuPayment,
+  recordCashfreeWebhookEvent,
+  hasCashfreeWebhookEvent,
+  updateOrderStatus,
   ordersByPhone,
   cancelOrderPublic,
   slotUsageFor,
@@ -32,9 +35,10 @@ import {
 import { orderPlacedEmails } from '../lib/mailer.js';
 import { quoteDelivery, reverseGeocode } from '../lib/delivery.js';
 import { createPayuPayment, validatePayuResponse } from '../lib/payu.js';
-import { cashfreeEnabled, createCashfreePayment, createUpiQr, getCashfreeOrder } from '../lib/cashfree.js';
+import { cashfreeEnabled, createCashfreePayment, createUpiQr, getCashfreeOrder, getCashfreePayments, validateCashfreeOrder, validateCashfreePayment, verifyCashfreeWebhookSignature, terminateCashfreeOrder } from '../lib/cashfree.js';
 import { findPartnerById, getPosition, haversineKm, etaMinutesFromKm } from '../lib/partners.js';
 import { createSubscriptionFromOrder, publicSubscription } from '../lib/subscriptions.js';
+import { requireVerifiedCustomer } from './auth.js';
 
 export const router = express.Router();
 
@@ -51,6 +55,25 @@ function normalizePhone(value) {
   if (/^[6-9]\d{9}$/.test(digits)) return digits;
   if (/^91[6-9]\d{9}$/.test(digits)) return digits.slice(2);
   return '';
+}
+
+function requireOrderOwner(req, res, next) {
+  /* Payment polling is a GET for storefront compatibility but it can settle
+     an order; apply the same origin boundary as cookie-authenticated writes. */
+  const origin = String(req.get('origin') || '');
+  const fetchSite = String(req.get('sec-fetch-site') || '').toLowerCase();
+  let expectedOrigin = '';
+  try { expectedOrigin = new URL(config.appUrl).origin; } catch {}
+  if ((origin && origin !== expectedOrigin) || fetchSite === 'cross-site' || fetchSite === 'same-site') {
+    return res.status(403).json({ ok: false, error: 'Cross-origin request blocked.' });
+  }
+  const order = getOrder(req.params.id);
+  if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
+  if (!req.customer || normalizePhone(order.customer?.phone) !== req.customer.phone) {
+    return res.status(403).json({ ok: false, error: 'This order does not belong to your account' });
+  }
+  req.order = order;
+  next();
 }
 
 function normalizeAddress(input = {}) {
@@ -306,8 +329,6 @@ router.post('/orders', async (req, res) => {
       notes: String(req.body?.notes || '').trim().slice(0, 500),
       source: 'own-store-web'
     });
-    if (couponCode) markCouponUsed(couponCode);
-
     const settings = loadSettings();
     const whatsappDigits = String(settings.business?.whatsapp || '918438765119').replace(/\D/g, '');
     const lines = order.items.map(item => `• ${item.title} × ${item.qty} — ₹${item.lineTotalInr}`).join('\n');
@@ -321,10 +342,43 @@ router.post('/orders', async (req, res) => {
            409s if the same order id is created twice) */
         try { setOrderPaymentSession(order.id, payment.sessionId, payment.mode); } catch {}
       } catch (error) {
-        console.error(JSON.stringify({ event: 'cashfree.createOrder.error', order: order.id, error: String(error?.message || error).slice(0, 400) }));
-        throw Object.assign(new Error('Online payment could not be started right now. Please choose Cash on Delivery.'), { status: 502 });
+        const providerStatus = Number(error?.status || 0);
+        const definitiveRejection = providerStatus >= 400 && providerStatus < 500 && providerStatus !== 409;
+        let inventoryCompensated = false;
+        if (definitiveRejection) {
+          try {
+            /* A documented provider 4xx (except conflict) means the create
+               request was rejected. Release this order's reservation through
+               the idempotent stock-transition operation. Timeouts, 5xx and
+               409 remain pending: the provider may already own the order. */
+            updateOrderStatus(order.id, 'CANCELLED', 'Cashfree rejected payment-order creation; inventory reservation released');
+            inventoryCompensated = true;
+          } catch (compensationError) {
+            console.error(JSON.stringify({
+              event: 'cashfree.createOrder.compensationError',
+              order: order.id,
+              error: String(compensationError?.message || compensationError).slice(0, 300)
+            }));
+          }
+        }
+        console.error(JSON.stringify({
+          event: 'cashfree.createOrder.error',
+          order: order.id,
+          providerStatus: providerStatus || null,
+          inventoryCompensated,
+          outcome: definitiveRejection ? 'rejected' : 'unknown',
+          error: String(error?.message || error).slice(0, 400)
+        }));
+        const message = inventoryCompensated
+          ? 'Online payment could not be started. Your order was cancelled and reserved stock released. Please try again or choose Cash on Delivery.'
+          : 'Online payment could not be confirmed as started. Your order is being held safely; please contact Rebesta Fresh before placing it again.';
+        throw Object.assign(new Error(message), { status: 502 });
       }
     }
+
+    /* Consume the coupon only once the order is accepted: COD at placement,
+       online after Cashfree has returned a usable payment session. */
+    if (couponCode && (paymentMethod === 'cod' || payment)) markCouponUsed(couponCode);
 
     if (!payment) void dispatchOrderConfirmation(order.id);
     res.status(201).json({
@@ -358,30 +412,25 @@ async function payuCallback(req, res) {
   }
 }
 
-router.get('/orders/history', (req, res) => {
-  const phone = normalizePhone(req.query.phone);
-  if (!phone) return res.status(400).json({ ok: false, error: 'Enter a valid phone number' });
-  res.json({ ok: true, orders: ordersByPhone(phone) });
+router.get('/orders/history', requireVerifiedCustomer, (req, res) => {
+  res.json({ ok: true, orders: ordersByPhone(req.customer.phone) });
 });
 
 /* ================= Weekly subscriptions (customer self-service) ================= */
 
-router.get('/subscriptions', (req, res) => {
-  const phone = normalizePhone(req.query.phone);
-  if (!phone) return res.status(400).json({ ok: false, error: 'Enter a valid phone number' });
+router.get('/subscriptions', requireVerifiedCustomer, (req, res) => {
   const mine = loadSubscriptions()
-    .filter(s => String(s.phone || '').replace(/\D/g, '').endsWith(phone))
+    .filter(s => normalizePhone(s.phone) === req.customer.phone)
     .map(publicSubscription);
   res.json({ ok: true, subscriptions: mine });
 });
 
-router.post('/subscriptions', (req, res) => {
+router.post('/subscriptions', requireVerifiedCustomer, (req, res) => {
   try {
     const order = getOrder(req.body?.orderId);
     if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
-    const phone = normalizePhone(req.body?.phone);
-    if (!phone || !String(order.customer?.phone || '').replace(/\D/g, '').endsWith(phone)) {
-      throw Object.assign(new Error('Phone number does not match this order'), { status: 403 });
+    if (normalizePhone(order.customer?.phone) !== req.customer.phone) {
+      throw Object.assign(new Error('This order does not belong to your account'), { status: 403 });
     }
     if (['CANCELLED', 'PAYMENT_FAILED'].includes(order.status)) {
       throw Object.assign(new Error('Cancelled orders cannot become subscriptions'), { status: 400 });
@@ -392,13 +441,12 @@ router.post('/subscriptions', (req, res) => {
   } catch (error) { flattenError(res, error, 'Could not create the subscription'); }
 });
 
-router.patch('/subscriptions/:id', (req, res) => {
+router.patch('/subscriptions/:id', requireVerifiedCustomer, (req, res) => {
   try {
     const subscription = getSubscription(req.params.id);
     if (!subscription) return res.status(404).json({ ok: false, error: 'Subscription not found' });
-    const phone = normalizePhone(req.body?.phone);
-    if (!phone || !String(subscription.phone || '').replace(/\D/g, '').endsWith(phone)) {
-      throw Object.assign(new Error('Phone number does not match this subscription'), { status: 403 });
+    if (normalizePhone(subscription.phone) !== req.customer.phone) {
+      throw Object.assign(new Error('This subscription does not belong to your account'), { status: 403 });
     }
     const action = String(req.body?.action || '').toLowerCase();
     if (action === 'pause') {
@@ -441,9 +489,40 @@ function subscriptionCreatedNotice(subscription) {
   };
 }
 
-router.post('/orders/:id/cancel', (req, res) => {
+router.post('/orders/:id/cancel', requireVerifiedCustomer, async (req, res) => {
   try {
-    const order = cancelOrderPublic(req.params.id, req.body?.phone);
+    const target = getOrder(req.params.id);
+    if (!target) return res.status(404).json({ ok: false, error: 'Order not found' });
+    if (normalizePhone(target.customer?.phone) !== req.customer.phone) {
+      return res.status(403).json({ ok: false, error: 'This order does not belong to your account' });
+    }
+
+    if (String(target.paymentMethod || '').toLowerCase() === 'online'
+      && !['PAID_ONLINE', 'PAID', 'REFUNDED'].includes(String(target.paymentStatus || '').toUpperCase())) {
+      if (!target.paymentSessionId) {
+        return res.status(409).json({ ok: false, error: 'Payment setup is still being confirmed. Please try cancelling again shortly.' });
+      }
+      const terminated = await terminateCashfreeOrder(target.id);
+      const providerStatus = String(terminated.order_status || '').toUpperCase();
+      if (providerStatus === 'PAID') {
+        const payments = await getCashfreePayments(target.id);
+        const paid = payments.find(item => validateCashfreePayment(target, item).valid);
+        if (paid) {
+          const checked = validateCashfreePayment(target, paid);
+          markPayuPayment(target.id, { success: true, reference: checked.paymentId, mode: 'cashfree', provider: 'cashfree', raw: { order_id: target.id, payment_id: checked.paymentId } });
+          void dispatchOrderConfirmation(target.id);
+        }
+        return res.status(409).json({ ok: false, error: 'Payment has already succeeded. Please contact support if you need a refund.' });
+      }
+      if (providerStatus !== 'TERMINATED') {
+        return res.status(409).json({ ok: false, error: 'Payment cancellation is still processing. Your stock remains reserved; please try again shortly.' });
+      }
+    }
+
+    const cancellationNote = String(target.paymentMethod || '').toLowerCase() === 'online'
+      ? 'Cashfree order terminated; cancelled by customer'
+      : 'Cancelled by customer';
+    const order = cancelOrderPublic(req.params.id, req.customer.phone, cancellationNote);
     if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
     res.json({ ok: true, order: maskCustomer(order) });
   } catch (error) { flattenError(res, error, 'Could not cancel this order'); }
@@ -460,28 +539,115 @@ router.get('/payments/cashfree/callback', async (req, res) => {
   try {
     const order = getOrder(orderId);
     if (!order) return res.status(404).type('text/plain').send('Order not found — contact Rebesta Fresh with your payment reference.');
-    const cfOrder = await getCashfreeOrder(orderId);
-    const paid = String(cfOrder?.order_status || '').toUpperCase() === 'PAID';
-    const payment = (cfOrder?.payments || []).find(p => String(p.payment_status || '').toUpperCase() === 'SUCCESS');
+    if (String(order.paymentMethod || '').toLowerCase() !== 'online') return res.status(400).type('text/plain').send('This order does not use online payment.');
+    const [cfOrder, cfPayments] = await Promise.all([
+      getCashfreeOrder(orderId),
+      getCashfreePayments(orderId)
+    ]);
+    const orderVerification = validateCashfreeOrder(order, cfOrder);
+    const payment = cfPayments.find(item => validateCashfreePayment(order, item).valid);
+    if (!orderVerification.valid || !payment) {
+      console.warn(JSON.stringify({
+        event: 'cashfree.paymentNotConfirmed',
+        order: order.id,
+        reason: orderVerification.valid ? 'no_matching_successful_payment' : orderVerification.reason
+      }));
+      return res.redirect(303, `/order-success?id=${encodeURIComponent(order.id)}&payment=pending`);
+    }
+    const paymentVerification = validateCashfreePayment(order, payment);
     markPayuPayment(order.id, {
-      success: paid,
-      reference: String(payment?.cf_payment_id || cfOrder?.cf_order_id || ''),
+      success: true,
+      reference: paymentVerification.paymentId,
       mode: 'cashfree',
       provider: 'cashfree',
-      raw: cfOrder
+      raw: {
+        order_id: cfOrder.order_id,
+        cf_order_id: cfOrder.cf_order_id,
+        order_status: cfOrder.order_status,
+        payment_id: paymentVerification.paymentId,
+        payment_status: payment.payment_status,
+        payment_amount: payment.payment_amount,
+        payment_currency: payment.payment_currency
+      }
     });
-    if (paid) void dispatchOrderConfirmation(order.id);
-    return res.redirect(303, `/order-success?id=${encodeURIComponent(order.id)}&payment=${paid ? 'paid' : 'failed'}`);
+    void dispatchOrderConfirmation(order.id);
+    return res.redirect(303, `/order-success?id=${encodeURIComponent(order.id)}&payment=paid`);
   } catch (error) {
     console.error(JSON.stringify({ event: 'cashfree.callback.error', order: orderId, error: String(error?.message || error).slice(0, 500) }));
     return res.status(502).type('text/plain').send('Payment verification failed. Contact Rebesta Fresh with your payment reference.');
   }
 });
 
-/* retry payment for an existing unpaid online order (order-success page) */
-router.post('/orders/:id/pay', async (req, res) => {
+/* Cashfree server-to-server webhook. Verify the exact raw body, then
+   independently verify order and payment against Cashfree's authenticated API.
+   The provider payload alone is never enough to mark an order paid. */
+router.post('/payments/cashfree/webhook', async (req, res) => {
+  const rawBody = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : '';
+  const signature = String(req.get('x-webhook-signature') || '');
+  const timestamp = String(req.get('x-webhook-timestamp') || '');
+  if (!verifyCashfreeWebhookSignature(signature, timestamp, rawBody)) {
+    return res.status(401).json({ ok: false, error: 'Invalid webhook signature' });
+  }
+
+  let event;
+  try { event = JSON.parse(rawBody); }
+  catch { return res.status(400).json({ ok: false, error: 'Invalid webhook payload' }); }
+
+  const orderId = String(event?.data?.order?.order_id || event?.data?.order_id || '').trim().toUpperCase();
+  const webhookPaymentId = String(event?.data?.payment?.cf_payment_id || '').trim();
+  if (!orderId || !webhookPaymentId) return res.status(400).json({ ok: false, error: 'Missing order or payment identity' });
+
   try {
-    const order = getOrder(String(req.params.id || '').toUpperCase());
+    const order = getOrder(orderId);
+    if (!order || String(order.paymentMethod || '').toLowerCase() !== 'online') {
+      return res.status(404).json({ ok: false, error: 'Online order not found' });
+    }
+    if (hasCashfreeWebhookEvent(orderId, webhookPaymentId)) {
+      return res.status(200).json({ ok: true, duplicate: true });
+    }
+
+    const [providerOrder, providerPayments] = await Promise.all([
+      getCashfreeOrder(orderId),
+      getCashfreePayments(orderId)
+    ]);
+    const orderCheck = validateCashfreeOrder(order, providerOrder);
+    if (!orderCheck.valid) return res.status(202).json({ ok: true, pending: true });
+
+    const providerPayment = providerPayments.find(payment => String(payment.cf_payment_id || '') === webhookPaymentId);
+    const paymentCheck = validateCashfreePayment(order, providerPayment);
+    if (!paymentCheck.valid) {
+      console.warn(JSON.stringify({ event: 'cashfree.webhook.paymentNotConfirmed', order: orderId, reason: paymentCheck.reason }));
+      return res.status(202).json({ ok: true, pending: true });
+    }
+
+    markPayuPayment(order.id, {
+      success: true,
+      reference: paymentCheck.paymentId,
+      mode: 'cashfree',
+      provider: 'cashfree',
+      raw: {
+        order_id: providerOrder.order_id,
+        cf_order_id: providerOrder.cf_order_id,
+        order_status: providerOrder.order_status,
+        payment_id: paymentCheck.paymentId,
+        payment_status: providerPayment.payment_status,
+        payment_amount: providerPayment.payment_amount,
+        payment_currency: providerPayment.payment_currency
+      }
+    });
+    recordCashfreeWebhookEvent(order.id, paymentCheck.paymentId);
+    void dispatchOrderConfirmation(order.id);
+    return res.status(200).json({ ok: true, processed: true });
+  } catch (error) {
+    console.error(JSON.stringify({ event: 'cashfree.webhook.error', order: orderId, error: String(error?.message || error).slice(0, 300) }));
+    return res.status(503).json({ ok: false, error: 'Webhook processing will be retried' });
+  }
+});
+
+/* retry payment for an existing unpaid online order (order-success page) */
+router.post('/orders/:id/pay', requireVerifiedCustomer, requireOrderOwner, async (req, res) => {
+  try {
+    const order = req.order;
     if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
     if (String(order.paymentMethod || '') !== 'online') return res.status(400).json({ ok: false, error: 'This order is not an online payment order' });
     if (String(order.status || '').toUpperCase() === 'CANCELLED') return res.status(400).json({ ok: false, error: 'This order was cancelled' });
@@ -500,9 +666,9 @@ router.post('/orders/:id/pay', async (req, res) => {
 /* UPI QR for the desktop "Scan & Pay" sheet: creates the QR payment attempt via
    Cashfree's session endpoint and returns the QR image so the page can render
    it crisply itself (no SDK iframe, no blur). */
-router.post('/orders/:id/upi-qr', async (req, res) => {
+router.post('/orders/:id/upi-qr', requireVerifiedCustomer, requireOrderOwner, async (req, res) => {
   try {
-    const order = getOrder(String(req.params.id || '').toUpperCase());
+    const order = req.order;
     if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
     if (String(order.paymentMethod || '') !== 'online') return res.status(400).json({ ok: false, error: 'This order is not an online payment order' });
     if (String(order.status || '').toUpperCase() === 'CANCELLED') return res.status(400).json({ ok: false, error: 'This order was cancelled' });
@@ -518,29 +684,42 @@ router.post('/orders/:id/upi-qr', async (req, res) => {
 
 /* lightweight payment poller for in-site UPI (intent + QR) — verifies with
    Cashfree, marks paid, fires the order notification, never throws */
-router.get('/orders/:id/verify-payment', async (req, res) => {
+router.get('/orders/:id/verify-payment', requireVerifiedCustomer, requireOrderOwner, async (req, res) => {
   try {
-    const order = getOrder(String(req.params.id || '').toUpperCase());
+    const order = req.order;
     if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
     if (['PAID', 'PAID_ONLINE'].includes(String(order.paymentStatus || '').toUpperCase())) {
       void dispatchOrderConfirmation(order.id);
       return res.json({ ok: true, paid: true });
     }
     if (String(order.paymentMethod || '') !== 'online') return res.json({ ok: true, paid: false });
-    const cfOrder = await getCashfreeOrder(order.id);
-    const paid = String(cfOrder?.order_status || '').toUpperCase() === 'PAID';
+    const [cfOrder, cfPayments] = await Promise.all([
+      getCashfreeOrder(order.id),
+      getCashfreePayments(order.id)
+    ]);
+    const orderVerification = validateCashfreeOrder(order, cfOrder);
+    const payment = cfPayments.find(item => validateCashfreePayment(order, item).valid);
+    const paid = orderVerification.valid && Boolean(payment);
     if (paid) {
-      const payment = (cfOrder?.payments || []).find(pp => String(pp?.payment_status || '').toUpperCase() === 'SUCCESS');
+      const paymentVerification = validateCashfreePayment(order, payment);
       markPayuPayment(order.id, {
         success: true,
-        reference: String(payment?.cf_payment_id || cfOrder?.cf_order_id || ''),
+        reference: paymentVerification.paymentId,
         mode: 'cashfree',
         provider: 'cashfree',
-        raw: cfOrder
+        raw: {
+          order_id: cfOrder.order_id,
+          cf_order_id: cfOrder.cf_order_id,
+          order_status: cfOrder.order_status,
+          payment_id: paymentVerification.paymentId,
+          payment_status: payment.payment_status,
+          payment_amount: payment.payment_amount,
+          payment_currency: payment.payment_currency
+        }
       });
       void dispatchOrderConfirmation(order.id);
     }
-    return res.json({ ok: true, paid });
+    return res.json({ ok: true, paid, ...(paid ? {} : { note: 'Payment is not confirmed yet.' }) });
   } catch (e) {
     return res.json({ ok: true, paid: false, note: 'verify pending' });
   }

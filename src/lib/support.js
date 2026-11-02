@@ -1,6 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { config } from '../config.js';
 import { loadSettings, getOrder } from './store.js';
 
 /* ============ 💬 Customer support assistant ============
@@ -11,9 +11,7 @@ import { loadSettings, getOrder } from './store.js';
    Either way, order questions are answered from REAL order data: the
    customer's order ID + phone number are looked up before answering. */
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dataDir = path.join(__dirname, '../../data');
-const QUERIES_FILE = path.join(dataDir, 'support-queries.json');
+const QUERIES_FILE = path.join(config.dataDir, 'support-queries.json');
 
 const STATUS_FRIENDLY = {
   PENDING_PAYMENT: 'waiting for payment',

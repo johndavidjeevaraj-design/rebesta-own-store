@@ -1,146 +1,85 @@
-# Rebesta Fresh — independent store
+# Rebesta Fresh — Independent Quick-Commerce Store
 
-This project is Rebesta Fresh rebuilt as a self-owned quick-commerce website. It does **not** use Shopify for catalogue, cart, checkout, delivery, payment, or order tracking.
+A self-owned vegetable commerce platform for Rebesta Fresh, built to support a local fresh-produce delivery operation. The application owns its catalogue, basket, delivery quote, order workflow and administration rather than relying on a hosted commerce platform.
 
-## What is implemented
+> **Project status:** The repository contains a working application and automated tests. Payment-provider credentials, deployment configuration and live transaction behaviour must be verified in the target environment before describing online payments as production-enabled.
 
-- 124 sellable fresh-product SKUs imported from the live public Rebesta catalogue.
-- All existing variant packs flattened into named SKUs (for example `500 g`, `1 kg`, Small and Large combo).
-- Local product images and brand assets.
-- Responsive storefront with one header, search, categories and product cards.
-- Browser-persisted basket plus a canonical `/cart` page.
-- Checkout with:
-  - customer details
-  - address
-  - current GPS pin
-  - draggable OpenStreetMap pin
-  - manual latitude/longitude fallback
-- Server-side route validation so customers cannot alter prices or bypass distance rules.
-- OSRM road-distance quote from the Hosur hub at `12.728582, 77.824784`.
-- Exact rules:
-  - 0–1 km: ₹20
-  - 1–3 km: ₹30
-  - 3–4 km: ₹40
-  - 4–5 km: ₹50
-  - 5–6 km: ₹60
-  - 6–7 km: ₹70
-  - 7–9 km: ₹100
-  - free delivery from ₹500 basket value
-  - standard eligibility limit: 9 road km
-- Tomorrow-morning delivery slots:
-  - 7:00 AM – 9:00 AM
-  - 9:00 AM – 11:00 AM
-- Cash on delivery checkout.
-- PayU hosted-checkout request/callback integration, including server-side reverse-hash verification, is coded and unit-tested. The online option stays disabled until live `PAYU_KEY` and `PAYU_SALT` are configured and verified with a real test transaction.
-- Order confirmation, masked tracking page and WhatsApp order handover link.
-- Owner dashboard at `/admin`:
-  - daily order/revenue metrics
-  - full order list
-  - order-status workflow
-  - stock and price updates
-  - product visibility
-- Automatic stock reservation on order and stock restoration when an order is cancelled.
-- Dockerfile and Railway deployment config.
+## Product capabilities
 
-## Start locally
+- Product catalogue with pack-size variants, pricing, stock and visibility controls.
+- Browser-persisted basket and canonical cart page.
+- Checkout with customer details, delivery address and map/GPS location input.
+- Server-side cart reconstruction and price calculation; client-submitted prices are not authoritative.
+- Delivery eligibility and fee calculation using road-distance routing, with a documented fallback path.
+- Morning delivery slots, slot-capacity checks and order status history.
+- Cash on Delivery and Cashfree hosted-checkout integration paths.
+- Customer order tracking with masked customer details.
+- Admin workflows for catalogue, inventory and order operations.
+- Customer accounts and phone-verification flows.
+- Order notifications and operational utilities.
+
+## Architecture at a glance
+
+| Layer | Implementation |
+| --- | --- |
+| Runtime | Node.js (20+) |
+| HTTP API | Express 4 |
+| Modules | JavaScript ES modules |
+| Persistence | JSON files under the configured data directory |
+| Security headers | Helmet |
+| Delivery routing | OpenStreetMap geocoding and OSRM road routing |
+| Payments | Cashfree integration; legacy PayU callback code remains in the codebase |
+| Tests | Node.js built-in test runner |
+| Deployment | Docker / Railway configuration |
+
+### Important engineering constraints
+
+The current JSON-file persistence layer is suitable for a small single-instance deployment, but it is not a substitute for transactional database storage. Concurrent read-modify-write operations can lose updates. Before increasing order volume or running multiple application instances, migrate order, inventory, customer and payment state to a transactional database.
+
+The in-process rate limiter is also instance-local. Use a shared rate-limit store or edge protection for multi-instance deployments.
+
+## Local development
+
+Requirements: Node.js 20 or later and npm.
 
 ```bash
-cd /home/user/rebesta-own-store
 npm ci
-npm start
+npm run dev
 ```
 
-Local app address: `http://localhost:3000`
+Open http://localhost:3000.
 
-Useful routes:
-
-- Storefront: `/`
-- Basket: `/cart`
-- Checkout: `/checkout`
-- Tracking: `/track`
-- Admin: `/admin`
-- Health: `/health`
-- Product API: `/api/products`
-- Quote API: `POST /api/quote`
-
-## Tests
+Useful commands:
 
 ```bash
-npm test
+npm test       # run the Node.js test suite
+npm start      # start the production server
 ```
 
-Current tests cover all seven required distance tiers, the ₹500 free-delivery threshold, and the hub-to-sample-pin distance range.
+## Main application routes
 
-## Production environment variables
+| Route | Purpose |
+| --- | --- |
+| `/` | Storefront |
+| `/cart` | Basket |
+| `/checkout` | Checkout |
+| `/track` | Order tracking |
+| `/admin` | Admin interface |
+| `/health` | Health endpoint |
+| `/api/products` | Public product catalogue |
+| `POST /api/quote` | Delivery quote |
+| `POST /api/orders` | Order creation |
 
-Required in production:
+## Configuration
 
-```env
-NODE_ENV=production
-HOST=0.0.0.0
-PORT=3000
-APP_URL=https://rebestafresh.in
-ADMIN_KEY=<long-random-private-key>
-DATA_DIR=/data
-```
+Configure secrets and environment-specific values outside source control. At minimum, review the production values for `NODE_ENV`, `HOST`, `PORT`, `APP_URL`, `ADMIN_KEY` and `DATA_DIR`. Configure Cashfree credentials through the supported deployment/admin configuration flow and verify the provider's server-side order status before treating an order as paid.
 
-Required later for live PayU hosted checkout:
+Never commit API secrets, payment salts, session-signing secrets, customer data or production data files.
 
-```env
-PAYU_KEY=<merchant-key>
-PAYU_SALT=<merchant-salt>
-PAYU_URL=https://secure.payu.in/_payment
-```
+## Engineering roadmap
 
-Do not commit the admin key or PayU salt.
+See [Engineering roadmap](docs/ENGINEERING_ROADMAP.md) for the prioritized reliability, security, testing and database work.
 
-## Production runbook
+## Scope and verification
 
-Detailed staging, cutover, PayU and backup steps are in [`docs/production-runbook.md`](./docs/production-runbook.md).
-
-## Production persistence warning
-
-The current implementation stores products, settings and orders as JSON under `DATA_DIR`. This is reliable only if the deployed host attaches a persistent disk/volume. Railway and standard VPS deployments can do that.
-
-Recommended managed setup:
-
-1. Create a persistent volume.
-2. Mount it at `/data`.
-3. Set `DATA_DIR=/data`.
-4. Deploy the Dockerfile.
-5. Verify `/health` before pointing live users to it.
-6. Keep regular off-host backups of `/data/orders.json`, `/data/products.json`, and `/data/settings.json`.
-
-For higher order volume, the next durable upgrade is PostgreSQL with immutable order rows and transaction-safe inventory reservations.
-
-## Catalogue refresh
-
-`scripts/import_public_catalog.py` can rebuild `data/products.json` from the current public storefront without a Shopify admin token:
-
-```bash
-python3 scripts/import_public_catalog.py
-```
-
-It creates `data/products.previous.json` as a backup. After checkout moves fully away from Shopify, the Admin Dashboard should become the primary catalogue editor instead of re-importing Shopify data.
-
-## Remaining production integrations
-
-These are separate because they require the merchant's private accounts/keys and cannot be completed safely by generating code alone:
-
-1. PayU live merchant keys, success/failure callbacks and settlement verification.
-2. WhatsApp Business API or a reliable internal email/SMS alert for staff.
-3. PostgreSQL managed database for high availability.
-4. Customer login/OTP if repeated customer accounts are required.
-5. GoDaddy DNS pointing the live hostname to the chosen host.
-6. Final live-domain HTTPS check and a small controlled pilot order wave.
-
-## Core delivery logic files
-
-- `src/lib/delivery.js` — GPS/address geocode plus OSRM driving route.
-- `src/lib/store.js` — catalogue, basket validation, inventory and orders.
-- `src/routes/public.js` — public products, quote, orders and tracking APIs.
-- `src/routes/admin.js` — protected owner APIs.
-
-## Security note
-
-The server recalculates product prices, basket totals, distance and delivery fee. Trusting browser-supplied totals would be unsafe, so those are ignored. The owner dashboard requires `ADMIN_KEY` in production.
+This README describes capabilities found in the repository source. It does not claim that a live payment transaction, production deployment, penetration test or load test has been completed. Run the test suite and verify each external integration in a controlled environment before release.

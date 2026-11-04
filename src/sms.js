@@ -75,10 +75,10 @@ export function otpMode() {
 export async function verifyWidgetToken(token) {
   const c = loadSmsConfig() || {};
   try {
-    const res = await fetch('https://control.msg91.com/api/v5/widget/verifyAccessToken', {
+    const res = await fetch('https://api.msg91.com/api/v5/widget/verifyAccessToken', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ authkey: String(c.authKey), 'access-token': String(token) }),
+      body: JSON.stringify({ 'access-token': String(token) }),
       signal: AbortSignal.timeout(10000)
     });
     const data = await res.json().catch(() => ({}));

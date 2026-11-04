@@ -77,7 +77,7 @@ export async function verifyWidgetToken(token) {
   try {
     const res = await fetch('https://api.msg91.com/api/v5/widget/verifyAccessToken', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', authkey: String(c.authkey) },
+      headers: { 'Content-Type': 'application/json', authkey: String(c.authKey) },
       body: JSON.stringify({ 'access-token': String(token) }),
       signal: AbortSignal.timeout(10000)
     });

@@ -83,7 +83,15 @@ export async function verifyWidgetToken(token) {
     });
     const data = await res.json().catch(() => ({}));
     const ok = res.ok && String(data.type || '').toLowerCase() === 'success';
-    const phone = data.mobile || data.phone || data.identifier || data.data?.mobile || data.data?.phone || null;
+    const phone =
+  data.mobile ||
+  data.phone ||
+  data.identifier ||
+  data.data?.mobile ||
+  data.data?.phone ||
+  (String(data.type || '').toLowerCase() === 'success'
+    ? data.message
+    : null);
     const digits = phone ? String(phone).replace(/\D/g, '').slice(-10) : null;
     const verifiedPhone = /^[6-9]\d{9}$/.test(digits || '') ? digits : null;
     /* Never log the raw provider body: it can contain the customer's full phone. */

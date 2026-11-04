@@ -151,7 +151,7 @@ test('MSG91 widget signup fails closed when the verified phone is absent or mism
   const originalFetch = globalThis.fetch;
   try {
     globalThis.fetch = async (url, options) => {
-      if (String(url).includes('control.msg91.com/api/v5/widget/verifyAccessToken')) {
+      if (String(url).includes('api.msg91.com/api/v5/widget/verifyAccessToken')) {
         return new Response(JSON.stringify({ type: 'success' }), { status: 200, headers: { 'content-type': 'application/json' } });
       }
       return originalFetch(url, options);
@@ -163,7 +163,7 @@ test('MSG91 widget signup fails closed when the verified phone is absent or mism
     assert.equal(missingPhone.status, 401);
 
     globalThis.fetch = async (url, options) => {
-      if (String(url).includes('control.msg91.com/api/v5/widget/verifyAccessToken')) {
+      if (String(url).includes('api.msg91.com/api/v5/widget/verifyAccessToken')) {
         return new Response(JSON.stringify({ type: 'success', mobile: '919000000002' }), { status: 200, headers: { 'content-type': 'application/json' } });
       }
       return originalFetch(url, options);
@@ -173,8 +173,36 @@ test('MSG91 widget signup fails closed when the verified phone is absent or mism
       body: { name: 'New Customer', phone: '9000000001', password: 'secure-pass', token: 'test-widget-token' }
     });
     assert.equal(mismatch.status, 401);
+    // MSG91 documented success response: phone number in `message`
+globalThis.fetch = async (url, options) => {
+  if (String(url).includes('api.msg91.com/api/v5/widget/verifyAccessToken')) {
+    return new Response(JSON.stringify({
+      type: 'success',
+      message: '919000000003'
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' }
+    });
+  }
+  return originalFetch(url, options);
+};
+
+const successfulSignup = await request('/api/auth/signup/verify', {
+  method: 'POST',
+  body: {
+    name: 'Successful Customer',
+    phone: '9000000003',
+    password: 'secure-pass',
+    token: 'test-widget-token'
+  }
+});
+
+assert.equal(successfulSignup.status, 200);
+assert.equal(successfulSignup.body.ok, true);
+assert.equal(successfulSignup.body.customer.phone, '9000000003');
+assert.equal(successfulSignup.body.customer.phoneVerified, true);
     globalThis.fetch = async (url, options) => {
-      if (String(url).includes('control.msg91.com/api/v5/widget/verifyAccessToken')) {
+      if (String(url).includes('api.msg91.com/api/v5/widget/verifyAccessToken')) {
         return new Response(JSON.stringify({ type: 'success' }), { status: 200, headers: { 'content-type': 'application/json' } });
       }
       return originalFetch(url, options);
